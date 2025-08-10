@@ -1,27 +1,25 @@
-# Estágio de build - Compilação do código Java
+# Estágio de build
 FROM maven:3.8.4-openjdk-17 AS build
 
 # Definir o diretório de trabalho
 WORKDIR /application
 
-# Copiar o arquivo pom.xml diretamente
-COPY . .
+# Copiar apenas o pom.xml e arquivos necessários para baixar dependências
+COPY pom.xml .
+COPY mvnw .
+COPY .mvn .mvn
 
+# Copiar o restante do código
+COPY src ./src
 
-# Compilar e empacotar o aplicativo
-RUN mvn clean package -DskipTests
+# Compilar e empacotar
+RUN ./mvnw clean package -DskipTests
 
-# Estágio de execução - Imagem final mais leve
+# Estágio final
 FROM openjdk:17-jdk-slim
-
-# Definir o diretório de trabalho
 WORKDIR /application
 
-# Copiar o JAR do estágio de build
-COPY --from=build /application/target/pointtils-0.0.1-SNAPSHOT.jar pointtils.jar
+COPY --from=build /application/target/pointtils-0.0.1-SNAPSHOT.jar app.jar
 
-# Expor a porta que a aplicação usa
 EXPOSE 8081
-
-# Comando simplificado para iniciar a aplicação
-ENTRYPOINT ["java", "-jar", "pointtils.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
