@@ -5,13 +5,10 @@ FROM maven:3.8.4-openjdk-17 AS build
 WORKDIR /application
 
 # Copiar o arquivo pom.xml diretamente
-COPY pom.xml ./
+COPY . .
 
 # Baixar todas as dependências - isso será armazenado em cache se o pom.xml não mudar
 RUN mvn dependency:go-offline -B
-
-# Copiar o restante do código fonte
-COPY src ./src
 
 # Compilar e empacotar o aplicativo
 RUN mvn clean package -DskipTests
@@ -20,13 +17,13 @@ RUN mvn clean package -DskipTests
 FROM openjdk:17-jdk-slim
 
 # Definir o diretório de trabalho
-WORKDIR /app
+WORKDIR /application
 
 # Copiar o JAR do estágio de build
-COPY --from=build /application/target/pointtils-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=build /application/target/pointtils-0.0.1-SNAPSHOT.jar pointtils.jar
 
 # Expor a porta que a aplicação usa
 EXPOSE 8081
 
 # Comando simplificado para iniciar a aplicação
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "pointtils.jar"]
