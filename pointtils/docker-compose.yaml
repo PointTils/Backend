@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+
+  # Pointtils
+  pointtils:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pointtils
+    env_file:
+      - .env
+    environment:
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - SPRING_APPLICATION_NAME=${SPRING_APPLICATION_NAME}
+      - SERVER_PORT=${SERVER_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${SPRING_JPA_HIBERNATE_DDL_AUTO}
+      - SPRING_JPA_SHOW_SQL=${SPRING_JPA_SHOW_SQL}
+      - SPRINGDOC_API_DOCS_ENABLED=${SPRINGDOC_API_DOCS_ENABLED}
+      - SPRINGDOC_SWAGGER_UI_ENABLED=${SPRINGDOC_SWAGGER_UI_ENABLED}
+      - SPRINGDOC_SWAGGER_UI_PATH=${SPRINGDOC_SWAGGER_UI_PATH}
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}"
+    depends_on:
+      - pointtils-db
+
+  pointtils-db:
+    image: postgres:latest
+    restart: always
+    container_name: pointtils-db
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
