@@ -8,6 +8,7 @@ COPY pointtils/pom.xml .
 COPY pointtils/mvnw .
 COPY pointtils/.mvn .mvn
 
+RUN chmod +x mvnw
 
 # Copiar o restante do código
 COPY pointtils/src ./src
