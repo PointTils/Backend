@@ -1,0 +1,29 @@
+# Arquivos e diretórios relacionados a build
+target/
+!target/*.jar
+
+# Arquivos e diretórios relacionados a ferramentas de desenvolvimento
+.git/
+.github/
+.gitignore
+.vscode/
+.idea/
+.mvn/
+*.iml
+*.md
+
+# Arquivos de log
+*.log
+
+# Diretórios temporários
+/tmp/
+/temp/
+
+# Arquivos Docker (exceto o Dockerfile principal)
+.dockerignore
+docker-compose*.yml
+docker-compose*.yaml
+
+# Outros arquivos de configuração
+.env
+.env.*
