@@ -5,12 +5,9 @@ target/
 # Arquivos e diretórios relacionados a ferramentas de desenvolvimento
 .git/
 .github/
-.gitignore
 .vscode/
 .idea/
-.mvn/
 *.iml
-*.md
 
 # Arquivos de log
 *.log
