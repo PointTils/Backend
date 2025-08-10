@@ -1,7 +1,7 @@
 # PointTils Backend
 
 ## Visão Geral
-Backend desenvolvido em Java Spring Boot para gerenciamento de pontos. Segue uma arquitetura limpa com separação clara de camadas.
+Backend desenvolvido em Java Spring Boot para gerenciamento de End-points. Segue uma arquitetura limpa com separação clara de camadas.
 
 ## Arquitetura
 ```
