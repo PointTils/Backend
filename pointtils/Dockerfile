@@ -7,8 +7,6 @@ WORKDIR /application
 # Copiar o arquivo pom.xml diretamente
 COPY . .
 
-# Baixar todas as dependências - isso será armazenado em cache se o pom.xml não mudar
-RUN mvn dependency:go-offline -B
 
 # Compilar e empacotar o aplicativo
 RUN mvn clean package -DskipTests

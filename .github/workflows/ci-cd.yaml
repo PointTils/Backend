@@ -32,8 +32,8 @@ jobs:
 
       - name: Subir serviços com Docker Compose
         run: |
-          docker-compose -f docker-compose.yml up --build -d
-          docker-compose -f docker-compose.yml ps
+          docker-compose -f ./pointtils/docker-compose.yaml up --build -d
+          docker-compose -f ./pointtils/docker-compose.yaml ps
 
       - name: Esperar serviços ficarem disponíveis
         run: sleep 30
@@ -44,4 +44,4 @@ jobs:
 
 
       - name: Derrubar serviços do Docker Compose
-        run: docker-compose -f docker-compose.yml down
+        run: docker-compose -f ./pointtils/docker-compose.yaml down
