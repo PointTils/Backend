@@ -50,8 +50,8 @@ jobs:
           echo "https://${{ secrets.GITLAB_USERNAME }}:${{ secrets.GITLAB_PASSWORD }}@tools.ages.pucrs.br" > ~/.git-credentials
           chmod 600 ~/.git-credentials
 
-      - name: Mirror Repository (HTTPS)
+      - name: Push to GitLab
         run: |
-          echo "Starting mirror push via HTTPS..."
-          git push --mirror gitlab
-          echo "Mirror completed successfully"
+          echo "Starting push to GitLab..."
+          git push --force gitlab main:main
+          echo "Push completed successfully"
