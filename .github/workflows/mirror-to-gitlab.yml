@@ -43,11 +43,15 @@ jobs:
           git remote add gitlab https://tools.ages.pucrs.br/point-tils-um-aplicativo-para-interpretes-de-lingua-brasileira-de-sinais/backend.git
           git remote -v
 
+      - name: Configure Git credentials
+        run: |
+          echo "Configuring Git credentials..."
+          git config --global credential.helper store
+          echo "https://${{ secrets.GITLAB_USERNAME }}:${{ secrets.GITLAB_PASSWORD }}@tools.ages.pucrs.br" > ~/.git-credentials
+          chmod 600 ~/.git-credentials
+
       - name: Mirror Repository (HTTPS)
         run: |
           echo "Starting mirror push via HTTPS..."
           git push --mirror gitlab
           echo "Mirror completed successfully"
-        env:
-          GITLAB_USERNAME: ${{ secrets.GITLAB_USERNAME }}
-          GITLAB_PASSWORD: ${{ secrets.GITLAB_PASSWORD }}
