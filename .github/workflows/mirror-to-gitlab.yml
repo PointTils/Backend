@@ -19,7 +19,7 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
 
-      - name: Mirror to AGES GitLab
+      - name: Mirror to GitLab
         run: |
-          git remote add gitlab https://oauth2:${{ secrets.GITLAB_TOKEN }}@tools.ages.pucrs.br/point-tils-um-aplicativo-para-interpretes-de-lingua-brasileira-de-sinais/backend.git
+          git remote add gitlab https://gitlab-ci-token:${{ secrets.GITLAB_TOKEN }}@tools.ages.pucrs.br/point-tils-um-aplicativo-para-interpretes-de-lingua-brasileira-de-sinais/backend.git
           git push --mirror gitlab
