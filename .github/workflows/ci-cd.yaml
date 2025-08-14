@@ -32,8 +32,8 @@ jobs:
 
       - name: Subir serviços com Docker Compose
         run: |
-          docker-compose -f ./pointtils/docker-compose.yaml up --build -d
-          docker-compose -f ./pointtils/docker-compose.yaml ps
+          docker-compose -f ./pointtils/docker-compose.prod.yaml up --build -d
+          docker-compose -f ./pointtils/docker-compose.prod.yaml ps
         env:
           SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
           SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
@@ -58,4 +58,4 @@ jobs:
 
 
       - name: Derrubar serviços do Docker Compose
-        run: docker-compose -f ./pointtils/docker-compose.yaml down
+        run: docker-compose -f ./pointtils/docker-compose.prod.yaml down
