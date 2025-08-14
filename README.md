@@ -84,9 +84,9 @@ docker-compose up --build
 ```
 
 **Gerar documentação Swagger:**
-Acesse após iniciar a aplicação:
+Documentação disponível no seguinte endereço:
 ```
-http://localhost:8080/swagger-ui.html
+https://backend-v5gs.onrender.com/swagger-ui/index.html
 ```
 
 ## Dicas de Desenvolvimento
