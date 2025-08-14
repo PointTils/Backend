@@ -19,9 +19,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import com.pointtils.pointtils.src.application.controllers.dto.PointRequestDTO;
-import com.pointtils.pointtils.src.application.controllers.dto.PointResponseDTO;
-import com.pointtils.pointtils.src.application.controllers.mapper.PointMapper;
+import com.pointtils.pointtils.src.application.dto.PointRequestDTO;
+import com.pointtils.pointtils.src.application.dto.PointResponseDTO;
+import com.pointtils.pointtils.src.application.mapper.PointMapper;
 import com.pointtils.pointtils.src.application.services.PointService;
 import com.pointtils.pointtils.src.core.domain.entities.Point;
 import com.pointtils.pointtils.src.core.domain.entities.PointType;

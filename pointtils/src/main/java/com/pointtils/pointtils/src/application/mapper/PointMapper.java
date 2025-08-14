@@ -1,11 +1,11 @@
-package com.pointtils.pointtils.src.application.controllers.mapper;
+package com.pointtils.pointtils.src.application.mapper;
 
 import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Component;
 
-import com.pointtils.pointtils.src.application.controllers.dto.PointRequestDTO;
-import com.pointtils.pointtils.src.application.controllers.dto.PointResponseDTO;
+import com.pointtils.pointtils.src.application.dto.PointRequestDTO;
+import com.pointtils.pointtils.src.application.dto.PointResponseDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Point;
 
 @Component

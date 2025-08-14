@@ -6,9 +6,9 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.pointtils.pointtils.src.application.controllers.dto.PointRequestDTO;
-import com.pointtils.pointtils.src.application.controllers.dto.PointResponseDTO;
-import com.pointtils.pointtils.src.application.controllers.mapper.PointMapper;
+import com.pointtils.pointtils.src.application.dto.PointRequestDTO;
+import com.pointtils.pointtils.src.application.dto.PointResponseDTO;
+import com.pointtils.pointtils.src.application.mapper.PointMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Point;
 import com.pointtils.pointtils.src.infrastructure.repositories.PointRepository;
 

@@ -1,6 +1,5 @@
-package com.pointtils.pointtils.src.application.controllers.dto;
+package com.pointtils.pointtils.src.application.dto;
 
-import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,10 +10,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PointResponseDTO {
-    private Long id;
+public class PointRequestDTO {
     private String userId;
     private String description;
-    private LocalDateTime timestamp;
-    private String type;
+    private String type; // ENTRY, EXIT, LUNCH_START, LUNCH_END
 }
