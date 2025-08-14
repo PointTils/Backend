@@ -4,14 +4,14 @@ FROM maven:3.8.4-openjdk-17 AS build
 WORKDIR /application
 
 # Copiar apenas os arquivos essenciais primeiro
-COPY pointtils/pom.xml .
-COPY pointtils/mvnw .
-COPY pointtils/.mvn .mvn
+COPY pom.xml .
+COPY mvnw .
+COPY .mvn .mvn
 
 RUN chmod +x mvnw
 
 # Copiar o restante do código
-COPY pointtils/src ./src
+COPY src ./src
 
 # Compilar e empacotar
 RUN ./mvnw clean package -DskipTests
