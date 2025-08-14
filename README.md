@@ -99,5 +99,25 @@ http://localhost:8080/swagger-ui.html
 
 ## Configurações
 As principais configurações estão em:
-- `src/main/resources/application.properties`
+- `src/main/resources/application.properties` 
 - `src/main/java/.../configs/OpenApiConfig.java`
+
+### Variáveis de Ambiente
+O projeto utiliza um arquivo `.env.example` como template para configurações sensíveis. Para executar o projeto:
+
+1. Copie o arquivo `.env.example` para `.env`:
+```bash
+cp .env.example .env
+```
+
+2. Edite o `.env` com seus valores reais (não versionado no Git)
+
+Variáveis comuns:
+```
+SPRING_DATASOURCE_URL=
+SPRING_DATASOURCE_USERNAME=
+SPRING_DATASOURCE_PASSWORD=
+JWT_SECRET=
+```
+
+3. Para Docker, certifique-se que as variáveis estão definidas no `docker-compose.yaml` ou no `.env`
