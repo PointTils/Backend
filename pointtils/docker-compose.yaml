@@ -22,6 +22,7 @@ services:
       - SPRINGDOC_SWAGGER_UI_PATH=${SPRINGDOC_SWAGGER_UI_PATH}
     ports:
       - "${SERVER_PORT}:${SERVER_PORT}"
+      - "8888:8888"
     depends_on:
       - pointtils-db
 
