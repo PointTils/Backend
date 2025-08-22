@@ -136,10 +136,10 @@ mvn clean verify sonar:sonar
 
 # Ou definindo propriedades via linha de comando
 mvn clean verify sonar:sonar \
-  -Dsonar.host.url=http://localhost:9000 \
-  -Dsonar.login=SEU_TOKEN_GERADO
-```
-
+  -Dsonar.projectKey=pointtils-backend \
+  -Dsonar.host.url=http://127.0.0.1:9000 \
+  -Dsonar.login=sqp_26b7665f094bb13cb597e298ac8880127eb2162c
+  
 ### 5. Arquivo de configuração
 
 O arquivo `sonar-project.properties` já está configurado com:
