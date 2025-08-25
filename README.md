@@ -37,25 +37,31 @@ Backend desenvolvido em Java Spring Boot para gerenciamento de End-points. Segue
 
 ## Estrutura de Pastas
 ```
-pointtils/
-├── src/
-│   ├── main/
-│   │   ├── java/com/pointtils/pointtils/
-│   │   │   ├── src/                  # Código fonte principal
-│   │   │   │   ├── application/      # Lógica de aplicação
-│   │   │   │   │   ├── controllers/  # Controladores REST
-│   │   │   │   │   ├── dto/          # Objetos de transferência
-│   │   │   │   │   ├── mapper/       # Mapeadores DTO-Entity
-│   │   │   │   │   └── services/     # Serviços de negócio
-│   │   │   │   ├── core/             # Núcleo do domínio
-│   │   │   │   │   └── domain/       # Entidades e enums
-│   │   │   │   └── infrastructure/   # Infraestrutura
-│   │   │   │       ├── configs/      # Configurações
-│   │   │   │       └── repositories/ # Repositórios
+.
+├── pointtils/                        # Aplicação principal
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── java/com/pointtils/pointtils/
+│   │   │   │   ├── src/                  # Código fonte principal
+│   │   │   │   │   ├── application/      # Lógica de aplicação
+│   │   │   │   │   │   ├── controllers/  # Controladores REST
+│   │   │   │   │   │   ├── dto/          # Objetos de transferência
+│   │   │   │   │   │   ├── mapper/       # Mapeadores DTO-Entity
+│   │   │   │   │   │   └── services/     # Serviços de negócio
+│   │   │   │   │   ├── core/             # Núcleo do domínio
+│   │   │   │   │   │   └── domain/       # Entidades e enums
+│   │   │   │   │   └── infrastructure/   # Infraestrutura
+│   │   │   │   │       ├── configs/      # Configurações
+│   │   │   │   │       └── repositories/ # Repositórios
 │   │   ├── resources/                # Arquivos de configuração
 │   └── test/                         # Testes unitários
-├── Dockerfile                        # Configuração Docker
-└── docker-compose.yaml               # Orquestração containers
+├── utils/                            # Utilitários e serviços auxiliares
+│   ├── sonarqube/                    # Configuração SonarQube
+│   │   └── Dockerfile
+│   └── postgres/                     # Configuração PostgreSQL
+│       └── Dockerfile
+├── docker-compose.yaml               # Orquestração unificada de containers
+└── sonarqube-docker-compose.yaml     # Docker-compose antigo (legado)
 ```
 
 ## Como Executar
@@ -73,9 +79,33 @@ cd pointtils
 ./mvnw spring-boot:run
 ```
 
-**Buildar e executar com Docker:**
+**Buildar e executar com Docker (nova estrutura unificada):**
 ```bash
+# Executa todos os serviços: aplicação, PostgreSQL e SonarQube
 docker-compose up --build
+
+# Ou para executar em background:
+docker-compose up -d --build
+
+# Executar apenas serviços específicos:
+docker-compose up pointtils pointtils-db  # Apenas app + banco
+docker-compose up sonarqube               # Apenas SonarQube
+```
+
+**Comandos Docker úteis:**
+```bash
+# Ver status dos containers
+docker-compose ps
+
+# Parar todos os serviços
+docker-compose down
+
+# Parar e remover volumes (dados)
+docker-compose down -v
+
+# Ver logs de um serviço específico
+docker-compose logs pointtils
+docker-compose logs sonarqube
 ```
 
 **Executar testes:**
