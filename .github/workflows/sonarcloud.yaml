@@ -4,11 +4,11 @@ on:
   push:
     branches:
       - main
-      - development
+      - dev
   pull_request:
     branches:
       - main
-      - development
+      - dev
 
 jobs:
   sonarcloud:
@@ -29,12 +29,13 @@ jobs:
           cache: 'maven'
 
       - name: Executar testes com cobertura
-        run: mvn clean verify jacoco:report
+        run: mvn clean test jacoco:report
         working-directory: ./pointtils
         env:
-          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/testdb
-          SPRING_DATASOURCE_USERNAME: testuser
-          SPRING_DATASOURCE_PASSWORD: testpass
+          SPRING_DATASOURCE_URL: jdbc:h2:mem:testdb
+          SPRING_DATASOURCE_USERNAME: sa
+          SPRING_DATASOURCE_PASSWORD: 
+          SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master

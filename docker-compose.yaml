@@ -1,0 +1,89 @@
+services:
+  # Aplicação principal Pointtils
+  pointtils:
+    build:
+      context: ./pointtils
+      dockerfile: Dockerfile
+    container_name: pointtils
+    env_file:
+      - ./.env
+    environment:
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - SPRING_APPLICATION_NAME=${SPRING_APPLICATION_NAME}
+      - SERVER_PORT=${SERVER_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${SPRING_JPA_HIBERNATE_DDL_AUTO}
+      - SPRING_JPA_SHOW_SQL=${SPRING_JPA_SHOW_SQL}
+      - SPRINGDOC_API_DOCS_ENABLED=${SPRINGDOC_API_DOCS_ENABLED}
+      - SPRINGDOC_SWAGGER_UI_ENABLED=${SPRINGDOC_SWAGGER_UI_ENABLED}
+      - SPRINGDOC_SWAGGER_UI_PATH=${SPRINGDOC_SWAGGER_UI_PATH}
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}"
+    depends_on:
+      pointtils-db:
+        condition: service_healthy
+    networks:
+      - pointtils-network
+    restart: unless-stopped
+
+  # Banco de dados PostgreSQL
+  pointtils-db:
+    build:
+      context: ./utils/postgres
+      dockerfile: Dockerfile
+    container_name: pointtils-db
+    env_file:
+      - ./.env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - pointtils-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # SonarQube para análise de código
+  sonarqube:
+    build:
+      context: ./utils/sonarqube
+      dockerfile: Dockerfile
+    container_name: sonarqube
+    ports:
+      - "9000:9000"
+    environment:
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    networks:
+      - pointtils-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/api/system/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
+
+networks:
+  pointtils-network:
+    driver: bridge

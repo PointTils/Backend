@@ -4,11 +4,11 @@ on:
   push:
     branches:
       - main
-      - development
+      - dev
   pull_request:
     branches:
       - main
-      - development
+      - dev
 
 jobs:
   build:
@@ -32,8 +32,8 @@ jobs:
 
       - name: Subir serviços com Docker Compose
         run: |
-          docker-compose -f ./pointtils/docker-compose.prod.yaml up --build -d
-          docker-compose -f ./pointtils/docker-compose.prod.yaml ps
+          docker-compose -f ./docker-compose.prod.yaml up --build -d
+          docker-compose -f ./docker-compose.prod.yaml ps
         env:
           SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
           SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
@@ -58,4 +58,4 @@ jobs:
 
 
       - name: Derrubar serviços do Docker Compose
-        run: docker-compose -f ./pointtils/docker-compose.prod.yaml down
+        run: docker-compose -f ./docker-compose.prod.yaml down
