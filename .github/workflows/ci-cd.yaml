@@ -59,4 +59,10 @@ jobs:
 
 
       - name: Derrubar serviços do Docker Compose
-        run: docker-compose -f ./docker-compose.prod.yaml down
+        run: |
+          # Tenta derrubar os serviços, ignora erros se não existirem
+          docker-compose -f ./docker-compose.prod.yaml down --remove-orphans 2>/dev/null || true
+          # Limpa quaisquer containers, networks ou volumes remanescentes
+          docker ps -aq | xargs -r docker rm -f 2>/dev/null || true
+          docker network prune -f 2>/dev/null || true
+          docker volume prune -f 2>/dev/null || true
