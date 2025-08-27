@@ -4,11 +4,11 @@ on:
   push:
     branches:
       - main
-      - development
+      - dev
   pull_request:
     branches:
       - main
-      - development
+      - dev
 
 jobs:
   sonarcloud:
@@ -29,25 +29,26 @@ jobs:
           cache: 'maven'
 
       - name: Executar testes com cobertura
-        run: mvn clean verify jacoco:report
+        run: mvn clean test jacoco:report
         working-directory: ./pointtils
         env:
-          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/testdb
-          SPRING_DATASOURCE_USERNAME: testuser
-          SPRING_DATASOURCE_PASSWORD: testpass
+          SPRING_DATASOURCE_URL: jdbc:h2:mem:testdb
+          SPRING_DATASOURCE_USERNAME: sa
+          SPRING_DATASOURCE_PASSWORD: 
+          SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          args: >
-            -Dsonar.projectKey=PointTils_Backend
-            -Dsonar.organization=pointtils
-            -Dsonar.host.url=https://sonarcloud.io
-            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
-            -Dsonar.junit.reportPaths=target/surefire-reports
-            -Dsonar.java.binaries=target/classes
-            -Dsonar.sourceEncoding=UTF-8
+        run: |
+          cd pointtils
+          mvn -B sonar:sonar \
+            -Dsonar.projectKey=PointTils_Backend \
+            -Dsonar.organization=pointtils \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+            -Dsonar.junit.reportPaths=target/surefire-reports \
+            -Dsonar.java.binaries=target/classes \
+            -Dsonar.sourceEncoding=UTF-8 \
             -Dsonar.exclusions=**/target/**,**/*.yml,**/*.yaml,**/*.properties
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
