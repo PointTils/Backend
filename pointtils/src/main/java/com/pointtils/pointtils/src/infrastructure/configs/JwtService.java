@@ -55,6 +55,7 @@ public class JwtService {
     ) {
         return Jwts
                 .builder()
+                .setSubject("testando-token")
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)

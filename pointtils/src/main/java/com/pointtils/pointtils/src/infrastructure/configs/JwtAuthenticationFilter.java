@@ -15,16 +15,14 @@ import java.io.IOException;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
     private final HandlerExceptionResolver handlerExceptionResolver;
 
     private final JwtService jwtService;
 
-    public JwtAuthenticationFilter(
-            JwtService jwtService,
-            HandlerExceptionResolver handlerExceptionResolver
-    ) {
-        this.jwtService = jwtService;
+    public JwtAuthenticationFilter ( HandlerExceptionResolver handlerExceptionResolver, JwtService jwtService ) {
         this.handlerExceptionResolver = handlerExceptionResolver;
+        this.jwtService = jwtService;
     }
 
     @Override

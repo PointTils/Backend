@@ -3,6 +3,7 @@ package com.pointtils.pointtils.src.infrastructure.configs;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -35,6 +36,9 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(authorize -> authorize
 //                        .requestMatchers(SWAGGER_WHITELIST).permitAll()
 //                        .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/points/listar").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/points/token").permitAll()
+                        .requestMatchers("/").permitAll()
 //                        .requestMatchers(HttpMethod.POST, "/login").permitAll()
 //                        .requestMatchers(HttpMethod.POST, "/users").permitAll()
 //                        .requestMatchers(HttpMethod.GET, "/users").hasAnyRole("USERS", "MANAGERS")
