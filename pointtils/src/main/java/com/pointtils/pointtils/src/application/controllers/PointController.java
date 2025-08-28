@@ -1,9 +1,7 @@
 package com.pointtils.pointtils.src.application.controllers;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -31,7 +29,6 @@ import lombok.RequiredArgsConstructor;
 public class PointController {
 
     private final PointService pointService;
-    private final JwtService jwtService;
 
     @GetMapping("/listar")
     @Operation(summary = "List all points", description = "Retrieves a list of all registered points")
@@ -80,15 +77,4 @@ public class PointController {
         }
     }
 
-    @GetMapping("/token")
-    public ResponseEntity<List<String>> getToken() {
-        var token = jwtService.generateToken();
-        var expiration = jwtService.getExpirationTime();
-
-        String dateExp = String.valueOf(expiration);
-        List<String> response = new ArrayList<>();
-        response.add(token);
-        response.add(dateExp);
-        return ResponseEntity.ok(response);
-    }
 }

@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -34,15 +33,9 @@ public class SecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
-//                        .requestMatchers(SWAGGER_WHITELIST).permitAll()
-//                        .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/points/listar").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/points/token").permitAll()
+                        .requestMatchers("/api/jwt-test/publico").permitAll()
+                        .requestMatchers("/api/points/**").permitAll() 
                         .requestMatchers("/").permitAll()
-//                        .requestMatchers(HttpMethod.POST, "/login").permitAll()
-//                        .requestMatchers(HttpMethod.POST, "/users").permitAll()
-//                        .requestMatchers(HttpMethod.GET, "/users").hasAnyRole("USERS", "MANAGERS")
-//                        .requestMatchers("/managers").hasRole("MANAGERS")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement((session) -> session
