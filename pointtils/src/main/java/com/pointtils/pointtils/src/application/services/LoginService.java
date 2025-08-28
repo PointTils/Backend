@@ -40,7 +40,7 @@ public class LoginService {
         UserDTO userDTO = new UserDTO(
                 user.getId(),
                 user.getEmail(),
-                user.getName(),
+                user.getDisplayName(),
                 user.getType(),
                 user.getStatus()
         );
