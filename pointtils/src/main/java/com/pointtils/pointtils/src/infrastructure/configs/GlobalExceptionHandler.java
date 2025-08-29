@@ -1,5 +1,6 @@
 
 package com.pointtils.pointtils.src.infrastructure.configs;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
