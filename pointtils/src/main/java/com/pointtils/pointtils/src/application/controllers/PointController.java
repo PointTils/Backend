@@ -30,7 +30,7 @@ public class PointController {
 
     private final PointService pointService;
 
-    @GetMapping
+    @GetMapping("/")
     @Operation(summary = "List all points", description = "Retrieves a list of all registered points")
     public ResponseEntity<List<PointResponseDTO>> findAll() {
         List<PointResponseDTO> points = pointService.findAll();
@@ -76,4 +76,5 @@ public class PointController {
             return ResponseEntity.notFound().build();
         }
     }
+
 }
