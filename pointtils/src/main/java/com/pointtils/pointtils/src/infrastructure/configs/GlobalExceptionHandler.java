@@ -27,17 +27,17 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGlobalException(
-            Exception ex, WebRequest request) {
+    //@ExceptionHandler(Exception.class)
+    // public ResponseEntity<ErrorResponse> handleGlobalException(
+    //        Exception ex, WebRequest request) {
         
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "An unexpected error occurred",
-                System.currentTimeMillis());
+    //    ErrorResponse errorResponse = new ErrorResponse(
+    //            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+    //            "An unexpected error occurred",
+    //            System.currentTimeMillis());
         
-        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    //    return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    //}
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorResponse> handleAuthentication(AuthenticationException ex) {
