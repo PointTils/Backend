@@ -4,11 +4,11 @@ on:
   push:
     branches:
       - main
-      - development
+      - dev
   pull_request:
     branches:
       - main
-      - development
+      - dev
 
 jobs:
   build:
@@ -32,8 +32,8 @@ jobs:
 
       - name: Subir serviços com Docker Compose
         run: |
-          docker-compose -f ./pointtils/docker-compose.prod.yaml up --build -d
-          docker-compose -f ./pointtils/docker-compose.prod.yaml ps
+          docker-compose -f ./docker-compose.prod.yaml up --build -d
+          docker-compose -f ./docker-compose.prod.yaml ps
         env:
           SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
           SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
@@ -42,6 +42,7 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           SPRING_JPA_HIBERNATE_DDL_AUTO: ${{ vars.SPRING_JPA_HIBERNATE_DDL_AUTO }}
           SPRING_JPA_SHOW_SQL: ${{ vars.SPRING_JPA_SHOW_SQL }}
+          SERVER_PORT: ${{ vars.SERVER_PORT }}
           SPRINGDOC_API_DOCS_ENABLED: ${{ vars.SPRINGDOC_API_DOCS_ENABLED }}
           SPRINGDOC_SWAGGER_UI_ENABLED: ${{ vars.SPRINGDOC_SWAGGER_UI_ENABLED }}
           SPRINGDOC_SWAGGER_UI_PATH: ${{ vars.SPRINGDOC_SWAGGER_UI_PATH }}
@@ -58,4 +59,10 @@ jobs:
 
 
       - name: Derrubar serviços do Docker Compose
-        run: docker-compose -f ./pointtils/docker-compose.prod.yaml down
+        run: |
+          # Tenta derrubar os serviços, ignora erros se não existirem
+          docker-compose -f ./docker-compose.prod.yaml down --remove-orphans 2>/dev/null || true
+          # Limpa quaisquer containers, networks ou volumes remanescentes
+          docker ps -aq | xargs -r docker rm -f 2>/dev/null || true
+          docker network prune -f 2>/dev/null || true
+          docker volume prune -f 2>/dev/null || true

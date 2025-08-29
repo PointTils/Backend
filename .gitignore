@@ -1,5 +1,4 @@
 .env
-docker-compose.prod.yaml
 HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
@@ -33,3 +32,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### MACos ###
+**/.DS_Store
