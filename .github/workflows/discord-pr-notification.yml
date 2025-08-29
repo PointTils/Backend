@@ -12,19 +12,21 @@ jobs:
       - name: Send Discord notification
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_PR_WEBHOOK }}
-        run: |
-          PR_TITLE="${{ github.event.pull_request.title }}"
-          PR_URL="${{ github.event.pull_request.html_url }}"
-          AUTHOR="${{ github.event.pull_request.user.login }}"
-          BRANCH="${{ github.event.pull_request.head.ref }}"
-          ACTION="${{ github.event.action }}"
-          if [[ "${ACTION}" == "closed" ]]; then
-            if [[ "${{ github.event.pull_request.merged }}" == "true" ]]; then
-              STATUS="✅ Pull Request mergeado!"
-            else
-              STATUS="❌ Pull Request fechado sem merge!"
-            fi
-          else
-            STATUS="🚀 Novo Pull Request aberto!"
-          fi
-          curl -H "Content-Type: application/json" -X POST -d "{\n            \"content\": \"${STATUS}\n\n🔗 [${PR_TITLE}](${PR_URL})\n👤 Autor: ${AUTHOR}\n🌿 Branch: ${BRANCH}\"\n          }" "$DISCORD_WEBHOOK"
+            run: |
+              PR_TITLE="${{ github.event.pull_request.title }}"
+              PR_URL="${{ github.event.pull_request.html_url }}"
+              AUTHOR="${{ github.event.pull_request.user.login }}"
+              BRANCH="${{ github.event.pull_request.head.ref }}"
+              ACTION="${{ github.event.action }}"
+              if [[ "${ACTION}" == "closed" ]]; then
+                if [[ "${{ github.event.pull_request.merged }}" == "true" ]]; then
+                  STATUS="✅ Pull Request mergeado!"
+                else
+                  STATUS="❌ Pull Request fechado sem merge!"
+                fi
+              else
+                STATUS="🚀 Novo Pull Request aberto!"
+              fi
+              MESSAGE="${STATUS}\n\n🔗 [${PR_TITLE}](${PR_URL})\n👤 Autor: ${AUTHOR}\n🌿 Branch: ${BRANCH}"
+              JSON=$(printf '{"content": "%s"}' "$(echo -e "$MESSAGE" | sed 's/"/\\"/g')")
+              curl -f -H "Content-Type: application/json" -X POST -d "$JSON" "$DISCORD_WEBHOOK"
