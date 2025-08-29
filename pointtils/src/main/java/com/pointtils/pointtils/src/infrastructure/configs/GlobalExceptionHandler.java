@@ -44,22 +44,24 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<?> handleAuthentication(AuthenticationException ex) {
         String message = ex.getMessage();
+        final String SUCCESS = "success";
+        final String MESSAGE = "message";
 
         if ("Credenciais inválidas".equals(message)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
-                    "success", false,
-                    "message", message
+                    SUCCESS, false,
+                    MESSAGE, message
             ));
         }
         if ("Usuário bloqueado".equals(message)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
-                    "success", false,
-                    "message", message
+                    SUCCESS, false,
+                    MESSAGE, message
             ));
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
-                "success", false,
-                "message", message
+                SUCCESS, false,
+                MESSAGE, message
         ));
     }
 

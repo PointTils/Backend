@@ -51,7 +51,7 @@ class LoginServiceTest {
 
         assertNotNull(response);
         assertEquals("test@email.com", response.getData().user().getEmail());
-        // assertEquals("fakeRefreshToken", response.getData().tokens().getAccess_token());
+        assertEquals("fakeRefreshToken", response.getData().tokens().getAccessToken());
     }
 
     @Test
