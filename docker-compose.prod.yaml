@@ -1,13 +1,12 @@
-services:
+version: '3.8'
 
-  # Pointtils
+services:
   pointtils:
     build:
-      context: .
+      context: ./pointtils
       dockerfile: Dockerfile
     container_name: pointtils
-    env_file:
-      - .env
+    
     environment:
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
@@ -15,6 +14,7 @@ services:
       - SPRING_APPLICATION_NAME=${SPRING_APPLICATION_NAME}
       - SERVER_PORT=${SERVER_PORT}
       - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION_TIME=${JWT_EXPIRATION_TIME}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=${SPRING_JPA_HIBERNATE_DDL_AUTO}
       - SPRING_JPA_SHOW_SQL=${SPRING_JPA_SHOW_SQL}
       - SPRINGDOC_API_DOCS_ENABLED=${SPRINGDOC_API_DOCS_ENABLED}
@@ -23,17 +23,39 @@ services:
     ports:
       - "${SERVER_PORT}:${SERVER_PORT}"
     depends_on:
-      - pointtils-db
+      pointtils-db:
+        condition: service_healthy
+    networks:
+      - pointtils-network
+    restart: unless-stopped
 
   pointtils-db:
-    image: postgres:latest
-    restart: always
+    build:
+      context: ./utils/postgres
+      dockerfile: Dockerfile
     container_name: pointtils-db
-    env_file:
-      - .env
+ 
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - pointtils-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  pointtils-network:
+    driver: bridge
