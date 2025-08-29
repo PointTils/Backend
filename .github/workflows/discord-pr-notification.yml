@@ -24,9 +24,15 @@ jobs:
               else
                 STATUS="❌ Pull Request fechado sem merge!"
               fi
-            else
+            elif [[ "${ACTION}" == "opened" ]]; then
               STATUS="🚀 Novo Pull Request aberto!"
+            elif [[ "${ACTION}" == "reopened" ]]; then
+              STATUS="🔄 Pull Request reaberto!"
+            elif [[ "${ACTION}" == "ready_for_review" ]]; then
+              STATUS="👀 Pull Request pronto para revisão!"
+            else
+              STATUS="ℹ️ Pull Request atualizado!"
             fi
             MESSAGE="${STATUS}\n\n🔗 [${PR_TITLE}](${PR_URL})\n👤 Autor: ${AUTHOR}\n🌿 Branch: ${BRANCH}"
-            JSON=$(printf '{"content": "%s"}' "$(echo -e "$MESSAGE" | sed 's/"/\\"/g')")
-            curl -f -H "Content-Type: application/json" -X POST -d "$JSON" "$DISCORD_WEBHOOK"
+              JSON=$(jq -n --arg content "$MESSAGE" '{content: $content}')
+              curl -f -H "Content-Type: application/json" -X POST -d "$JSON" "$DISCORD_WEBHOOK" || { echo "Failed to send Discord notification"; exit 1; }
