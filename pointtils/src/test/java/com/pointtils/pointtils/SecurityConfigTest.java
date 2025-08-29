@@ -30,7 +30,7 @@ public class SecurityConfigTest {
     @Test
     void whenUnauthenticated_thenShouldBeUnauthorized() throws Exception {
 
-        mockMvc.perform(get("/api/jwt-test/privado")
+        mockMvc.perform(get("/api/private")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is4xxClientError());
     }
@@ -41,7 +41,7 @@ public class SecurityConfigTest {
         String validToken = "valid-jwt-token";
         when(jwtService.isTokenExpired(validToken)).thenReturn(false);
 
-        mockMvc.perform(get("/api/jwt-test/publico")
+        mockMvc.perform(get("/api/public")
                 .header("Authorization", "Bearer " + validToken)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());

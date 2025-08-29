@@ -45,13 +45,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             final String jwt = authHeader.substring(7);
 
-            Authentication existAuth = SecurityContextHolder.getContext().getAuthentication();
-
-            if (existAuth == null) {
-               filterChain.doFilter(request, response);
-               return;
-            }
-
             if (jwtService.isTokenExpired(jwt)) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.getWriter().write("Token expired");

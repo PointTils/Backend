@@ -1,8 +1,6 @@
 package com.pointtils.pointtils.src.infrastructure.configs;
 
 
-import java.util.List;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -15,6 +13,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -31,11 +31,14 @@ public class SecurityConfiguration {
                 .frameOptions(HeadersConfigurer.FrameOptionsConfig::disable));
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/jwt-test/publico").permitAll()
-                        .requestMatchers("/api/points/**").permitAll() 
-                        .requestMatchers("/").permitAll()
+//                        .requestMatchers(SWAGGER_WHITELIST).permitAll()
+//                        .requestMatchers("/h2-console/**").permitAll()
+//                        .requestMatchers(HttpMethod.POST, "/login").permitAll()
+//                        .requestMatchers(HttpMethod.POST, "/users").permitAll()
+//                        .requestMatchers(HttpMethod.GET, "/users").hasAnyRole("USERS", "MANAGERS")
+//                        .requestMatchers("/managers").hasRole("MANAGERS")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement((session) -> session
@@ -49,7 +52,7 @@ public class SecurityConfiguration {
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowedOrigins(List.of("http://localhost:3333"));
-        configuration.setAllowedMethods(List.of("GET","POST"));
+        configuration.setAllowedMethods(List.of("GET","POST","PUT","DELETE"));
         configuration.setAllowedHeaders(List.of("Authorization","Content-Type"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
