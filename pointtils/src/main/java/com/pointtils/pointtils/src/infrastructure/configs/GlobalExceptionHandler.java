@@ -1,7 +1,5 @@
 package com.pointtils.pointtils.src.infrastructure.configs;
 
-import java.util.Map;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -42,27 +40,28 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<?> handleAuthentication(AuthenticationException ex) {
+    public ResponseEntity<ErrorResponse> handleAuthentication(AuthenticationException ex) {
         String message = ex.getMessage();
-        final String SUCCESS_CONST = "success";
-        final String MESSAGE_CONST = "message";
 
         if ("Credenciais inválidas".equals(message)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
-                    SUCCESS_CONST, false,
-                    MESSAGE_CONST, message
-            ));
+            ErrorResponse errorResponse = new ErrorResponse(
+                    HttpStatus.UNAUTHORIZED.value(),
+                    message,
+                    System.currentTimeMillis());
+            return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
         }
         if ("Usuário bloqueado".equals(message)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
-                    SUCCESS_CONST, false,
-                    MESSAGE_CONST, message
-            ));
+            ErrorResponse errorResponse = new ErrorResponse(
+                    HttpStatus.FORBIDDEN.value(),
+                    message,
+                    System.currentTimeMillis());
+            return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
         }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
-                SUCCESS_CONST, false,
-                MESSAGE_CONST, message
-        ));
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                message,
+                System.currentTimeMillis());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
     @Data
