@@ -28,6 +28,9 @@ public class LoginService {
         // if (!passwordEncoder.matches(password, user.getPassword())) {
         //     throw new AuthenticationException("Credenciais inválidas");
         // }
+        if (user.getPassword() == null || !user.getPassword().equals(password)) {
+            throw new AuthenticationException("Credenciais inválidas");
+        }
 
         if ("blocked".equals(user.getStatus())) {
             throw new AuthenticationException("Usuário bloqueado");
