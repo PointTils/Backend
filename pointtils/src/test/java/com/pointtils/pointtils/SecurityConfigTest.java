@@ -16,7 +16,7 @@ import com.pointtils.pointtils.src.infrastructure.configs.JwtAuthenticationFilte
 import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
 import com.pointtils.pointtils.src.infrastructure.configs.SecurityConfiguration;
 
-@WebMvcTest(controllers = {com.pointtils.pointtils.src.application.controllers.JwtTestController.class})
+@WebMvcTest(controllers = {com.pointtils.pointtils.src.application.controllers.JwtController.class})
 @Import({SecurityConfiguration.class, JwtAuthenticationFilter.class})
 public class SecurityConfigTest {
 
@@ -38,12 +38,12 @@ public class SecurityConfigTest {
     @Test
     void whenAuthenticatedWithValidToken_thenShouldBeOk() throws Exception {
 
-        String validToken = "valid-jwt-token";
-        when(jwtService.isTokenExpired(validToken)).thenReturn(false);
+    String validToken = "valid-jwt-token";
+    when(jwtService.isTokenExpired(validToken)).thenReturn(false);
 
-        mockMvc.perform(get("/api/public")
-                .header("Authorization", "Bearer " + validToken)
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+    mockMvc.perform(get("/api/jwt/public")
+        .header("Authorization", "Bearer " + validToken)
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk());
     }
 }

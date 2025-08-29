@@ -29,8 +29,7 @@ public class SecurityConfiguration {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.headers(headers -> headers
                 .frameOptions(HeadersConfigurer.FrameOptionsConfig::disable));
-        http
-                .csrf(AbstractHttpConfigurer::disable)
+    http
                 .addFilterAfter(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
 //                        .requestMatchers(SWAGGER_WHITELIST).permitAll()

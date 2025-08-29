@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api")
-public class JwtTestController {
+@RequestMapping("/api/jwt")
+public class JwtController {
 
     @GetMapping("/public")
     public ResponseEntity<String> getPublicResource() {
