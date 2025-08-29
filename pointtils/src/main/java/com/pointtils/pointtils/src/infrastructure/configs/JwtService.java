@@ -2,7 +2,6 @@ package com.pointtils.pointtils.src.infrastructure.configs;
 
 import java.security.Key;
 import java.util.Date;
-import java.util.UUID;
 import java.util.function.Function;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -22,8 +21,8 @@ public class JwtService {
     @Value("${security.jwt.expiration-time}")
     private long jwtExpiration;
 
-    public String generateToken() {
-        return buildToken(jwtExpiration);
+    public String generateToken(String subject) {
+        return buildToken(subject, jwtExpiration);
     }
 
     public long getExpirationTime() {
@@ -53,11 +52,12 @@ public class JwtService {
     }
 
     private String buildToken(
+            String subject,
             long expiration
     ) {
         return Jwts
                 .builder()
-                .setSubject(UUID.randomUUID().toString())
+                .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)

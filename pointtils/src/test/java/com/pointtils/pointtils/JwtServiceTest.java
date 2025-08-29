@@ -1,9 +1,10 @@
-package com.pointtils.pointtils.src.infrastructure.configs;
+package com.pointtils.pointtils;
 
 import io.jsonwebtoken.Claims;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
+import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -20,21 +21,21 @@ class JwtServiceTest {
 
     @Test
     void testGenerateTokenAndValidate() {
-        String token = jwtService.generateToken();
+    String token = jwtService.generateToken("user");
         assertNotNull(token);
         assertFalse(jwtService.isTokenExpired(token));
     }
 
     @Test
     void testExtractClaim() {
-        String token = jwtService.generateToken();
+    String token = jwtService.generateToken("user");
         String subject = jwtService.extractClaim(token, Claims::getSubject);
         assertNotNull(subject);
     }
 
     @Test
     void testTokenExpiration() throws InterruptedException {
-        String token = jwtService.generateToken();
+    String token = jwtService.generateToken("user");
         Thread.sleep(20); // Wait a bit
         assertFalse(jwtService.isTokenExpired(token));
     }

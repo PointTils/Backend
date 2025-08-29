@@ -27,17 +27,13 @@ public class SecurityConfiguration {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.headers(headers -> headers
-                .frameOptions(HeadersConfigurer.FrameOptionsConfig::disable));
-    http
-                .addFilterAfter(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+        http.csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .headers(headers -> headers
+                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
-//                        .requestMatchers(SWAGGER_WHITELIST).permitAll()
-//                        .requestMatchers("/h2-console/**").permitAll()
-//                        .requestMatchers(HttpMethod.POST, "/login").permitAll()
-//                        .requestMatchers(HttpMethod.POST, "/users").permitAll()
-//                        .requestMatchers(HttpMethod.GET, "/users").hasAnyRole("USERS", "MANAGERS")
-//                        .requestMatchers("/managers").hasRole("MANAGERS")
+                        .requestMatchers("/api/jwt/public").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement((session) -> session
