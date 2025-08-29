@@ -30,7 +30,7 @@ public class PointController {
 
     private final PointService pointService;
 
-    @GetMapping("/listar")
+    @GetMapping("/")
     @Operation(summary = "List all points", description = "Retrieves a list of all registered points")
     public ResponseEntity<List<PointResponseDTO>> findAll() {
         List<PointResponseDTO> points = pointService.findAll();

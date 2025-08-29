@@ -6,15 +6,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/jwt-test")
+@RequestMapping("/api")
 public class JwtTestController {
 
-    @GetMapping("/publico")
+    @GetMapping("/public")
     public ResponseEntity<String> getPublicResource() {
         return ResponseEntity.ok("Esse endpoint é público.");
     }
 
-    @GetMapping("/protegido")
+    @GetMapping("/protected")
     public ResponseEntity<String> getProtectedResource() {
         return ResponseEntity.ok("Esse endpoint é privado.");
     }
