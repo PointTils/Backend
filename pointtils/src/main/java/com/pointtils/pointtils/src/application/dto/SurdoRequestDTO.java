@@ -2,11 +2,16 @@ package com.pointtils.pointtils.src.application.dto;
 
 
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
-@Getter
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+
 public class SurdoRequestDTO {
     
     private String name;

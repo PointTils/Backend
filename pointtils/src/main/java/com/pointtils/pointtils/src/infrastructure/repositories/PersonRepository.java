@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 import com.pointtils.pointtils.src.core.domain.entities.Person;
 
 @Repository
-public interface PersonRepository extends JpaRepository<Person, Integer> {
+public interface PersonRepository extends JpaRepository<Person, Long> {
     
     Optional<Person> findByCpf(String cpf);
 
