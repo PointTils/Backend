@@ -11,6 +11,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.PrimaryKeyJoinColumn;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -22,6 +23,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
+
+
 public class Person extends User{
     
     private String name;

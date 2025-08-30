@@ -1,19 +1,15 @@
 package com.pointtils.pointtils.src.application.services;
 
-
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
 
-import org.springframework.security.access.method.P;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.pointtils.pointtils.src.application.dto.PointResponseDTO;
-import com.pointtils.pointtils.src.application.dto.SurdoRequestDTO;
-import com.pointtils.pointtils.src.application.dto.SurdoResponseDTO;
+import com.pointtils.pointtils.src.application.dto.DeafRequestDTO;
+import com.pointtils.pointtils.src.application.dto.DeafResponseDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Person;
-import com.pointtils.pointtils.src.core.domain.entities.User;
 import com.pointtils.pointtils.src.infrastructure.repositories.PersonRepository;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -21,17 +17,12 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class SurdoRegisterService {
+public class DeafRegisterService {
     
-    private PersonRepository personRepository;
-    private PasswordEncoder passwordEncoder;
+    private final PersonRepository personRepository;
+    private final PasswordEncoder passwordEncoder;
     
-    public SurdoRegisterService(PersonRepository personRepository, PasswordEncoder passwordEncoder) {
-        this.personRepository = personRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
-    
-    public SurdoResponseDTO registerPerson(SurdoRequestDTO dto){
+    public DeafResponseDTO registerPerson(DeafRequestDTO dto) {
         Person person = new Person();
 
         person.setEmail(dto.getEmail());
@@ -47,21 +38,14 @@ public class SurdoRegisterService {
 
         Person savedPerson = personRepository.save(person);
 
-        return new SurdoResponseDTO(savedPerson);
-
+        return new DeafResponseDTO(savedPerson);
     }
 
     @Transactional(readOnly = true)
-    public SurdoResponseDTO findById(Long id) {
+    public DeafResponseDTO findById(Long id) {
+        Person person = personRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
 
-        Person person = personRepository.findById(id).orElse(null);
-        if (person == null) {
-            throw new EntityNotFoundException("Usuário não encontrado");
-            
-        }
-        SurdoResponseDTO response = new SurdoResponseDTO(person);
-        
-        return response;
+        return new DeafResponseDTO(person);
     }
-    
 }
