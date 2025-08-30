@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 
+import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
+
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -26,16 +28,6 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
 
-    // @ExceptionHandler(AccessDeniedException.class)
-    // public ResponseEntity<ErrorResponse> accessDeniedException(
-    //         AccessDeniedException ex, WebRequest request) {
-    //     ErrorResponse errorResponse = new ErrorResponse(
-    //             HttpStatus.FORBIDDEN.value(),
-    //             "Acesso negado. Você não tem permissão para acessar este recurso.",
-    //             System.currentTimeMillis());
-    //     return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
-    // }
-
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(
             Exception ex, WebRequest request) {
@@ -46,6 +38,31 @@ public class GlobalExceptionHandler {
                 System.currentTimeMillis());
         
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthentication(AuthenticationException ex) {
+        String message = ex.getMessage();
+
+        if ("Credenciais inválidas".equals(message)) {
+            ErrorResponse errorResponse = new ErrorResponse(
+                    HttpStatus.UNAUTHORIZED.value(),
+                    message,
+                    System.currentTimeMillis());
+            return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+        }
+        if ("Usuário bloqueado".equals(message)) {
+            ErrorResponse errorResponse = new ErrorResponse(
+                    HttpStatus.FORBIDDEN.value(),
+                    message,
+                    System.currentTimeMillis());
+            return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+        }
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                message,
+                System.currentTimeMillis());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
     @Data
