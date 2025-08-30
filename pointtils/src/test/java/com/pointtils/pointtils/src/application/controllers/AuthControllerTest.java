@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -14,6 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.pointtils.pointtils.src.core.domain.entities.Person;
+import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
 
 @SpringBootTest
@@ -27,13 +29,18 @@ class AuthControllerTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JwtService jwtService;
+
     @BeforeEach
     @SuppressWarnings("unused")
     void up() {
-        // Criar usuário de teste no banco H2
         Person person = new Person();
         person.setEmail("usuario@exemplo.com");
-        person.setPassword("minhasenha123"); // alterar quando integrar com PasswordEncoder
+        person.setPassword(passwordEncoder.encode("minhasenha123"));
         person.setName("João Silva");
         person.setPhone("51999999999");
         person.setPicture("picture_url");
@@ -51,28 +58,27 @@ class AuthControllerTest {
     @Test
     void deveRetornar200QuandoLoginValido() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders
-                        .post("/v1/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                    "email": "usuario@exemplo.com",
-                                    "password": "minhasenha123"
-                                }
-                        """))
+                    .post("/v1/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .content("""
+                            {
+                                "email":"usuario@exemplo.com",
+                                "password":"minhasenha123"}
+                            """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.user.email").value("usuario@exemplo.com"));
-                // .andExpect(jsonPath("$.data.tokens.access_token").exists());
+                .andExpect(jsonPath("$.data.user.email").value("usuario@exemplo.com"))
+                .andExpect(jsonPath("$.data.tokens.access_token").exists());
     }
 
     @Test
     void deveFalharComCredenciaisInvalidas() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders
-                        .post("/v1/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON)
-                        .content("""
+                .post("/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .content("""
                                 {
                                     "email": "usuario@exemplo.com",
                                     "password": "senhaErrada"

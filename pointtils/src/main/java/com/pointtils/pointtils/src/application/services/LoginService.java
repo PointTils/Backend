@@ -1,5 +1,6 @@
 package com.pointtils.pointtils.src.application.services;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.pointtils.pointtils.src.application.dto.LoginResponseDTO;
@@ -7,6 +8,7 @@ import com.pointtils.pointtils.src.application.dto.TokensDTO;
 import com.pointtils.pointtils.src.application.dto.UserDTO;
 import com.pointtils.pointtils.src.core.domain.entities.User;
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
+import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -16,8 +18,8 @@ import lombok.RequiredArgsConstructor;
 public class LoginService {
 
     private final UserRepository userRepository;
-    // private final JwtService jwtTokenPrivider;
-    // private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtTokenPrivider;
+    private final PasswordEncoder passwordEncoder;
     
     public LoginResponseDTO login(String email, String password) {
         User user = userRepository.findByEmail(email);
@@ -25,10 +27,7 @@ public class LoginService {
             throw new AuthenticationException("Usuário não encontrado");
         }
 
-        // if (!passwordEncoder.matches(password, user.getPassword())) {
-        //     throw new AuthenticationException("Credenciais inválidas");
-        // }
-        if (user.getPassword() == null || !user.getPassword().equals(password)) {
+        if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new AuthenticationException("Credenciais inválidas");
         }
 
@@ -36,9 +35,8 @@ public class LoginService {
             throw new AuthenticationException("Usuário bloqueado");
         }
 
-        // ToDo: Integrar com geração de token JWT criada com o middleware 
-        String accessToken = "token_super_maneiro"; // jwtTokenProvider.generateAccessToken(user);
-        String refreshToken = "token_ainda_mais_maneiro"; // jwtTokenProvider.generateRefreshToken(user);
+        String accessToken = jwtTokenPrivider.generateToken(user.getEmail());
+        String refreshToken = "token_ainda_mais_maneiro";
 
         UserDTO userDTO = new UserDTO(
                 user.getId(),
@@ -52,8 +50,8 @@ public class LoginService {
                 accessToken,
                 refreshToken,
                 "Bearer",
-                3600, // jwtProvider.getAccessTokenExpirationSeconds(),
-                604800 // jwtProvider.getRefreshTokenExpirationSeconds()
+                jwtTokenPrivider.getExpirationTime(), 
+                604800
         );
 
         return new LoginResponseDTO(
