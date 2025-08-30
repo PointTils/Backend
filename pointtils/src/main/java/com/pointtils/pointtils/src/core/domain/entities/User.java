@@ -7,6 +7,7 @@ import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -50,6 +51,9 @@ public class User {
 
     @Column(columnDefinition = "TEXT")
     private String picture;
+
+    @Embedded
+    private Location location;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

@@ -1,21 +1,20 @@
 package com.pointtils.pointtils.src.application.services;
 
-import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
-import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.pointtils.pointtils.src.application.dto.DeafRequestDTO;
-import com.pointtils.pointtils.src.application.dto.DeafResponseDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Person;
+import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
+import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
 import com.pointtils.pointtils.src.infrastructure.repositories.PersonRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class DeafRegisterService {
     
@@ -31,10 +30,11 @@ public class DeafRegisterService {
         person.setPicture(dto.getPicture());
         person.setStatus(UserStatus.ACTIVE);
         person.setType(UserTypeE.CLIENT);
-
         person.setName(dto.getName());
         person.setBirthday(dto.getBirthday());
         person.setCpf(dto.getCpf());
+        person.setLocation(dto.getLocation());
+        person.setAp(dto.getAccessibility());
 
         Person savedPerson = personRepository.save(person);
 
