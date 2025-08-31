@@ -18,6 +18,7 @@ import com.pointtils.pointtils.src.infrastructure.configs.SecurityConfiguration;
 
 @WebMvcTest(controllers = {com.pointtils.pointtils.src.application.controllers.JwtController.class})
 @Import({SecurityConfiguration.class, JwtAuthenticationFilter.class})
+@SuppressWarnings("deprecation")
 public class SecurityConfigurationTest {
 
     @Autowired
