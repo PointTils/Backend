@@ -37,15 +37,9 @@ jobs:
           SPRING_DATASOURCE_PASSWORD: ""
           SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          JWT_EXPIRATION_TIME: ${{ secrets.JWT_EXPIRATION_TIME }}
-          JWT_REFRESH_EXPIRATION_TIME: ${{ secrets.JWT_REFRESH_EXPIRATION_TIME }}
-          SPRING_APPLICATION_NAME: pointtils-test
-          SERVER_PORT: 8080
-          SPRING_JPA_SHOW_SQL: false
-          SPRINGDOC_API_DOCS_ENABLED: true
-          SPRINGDOC_SWAGGER_UI_ENABLED: true
-          SPRINGDOC_SWAGGER_UI_PATH: /swagger-ui.html
-
+          JWT_EXPIRATION_TIME: ${{ vars.JWT_EXPIRATION_TIME }}
+          JWT_REFRESH_EXPIRATION_TIME: ${{ vars.JWT_REFRESH_EXPIRATION_TIME }}
+          SERVER_PORT: ${{ vars.SERVER_PORT }}
       - name: SonarCloud Scan
         run: |
           cd pointtils
