@@ -9,6 +9,7 @@ import com.pointtils.pointtils.src.application.dto.UserDTO;
 import com.pointtils.pointtils.src.core.domain.entities.User;
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
 import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
+import com.pointtils.pointtils.src.infrastructure.configs.LoginAttemptService;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -20,23 +21,37 @@ public class LoginService {
     private final UserRepository userRepository;
     private final JwtService jwtTokenPrivider;
     private final PasswordEncoder passwordEncoder;
-    
+    private final LoginAttemptService loginAttemptService;
+
     public LoginResponseDTO login(String email, String password) {
+
+        if (loginAttemptService.isBlocked(email)) {
+            throw new AuthenticationException("Muitas tentativas de login");
+        }
+
+        if (email == null || email.isBlank()) {
+            throw new AuthenticationException("O campo email é obrigatório");
+        }
+        if (password == null || password.isBlank()) {
+            throw new AuthenticationException("O campo senha é obrigatório");
+        }
+
         User user = userRepository.findByEmail(email);
         if (user == null) {
             throw new AuthenticationException("Usuário não encontrado");
-        }
-
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new AuthenticationException("Credenciais inválidas");
         }
 
         if ("blocked".equals(user.getStatus())) {
             throw new AuthenticationException("Usuário bloqueado");
         }
 
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            loginAttemptService.loginFailed(email);
+            throw new AuthenticationException("Credenciais inválidas");
+        }
+
         String accessToken = jwtTokenPrivider.generateToken(user.getEmail());
-        String refreshToken = "token_ainda_mais_maneiro";
+        String refreshToken = jwtTokenPrivider.generateRefreshToken(user.getEmail());
 
         UserDTO userDTO = new UserDTO(
                 user.getId(),
@@ -50,8 +65,8 @@ public class LoginService {
                 accessToken,
                 refreshToken,
                 "Bearer",
-                jwtTokenPrivider.getExpirationTime(), 
-                604800
+                jwtTokenPrivider.getExpirationTime(),
+                jwtTokenPrivider.getRefreshExpirationTime()
         );
 
         return new LoginResponseDTO(
