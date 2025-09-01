@@ -32,11 +32,20 @@ jobs:
         run: mvn clean test jacoco:report
         working-directory: ./pointtils
         env:
+          SPRING_APPLICATION_NAME: pointtils
           SPRING_DATASOURCE_URL: jdbc:h2:mem:testdb
           SPRING_DATASOURCE_USERNAME: sa
-          SPRING_DATASOURCE_PASSWORD: 
+          SPRING_DATASOURCE_PASSWORD: ""
           SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
-
+          SPRING_JPA_SHOW_SQL: false
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_EXPIRATION_TIME: ${{ vars.JWT_EXPIRATION_TIME }}
+          JWT_REFRESH_EXPIRATION_TIME: ${{ vars.JWT_REFRESH_EXPIRATION_TIME }}
+          SERVER_PORT: ${{ vars.SERVER_PORT }}
+          SPRINGDOC_API_DOCS_ENABLED: ${{ vars.SPRINGDOC_API_DOCS_ENABLED }}
+          SPRINGDOC_SWAGGER_UI_ENABLED: ${{ vars.SPRINGDOC_SWAGGER_UI_ENABLED }}
+          SPRINGDOC_SWAGGER_UI_PATH: ${{ vars.SPRINGDOC_SWAGGER_UI_PATH }}
+          
       - name: SonarCloud Scan
         run: |
           cd pointtils
