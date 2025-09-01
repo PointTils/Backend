@@ -44,6 +44,20 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleAuthentication(AuthenticationException ex) {
         String message = ex.getMessage();
 
+        if ("O campo email é obrigatório".equals(message) || "O campo senha é obrigatório".equals(message)) {
+            ErrorResponse errorResponse = new ErrorResponse(
+                    HttpStatus.UNPROCESSABLE_ENTITY.value(),
+                    message,
+                    System.currentTimeMillis());
+            return new ResponseEntity<>(errorResponse, HttpStatus.UNPROCESSABLE_ENTITY);
+        }
+        if ("Muitas tentativas de login".equals(message)) {
+            ErrorResponse errorResponse = new ErrorResponse(
+                    HttpStatus.TOO_MANY_REQUESTS.value(),
+                    message,
+                    System.currentTimeMillis());
+            return new ResponseEntity<>(errorResponse, HttpStatus.TOO_MANY_REQUESTS);
+        }
         if ("Credenciais inválidas".equals(message)) {
             ErrorResponse errorResponse = new ErrorResponse(
                     HttpStatus.UNAUTHORIZED.value(),
