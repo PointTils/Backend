@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class LoginAttemptService {
 
-    private final int MAX_ATTEMPTS = 5;
-    private final long BLOCK_TIME = 15 * 60;
+    private final static int MAXATTEMPTS = 5;
+    private final static long BLOCKTIME = 15L * 60L;
 
     private final Map<String, Attempt> attempts = new ConcurrentHashMap<>();
 
@@ -30,12 +30,12 @@ public class LoginAttemptService {
         if (attempt == null) return false;
 
         long now = Instant.now().getEpochSecond();
-        if (now - attempt.lastAttempt > BLOCK_TIME) {
+        if (now - attempt.lastAttempt > BLOCKTIME) {
             attempts.remove(email);
             return false;
         }
 
-        return attempt.count >= MAX_ATTEMPTS;
+        return attempt.count >= MAXATTEMPTS;
     }
 
     private static class Attempt {
