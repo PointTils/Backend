@@ -14,17 +14,20 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.pointtils.pointtils.src.application.dto.LoginRequestDTO;
 import com.pointtils.pointtils.src.application.dto.LoginResponseDTO;
 import com.pointtils.pointtils.src.application.dto.TokensDTO;
 import com.pointtils.pointtils.src.application.dto.UserDTO;
 import com.pointtils.pointtils.src.application.services.LoginService;
 import com.pointtils.pointtils.src.core.domain.entities.Person;
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
+import com.pointtils.pointtils.src.infrastructure.configs.LoginAttemptService;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
 
 @SpringBootTest
@@ -40,6 +43,10 @@ class AuthControllerTest {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @SuppressWarnings("removal")
+    @MockBean
+    private LoginAttemptService loginAttemptService;
 
     @SuppressWarnings("removal")
     @MockBean
@@ -79,14 +86,14 @@ class AuthControllerTest {
         when(loginService.login(anyString(), anyString())).thenReturn(mockLoginResponse);
 
         mockMvc.perform(MockMvcRequestBuilders
-                        .post("/v1/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                    "email":"usuario@exemplo.com",
-                                    "password":"minhasenha123"}
-                                """))
+                .post("/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                            "email":"usuario@exemplo.com",
+                            "password":"minhasenha123"}
+                        """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.user.email").value("usuario@exemplo.com"))
@@ -97,12 +104,12 @@ class AuthControllerTest {
     @DisplayName("Deve retornar 401 com credenciais inválidas")
     void deveRetornar401QuandoCredenciaisInvalidas() throws Exception {
         when(loginService.login(anyString(), anyString()))
-            .thenThrow(new AuthenticationException("Credenciais inválidas"));
+                .thenThrow(new AuthenticationException("Credenciais inválidas"));
 
         mockMvc.perform(MockMvcRequestBuilders
-                        .post("/v1/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"teste@email.com\",\"password\":\"123456\"}"))
+                .post("/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"teste@email.com\",\"password\":\"123456\"}"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").value("Credenciais inválidas"));
     }
@@ -124,13 +131,17 @@ class AuthControllerTest {
     @Test
     @DisplayName("Deve retornar 429 quando muitas tentativas de login falharem")
     void deveRetornar429QuandoMuitasTentativas() throws Exception {
-        when(loginService.login(anyString(), anyString()))
-                .thenThrow(new AuthenticationException("Muitas tentativas de login"));
+        String clientIp = "192.168.0.20";
+        when(loginAttemptService.isBlocked(clientIp)).thenReturn(true);
 
         mockMvc.perform(MockMvcRequestBuilders
                 .post("/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\"usuario@exemplo.com\",\"password\":\"minhasenha123\"}"))
+                .content("{\"email\":\"usuario@exemplo.com\",\"password\":\"minhasenha123\"}")
+                .with(request -> {
+                    request.setRemoteAddr(clientIp);
+                    return request;
+                }))
                 .andExpect(status().isTooManyRequests())
                 .andExpect(jsonPath("$.message").value("Muitas tentativas de login"));
     }
@@ -146,5 +157,38 @@ class AuthControllerTest {
                 .content("{\"email\":\"\",\"password\":\"\"}"))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.message").value("O campo email é obrigatório"));
+    }
+
+    @Test
+    @DisplayName("Deve permitir login quand IP não está bloqueado")
+    void devePermitirLoginQuandoIpNaoBloqueado() throws Exception {
+        String clientIp = "192.168.0.20";
+        when(loginAttemptService.isBlocked(clientIp)).thenReturn(false);
+        LoginResponseDTO mockLoginResponse = new LoginResponseDTO(
+                true,
+                "Autenticação realizada com sucesso",
+                new LoginResponseDTO.Data(
+                        new UserDTO(1L, "usuario@exemplo.com", "João Silva", "person", "active"),
+                        new TokensDTO("access-token", "refresh-token", "Bearer", 3600, 604800)));
+
+        when(loginService.login(anyString(), anyString())).thenReturn(mockLoginResponse);
+
+        mockMvc.perform(MockMvcRequestBuilders
+                        .post("/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "email":"usuario@exemplo.com",
+                                    "password":"minhasenha123"}
+                                """)
+                        .with(request -> {
+                            request.setRemoteAddr(clientIp);
+                            return request;
+                        }))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.user.email").value("usuario@exemplo.com"))
+                .andExpect(jsonPath("$.data.tokens.accessToken").exists());
     }
 }

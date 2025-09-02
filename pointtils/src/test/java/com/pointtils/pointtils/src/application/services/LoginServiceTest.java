@@ -144,15 +144,4 @@ class LoginServiceTest {
         );
         assertEquals("O campo senha é obrigatório", ex2.getMessage());
     }
-
-    @Test
-    @DisplayName("Deve falhar quando muitas tentativas de login")
-    void deveFalharQuandoMuitasTentativasDeLogin() {
-        when(loginAttemptService.isBlocked("test@email.com")).thenReturn(true);
-        AuthenticationException ex = assertThrows(
-                AuthenticationException.class,
-                () -> loginService.login("test@email.com", "password123")
-        );
-        assertEquals("Muitas tentativas de login", ex.getMessage());
-    }
 }
