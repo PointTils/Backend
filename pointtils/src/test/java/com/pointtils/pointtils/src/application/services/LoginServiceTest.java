@@ -72,7 +72,7 @@ class LoginServiceTest {
 
         AuthenticationException ex = assertThrows(
                 AuthenticationException.class,
-                () -> loginService.login("emailnaoexiste@email.com", "senha")
+                () -> loginService.login("emailnaoexiste@email.com", "senha123")
         );
 
         assertEquals("Usuário não encontrado", ex.getMessage());
@@ -90,7 +90,7 @@ class LoginServiceTest {
         
         AuthenticationException ex = assertThrows(
                 AuthenticationException.class,
-                () -> loginService.login("usuario@exemplo.com", "123")
+                () -> loginService.login("usuario@exemplo.com", "senha123")
         );
 
         assertEquals("Usuário bloqueado", ex.getMessage());
