@@ -15,9 +15,10 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.pointtils.pointtils.src.application.dto.PointRequestDTO;
 import com.pointtils.pointtils.src.application.dto.PointResponseDTO;
@@ -29,7 +30,7 @@ import com.pointtils.pointtils.src.infrastructure.repositories.PointRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 
-@SpringBootTest
+@ExtendWith(MockitoExtension.class)
 class PointServiceTest {
 
     @Mock
