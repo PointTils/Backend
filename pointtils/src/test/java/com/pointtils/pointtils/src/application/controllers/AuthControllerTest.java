@@ -23,6 +23,7 @@ import com.pointtils.pointtils.src.application.dto.LoginResponseDTO;
 import com.pointtils.pointtils.src.application.dto.TokensDTO;
 import com.pointtils.pointtils.src.application.dto.UserDTO;
 import com.pointtils.pointtils.src.application.services.LoginService;
+import com.pointtils.pointtils.src.core.domain.entities.Enterprise;
 import com.pointtils.pointtils.src.core.domain.entities.Person;
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
 import com.pointtils.pointtils.src.infrastructure.configs.LoginAttemptService;
@@ -62,6 +63,16 @@ class AuthControllerTest {
         person.setStatus("active");
 
         userRepository.save(person);
+
+        Enterprise enterprise = new Enterprise();
+        enterprise.setEmail("enterprise@exemplo.com");
+        enterprise.setPassword(passwordEncoder.encode("enterprise123"));
+        enterprise.setCorporateReason("Empresa Exemplo");
+        enterprise.setPhone("51888888888");
+        enterprise.setPicture("enterprise_picture_url");
+        enterprise.setStatus("active");
+
+        userRepository.save(enterprise);
     }
 
     @AfterEach
@@ -71,8 +82,8 @@ class AuthControllerTest {
     }
 
     @Test
-    @DisplayName("Deve retornar 200 quando o login for válido")
-    void deveRetornar200QuandoLoginValido() throws Exception {
+    @DisplayName("Deve retornar 200 quando o login de Pessoa for válido")
+    void deveRetornar200QuandoLoginDePessoaValido() throws Exception {
 
         LoginResponseDTO mockLoginResponse = new LoginResponseDTO(
                 true,
@@ -95,7 +106,39 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.user.email").value("usuario@exemplo.com"))
-                .andExpect(jsonPath("$.data.tokens.accessToken").exists());
+                .andExpect(jsonPath("$.data.user.type").value("person"))
+                .andExpect(jsonPath("$.data.tokens.accessToken").exists())
+                .andExpect(jsonPath("$.data.tokens.refreshToken").exists());
+    }
+
+    @Test
+    @DisplayName("Deve retornar 200 quando o login de Empresa for válido")
+    void deveRetornar200QuandoLoginDeEmpresaValido() throws Exception {
+
+        LoginResponseDTO mockLoginResponse = new LoginResponseDTO(
+                true,
+                "Autenticação realizada com sucesso",
+                new LoginResponseDTO.Data(
+                        new UserDTO(1L, "enterprise@exemplo.com", "Empresa Exemplo", "enterprise", "active"),
+                        new TokensDTO("access-token", "refresh-token", "Bearer", 3600, 604800)));
+
+        when(loginService.login(anyString(), anyString())).thenReturn(mockLoginResponse);
+
+        mockMvc.perform(MockMvcRequestBuilders
+                .post("/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                            "email":"enterprise@exemplo.com",
+                            "password":"enterprise123"}
+                        """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.user.email").value("enterprise@exemplo.com"))
+                .andExpect(jsonPath("$.data.user.type").value("enterprise"))
+                .andExpect(jsonPath("$.data.tokens.accessToken").exists())
+                .andExpect(jsonPath("$.data.tokens.refreshToken").exists());
     }
 
     @Test
