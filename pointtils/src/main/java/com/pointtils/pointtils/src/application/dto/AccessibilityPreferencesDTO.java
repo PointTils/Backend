@@ -1,24 +1,31 @@
 package com.pointtils.pointtils.src.application.dto;
 
-import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentModality;
-import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @AllArgsConstructor
+@NoArgsConstructor
 @Getter
 @Setter
+@ToString
 public class AccessibilityPreferencesDTO {
 
-    public AccessibilityPreferencesDTO(String communication2, AppointmentModality modality2, Gender gender2,
-            EmergencyContactDTO dto) {
-        //TODO Auto-generated constructor stub
-    }
+    @JsonProperty("communication_method")
     private String communication;
+    
+    @JsonProperty("preferred_modality")
     private String modality;
-    private String gender;
+    
+    @JsonProperty("interpreter_gender_preference")
+    private String accessGender;
+    
+    @JsonProperty("emergency_contact")
     private EmergencyContactDTO emergency;
+    
 
 }

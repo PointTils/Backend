@@ -6,9 +6,11 @@ import com.pointtils.pointtils.src.application.mapper.AccessibilityMapper;
 import com.pointtils.pointtils.src.application.mapper.LocationMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Person;
 
+import lombok.Getter;
+import lombok.Setter;
 
-
-
+@Getter
+@Setter
 public class DeafResponseDTO {
 
     private Long id;

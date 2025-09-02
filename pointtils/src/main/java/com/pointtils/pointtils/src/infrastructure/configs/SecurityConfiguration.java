@@ -28,7 +28,7 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    @SuppressWarnings("squid:S4502") // CSRF desabilitado intencionalmente para API REST stateless com JWT
+    @SuppressWarnings("squid:S4502") 
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -37,6 +37,7 @@ public class SecurityConfiguration {
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(authorize -> authorize
                     .requestMatchers("/api/jwt/public").permitAll()
+                    .requestMatchers("/v1/deaf-users/register/**").permitAll()
                     .anyRequest().authenticated()
             )
             .sessionManagement((session) -> session
@@ -60,11 +61,6 @@ public class SecurityConfiguration {
         return source;
     }
 
-//    @Bean
-//    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration)throws Exception{
-//        return configuration.getAuthenticationManager();
-//    }
-//
     @Bean
     public PasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();
