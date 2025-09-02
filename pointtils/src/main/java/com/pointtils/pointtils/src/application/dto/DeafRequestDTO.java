@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 
-public class SurdoRequestDTO {
+public class DeafRequestDTO {
     
     private String name;
     private String email;

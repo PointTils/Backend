@@ -4,13 +4,11 @@ import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentModalit
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 
 import jakarta.persistence.Embeddable;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Embeddable
-@AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
@@ -20,4 +18,11 @@ public class AccessibilityPreferences {
     private AppointmentModality modality;
     private Gender gender;
     private EmergencyContact emergency;
+
+    public AccessibilityPreferences(String communication, AppointmentModality modality, Gender gender, EmergencyContact ec){
+            this.communication = communication;
+        this.modality = modality;
+        this.gender = gender;
+        this.emergency = emergency;
+    }
 }

@@ -8,7 +8,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.pointtils.pointtils.src.application.dto.SurdoResponseDTO;
+import com.pointtils.pointtils.src.application.dto.ApiResponse;
+import com.pointtils.pointtils.src.application.dto.DeafRequestDTO;
+import com.pointtils.pointtils.src.application.dto.DeafResponseDTO;
 import com.pointtils.pointtils.src.application.services.DeafRegisterService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -23,10 +25,10 @@ public class DeafController {
     private final DeafRegisterService service;
 
     @PostMapping
-    @Operation(summary = "Create a Deaf User", description = "Creates a new deaf user")
-    public ResponseEntity<SurdoResponseDTO> createUser(@RequestBody DeafRequestDTO dto) {
+    public ResponseEntity<ApiResponse<DeafResponseDTO>> createUser(@RequestBody DeafRequestDTO dto) {
         DeafResponseDTO created = service.registerPerson(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        ApiResponse<DeafResponseDTO> response = new ApiResponse<DeafResponseDTO>(true, "Usuário cadastrado com sucesso!", created);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/{id}")
