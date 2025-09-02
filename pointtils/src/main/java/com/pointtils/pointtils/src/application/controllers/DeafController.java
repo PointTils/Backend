@@ -32,7 +32,7 @@ public class DeafController {
     @PostMapping
     public ResponseEntity<ApiResponse<DeafResponseDTO>> createUser(@RequestBody DeafRequestDTO dto) {
         DeafResponseDTO created = service.registerPerson(dto);
-        ApiResponse<DeafResponseDTO> response = new ApiResponse<DeafResponseDTO>(true, "Usuário cadastrado com sucesso!", created);
+        ApiResponse<DeafResponseDTO> response = new ApiResponse<DeafResponseDTO>(true, "User Register Successfully!", created);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
