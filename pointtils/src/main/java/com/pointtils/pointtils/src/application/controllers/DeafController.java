@@ -23,6 +23,7 @@ import lombok.AllArgsConstructor;
 
 @RestController
 @RequestMapping("/v1/deaf-users")
+@AllArgsConstructor
 
 
 public class DeafController {
