@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class LoginAttemptService {
 
-    private final static int MAXATTEMPTS = 5;
-    private final static long BLOCKTIME = 15L * 60L;
+    private static final int MAXATTEMPTS = 5;
+    private static final long BLOCKTIME = 15L * 60L;
 
     private final Map<String, Attempt> attempts = new ConcurrentHashMap<>();
 

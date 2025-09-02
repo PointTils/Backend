@@ -2,7 +2,6 @@ package com.pointtils.pointtils;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -21,7 +20,7 @@ class JwtRefreshTokenTest {
     void testGenerateAccessToken() {
         String token = jwtService.generateToken("testuser");
         assertNotNull(token);
-        assertTrue(token.length() > 0);
+        assertTrue(!token.isEmpty());
     }
 
     @Test
