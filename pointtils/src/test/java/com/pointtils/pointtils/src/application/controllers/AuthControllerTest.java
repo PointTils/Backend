@@ -14,13 +14,11 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.pointtils.pointtils.src.application.dto.LoginRequestDTO;
 import com.pointtils.pointtils.src.application.dto.LoginResponseDTO;
 import com.pointtils.pointtils.src.application.dto.TokensDTO;
 import com.pointtils.pointtils.src.application.dto.UserDTO;
@@ -147,16 +145,59 @@ class AuthControllerTest {
     }
 
     @Test
-    void deveRetornar422QuandoValidacaoFalha() throws Exception {
+    @DisplayName("Deve retornar 400 quando email for nulo ou vazio")
+    void deveRetornar400QuandoEmailForNuloOuVazio() throws Exception {
         when(loginService.login(anyString(), anyString()))
                 .thenThrow(new AuthenticationException("O campo email é obrigatório"));
 
         mockMvc.perform(MockMvcRequestBuilders
-                .post("/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\"\",\"password\":\"\"}"))
-                .andExpect(status().isUnprocessableEntity())
+                        .post("/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"\",\"password\":\"senha123\"}"))
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("O campo email é obrigatório"));
+    }
+
+    @Test
+    @DisplayName("Deve retornar 400 quando senha for nula ou vazia")
+    void deveRetornar400QuandoSenhaForNulaOuVazia() throws Exception {
+        when(loginService.login(anyString(), anyString()))
+                .thenThrow(new AuthenticationException("O campo senha é obrigatório"));
+
+        mockMvc.perform(MockMvcRequestBuilders
+                        .post("/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"usuario@test.com\",\"password\":\"\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("O campo senha é obrigatório"));
+    }
+
+    @Test
+    @DisplayName("Deve retornar 422 quando o email for inválido")
+    void deveRetornar422QuandoEmailForInvalido() throws Exception {
+        when(loginService.login(anyString(), anyString()))
+                .thenThrow(new AuthenticationException("Formato de e-mail inválido"));
+
+        mockMvc.perform(MockMvcRequestBuilders
+                        .post("/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"usuario123\",\"password\":\"senha123\"}"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.message").value("Formato de e-mail inválido"));
+    }
+
+    @Test
+    @DisplayName("Deve retornar 422 quando a senha for inválida")
+    void deveRetornar422QuandoSenhaForInvalida() throws Exception {
+        when(loginService.login(anyString(), anyString()))
+                .thenThrow(new AuthenticationException("Formato de senha inválida"));
+
+        mockMvc.perform(MockMvcRequestBuilders
+                        .post("/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"usuario@test.com\",\"password\":\"    \"}"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.message").value("Formato de senha inválida"));
     }
 
     @Test

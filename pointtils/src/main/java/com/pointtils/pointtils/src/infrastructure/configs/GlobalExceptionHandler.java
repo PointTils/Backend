@@ -46,6 +46,13 @@ public class GlobalExceptionHandler {
 
         if ("O campo email é obrigatório".equals(message) || "O campo senha é obrigatório".equals(message)) {
             ErrorResponse errorResponse = new ErrorResponse(
+                    HttpStatus.BAD_REQUEST.value(),
+                    message,
+                    System.currentTimeMillis());
+            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        }
+        if ("Formato de e-mail inválido".equals(message) || "Formato de senha inválida".equals(message)) {
+            ErrorResponse errorResponse = new ErrorResponse(
                     HttpStatus.UNPROCESSABLE_ENTITY.value(),
                     message,
                     System.currentTimeMillis());
@@ -73,10 +80,10 @@ public class GlobalExceptionHandler {
             return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
         }
         ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 message,
                 System.currentTimeMillis());
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Data

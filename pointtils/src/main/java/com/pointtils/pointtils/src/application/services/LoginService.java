@@ -30,6 +30,14 @@ public class LoginService {
             throw new AuthenticationException("O campo senha é obrigatório");
         }
 
+        if (!email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
+            throw new AuthenticationException("Formato de e-mail inválido");
+        }
+
+        if (!password.matches("^[a-zA-Z0-9!@#$%^&*()_+=-]{6,}$")) {
+            throw new AuthenticationException("Formato de senha inválida");
+        }
+
         User user = userRepository.findByEmail(email);
         if (user == null) {
             throw new AuthenticationException("Usuário não encontrado");
