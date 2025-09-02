@@ -12,9 +12,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 
 
-public class SurdoResponseDTO {
+public class DeafResponseDTO {
 
-    public SurdoResponseDTO ( Person person) {
-        
+    public DeafResponseDTO ( Person person) {
+
     }
 }

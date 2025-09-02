@@ -48,4 +48,39 @@ public class DeafRegisterService {
 
         return new DeafResponseDTO(person);
     }
+
+    @Transactional
+    public void delete(Long id) {
+        if (!personRepository.existsById(id)) {
+            throw new EntityNotFoundException("User not found with id: " + id);
+        }
+        personRepository.deleteById(id);
+    }
+    @Transactional
+    public DeafResponseDTO updatePartial(Long id, DeafRequestDTO dto) {
+        Person person = personRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
+
+        if (dto.getName() != null) {
+            person.setName(dto.getName());
+        }
+        if (dto.getPassword() != null) {
+            person.setPassword(passwordEncoder.encode(dto.getPassword()));
+        }
+        if (dto.getPhone() != null) {
+            person.setPhone(dto.getPhone());
+        }
+        if (dto.getPicture() != null) {
+            person.setPicture(dto.getPicture());
+        }
+        if (dto.getBirthday() != null) {
+            person.setBirthday(dto.getBirthday());
+        }
+        if (dto.getCpf() != null) {
+            person.setCpf(dto.getCpf());
+        }
+
+        Person updated = personRepository.save(person);
+        return new DeafResponseDTO(updated);
+    }
 }
