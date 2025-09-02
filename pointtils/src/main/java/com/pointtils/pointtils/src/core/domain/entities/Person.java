@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -36,4 +37,8 @@ public class Person extends User{
 
     @Column(unique = true, length = 11)
     private String cpf;
+
+    @Embedded
+    private AccessibilityPreferences ap;
+
 }
