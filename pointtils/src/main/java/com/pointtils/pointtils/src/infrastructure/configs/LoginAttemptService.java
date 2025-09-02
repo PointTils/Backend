@@ -14,28 +14,30 @@ public class LoginAttemptService {
 
     private final Map<String, Attempt> attempts = new ConcurrentHashMap<>();
 
-    public void loginFailed(String email) {
-        Attempt attempt = attempts.getOrDefault(email, new Attempt(0, Instant.now().getEpochSecond()));
+    public void loginFailed(String ip) {
+        Attempt attempt = attempts.getOrDefault(ip, new Attempt(0, Instant.now().getEpochSecond()));
         attempt.count++;
         attempt.lastAttempt = Instant.now().getEpochSecond();
-        attempts.put(email, attempt);
+        attempts.put(ip, attempt);
     }
 
-    public void loginSucceeded(String email) {
-        attempts.remove(email);
+    public void loginSucceeded(String ip) {
+        attempts.remove(ip);
     }
 
-    public boolean isBlocked(String email) {
-        Attempt attempt = attempts.get(email);
-        if (attempt == null) return false;
-
-        long now = Instant.now().getEpochSecond();
-        if (now - attempt.lastAttempt > BLOCKTIME) {
-            attempts.remove(email);
+    public boolean isBlocked(String ip) {
+        Attempt attempt = attempts.get(ip);
+        if (attempt == null)
             return false;
-        }
 
-        return attempt.count >= MAXATTEMPTS;
+        if (attempt.count >= MAXATTEMPTS) {
+            if (System.currentTimeMillis() - attempt.lastAttempt > BLOCKTIME) {
+                attempts.remove(ip);
+                return false;
+            }
+            return true;
+        }
+        return false;
     }
 
     private static class Attempt {
