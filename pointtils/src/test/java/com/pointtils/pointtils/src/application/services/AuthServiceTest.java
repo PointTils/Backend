@@ -14,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.pointtils.pointtils.src.application.dto.LoginRequestDTO;
 import com.pointtils.pointtils.src.application.dto.LoginResponseDTO;
+import com.pointtils.pointtils.src.application.dto.RefreshTokenResponseDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Person;
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
 import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
@@ -143,5 +144,88 @@ class AuthServiceTest {
                 () -> loginService.login("email@email.com", "")
         );
         assertEquals("O campo senha é obrigatório", ex2.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve renovar token com refresh token válido")
+    void deveRenovarTokenComRefreshTokenValido() {
+        Person person = new Person();
+        person.setEmail("exemplo@user.com");
+        person.setStatus("active");
+
+        when(jwtTokenProvider.isTokenExpired("valid_refresh_token")).thenReturn(false);
+        when(jwtTokenProvider.validateToken("valid_refresh_token")).thenReturn(true);
+        when(jwtTokenProvider.getEmailFromToken("valid_refresh_token")).thenReturn("exemplo@user.com");
+        when(userRepository.findByEmail("exemplo@user.com")).thenReturn(person);
+        when(jwtTokenProvider.generateToken(person.getEmail())).thenReturn("new_access_token");
+        when(jwtTokenProvider.generateRefreshToken(person.getEmail())).thenReturn("new_refresh_token");
+
+        RefreshTokenResponseDTO response = loginService.refreshToken("valid_refresh_token");
+        assertNotNull(response);
+        assertEquals("new_access_token", response.getData().tokens().getAccessToken());
+        assertEquals("new_refresh_token", response.getData().tokens().getRefreshToken());
+    }
+
+    @Test
+    @DisplayName("Deve falhar ao renovar token com refresh token nulo ou vazio")
+    void deveFalharAoRenovarTokenComRefreshTokenNuloOuVazio() {
+        AuthenticationException ex1 = assertThrows(
+                AuthenticationException.class,
+                () -> loginService.refreshToken(null)
+        );
+        assertEquals("Refresh token não fornecido", ex1.getMessage());
+        AuthenticationException ex2 = assertThrows(
+                AuthenticationException.class,
+                () -> loginService.refreshToken("")
+        );
+        assertEquals("Refresh token não fornecido", ex2.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve falhar ao renovar token com refresh token inválido")
+    void deveFalharAoRenovarTokenComRefreshTokenInvalido() {
+        String invalidRefreshToken = "invalid_refresh_token";
+
+        when(jwtTokenProvider.validateToken(invalidRefreshToken)).thenReturn(false);
+
+        AuthenticationException ex = assertThrows(
+                AuthenticationException.class,
+                () -> loginService.refreshToken(invalidRefreshToken)
+        );
+
+        assertEquals("Refresh token inválido ou expirado", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve falhar ao renovar token com refresh token expirado")
+    void deveFalharAoRenovarTokenComRefreshTokenExpirado() {
+        String expiredRefreshToken = "expired_refresh_token";
+
+        when(jwtTokenProvider.isTokenExpired(expiredRefreshToken)).thenReturn(true);
+
+        AuthenticationException ex = assertThrows(
+                AuthenticationException.class,
+                () -> loginService.refreshToken(expiredRefreshToken)
+        );
+
+        assertEquals("Refresh token inválido ou expirado", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve falhar ao renovar token quando usuário não for encontrado")
+    void deveFalharAoRenovarTokenQuandoUsuarioNaoForEncontrado() {
+        String validRefreshToken = "valid_refresh_token";
+
+        when(jwtTokenProvider.isTokenExpired(validRefreshToken)).thenReturn(false);
+        when(jwtTokenProvider.validateToken(validRefreshToken)).thenReturn(true);
+        when(jwtTokenProvider.getEmailFromToken(validRefreshToken)).thenReturn("exemplo@user.com");
+        when(userRepository.findByEmail("exemplo@user.com")).thenReturn(null);
+
+        AuthenticationException ex = assertThrows(
+                AuthenticationException.class,
+                () -> loginService.refreshToken(validRefreshToken)
+        );
+
+        assertEquals("Usuário não encontrado", ex.getMessage());
     }
 }
