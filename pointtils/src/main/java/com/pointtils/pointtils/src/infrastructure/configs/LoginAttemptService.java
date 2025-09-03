@@ -31,7 +31,7 @@ public class LoginAttemptService {
             return false;
 
         if (attempt.count >= MAXATTEMPTS) {
-            if (System.currentTimeMillis() - attempt.lastAttempt > BLOCKTIME) {
+            if (Instant.now().getEpochSecond() - attempt.lastAttempt > BLOCKTIME) {
                 attempts.remove(ip);
                 return false;
             }
