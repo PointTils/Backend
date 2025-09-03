@@ -83,7 +83,7 @@ public class AuthService {
             throw new AuthenticationException("Refresh token não fornecido");
         }
 
-        if (!jwtTokenPrivider.isTokenExpired(token)) {
+        if (jwtTokenPrivider.isTokenExpired(token) || !jwtTokenPrivider.validateToken(token)) {
             throw new AuthenticationException("Refresh token inválido ou expirado");
         }
 
