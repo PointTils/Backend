@@ -4,6 +4,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,16 +15,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.pointtils.pointtils.src.application.dto.LoginResponseDTO;
 import com.pointtils.pointtils.src.application.dto.TokensDTO;
 import com.pointtils.pointtils.src.application.dto.UserDTO;
-import com.pointtils.pointtils.src.application.services.LoginService;
+import com.pointtils.pointtils.src.application.services.AuthService;
 import com.pointtils.pointtils.src.core.domain.entities.Enterprise;
 import com.pointtils.pointtils.src.core.domain.entities.Person;
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
@@ -49,7 +48,7 @@ class AuthControllerTest {
 
     @SuppressWarnings("removal")
     @MockBean
-    private LoginService loginService;
+    private AuthService authService;
 
     @BeforeEach
     @SuppressWarnings("unused")
@@ -92,7 +91,7 @@ class AuthControllerTest {
                         new UserDTO(1L, "usuario@exemplo.com", "João Silva", "person", "active"),
                         new TokensDTO("access-token", "refresh-token", "Bearer", 3600, 604800)));
 
-        when(loginService.login(anyString(), anyString())).thenReturn(mockLoginResponse);
+        when(authService.login(anyString(), anyString())).thenReturn(mockLoginResponse);
 
         mockMvc.perform(MockMvcRequestBuilders
                 .post("/v1/auth/login")
@@ -122,7 +121,7 @@ class AuthControllerTest {
                         new UserDTO(1L, "enterprise@exemplo.com", "Empresa Exemplo", "enterprise", "active"),
                         new TokensDTO("access-token", "refresh-token", "Bearer", 3600, 604800)));
 
-        when(loginService.login(anyString(), anyString())).thenReturn(mockLoginResponse);
+        when(authService.login(anyString(), anyString())).thenReturn(mockLoginResponse);
 
         mockMvc.perform(MockMvcRequestBuilders
                 .post("/v1/auth/login")
@@ -144,7 +143,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("Deve retornar 401 com credenciais inválidas")
     void deveRetornar401QuandoCredenciaisInvalidas() throws Exception {
-        when(loginService.login(anyString(), anyString()))
+        when(authService.login(anyString(), anyString()))
                 .thenThrow(new AuthenticationException("Credenciais inválidas"));
 
         mockMvc.perform(MockMvcRequestBuilders
@@ -158,7 +157,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("Deve retornar 403 quando o usuário estiver bloqueado")
     void deveRetornar403QuandoUsuarioBloqueado() throws Exception {
-        when(loginService.login(anyString(), anyString()))
+        when(authService.login(anyString(), anyString()))
                 .thenThrow(new AuthenticationException("Usuário bloqueado"));
 
         mockMvc.perform(MockMvcRequestBuilders
@@ -190,7 +189,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("Deve retornar 400 quando email for nulo ou vazio")
     void deveRetornar400QuandoEmailForNuloOuVazio() throws Exception {
-        when(loginService.login(anyString(), anyString()))
+        when(authService.login(anyString(), anyString()))
                 .thenThrow(new AuthenticationException("O campo email é obrigatório"));
 
         mockMvc.perform(MockMvcRequestBuilders
@@ -204,7 +203,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("Deve retornar 400 quando senha for nula ou vazia")
     void deveRetornar400QuandoSenhaForNulaOuVazia() throws Exception {
-        when(loginService.login(anyString(), anyString()))
+        when(authService.login(anyString(), anyString()))
                 .thenThrow(new AuthenticationException("O campo senha é obrigatório"));
 
         mockMvc.perform(MockMvcRequestBuilders
@@ -218,7 +217,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("Deve retornar 422 quando o email for inválido")
     void deveRetornar422QuandoEmailForInvalido() throws Exception {
-        when(loginService.login(anyString(), anyString()))
+        when(authService.login(anyString(), anyString()))
                 .thenThrow(new AuthenticationException("Formato de e-mail inválido"));
 
         mockMvc.perform(MockMvcRequestBuilders
@@ -232,7 +231,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("Deve retornar 422 quando a senha for inválida")
     void deveRetornar422QuandoSenhaForInvalida() throws Exception {
-        when(loginService.login(anyString(), anyString()))
+        when(authService.login(anyString(), anyString()))
                 .thenThrow(new AuthenticationException("Formato de senha inválida"));
 
         mockMvc.perform(MockMvcRequestBuilders
@@ -255,7 +254,7 @@ class AuthControllerTest {
                         new UserDTO(1L, "usuario@exemplo.com", "João Silva", "person", "active"),
                         new TokensDTO("access-token", "refresh-token", "Bearer", 3600, 604800)));
 
-        when(loginService.login(anyString(), anyString())).thenReturn(mockLoginResponse);
+        when(authService.login(anyString(), anyString())).thenReturn(mockLoginResponse);
 
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/v1/auth/login")

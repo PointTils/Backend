@@ -64,8 +64,8 @@ class JwtControllerTest {
         mockMvc.perform(post("/api/jwt/generate-tokens")
                         .param("username", username))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken").value(accessToken))
-                .andExpect(jsonPath("$.refreshToken").value(refreshToken));
+                .andExpect(jsonPath("$.data.tokens.accessToken").value(accessToken))
+                .andExpect(jsonPath("$.data.tokens.refreshToken").value(refreshToken));
     }
 
     @Test
@@ -82,7 +82,7 @@ class JwtControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken").value(newAccessToken))
-                .andExpect(jsonPath("$.refreshToken").value(newRefreshToken));
+                .andExpect(jsonPath("$.data.tokens.accessToken").value(newAccessToken))
+                .andExpect(jsonPath("$.data.tokens.refreshToken").value(newRefreshToken));
     }
 }
