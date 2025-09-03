@@ -80,4 +80,8 @@ public class JwtService {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
     }
+
+    public String getEmailFromToken(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
 }

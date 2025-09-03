@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.pointtils.pointtils.src.application.dto.RefreshTokenRequestDTO;
 import com.pointtils.pointtils.src.application.dto.RefreshTokenResponseDTO;
+import com.pointtils.pointtils.src.application.dto.TokensDTO;
 import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -42,21 +43,29 @@ public class JwtController {
     public ResponseEntity<RefreshTokenResponseDTO> generateTokens(@RequestParam String username) {
         String accessToken = jwtService.generateToken(username);
         String refreshToken = jwtService.generateRefreshToken(username);
-        
-        RefreshTokenResponseDTO response = new RefreshTokenResponseDTO(accessToken, refreshToken);
+
+        TokensDTO tokensDTO = new TokensDTO(accessToken, refreshToken, "Bearer", jwtService.getExpirationTime(),
+                jwtService.getRefreshExpirationTime());
+        RefreshTokenResponseDTO response = new RefreshTokenResponseDTO(true, "Tokens gerados com sucesso",
+                new RefreshTokenResponseDTO.Data(tokensDTO));
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/refresh-token")
     @Operation(summary = "Gera um novo access token usando um refresh token válido")
     public ResponseEntity<RefreshTokenResponseDTO> refreshToken(@RequestBody RefreshTokenRequestDTO request) {
-        // Para simplificar, vamos assumir que qualquer refresh token válido pode gerar um novo access token
-        // Em uma implementação real, você validaria o refresh token e extrairia o subject dele
+        // Para simplificar, vamos assumir que qualquer refresh token válido pode gerar
+        // um novo access token
+        // Em uma implementação real, você validaria o refresh token e extrairia o
+        // subject dele
         String username = "user"; // Em produção, extrair do refresh token
         String newAccessToken = jwtService.generateToken(username);
         String newRefreshToken = jwtService.generateRefreshToken(username);
-        
-        RefreshTokenResponseDTO response = new RefreshTokenResponseDTO(newAccessToken, newRefreshToken);
+
+        TokensDTO tokensDTO = new TokensDTO(newAccessToken, newRefreshToken, "Bearer", jwtService.getExpirationTime(),
+                jwtService.getRefreshExpirationTime());
+        RefreshTokenResponseDTO response = new RefreshTokenResponseDTO(true, "Tokens gerados com sucesso",
+                new RefreshTokenResponseDTO.Data(tokensDTO));
         return ResponseEntity.ok(response);
     }
 }
