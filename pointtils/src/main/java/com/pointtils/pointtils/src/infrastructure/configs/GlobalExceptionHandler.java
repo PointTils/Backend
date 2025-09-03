@@ -79,6 +79,20 @@ public class GlobalExceptionHandler {
                     System.currentTimeMillis());
             return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
         }
+        if ("Refresh token não fornecido".equals(message)) {
+            ErrorResponse errorResponse = new ErrorResponse(
+                    HttpStatus.BAD_REQUEST.value(),
+                    message,
+                    System.currentTimeMillis());
+            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        }
+        if ("Refresh token inválido ou expirado".equals(message)) {
+            ErrorResponse errorResponse = new ErrorResponse(
+                    HttpStatus.UNAUTHORIZED.value(),
+                    message,
+                    System.currentTimeMillis());
+            return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+        }
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 message,
