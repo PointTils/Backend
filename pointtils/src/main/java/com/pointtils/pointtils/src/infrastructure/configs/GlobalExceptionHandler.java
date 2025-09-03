@@ -1,3 +1,4 @@
+
 package com.pointtils.pointtils.src.infrastructure.configs;
 
 import org.springframework.http.HttpStatus;
@@ -24,6 +25,16 @@ public class GlobalExceptionHandler {
         
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
+
+    // @ExceptionHandler(AccessDeniedException.class)
+    // public ResponseEntity<ErrorResponse> accessDeniedException(
+    //         AccessDeniedException ex, WebRequest request) {
+    //     ErrorResponse errorResponse = new ErrorResponse(
+    //             HttpStatus.FORBIDDEN.value(),
+    //             "Acesso negado. Você não tem permissão para acessar este recurso.",
+    //             System.currentTimeMillis());
+    //     return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    // }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(
