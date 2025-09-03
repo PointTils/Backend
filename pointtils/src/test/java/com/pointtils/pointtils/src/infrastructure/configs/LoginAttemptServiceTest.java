@@ -7,6 +7,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 class LoginAttemptServiceTest {
@@ -20,6 +21,7 @@ class LoginAttemptServiceTest {
     }
 
     @Test
+    @DisplayName("Primeira falha de login deve registrar tentativa")
     void primeiraFalhaDeLogin_DeveRegistrarAttempt() {
         String ip = "127.0.0.1";
 
@@ -29,6 +31,7 @@ class LoginAttemptServiceTest {
     }
 
     @Test
+    @DisplayName("Múltiplas falhas de login devem incrementar contador")
     void multiplasFalhasDeLogin_DeveIncrementarContador() {
         String ip = "192.168.0.1";
 
@@ -41,6 +44,7 @@ class LoginAttemptServiceTest {
     }
 
     @Test
+    @DisplayName("Login bem-sucedido deve limpar tentativas")
     void loginBemSucedido_DeveLimparTentativas() {
         String ip = "10.0.0.1";
 
@@ -54,6 +58,7 @@ class LoginAttemptServiceTest {
     }
 
     @Test
+    @DisplayName("Deve bloquear após número máximo de falhas")
     void deveBloquearAposMaximoDeFalhas() {
         String ip = "200.200.200.200";
 
@@ -65,6 +70,7 @@ class LoginAttemptServiceTest {
     }
 
     @Test
+    @DisplayName("Deve desbloquear após tempo expirado")
     void deveDesbloquearAposTempoExpirado() throws Exception {
         String ip = "8.8.8.8";
 
@@ -72,13 +78,11 @@ class LoginAttemptServiceTest {
             service.loginFailed(ip);
         }
 
-        // acessa o Map interno "attempts" e força lastAttempt para 20 minutos atrás (em SEGUNDOS!)
         Field attemptsField = getAttemptsField();
         @SuppressWarnings("unchecked")
         Map<String, Object> attempts = (Map<String, Object>) getFieldValue(service, attemptsField);
         Object attempt = attempts.get(ip);
 
-        // Agora ajustamos para segundos (porque a classe usa seconds)
         long vinteMinutosAtrasEmSegundos = Instant.now().minusSeconds(20 * 60).getEpochSecond();
         setLastAttempt(attempt, vinteMinutosAtrasEmSegundos);
 
@@ -86,6 +90,7 @@ class LoginAttemptServiceTest {
     }
 
     @Test
+    @DisplayName("IP sem registros não deve estar bloqueado")
     void ipSemRegistrosNaoDeveEstarBloqueado() {
         String ip = "1.1.1.1";
 
