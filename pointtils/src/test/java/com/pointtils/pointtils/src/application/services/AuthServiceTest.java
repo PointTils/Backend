@@ -21,7 +21,7 @@ import com.pointtils.pointtils.src.infrastructure.configs.LoginAttemptService;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
-class LoginServiceTest {
+class AuthServiceTest {
 
     @Mock
     private UserRepository userRepository;
@@ -36,7 +36,7 @@ class LoginServiceTest {
     private LoginAttemptService loginAttemptService;
     
     @InjectMocks
-    private LoginService loginService;
+    private AuthService loginService;
 
     @Test
     @DisplayName("Deve autenticar usuario pessoa com sucesso")

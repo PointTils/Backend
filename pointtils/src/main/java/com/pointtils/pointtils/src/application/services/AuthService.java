@@ -4,6 +4,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.pointtils.pointtils.src.application.dto.LoginResponseDTO;
+import com.pointtils.pointtils.src.application.dto.RefreshTokenResponseDTO;
 import com.pointtils.pointtils.src.application.dto.TokensDTO;
 import com.pointtils.pointtils.src.application.dto.UserDTO;
 import com.pointtils.pointtils.src.core.domain.entities.User;
@@ -15,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class LoginService {
+public class AuthService {
 
     private final UserRepository userRepository;
     private final JwtService jwtTokenPrivider;
@@ -74,6 +75,37 @@ public class LoginService {
                 true,
                 "Autenticação realizada com sucesso",
                 new LoginResponseDTO.Data(userDTO, tokensDTO)
+        );
+    }
+
+    public RefreshTokenResponseDTO refreshToken(String token) {
+        if (token == null || token.isBlank()) {
+            throw new AuthenticationException("Refresh token não fornecido");
+        }
+
+        if (!jwtTokenPrivider.isTokenExpired(token)) {
+            throw new AuthenticationException("Refresh token inválido ou expirado");
+        }
+
+        String email = jwtTokenPrivider.getEmailFromToken(token);
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            throw new AuthenticationException("Usuário não encontrado");
+        }
+
+        String accessToken = jwtTokenPrivider.generateToken(user.getEmail());
+        String refreshToken = jwtTokenPrivider.generateRefreshToken(user.getEmail());
+
+        return new RefreshTokenResponseDTO(
+                true,
+                "Token renovado com sucesso",
+                new RefreshTokenResponseDTO.Data(new TokensDTO(
+                        accessToken,
+                        refreshToken,
+                        "Bearer",
+                        jwtTokenPrivider.getExpirationTime(),
+                        jwtTokenPrivider.getRefreshExpirationTime()
+                ))
         );
     }
 }
