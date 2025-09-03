@@ -16,7 +16,6 @@ import com.pointtils.pointtils.src.application.dto.DeafRequestDTO;
 import com.pointtils.pointtils.src.application.dto.DeafResponseDTO;
 import com.pointtils.pointtils.src.application.services.DeafRegisterService;
 
-import io.swagger.v3.oas.annotations.Operation;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -37,7 +36,6 @@ public class DeafController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get point by ID", description = "Retrieves a specific point by its ID")
     public ResponseEntity<DeafResponseDTO> findById(@PathVariable Long id) {
         try {
             DeafResponseDTO deaf = service.findById(id);
@@ -48,14 +46,12 @@ public class DeafController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete User", description = "Deletes a User record by its ID")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}")
-    @Operation(summary = "Update partially a Deaf User", description = "Updates specific fields of a deaf user by ID")
     public ResponseEntity<DeafResponseDTO> updateUser(@PathVariable Long id, @RequestBody @Valid DeafRequestDTO dto) {
     try {
         DeafResponseDTO updated = service.updatePartial(id, dto);
