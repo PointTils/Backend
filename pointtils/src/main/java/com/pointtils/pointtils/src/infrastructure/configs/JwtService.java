@@ -84,4 +84,14 @@ public class JwtService {
     public String getEmailFromToken(String token) {
         return extractClaim(token, Claims::getSubject);
     }
+
+    @SuppressWarnings("UseSpecificCatch")
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parserBuilder().setSigningKey(getSignInKey()).build().parseClaimsJws(token);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }
