@@ -8,7 +8,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.pointtils.pointtils.src.application.dto.LoginRequestDTO;
 import com.pointtils.pointtils.src.application.dto.LoginResponseDTO;
-import com.pointtils.pointtils.src.application.services.LoginService;
+import com.pointtils.pointtils.src.application.dto.RefreshTokenResponseDTO;
+import com.pointtils.pointtils.src.application.services.AuthService;
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
 import com.pointtils.pointtils.src.infrastructure.configs.LoginAttemptService;
 
@@ -20,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final LoginService loginService;
+    private final AuthService authService;
 
     private final LoginAttemptService loginAttemptService;
 
@@ -33,7 +34,7 @@ public class AuthController {
         }
 
         try {
-            LoginResponseDTO response = loginService.login(loginRequest.getEmail(), loginRequest.getPassword());
+            LoginResponseDTO response = authService.login(loginRequest.getEmail(), loginRequest.getPassword());
             loginAttemptService.loginSucceeded(clientIp);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -41,6 +42,13 @@ public class AuthController {
             throw e;
         }
     }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<RefreshTokenResponseDTO> postMethodName(@RequestBody String refresh_token) {
+        RefreshTokenResponseDTO response = authService.refreshToken(refresh_token);
+        return ResponseEntity.ok(response);
+    }
+    
 
     private String getClientIP(HttpServletRequest request) {
         String xfHeader = request.getHeader("X-Forwarded-For");
