@@ -58,6 +58,13 @@ public class GlobalExceptionHandler {
                     System.currentTimeMillis());
             return new ResponseEntity<>(errorResponse, HttpStatus.UNPROCESSABLE_ENTITY);
         }
+        if ("Usuário não encontrado".equals(message)) {
+            ErrorResponse errorResponse = new ErrorResponse(
+                    HttpStatus.NOT_FOUND.value(),
+                    message,
+                    System.currentTimeMillis());
+            return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+        }
         if ("Muitas tentativas de login".equals(message)) {
             ErrorResponse errorResponse = new ErrorResponse(
                     HttpStatus.TOO_MANY_REQUESTS.value(),
