@@ -9,7 +9,7 @@ import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
 import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
 
 @Repository
-public interface InterpreterRepository extends JpaRepository<Interpreter, Integer> {
+public interface InterpreterRepository extends JpaRepository<Interpreter, Long> {
     
     List<Interpreter> findByModality(InterpreterModality modality);
 

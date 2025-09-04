@@ -38,6 +38,7 @@ public class SecurityConfiguration {
             .authorizeHttpRequests(authorize -> authorize
                     .requestMatchers("/api/jwt/public").permitAll()
                     .requestMatchers("/v1/deaf-users/register/**").permitAll()
+                    .requestMatchers("/v1/interpreters/register/**").permitAll()
                     .anyRequest().authenticated()
             )
             .sessionManagement((session) -> session

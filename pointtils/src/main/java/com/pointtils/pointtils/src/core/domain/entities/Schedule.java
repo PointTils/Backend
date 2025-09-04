@@ -1,7 +1,13 @@
 package com.pointtils.pointtils.src.core.domain.entities;
 
+import java.time.LocalTime;
+
+import com.pointtils.pointtils.src.core.domain.entities.enums.WeekDay;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -14,29 +20,28 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "location")
+@Table(name = "schedule")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-public class Location {
+public class Schedule {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @Column(name = "UF", length = 2)
-    private String uf;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "day", nullable = false)
+    private WeekDay day;
     
-    @Column(name = "city", length = 255)
-    private String city;
+    @Column(name = "start_time", nullable = false)
+    private LocalTime startTime;
+    
+    @Column(name = "end_time", nullable = false)
+    private LocalTime endTime;
     
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-    
-    public Location(String uf, String city) {
-        this.uf = uf;
-        this.city = city;
-    }
+    @JoinColumn(name = "interpreter_id", nullable = false)
+    private Interpreter interpreter;
 }

@@ -22,7 +22,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-public class Interpreter extends User {
+public class Interpreter extends Person {
+    
     private String cnpj;
     private Double rating;
 

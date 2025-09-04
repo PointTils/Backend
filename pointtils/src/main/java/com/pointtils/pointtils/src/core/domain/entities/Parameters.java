@@ -5,8 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -14,29 +12,20 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "location")
+@Table(name = "parameters")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-public class Location {
+public class Parameters {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @Column(name = "UF", length = 2)
-    private String uf;
+    @Column(name = "key", columnDefinition = "TEXT", nullable = false)
+    private String key;
     
-    @Column(name = "city", length = 255)
-    private String city;
-    
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-    
-    public Location(String uf, String city) {
-        this.uf = uf;
-        this.city = city;
-    }
+    @Column(name = "value", columnDefinition = "TEXT", nullable = false)
+    private String value;
 }

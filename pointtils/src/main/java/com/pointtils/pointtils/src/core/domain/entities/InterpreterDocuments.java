@@ -14,29 +14,21 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "location")
+@Table(name = "interpreter_documents")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-public class Location {
+public class InterpreterDocuments {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @Column(name = "UF", length = 2)
-    private String uf;
-    
-    @Column(name = "city", length = 255)
-    private String city;
-    
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "interpreter_id", nullable = false)
+    private Interpreter interpreter;
     
-    public Location(String uf, String city) {
-        this.uf = uf;
-        this.city = city;
-    }
+    @Column(name = "document", columnDefinition = "TEXT", nullable = false)
+    private String document;
 }

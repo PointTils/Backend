@@ -1,13 +1,14 @@
 package com.pointtils.pointtils.src.core.domain.entities;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -19,6 +20,7 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -52,8 +54,9 @@ public class User {
     @Column(columnDefinition = "TEXT")
     private String picture;
 
-    @Embedded
-    private Location location;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<Location> locations;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -70,5 +73,6 @@ public class User {
         joinColumns = @JoinColumn(name = "user_id"),
         inverseJoinColumns = @JoinColumn(name = "specialtie_id")
     )
+    @Builder.Default
     private Set<Specialty> specialties = new HashSet<>();
 }

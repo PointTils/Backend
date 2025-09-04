@@ -1,11 +1,7 @@
 package com.pointtils.pointtils.src.application.dto;
 
-
 import java.time.LocalDate;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -13,14 +9,11 @@ import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString
-
-public class DeafRequestDTO {
+public class PersonalDataDTO {
     
     @NotBlank(message = "Name is required")
     private String name;
@@ -46,18 +39,4 @@ public class DeafRequestDTO {
     private String cpf;
     
     private String picture; 
-    
-    @NotBlank(message = "Status is required")
-    private String status;
-    
-    @NotBlank(message = "Type is required")
-    private String type;
-    
-    @NotNull(message = "Location is required")
-    @Valid
-    private LocationDTO location;
-    
-    @JsonProperty("accessibility_preferences")
-    @Valid
-    private AccessibilityPreferencesDTO accessibility;
 }

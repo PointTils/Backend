@@ -1,5 +1,7 @@
 package com.pointtils.pointtils.src.core.domain.entities;
 
+import java.math.BigDecimal;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -14,29 +16,24 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "location")
+@Table(name = "rating")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-public class Location {
+public class Rating {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @Column(name = "UF", length = 2)
-    private String uf;
+    @Column(name = "stars", nullable = false, precision = 3, scale = 2)
+    private BigDecimal stars;
     
-    @Column(name = "city", length = 255)
-    private String city;
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
     
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-    
-    public Location(String uf, String city) {
-        this.uf = uf;
-        this.city = city;
-    }
+    @JoinColumn(name = "appointment_id", nullable = false)
+    private Appointment appointment;
 }
