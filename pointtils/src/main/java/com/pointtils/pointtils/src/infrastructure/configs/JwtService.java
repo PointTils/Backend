@@ -21,12 +21,23 @@ public class JwtService {
     @Value("${security.jwt.expiration-time}")
     private long jwtExpiration;
 
+    @Value("${security.jwt.refresh-expiration-time}")
+    private long refreshExpiration;
+
     public String generateToken(String subject) {
         return buildToken(subject, jwtExpiration);
     }
 
+    public String generateRefreshToken(String subject) {
+        return buildToken(subject, refreshExpiration);
+    }
+
     public long getExpirationTime() {
         return jwtExpiration;
+    }
+
+    public long getRefreshExpirationTime() {
+        return refreshExpiration;
     }
 
     public boolean isTokenExpired(String token) {
@@ -53,13 +64,14 @@ public class JwtService {
 
     private String buildToken(
             String subject,
-            long expiration
+            long expirationMinutes
     ) {
+        long expirationMillis = expirationMinutes * 60 * 1000; // Convert minutes to milliseconds
         return Jwts
                 .builder()
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + expiration))
+                .setExpiration(new Date(System.currentTimeMillis() + expirationMillis))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
