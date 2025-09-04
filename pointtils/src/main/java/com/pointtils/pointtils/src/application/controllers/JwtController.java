@@ -43,7 +43,6 @@ public class JwtController {
     public ResponseEntity<RefreshTokenResponseDTO> generateTokens(@RequestParam String username) {
         String accessToken = jwtService.generateToken(username);
         String refreshToken = jwtService.generateRefreshToken(username);
-
         TokensDTO tokensDTO = new TokensDTO(accessToken, refreshToken, "Bearer", jwtService.getExpirationTime(),
                 jwtService.getRefreshExpirationTime());
         RefreshTokenResponseDTO response = new RefreshTokenResponseDTO(true, "Tokens gerados com sucesso",
