@@ -45,7 +45,6 @@ jobs:
           SPRINGDOC_API_DOCS_ENABLED: ${{ vars.SPRINGDOC_API_DOCS_ENABLED }}
           SPRINGDOC_SWAGGER_UI_ENABLED: ${{ vars.SPRINGDOC_SWAGGER_UI_ENABLED }}
           SPRINGDOC_SWAGGER_UI_PATH: ${{ vars.SPRINGDOC_SWAGGER_UI_PATH }}
-          
       - name: SonarCloud Scan
         run: |
           cd pointtils
