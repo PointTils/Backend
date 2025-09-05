@@ -49,6 +49,13 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
     
+    @SuppressWarnings("rawtypes")
+    @PostMapping("/logout")
+    public ResponseEntity logout(@RequestBody String refresh_token, HttpServletRequest httpRequest) {
+        authService.logout(refresh_token, httpRequest.getHeader("Authorization").substring(7));
+        return ResponseEntity.ok().build();
+    }
+    
 
     private String getClientIP(HttpServletRequest request) {
         String xfHeader = request.getHeader("X-Forwarded-For");

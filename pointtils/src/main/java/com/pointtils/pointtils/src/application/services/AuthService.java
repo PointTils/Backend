@@ -10,6 +10,7 @@ import com.pointtils.pointtils.src.application.dto.UserDTO;
 import com.pointtils.pointtils.src.core.domain.entities.User;
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
 import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
+import com.pointtils.pointtils.src.infrastructure.configs.RedisBlacklistService;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final JwtService jwtTokenPrivider;
     private final PasswordEncoder passwordEncoder;
+    private final RedisBlacklistService redisBlacklistService;
 
     public LoginResponseDTO login(String email, String password) {
 
@@ -107,5 +109,23 @@ public class AuthService {
                         jwtTokenPrivider.getRefreshExpirationTime()
                 ))
         );
+    }
+
+    public void logout(String accessToken, String refreshToken) {
+        if (accessToken == null || accessToken.isBlank()) {
+            throw new AuthenticationException("Access token não fornecido");
+        }
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new AuthenticationException("Refresh token não fornecido");
+        }
+
+        if (!jwtTokenPrivider.validateToken(accessToken)) {
+            throw new AuthenticationException("Access token inválido");
+        }
+        if (!jwtTokenPrivider.validateToken(refreshToken)) {
+            throw new AuthenticationException("Refresh token inválido");
+        }
+
+        redisBlacklistService.addToBlacklist(accessToken);
     }
 }
