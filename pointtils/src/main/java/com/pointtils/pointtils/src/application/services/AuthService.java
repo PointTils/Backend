@@ -119,11 +119,11 @@ public class AuthService {
             throw new AuthenticationException("Refresh token não fornecido");
         }
 
-        if (!jwtTokenPrivider.validateToken(accessToken)) {
-            throw new AuthenticationException("Access token inválido");
+        if (!jwtTokenPrivider.validateToken(accessToken) || jwtTokenPrivider.isTokenExpired(accessToken)) {
+            throw new AuthenticationException("Access token inválido ou expirado");
         }
-        if (!jwtTokenPrivider.validateToken(refreshToken)) {
-            throw new AuthenticationException("Refresh token inválido");
+        if (!jwtTokenPrivider.validateToken(refreshToken) || jwtTokenPrivider.isTokenExpired(refreshToken)) {
+            throw new AuthenticationException("Refresh token inválido ou expirado");
         }
 
         redisBlacklistService.addToBlacklist(accessToken);
