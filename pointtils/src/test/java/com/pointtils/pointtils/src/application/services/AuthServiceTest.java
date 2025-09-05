@@ -19,6 +19,7 @@ import com.pointtils.pointtils.src.core.domain.entities.Person;
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
 import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
 import com.pointtils.pointtils.src.infrastructure.configs.LoginAttemptService;
+import com.pointtils.pointtils.src.infrastructure.configs.RedisBlacklistService;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,10 +35,14 @@ class AuthServiceTest {
     private JwtService jwtTokenProvider;
 
     @Mock
+    @SuppressWarnings("unused")
     private LoginAttemptService loginAttemptService;
     
     @InjectMocks
     private AuthService loginService;
+
+    @Mock
+    private RedisBlacklistService redisBlacklistService;
 
     @Test
     @DisplayName("Deve autenticar usuario pessoa com sucesso")
@@ -227,5 +232,116 @@ class AuthServiceTest {
         );
 
         assertEquals("Usuário não encontrado", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve fazer logout com tokens válidos")
+    void deveFazerLogoutComTokensValidos() {
+        String accessToken = "valid_access_token";
+        String refreshToken = "valid_refresh_token";
+
+        when(jwtTokenProvider.validateToken(accessToken)).thenReturn(true);
+        when(jwtTokenProvider.isTokenExpired(accessToken)).thenReturn(false);
+        when(jwtTokenProvider.validateToken(refreshToken)).thenReturn(true);
+        when(jwtTokenProvider.isTokenExpired(refreshToken)).thenReturn(false);
+
+        loginService.logout(accessToken, refreshToken);
+
+        assertNotNull(redisBlacklistService);        
+    }
+
+    @Test
+    @DisplayName("Deve falhar ao fazer logout com access token nulo ou vazio")
+    void deveFalharAoFazerLogoutComAccessTokenNuloOuVazio() {
+        AuthenticationException ex1 = assertThrows(
+                AuthenticationException.class,
+                () -> loginService.logout(null, "valid_refresh_token")
+        );
+        assertEquals("Access token não fornecido", ex1.getMessage());
+        AuthenticationException ex2 = assertThrows(
+                AuthenticationException.class,
+                () -> loginService.logout("", "valid_refresh_token")
+        );
+        assertEquals("Access token não fornecido", ex2.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve falhar ao fazer logout com refresh token nulo ou vazio")
+    void deveFalharAoFazerLogoutComRefreshTokenNuloOuVazio() {
+        AuthenticationException ex1 = assertThrows(
+                AuthenticationException.class,
+                () -> loginService.logout("valid_access_token", null)
+        );
+        assertEquals("Refresh token não fornecido", ex1.getMessage());
+        AuthenticationException ex2 = assertThrows(
+                AuthenticationException.class,
+                () -> loginService.logout("valid_access_token", "")
+        );
+        assertEquals("Refresh token não fornecido", ex2.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve falhar ao fazer logout com access token inválido")
+    void deveFalharAoFazerLogoutComAccessTokenInvalido() {
+        String invalidAccessToken = "invalid_access_token";
+        String validRefreshToken = "valid_refresh_token";
+
+        when(jwtTokenProvider.validateToken(invalidAccessToken)).thenReturn(false);
+
+        AuthenticationException ex = assertThrows(
+                AuthenticationException.class,
+                () -> loginService.logout(invalidAccessToken, validRefreshToken)
+        );
+        assertEquals("Access token inválido ou expirado", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve falhar ao fazer logout com refresh token inválido")
+    void deveFalharAoFazerLogoutComRefreshTokenInvalido() {
+        String validAccessToken = "valid_access_token";
+        String invalidRefreshToken = "invalid_refresh_token";
+
+        when(jwtTokenProvider.validateToken(validAccessToken)).thenReturn(true);
+        when(jwtTokenProvider.validateToken(invalidRefreshToken)).thenReturn(false);
+
+        AuthenticationException ex = assertThrows(
+                AuthenticationException.class,
+                () -> loginService.logout(validAccessToken, invalidRefreshToken)
+        );
+        assertEquals("Refresh token inválido ou expirado", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve falhar ao fazer logout com access token expirado")
+    void deveFalharAoFazerLogoutComAccessTokenExpirado() {
+        String expiredAccessToken = "expired_access_token";
+        String validRefreshToken = "valid_refresh_token";
+
+        when(jwtTokenProvider.validateToken(expiredAccessToken)).thenReturn(true);
+        when(jwtTokenProvider.isTokenExpired(expiredAccessToken)).thenReturn(true);
+
+        AuthenticationException ex = assertThrows(
+                AuthenticationException.class,
+                () -> loginService.logout(expiredAccessToken, validRefreshToken)
+        );
+        assertEquals("Access token inválido ou expirado", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve falhar ao fazer logout com refresh token expirado")
+    void deveFalharAoFazerLogoutComRefreshTokenExpirado() {
+        String validAccessToken = "valid_access_token";
+        String expiredRefreshToken = "expired_refresh_token";
+
+        when(jwtTokenProvider.validateToken(validAccessToken)).thenReturn(true);
+        when(jwtTokenProvider.isTokenExpired(validAccessToken)).thenReturn(false);
+        when(jwtTokenProvider.validateToken(expiredRefreshToken)).thenReturn(true);
+        when(jwtTokenProvider.isTokenExpired(expiredRefreshToken)).thenReturn(true);
+
+        AuthenticationException ex = assertThrows(
+                AuthenticationException.class,
+                () -> loginService.logout(validAccessToken, expiredRefreshToken)
+        );
+        assertEquals("Refresh token inválido ou expirado", ex.getMessage());
     }
 }
