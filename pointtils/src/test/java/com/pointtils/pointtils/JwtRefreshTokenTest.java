@@ -12,34 +12,34 @@ import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
 
 @SpringBootTest
 @TestPropertySource(locations = "classpath:application.properties")
-public class JwtRefreshTokenTest {
+class JwtRefreshTokenTest {
 
     @Autowired
     private JwtService jwtService;
 
     @Test
-    public void testGenerateAccessToken() {
+    void testGenerateAccessToken() {
         String token = jwtService.generateToken("testuser");
         assertNotNull(token);
-        assertTrue(token.length() > 0);
+        assertTrue(!token.isEmpty());
     }
 
     @Test
-    public void testGenerateRefreshToken() {
+    void testGenerateRefreshToken() {
         String refreshToken = jwtService.generateRefreshToken("testuser");
         assertNotNull(refreshToken);
-        assertTrue(refreshToken.length() > 0);
+        assertTrue(!refreshToken.isEmpty());
     }
 
     @Test
-    public void testTokenNotExpired() {
+    void testTokenNotExpired() {
         String token = jwtService.generateToken("testuser");
         boolean isExpired = jwtService.isTokenExpired(token);
         assertTrue(!isExpired);
     }
 
     @Test
-    public void testRefreshTokenNotExpired() {
+    void testRefreshTokenNotExpired() {
         String refreshToken = jwtService.generateRefreshToken("testuser");
         boolean isExpired = jwtService.isTokenExpired(refreshToken);
         assertTrue(!isExpired);

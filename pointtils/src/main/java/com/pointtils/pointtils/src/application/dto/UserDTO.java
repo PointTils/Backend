@@ -9,12 +9,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RefreshTokenResponseDTO {
-    boolean success;
-    String message;
-    Data data;
-
-    public record Data(TokensDTO tokens) {
-
-    }
+public class UserDTO {
+    private Long id;
+    private String email;
+    private String name;
+    private String type;
+    private String status;
 }

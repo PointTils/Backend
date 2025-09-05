@@ -80,4 +80,18 @@ public class JwtService {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
     }
+
+    public String getEmailFromToken(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
+
+    @SuppressWarnings("UseSpecificCatch")
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parserBuilder().setSigningKey(getSignInKey()).build().parseClaimsJws(token);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }
