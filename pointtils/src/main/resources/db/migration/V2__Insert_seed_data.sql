@@ -3,7 +3,7 @@
 -- ========================
 WITH new_user AS (
   INSERT INTO users (email, password, phone, picture, status, type)
-  VALUES ('client1@email.com', '123456', '11999999999', NULL, 'ACTIVE', 'CLIENT')
+  VALUES ('client1@email.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '11999999999', NULL, 'ACTIVE', 'CLIENT')
   RETURNING id
 )
 INSERT INTO person (id, name, gender, birthday, cpf)
@@ -18,7 +18,7 @@ SELECT id, 'SP', 'São Paulo' FROM users WHERE email = 'client1@email.com';
 -- ========================
 WITH new_user AS (
   INSERT INTO users (email, password, phone, picture, status, type)
-  VALUES ('empresa1@email.com', '123456', '11888888888', NULL, 'ACTIVE', 'ENTERPRISE')
+  VALUES ('empresa1@email.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '11888888888', NULL, 'ACTIVE', 'ENTERPRISE')
   RETURNING id
 )
 INSERT INTO enterprise (id, corporate_reason, cnpj)
@@ -33,7 +33,7 @@ SELECT id, 'RJ', 'Rio de Janeiro' FROM users WHERE email = 'empresa1@email.com';
 -- ========================
 WITH new_user AS (
   INSERT INTO users (email, password, phone, picture, status, type)
-  VALUES ('interpreter1@email.com', '123456', '11777777777', NULL, 'ACTIVE', 'INTERPRETER')
+  VALUES ('interpreter1@email.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '11777777777', NULL, 'ACTIVE', 'INTERPRETER')
   RETURNING id
 ),
 new_person AS (
