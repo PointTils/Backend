@@ -112,10 +112,6 @@ public class AuthService {
     }
 
     public Boolean logout(String accessToken, String refreshToken) {
-        if (refreshToken == null || refreshToken.isBlank()) {
-            throw new AuthenticationException("Refresh token não fornecido");
-        }
-
         if (!jwtTokenPrivider.validateToken(accessToken) || jwtTokenPrivider.isTokenExpired(accessToken)) {
             throw new AuthenticationException("Access token inválido ou expirado");
         }

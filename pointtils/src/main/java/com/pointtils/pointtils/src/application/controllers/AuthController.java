@@ -58,6 +58,9 @@ public class AuthController {
         if (header == null || !header.startsWith("Bearer ") || header.length() <= 7) {
             throw new AuthenticationException("Access token não fornecido");
         }
+        if (refresh_token.getRefreshToken() == null || refresh_token.getRefreshToken().isBlank()) {
+            throw new AuthenticationException("Refresh token não fornecido");
+        }
 
         String accessToken = header.substring(7);
         boolean success = authService.logout(accessToken, refresh_token.getRefreshToken());

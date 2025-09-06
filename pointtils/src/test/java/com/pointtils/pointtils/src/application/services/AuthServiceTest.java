@@ -251,36 +251,6 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("Deve falhar ao fazer logout com access token nulo ou vazio")
-    void deveFalharAoFazerLogoutComAccessTokenNuloOuVazio() {
-        AuthenticationException ex1 = assertThrows(
-                AuthenticationException.class,
-                () -> loginService.logout(null, "valid_refresh_token")
-        );
-        assertEquals("Access token não fornecido", ex1.getMessage());
-        AuthenticationException ex2 = assertThrows(
-                AuthenticationException.class,
-                () -> loginService.logout("", "valid_refresh_token")
-        );
-        assertEquals("Access token não fornecido", ex2.getMessage());
-    }
-
-    @Test
-    @DisplayName("Deve falhar ao fazer logout com refresh token nulo ou vazio")
-    void deveFalharAoFazerLogoutComRefreshTokenNuloOuVazio() {
-        AuthenticationException ex1 = assertThrows(
-                AuthenticationException.class,
-                () -> loginService.logout("valid_access_token", null)
-        );
-        assertEquals("Refresh token não fornecido", ex1.getMessage());
-        AuthenticationException ex2 = assertThrows(
-                AuthenticationException.class,
-                () -> loginService.logout("valid_access_token", "")
-        );
-        assertEquals("Refresh token não fornecido", ex2.getMessage());
-    }
-
-    @Test
     @DisplayName("Deve falhar ao fazer logout com access token inválido")
     void deveFalharAoFazerLogoutComAccessTokenInvalido() {
         String invalidAccessToken = "invalid_access_token";
