@@ -10,6 +10,7 @@ import com.pointtils.pointtils.src.application.dto.UserDTO;
 import com.pointtils.pointtils.src.core.domain.entities.User;
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
 import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
+import com.pointtils.pointtils.src.infrastructure.configs.RedisBlacklistService;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final JwtService jwtTokenPrivider;
     private final PasswordEncoder passwordEncoder;
+    private final RedisBlacklistService redisBlacklistService;
 
     public LoginResponseDTO login(String email, String password) {
 
@@ -107,5 +109,18 @@ public class AuthService {
                         jwtTokenPrivider.getRefreshExpirationTime()
                 ))
         );
+    }
+
+    public Boolean logout(String accessToken, String refreshToken) {
+        if (!jwtTokenPrivider.validateToken(accessToken) || jwtTokenPrivider.isTokenExpired(accessToken)) {
+            throw new AuthenticationException("Access token inválido ou expirado");
+        }
+        if (!jwtTokenPrivider.validateToken(refreshToken) || jwtTokenPrivider.isTokenExpired(refreshToken)) {
+            throw new AuthenticationException("Refresh token inválido ou expirado");
+        }
+
+        redisBlacklistService.addToBlacklist(accessToken);
+
+        return true;
     }
 }

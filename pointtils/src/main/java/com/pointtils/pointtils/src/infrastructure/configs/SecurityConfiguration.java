@@ -39,6 +39,7 @@ public class SecurityConfiguration {
                     .requestMatchers("/api/jwt/public").permitAll()
                     .requestMatchers("/v1/auth/login").permitAll()
                     .requestMatchers("/v1/auth/refresh").permitAll()
+                    .requestMatchers("/v1/auth/logout").permitAll()
                     .requestMatchers("/api/jwt/**", "/auth/**").permitAll()
                     .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                     .anyRequest().authenticated()

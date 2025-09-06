@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.pointtils.pointtils.src.application.dto.LoginRequestDTO;
 import com.pointtils.pointtils.src.application.dto.LoginResponseDTO;
+import com.pointtils.pointtils.src.application.dto.RefreshTokenRequestDTO;
 import com.pointtils.pointtils.src.application.dto.RefreshTokenResponseDTO;
 import com.pointtils.pointtils.src.application.services.AuthService;
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
@@ -26,7 +27,8 @@ public class AuthController {
     private final LoginAttemptService loginAttemptService;
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequestDTO loginRequest, HttpServletRequest httpRequest) {
+    public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequestDTO loginRequest,
+            HttpServletRequest httpRequest) {
         String clientIp = getClientIP(httpRequest);
 
         if (loginAttemptService.isBlocked(clientIp)) {
@@ -48,7 +50,27 @@ public class AuthController {
         RefreshTokenResponseDTO response = authService.refreshToken(refresh_token);
         return ResponseEntity.ok(response);
     }
-    
+
+    @SuppressWarnings("rawtypes")
+    @PostMapping("/logout")
+    public ResponseEntity logout(@RequestBody RefreshTokenRequestDTO refresh_token, HttpServletRequest httpRequest) {
+        String header = httpRequest.getHeader("Authorization");
+        if (header == null || !header.startsWith("Bearer ") || header.length() <= 7) {
+            throw new AuthenticationException("Access token não fornecido");
+        }
+        if (refresh_token.getRefreshToken() == null || refresh_token.getRefreshToken().isBlank()) {
+            throw new AuthenticationException("Refresh token não fornecido");
+        }
+
+        String accessToken = header.substring(7);
+        boolean success = authService.logout(accessToken, refresh_token.getRefreshToken());
+
+        if (!success) {
+            throw new InternalError("Erro ao fazer logout");
+        } else {
+            return ResponseEntity.ok().build();
+        }
+    }
 
     private String getClientIP(HttpServletRequest request) {
         String xfHeader = request.getHeader("X-Forwarded-For");
