@@ -48,19 +48,19 @@ class PointServiceTest {
         // Configurar objetos de teste
         point = new Point();
         point.setId(1L);
-        point.setUserId("user123");
+        point.setUserId(1L);
         point.setDescription("Morning entry");
         point.setType(PointType.ENTRY);
         point.setTimestamp(LocalDateTime.now());
 
         requestDTO = new PointRequestDTO();
-        requestDTO.setUserId("user123");
+        requestDTO.setUserId(1L);
         requestDTO.setDescription("Morning entry");
         requestDTO.setType(PointType.ENTRY);
 
         responseDTO = new PointResponseDTO();
         responseDTO.setId(1L);
-        responseDTO.setUserId("user123");
+        responseDTO.setUserId(1L);
         responseDTO.setDescription("Morning entry");
         responseDTO.setType(PointType.ENTRY);
         responseDTO.setTimestamp(point.getTimestamp());

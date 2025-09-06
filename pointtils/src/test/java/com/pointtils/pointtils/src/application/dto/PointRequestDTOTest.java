@@ -13,7 +13,7 @@ class PointRequestDTOTest {
     @Test
     void shouldCreatePointRequestDTOWithAllArgsConstructor() {
         // Given
-        String userId = "user123";
+        Long userId = 1L;
         String description = "Test description";
         String type = "ENTRY";
 
@@ -42,7 +42,7 @@ class PointRequestDTOTest {
     @Test
     void shouldCreatePointRequestDTOWithBuilder() {
         // Given
-        String userId = "user123";
+        Long userId = 1L;
         String description = "Test description";
         String type = "ENTRY";
 
@@ -64,7 +64,7 @@ class PointRequestDTOTest {
     void shouldSetAndGetProperties() {
         // Given
         PointRequestDTO dto = new PointRequestDTO();
-        String userId = "user123";
+        Long userId = 1L;
         String description = "Test description";
         String type = "ENTRY";
 
@@ -93,10 +93,10 @@ class PointRequestDTOTest {
     @Test
     void shouldHandleEmptyStrings() {
         // Given
-        PointRequestDTO dto = new PointRequestDTO("", "", "");
+        PointRequestDTO dto = new PointRequestDTO(1L, "", "");
 
         // Then
-        assertEquals("", dto.getUserId());
+        assertEquals(1L, dto.getUserId());
         assertEquals("", dto.getDescription());
         assertEquals("", dto.getType());
     }
@@ -104,14 +104,14 @@ class PointRequestDTOTest {
     @Test
     void shouldGenerateToString() {
         // Given
-        PointRequestDTO dto = new PointRequestDTO("user123", "Test description", "ENTRY");
+        PointRequestDTO dto = new PointRequestDTO(1L, "Test description", "ENTRY");
 
         // When
         String toString = dto.toString();
 
         // Then
         assertNotNull(toString);
-        assertTrue(toString.contains("user123"));
+        assertTrue(toString.contains("1"));
         assertTrue(toString.contains("Test description"));
         assertTrue(toString.contains("ENTRY"));
     }
@@ -119,8 +119,8 @@ class PointRequestDTOTest {
     @Test
     void shouldGenerateHashCode() {
         // Given
-        PointRequestDTO dto1 = new PointRequestDTO("user123", "Test description", "ENTRY");
-        PointRequestDTO dto2 = new PointRequestDTO("user123", "Test description", "ENTRY");
+        PointRequestDTO dto1 = new PointRequestDTO(1L, "Test description", "ENTRY");
+        PointRequestDTO dto2 = new PointRequestDTO(1L, "Test description", "ENTRY");
 
         // When
         int hashCode1 = dto1.hashCode();
@@ -133,8 +133,8 @@ class PointRequestDTOTest {
     @Test
     void shouldBeEqualWithSameValues() {
         // Given
-        PointRequestDTO dto1 = new PointRequestDTO("user123", "Test description", "ENTRY");
-        PointRequestDTO dto2 = new PointRequestDTO("user123", "Test description", "ENTRY");
+        PointRequestDTO dto1 = new PointRequestDTO(1L, "Test description", "ENTRY");
+        PointRequestDTO dto2 = new PointRequestDTO(1L, "Test description", "ENTRY");
 
         // Then
         assertEquals(dto1, dto2);
@@ -143,8 +143,8 @@ class PointRequestDTOTest {
     @Test
     void shouldNotBeEqualWithDifferentValues() {
         // Given
-        PointRequestDTO dto1 = new PointRequestDTO("user123", "Test description", "ENTRY");
-        PointRequestDTO dto2 = new PointRequestDTO("user456", "Different description", "EXIT");
+        PointRequestDTO dto1 = new PointRequestDTO(1L, "Test description", "ENTRY");
+        PointRequestDTO dto2 = new PointRequestDTO(2L, "Different description", "EXIT");
 
         // Then
         assertNotEquals(dto1, dto2);
@@ -153,7 +153,7 @@ class PointRequestDTOTest {
     @Test
     void shouldNotBeEqualWithNull() {
         // Given
-        PointRequestDTO dto = new PointRequestDTO("user123", "Test description", "ENTRY");
+        PointRequestDTO dto = new PointRequestDTO(1L, "Test description", "ENTRY");
 
         // Then
         assertNotEquals(null, dto);
@@ -162,7 +162,7 @@ class PointRequestDTOTest {
     @Test
     void shouldNotBeEqualWithDifferentClass() {
         // Given
-        PointRequestDTO dto = new PointRequestDTO("user123", "Test description", "ENTRY");
+        PointRequestDTO dto = new PointRequestDTO(1L, "Test description", "ENTRY");
         String differentObject = "not a dto";
 
         // Then

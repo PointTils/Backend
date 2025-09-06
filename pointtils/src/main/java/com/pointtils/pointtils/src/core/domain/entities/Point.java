@@ -24,7 +24,7 @@ public class Point {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    private String userId;
+    private Long userId;
     private String description;
     private LocalDateTime timestamp;
     private String type; // ENTRY, EXIT, LUNCH_START, LUNCH_END

@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PointRequestDTO {
-    private String userId;
+    private Long userId;
     private String description;
     private String type; // ENTRY, EXIT, LUNCH_START, LUNCH_END
 }

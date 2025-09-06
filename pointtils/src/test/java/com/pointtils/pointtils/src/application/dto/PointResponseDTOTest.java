@@ -16,7 +16,7 @@ class PointResponseDTOTest {
     void shouldCreatePointResponseDTOWithAllArgsConstructor() {
         // Given
         Long id = 1L;
-        String userId = "user123";
+        Long userId = 1L;
         String description = "Test description";
         LocalDateTime timestamp = LocalDateTime.now();
         String type = "ENTRY";
@@ -51,7 +51,7 @@ class PointResponseDTOTest {
     void shouldCreatePointResponseDTOWithBuilder() {
         // Given
         Long id = 1L;
-        String userId = "user123";
+        Long userId = 1L;
         String description = "Test description";
         LocalDateTime timestamp = LocalDateTime.now();
         String type = "ENTRY";
@@ -79,7 +79,7 @@ class PointResponseDTOTest {
         // Given
         PointResponseDTO dto = new PointResponseDTO();
         Long id = 1L;
-        String userId = "user123";
+        Long userId = 1L;
         String description = "Test description";
         LocalDateTime timestamp = LocalDateTime.now();
         String type = "ENTRY";
@@ -116,11 +116,11 @@ class PointResponseDTOTest {
     void shouldHandleEmptyStrings() {
         // Given
         LocalDateTime timestamp = LocalDateTime.now();
-        PointResponseDTO dto = new PointResponseDTO(1L, "", "", timestamp, "");
+        PointResponseDTO dto = new PointResponseDTO(1L, 1L, "", timestamp, "");
 
         // Then
         assertEquals(1L, dto.getId());
-        assertEquals("", dto.getUserId());
+        assertEquals(1L, dto.getUserId());
         assertEquals("", dto.getDescription());
         assertEquals(timestamp, dto.getTimestamp());
         assertEquals("", dto.getType());
@@ -130,7 +130,7 @@ class PointResponseDTOTest {
     void shouldGenerateToString() {
         // Given
         LocalDateTime timestamp = LocalDateTime.now();
-        PointResponseDTO dto = new PointResponseDTO(1L, "user123", "Test description", timestamp, "ENTRY");
+        PointResponseDTO dto = new PointResponseDTO(1L, 2L, "Test description", timestamp, "ENTRY");
 
         // When
         String toString = dto.toString();
@@ -138,7 +138,7 @@ class PointResponseDTOTest {
         // Then
         assertNotNull(toString);
         assertTrue(toString.contains("1"));
-        assertTrue(toString.contains("user123"));
+        assertTrue(toString.contains("2"));
         assertTrue(toString.contains("Test description"));
         assertTrue(toString.contains("ENTRY"));
     }
@@ -147,8 +147,8 @@ class PointResponseDTOTest {
     void shouldGenerateHashCode() {
         // Given
         LocalDateTime timestamp = LocalDateTime.now();
-        PointResponseDTO dto1 = new PointResponseDTO(1L, "user123", "Test description", timestamp, "ENTRY");
-        PointResponseDTO dto2 = new PointResponseDTO(1L, "user123", "Test description", timestamp, "ENTRY");
+        PointResponseDTO dto1 = new PointResponseDTO(1L, 1L, "Test description", timestamp, "ENTRY");
+        PointResponseDTO dto2 = new PointResponseDTO(1L, 1L, "Test description", timestamp, "ENTRY");
 
         // When
         int hashCode1 = dto1.hashCode();
@@ -162,8 +162,8 @@ class PointResponseDTOTest {
     void shouldBeEqualWithSameValues() {
         // Given
         LocalDateTime timestamp = LocalDateTime.now();
-        PointResponseDTO dto1 = new PointResponseDTO(1L, "user123", "Test description", timestamp, "ENTRY");
-        PointResponseDTO dto2 = new PointResponseDTO(1L, "user123", "Test description", timestamp, "ENTRY");
+        PointResponseDTO dto1 = new PointResponseDTO(1L, 1L, "Test description", timestamp, "ENTRY");
+        PointResponseDTO dto2 = new PointResponseDTO(1L, 1L, "Test description", timestamp, "ENTRY");
 
         // Then
         assertEquals(dto1, dto2);
@@ -173,8 +173,8 @@ class PointResponseDTOTest {
     void shouldNotBeEqualWithDifferentValues() {
         // Given
         LocalDateTime timestamp = LocalDateTime.now();
-        PointResponseDTO dto1 = new PointResponseDTO(1L, "user123", "Test description", timestamp, "ENTRY");
-        PointResponseDTO dto2 = new PointResponseDTO(2L, "user456", "Different description", timestamp, "EXIT");
+        PointResponseDTO dto1 = new PointResponseDTO(1L, 1L, "Test description", timestamp, "ENTRY");
+        PointResponseDTO dto2 = new PointResponseDTO(2L, 2L, "Different description", timestamp, "EXIT");
 
         // Then
         assertNotEquals(dto1, dto2);
@@ -185,8 +185,8 @@ class PointResponseDTOTest {
         // Given
         LocalDateTime timestamp1 = LocalDateTime.now();
         LocalDateTime timestamp2 = timestamp1.plusMinutes(1);
-        PointResponseDTO dto1 = new PointResponseDTO(1L, "user123", "Test description", timestamp1, "ENTRY");
-        PointResponseDTO dto2 = new PointResponseDTO(1L, "user123", "Test description", timestamp2, "ENTRY");
+        PointResponseDTO dto1 = new PointResponseDTO(1L, 1L, "Test description", timestamp1, "ENTRY");
+        PointResponseDTO dto2 = new PointResponseDTO(1L, 1L, "Test description", timestamp2, "ENTRY");
 
         // Then
         assertNotEquals(dto1, dto2);
@@ -196,7 +196,7 @@ class PointResponseDTOTest {
     void shouldNotBeEqualWithNull() {
         // Given
         LocalDateTime timestamp = LocalDateTime.now();
-        PointResponseDTO dto = new PointResponseDTO(1L, "user123", "Test description", timestamp, "ENTRY");
+        PointResponseDTO dto = new PointResponseDTO(1L, 1L, "Test description", timestamp, "ENTRY");
 
         // Then
         assertNotEquals(null, dto);
@@ -206,7 +206,7 @@ class PointResponseDTOTest {
     void shouldNotBeEqualWithDifferentClass() {
         // Given
         LocalDateTime timestamp = LocalDateTime.now();
-        PointResponseDTO dto = new PointResponseDTO(1L, "user123", "Test description", timestamp, "ENTRY");
+        PointResponseDTO dto = new PointResponseDTO(1L, 1L, "Test description", timestamp, "ENTRY");
         String differentObject = "not a dto";
 
         // Then
@@ -217,8 +217,8 @@ class PointResponseDTOTest {
     void shouldHandleNullIdInEquality() {
         // Given
         LocalDateTime timestamp = LocalDateTime.now();
-        PointResponseDTO dto1 = new PointResponseDTO(null, "user123", "Test description", timestamp, "ENTRY");
-        PointResponseDTO dto2 = new PointResponseDTO(null, "user123", "Test description", timestamp, "ENTRY");
+        PointResponseDTO dto1 = new PointResponseDTO(null, 1L, "Test description", timestamp, "ENTRY");
+        PointResponseDTO dto2 = new PointResponseDTO(null, 1L, "Test description", timestamp, "ENTRY");
 
         // Then
         assertEquals(dto1, dto2);
