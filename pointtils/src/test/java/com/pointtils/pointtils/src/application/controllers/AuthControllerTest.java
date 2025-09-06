@@ -417,12 +417,48 @@ class AuthControllerTest {
         String accessToken = jwtTokenProvider.generateToken("user@exemplo.com");
         String refreshTokenJson = "{ \"refreshToken\": \"\" }";
         mockMvc.perform(MockMvcRequestBuilders
+                        .post("/v1/auth/logout")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(refreshTokenJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Refresh token não fornecido"));
+    }
+
+    @Test
+    @DisplayName("Deve retornar 401 quando logout for chamado com token de acesso inválido")
+    void deveRetornar401QuandoLogoutForChamadoComTokenDeAcessoInvalido() throws Exception {
+        String refreshToken = jwtTokenProvider.generateRefreshToken("user@exemplo.com");
+        String refreshTokenJson = "{ \"refreshToken\": \"" + refreshToken + "\" }";
+
+        when(authService.logout(anyString(), anyString()))
+                .thenThrow(new AuthenticationException("Access token inválido ou expirado"));
+
+        mockMvc.perform(MockMvcRequestBuilders
+                .post("/v1/auth/logout")
+                .header("Authorization", "Bearer invalid-access-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(refreshTokenJson))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Access token inválido ou expirado"));
+    }
+
+    @Test
+    @DisplayName("Deve retornar 401 quando logout for chamado com refresh token inválido")
+    void deveRetornar401QuandoLogoutForChamadoComRefreshTokenInvalido() throws Exception {
+        String accessToken = jwtTokenProvider.generateToken("user@exemplo.com");
+        String refreshTokenJson = "{ \"refreshToken\": \"invalid-refresh-token\" }";
+
+        when(authService.logout(anyString(), anyString()))
+                .thenThrow(new AuthenticationException("Refresh token inválido ou expirado"));
+
+        mockMvc.perform(MockMvcRequestBuilders
                 .post("/v1/auth/logout")
                 .header("Authorization", "Bearer " + accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(refreshTokenJson))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Refresh token não fornecido"));
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Refresh token inválido ou expirado"));
     }
 
 }
