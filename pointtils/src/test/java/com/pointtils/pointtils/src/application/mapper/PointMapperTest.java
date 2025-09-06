@@ -1,8 +1,7 @@
-package com.pointtils.pointtils.mapper;
+package com.pointtils.pointtils.src.application.mapper;
 
 import com.pointtils.pointtils.src.application.dto.PointRequestDTO;
 import com.pointtils.pointtils.src.application.dto.PointResponseDTO;
-import com.pointtils.pointtils.src.application.mapper.PointMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Point;
 import com.pointtils.pointtils.src.core.domain.entities.PointType;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,7 +9,9 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class PointMapperTest {
 

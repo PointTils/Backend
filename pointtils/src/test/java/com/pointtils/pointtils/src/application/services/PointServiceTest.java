@@ -1,4 +1,23 @@
-package com.pointtils.pointtils;
+package com.pointtils.pointtils.src.application.services;
+
+import com.pointtils.pointtils.src.application.dto.PointRequestDTO;
+import com.pointtils.pointtils.src.application.dto.PointResponseDTO;
+import com.pointtils.pointtils.src.application.mapper.PointMapper;
+import com.pointtils.pointtils.src.core.domain.entities.Point;
+import com.pointtils.pointtils.src.core.domain.entities.PointType;
+import com.pointtils.pointtils.src.infrastructure.repositories.PointRepository;
+import jakarta.persistence.EntityNotFoundException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -7,28 +26,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import com.pointtils.pointtils.src.application.dto.PointRequestDTO;
-import com.pointtils.pointtils.src.application.dto.PointResponseDTO;
-import com.pointtils.pointtils.src.application.mapper.PointMapper;
-import com.pointtils.pointtils.src.application.services.PointService;
-import com.pointtils.pointtils.src.core.domain.entities.Point;
-import com.pointtils.pointtils.src.core.domain.entities.PointType;
-import com.pointtils.pointtils.src.infrastructure.repositories.PointRepository;
-
-import jakarta.persistence.EntityNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 class PointServiceTest {

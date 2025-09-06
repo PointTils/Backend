@@ -1,7 +1,7 @@
 package com.pointtils.pointtils.src.application.controllers;
 
-import com.pointtils.pointtils.src.application.dto.LocationResponseDTO;
-import com.pointtils.pointtils.src.application.services.LocationService;
+import com.pointtils.pointtils.src.application.dto.StateResponseDTO;
+import com.pointtils.pointtils.src.application.services.StateService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -15,25 +15,24 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/v1/location")
-@Tag(name = "Location Controller", description = "Endpoints para gerenciar dados de localização")
-public class LocationController {
+@RequestMapping("/v1/states")
+@SecurityRequirement(name = "bearerAuth")
+@Tag(name = "State Controller", description = "Endpoints para gerenciar dados de UFs brasileiras")
+public class StateController {
 
-    private final LocationService locationService;
+    private final StateService stateService;
 
-    @GetMapping("/states")
+    @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Busca todas as UFs brasileiras")
-    public LocationResponseDTO getStates() {
-        return locationService.getAllStates();
+    public StateResponseDTO getStates() {
+        return stateService.getAllStates();
     }
 
-    @GetMapping("/states/{stateId}/cities")
+    @GetMapping("/{stateId}/cities")
     @ResponseStatus(HttpStatus.OK)
-    @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Busca todos os municípios de uma determinada UF brasileira")
-    public LocationResponseDTO getCitiesByState(@PathVariable String stateId) {
-        return locationService.getCitiesByState(stateId);
+    public StateResponseDTO getCitiesByState(@PathVariable String stateId) {
+        return stateService.getCitiesByState(stateId);
     }
 }

@@ -1,8 +1,8 @@
 package com.pointtils.pointtils.src.application.clients;
 
-import com.pointtils.pointtils.src.application.dto.CityResponseDTO;
-import com.pointtils.pointtils.src.application.dto.LocationDataDTO;
-import com.pointtils.pointtils.src.application.dto.StateResponseDTO;
+import com.pointtils.pointtils.src.application.dto.CityIbgeResponseDTO;
+import com.pointtils.pointtils.src.application.dto.StateDataDTO;
+import com.pointtils.pointtils.src.application.dto.StateIbgeResponseDTO;
 import com.pointtils.pointtils.src.core.domain.exceptions.ClientTimeoutException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
@@ -35,11 +35,11 @@ public class IbgeClient {
         this.cityUrl = cityUrl;
     }
 
-    public List<LocationDataDTO> getStateList() {
+    public List<StateDataDTO> getStateList() {
         try {
             log.info("Iniciando uma requisicao para a API do IBGE para buscar a lista de UFs");
-            ResponseEntity<StateResponseDTO[]> stateResponse = restTemplate.getForEntity(stateUrl, StateResponseDTO[].class);
-            Function<StateResponseDTO, LocationDataDTO> mapper = state -> new LocationDataDTO(state.getAbbreviation());
+            ResponseEntity<StateIbgeResponseDTO[]> stateResponse = restTemplate.getForEntity(stateUrl, StateIbgeResponseDTO[].class);
+            Function<StateIbgeResponseDTO, StateDataDTO> mapper = state -> new StateDataDTO(state.getAbbreviation());
             return formatResponseData(stateResponse.getBody(), mapper, "UFs não encontradas");
         } catch (ResourceAccessException ex) {
             log.error("Timeout na requisicao para a API do IBGE para buscar a lista de UFs", ex);
@@ -47,11 +47,11 @@ public class IbgeClient {
         }
     }
 
-    public List<LocationDataDTO> getCityListByState(String state) {
+    public List<StateDataDTO> getCityListByState(String state) {
         try {
             log.info("Iniciando uma requisicao para a API do IBGE para buscar a lista de municípios da UF {}", state);
-            ResponseEntity<CityResponseDTO[]> cityResponse = restTemplate.getForEntity(cityUrl, CityResponseDTO[].class, state);
-            Function<CityResponseDTO, LocationDataDTO> mapper = city -> new LocationDataDTO(city.getName());
+            ResponseEntity<CityIbgeResponseDTO[]> cityResponse = restTemplate.getForEntity(cityUrl, CityIbgeResponseDTO[].class, state);
+            Function<CityIbgeResponseDTO, StateDataDTO> mapper = city -> new StateDataDTO(city.getName());
             return formatResponseData(cityResponse.getBody(), mapper, "Municípios não encontrados");
         } catch (ResourceAccessException ex) {
             log.error("Timeout na requisicao para a API do IBGE para buscar a lista de municípios da UF {}", state, ex);
@@ -59,15 +59,15 @@ public class IbgeClient {
         }
     }
 
-    private <T> List<LocationDataDTO> formatResponseData(T[] responseBody,
-                                                         Function<? super T, LocationDataDTO> mapper,
-                                                         String errorMessage) {
+    private <T> List<StateDataDTO> formatResponseData(T[] responseBody,
+                                                      Function<? super T, StateDataDTO> mapper,
+                                                      String errorMessage) {
         if (ArrayUtils.isEmpty(responseBody)) {
             throw new EntityNotFoundException(errorMessage);
         }
         return Arrays.stream(responseBody)
                 .map(mapper)
-                .sorted(Comparator.comparing(LocationDataDTO::getName))
+                .sorted(Comparator.comparing(StateDataDTO::getName))
                 .toList();
     }
 }

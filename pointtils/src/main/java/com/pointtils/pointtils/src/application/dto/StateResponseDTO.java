@@ -1,10 +1,11 @@
 package com.pointtils.pointtils.src.application.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -12,11 +13,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class StateResponseDTO {
 
-    private Long id;
-
-    @JsonProperty("sigla")
-    private String abbreviation;
-
-    @JsonProperty("nome")
-    private String name;
+    private boolean success;
+    private String message;
+    private List<StateDataDTO> data;
 }

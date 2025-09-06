@@ -10,9 +10,12 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CityResponseDTO {
+public class StateIbgeResponseDTO {
 
     private Long id;
+
+    @JsonProperty("sigla")
+    private String abbreviation;
 
     @JsonProperty("nome")
     private String name;
