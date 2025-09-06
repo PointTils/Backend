@@ -1,5 +1,7 @@
 package com.pointtils.pointtils.src.application.controllers;
 
+import java.util.UUID;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -89,7 +91,7 @@ class AuthControllerTest {
                                 true,
                                 "Autenticação realizada com sucesso",
                                 new LoginResponseDTO.Data(
-                                                new UserDTO(1L, "usuario@exemplo.com", "João Silva", "person",
+                                                new UserDTO(UUID.randomUUID(), "usuario@exemplo.com", "João Silva", "person",
                                                                 "active"),
                                                 new TokensDTO("access-token", "refresh-token", "Bearer", 3600,
                                                                 604800)));
@@ -121,7 +123,7 @@ class AuthControllerTest {
                                 true,
                                 "Autenticação realizada com sucesso",
                                 new LoginResponseDTO.Data(
-                                                new UserDTO(1L, "enterprise@exemplo.com", "Empresa Exemplo",
+                                                new UserDTO(UUID.randomUUID(), "enterprise@exemplo.com", "Empresa Exemplo",
                                                                 "enterprise", "active"),
                                                 new TokensDTO("access-token", "refresh-token", "Bearer", 3600,
                                                                 604800)));
@@ -270,7 +272,7 @@ class AuthControllerTest {
                                 true,
                                 "Autenticação realizada com sucesso",
                                 new LoginResponseDTO.Data(
-                                                new UserDTO(1L, "usuario@exemplo.com", "João Silva", "person",
+                                                new UserDTO(UUID.randomUUID(), "usuario@exemplo.com", "João Silva", "person",
                                                                 "active"),
                                                 new TokensDTO("access-token", "refresh-token", "Bearer", 3600,
                                                                 604800)));
