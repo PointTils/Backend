@@ -1,7 +1,5 @@
-package com.pointtils.pointtils;
+package com.pointtils.pointtils.src.infrastructure.configs;
 
-import com.pointtils.pointtils.src.infrastructure.configs.JwtAuthenticationFilter;
-import com.pointtils.pointtils.src.infrastructure.configs.SecurityConfiguration;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -11,7 +9,10 @@ import org.springframework.web.cors.CorsConfigurationSource;
 
 import java.lang.reflect.Method;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(MockitoExtension.class)
 class SecurityConfigurationTest {
@@ -42,7 +43,7 @@ class SecurityConfigurationTest {
         Method corsConfigurationSourceMethod = SecurityConfiguration.class.getDeclaredMethod("corsConfigurationSource");
         corsConfigurationSourceMethod.setAccessible(true);
         CorsConfigurationSource corsConfigurationSource = (CorsConfigurationSource) corsConfigurationSourceMethod.invoke(securityConfiguration);
-        
+
         MockHttpServletRequest request = new MockHttpServletRequest();
         var corsConfiguration = corsConfigurationSource.getCorsConfiguration(request);
 
@@ -61,7 +62,7 @@ class SecurityConfigurationTest {
         Method corsConfigurationSourceMethod = SecurityConfiguration.class.getDeclaredMethod("corsConfigurationSource");
         corsConfigurationSourceMethod.setAccessible(true);
         CorsConfigurationSource corsConfigurationSource = (CorsConfigurationSource) corsConfigurationSourceMethod.invoke(securityConfiguration);
-        
+
         MockHttpServletRequest request = new MockHttpServletRequest();
         var corsConfiguration = corsConfigurationSource.getCorsConfiguration(request);
 
@@ -84,7 +85,7 @@ class SecurityConfigurationTest {
         Method corsConfigurationSourceMethod = SecurityConfiguration.class.getDeclaredMethod("corsConfigurationSource");
         corsConfigurationSourceMethod.setAccessible(true);
         CorsConfigurationSource corsConfigurationSource = (CorsConfigurationSource) corsConfigurationSourceMethod.invoke(securityConfiguration);
-        
+
         MockHttpServletRequest request = new MockHttpServletRequest();
         var corsConfiguration = corsConfigurationSource.getCorsConfiguration(request);
 
@@ -107,7 +108,7 @@ class SecurityConfigurationTest {
         Method corsConfigurationSourceMethod = SecurityConfiguration.class.getDeclaredMethod("corsConfigurationSource");
         corsConfigurationSourceMethod.setAccessible(true);
         CorsConfigurationSource corsConfigurationSource = (CorsConfigurationSource) corsConfigurationSourceMethod.invoke(securityConfiguration);
-        
+
         MockHttpServletRequest request = new MockHttpServletRequest();
         var corsConfiguration = corsConfigurationSource.getCorsConfiguration(request);
 
@@ -125,7 +126,7 @@ class SecurityConfigurationTest {
         Method corsConfigurationSourceMethod = SecurityConfiguration.class.getDeclaredMethod("corsConfigurationSource");
         corsConfigurationSourceMethod.setAccessible(true);
         CorsConfigurationSource corsConfigurationSource = (CorsConfigurationSource) corsConfigurationSourceMethod.invoke(securityConfiguration);
-        
+
         MockHttpServletRequest request = new MockHttpServletRequest();
         var corsConfiguration = corsConfigurationSource.getCorsConfiguration(request);
 

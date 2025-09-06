@@ -1,14 +1,12 @@
-package com.pointtils.pointtils.dto;
+package com.pointtils.pointtils.src.application.dto;
+
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.Test;
-
-import com.pointtils.pointtils.src.application.dto.RefreshTokenResponseDTO;
-import com.pointtils.pointtils.src.application.dto.TokensDTO;
 
 class RefreshTokenResponseDTOTest {
 
