@@ -111,10 +111,7 @@ public class AuthService {
         );
     }
 
-    public void logout(String accessToken, String refreshToken) {
-        if (accessToken == null || accessToken.isBlank()) {
-            throw new AuthenticationException("Access token não fornecido");
-        }
+    public Boolean logout(String accessToken, String refreshToken) {
         if (refreshToken == null || refreshToken.isBlank()) {
             throw new AuthenticationException("Refresh token não fornecido");
         }
@@ -127,5 +124,7 @@ public class AuthService {
         }
 
         redisBlacklistService.addToBlacklist(accessToken);
+
+        return true;
     }
 }
