@@ -11,9 +11,9 @@ import com.pointtils.pointtils.src.core.domain.entities.User;
 @Repository
 public interface LocationRepository extends JpaRepository<Location, Long> {
     
-    List<Location> findByUser(User user);
+    Location findByUser(User user);
     
-    List<Location> findByUf(String uf);
+    Location findByUf(String uf);
     
-    List<Location> findByUfAndCity(String uf, String city);
+    Location findByUfAndCity(String uf, String city);
 }

@@ -2,6 +2,8 @@ package com.pointtils.pointtils.src.application.dto;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -15,6 +17,7 @@ public class InterpreterRequestDTO {
     
     @NotNull(message = "Personal data is required")
     @Valid
+    @JsonProperty("personal_data")
     private PersonalDataDTO personalData;
     
     @NotNull(message = "Location is required")
@@ -23,9 +26,11 @@ public class InterpreterRequestDTO {
     
     @NotNull(message = "Professional data is required")
     @Valid
+    @JsonProperty("professional_data")
     private ProfessionalDataDTO professionalData;
     
     private List<Integer> specialties;
     
+    @JsonProperty("initial_schedule")
     private List<InitialScheduleDTO> initialSchedule;
 }

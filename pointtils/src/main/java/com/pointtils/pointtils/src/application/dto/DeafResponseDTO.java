@@ -38,7 +38,7 @@ public class DeafResponseDTO {
         this.gender = person.getGender() != null ? person.getGender().name() : null;
         this.birthday = person.getBirthday() != null ? person.getBirthday().toString() : null;
         this.cpf = person.getCpf();
-        this.location = LocationMapper.toDto(person.getLocations());
+        this.location = LocationMapper.toDto(person.getLocation());
         this.accessibility_preferences = AccessibilityMapper.toDto(person.getAp());
     }
 

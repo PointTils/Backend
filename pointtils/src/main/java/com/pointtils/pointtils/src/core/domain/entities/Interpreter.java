@@ -1,30 +1,39 @@
 package com.pointtils.pointtils.src.core.domain.entities;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrimaryKeyJoinColumn;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "interpreter")
 @PrimaryKeyJoinColumn(name = "id")
+@SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
+@ToString
 public class Interpreter extends Person {
     
     private String cnpj;
+
     private Double rating;
 
     @Column(name = "min_value")
@@ -41,4 +50,7 @@ public class Interpreter extends Person {
 
     @Column(columnDefinition = "TEXT")
     private String description;
+
+    @OneToMany(mappedBy = "interpreter", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Schedule> schedules;
 }

@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.pointtils.pointtils.src.application.dto.DeafRequestDTO;
 import com.pointtils.pointtils.src.application.dto.DeafResponseDTO;
 import com.pointtils.pointtils.src.application.mapper.AccessibilityMapper;
+import com.pointtils.pointtils.src.core.domain.entities.Location;
 import com.pointtils.pointtils.src.core.domain.entities.Person;
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
@@ -24,7 +25,6 @@ public class DeafRegisterService {
     
     private final PersonRepository personRepository;
     private final PasswordEncoder passwordEncoder;
-    private final LocationService locationService;
     
     public DeafResponseDTO registerPerson(DeafRequestDTO dto) {
         Person person = new Person();
@@ -40,13 +40,18 @@ public class DeafRegisterService {
         person.setBirthday(dto.getBirthday());
         person.setCpf(dto.getCpf());
         person.setAp(AccessibilityMapper.toDomain(dto.getAccessibility()));
-
-        Person savedPerson = personRepository.save(person);
         
         if (dto.getLocation() != null) {
-            locationService.saveLocation(dto.getLocation(), savedPerson);
+            Location location = Location.builder()
+            .uf(dto.getLocation().getUf())
+            .city(dto.getLocation().getCity())
+            .user(person)
+            .build();
+        
+            person.setLocation(location);
         }
-
+        Person savedPerson = personRepository.save(person);
+        
         return new DeafResponseDTO(savedPerson);
     }
 
@@ -87,12 +92,6 @@ public class DeafRegisterService {
         if (dto.getCpf() != null) {
             person.setCpf(dto.getCpf());
         }
-        
-        // Atualizar localização se fornecida
-        if (dto.getLocation() != null) {
-            locationService.updateUserLocation(person, dto.getLocation());
-        }
-
         Person updated = personRepository.save(person);
         return new DeafResponseDTO(updated);
     }

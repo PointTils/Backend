@@ -14,13 +14,16 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.PrimaryKeyJoinColumn;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 @Table(name = "person")
 @Entity
 @PrimaryKeyJoinColumn(name = "id")
+@SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter

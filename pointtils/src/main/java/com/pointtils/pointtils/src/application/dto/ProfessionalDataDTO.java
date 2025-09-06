@@ -2,15 +2,19 @@ package com.pointtils.pointtils.src.application.dto;
 
 import java.math.BigDecimal;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProfessionalDataDTO {
@@ -25,10 +29,12 @@ public class ProfessionalDataDTO {
     
     @NotNull(message = "Minimum value is required")
     @DecimalMin(value = "0.0", message = "Minimum value must be positive")
+    @JsonProperty("min_value")  // Mapeia snake_case para camelCase
     private BigDecimal minValue;
     
     @NotNull(message = "Maximum value is required")
     @DecimalMin(value = "0.0", message = "Maximum value must be positive")
+    @JsonProperty("max_value")
     private BigDecimal maxValue;
     
     @NotBlank(message = "Modality is required")
@@ -38,5 +44,6 @@ public class ProfessionalDataDTO {
     private String description;
     
     @NotNull(message = "Image rights agreement is required")
+    @JsonProperty("image_rights")
     private Boolean imageRights;
 }

@@ -6,19 +6,23 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @Entity
 @Table(name = "location")
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
+@ToString
 public class Location {
     
     @Id
@@ -31,10 +35,16 @@ public class Location {
     @Column(name = "city", length = 255)
     private String city;
     
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @OneToOne
+    @JoinColumn(name = "fk_location_user_id_user", nullable = false)
     private User user;
-    
+
+    public Location(String uf, String city, User user) {
+        this.uf = uf;
+        this.city = city;
+        this.user = user;
+    }
+
     public Location(String uf, String city) {
         this.uf = uf;
         this.city = city;

@@ -19,7 +19,6 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-
 public class DeafRequestDTO {
     
     @NotBlank(message = "Name is required")
