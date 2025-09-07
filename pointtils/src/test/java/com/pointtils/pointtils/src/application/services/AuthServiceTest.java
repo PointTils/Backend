@@ -3,6 +3,9 @@ package com.pointtils.pointtils.src.application.services;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.util.UUID;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,7 +51,7 @@ class AuthServiceTest {
     @DisplayName("Deve autenticar usuario pessoa com sucesso")
     void deveAutenticarUsuarioPessoaComSucesso() {
         Person person = new Person();
-        person.setId(1L);
+        person.setId(UUID.randomUUID());
         person.setEmail("test@email.com");
         person.setPassword("password123");
         person.setName("Test User");
