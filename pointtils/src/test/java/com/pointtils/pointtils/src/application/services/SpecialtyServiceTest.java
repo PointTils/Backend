@@ -262,4 +262,73 @@ class SpecialtyServiceTest {
         verify(specialtyRepository).findById(specialtyId);
         verify(specialtyRepository, never()).delete(any(Specialty.class));
     }
+
+    @Test
+    void partialUpdateSpecialty_WhenNameProvidedAndNotTaken_ShouldUpdateSpecialty() {
+        // Arrange
+        Specialty existingSpecialty = new Specialty("Old Name");
+        existingSpecialty.setId(specialtyId);
+        
+        when(specialtyRepository.findById(specialtyId)).thenReturn(Optional.of(existingSpecialty));
+        when(specialtyRepository.existsByName("New Name")).thenReturn(false);
+        when(specialtyRepository.save(any(Specialty.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        Specialty result = specialtyService.partialUpdateSpecialty(specialtyId, "New Name");
+
+        // Assert
+        assertNotNull(result);
+        assertEquals("New Name", result.getName());
+        verify(specialtyRepository).findById(specialtyId);
+        verify(specialtyRepository).existsByName("New Name");
+        verify(specialtyRepository).save(any(Specialty.class));
+    }
+
+    @Test
+    void partialUpdateSpecialty_WhenNameIsNull_ShouldNotUpdateName() {
+        // Arrange
+        Specialty existingSpecialty = new Specialty("Old Name");
+        existingSpecialty.setId(specialtyId);
+        
+        when(specialtyRepository.findById(specialtyId)).thenReturn(Optional.of(existingSpecialty));
+        when(specialtyRepository.save(any(Specialty.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        Specialty result = specialtyService.partialUpdateSpecialty(specialtyId, null);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals("Old Name", result.getName()); // Name should remain unchanged
+        verify(specialtyRepository).findById(specialtyId);
+        verify(specialtyRepository, never()).existsByName(anyString());
+        verify(specialtyRepository).save(any(Specialty.class));
+    }
+
+    @Test
+    void partialUpdateSpecialty_WhenNameTakenByDifferentSpecialty_ShouldThrowException() {
+        // Arrange
+        Specialty existingSpecialty = new Specialty("Old Name");
+        existingSpecialty.setId(specialtyId);
+        
+        when(specialtyRepository.findById(specialtyId)).thenReturn(Optional.of(existingSpecialty));
+        when(specialtyRepository.existsByName("Taken Name")).thenReturn(true);
+
+        // Act & Assert
+        assertThrows(RuntimeException.class, () -> specialtyService.partialUpdateSpecialty(specialtyId, "Taken Name"));
+        verify(specialtyRepository).findById(specialtyId);
+        verify(specialtyRepository).existsByName("Taken Name");
+        verify(specialtyRepository, never()).save(any(Specialty.class));
+    }
+
+    @Test
+    void partialUpdateSpecialty_WhenSpecialtyNotExists_ShouldThrowException() {
+        // Arrange
+        when(specialtyRepository.findById(specialtyId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(RuntimeException.class, () -> specialtyService.partialUpdateSpecialty(specialtyId, "New Name"));
+        verify(specialtyRepository).findById(specialtyId);
+        verify(specialtyRepository, never()).existsByName(anyString());
+        verify(specialtyRepository, never()).save(any(Specialty.class));
+    }
 }

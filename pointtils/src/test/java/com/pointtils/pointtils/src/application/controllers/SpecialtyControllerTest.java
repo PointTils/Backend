@@ -90,6 +90,35 @@ class SpecialtyControllerTest {
     }
 
     @Test
+    void searchSpecialtiesByName_ShouldReturnMatchingSpecialties() throws Exception {
+        // Arrange
+        when(specialtyService.searchSpecialtiesByName("test")).thenReturn(List.of(specialty));
+
+        // Act & Assert
+        mockMvc.perform(get("/v1/specialties/search")
+                .param("name", "test"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(specialtyId.toString()))
+                .andExpect(jsonPath("$[0].name").value("Test Specialty"));
+
+        verify(specialtyService).searchSpecialtiesByName("test");
+    }
+
+    @Test
+    void searchSpecialtiesByName_WhenServiceThrowsException_ShouldReturnInternalServerError() throws Exception {
+        // Arrange
+        when(specialtyService.searchSpecialtiesByName("test"))
+            .thenThrow(new RuntimeException("Database error"));
+
+        // Act & Assert
+        mockMvc.perform(get("/v1/specialties/search")
+                .param("name", "test"))
+                .andExpect(status().isInternalServerError());
+
+        verify(specialtyService).searchSpecialtiesByName("test");
+    }
+
+    @Test
     void createSpecialty_ShouldCreateSpecialty() throws Exception {
         // Arrange
         when(specialtyService.createSpecialty("New Specialty")).thenReturn(specialty);
