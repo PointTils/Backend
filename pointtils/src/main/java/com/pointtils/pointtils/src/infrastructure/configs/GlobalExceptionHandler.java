@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
+import com.pointtils.pointtils.src.core.domain.exceptions.UserSpecialtyException;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
@@ -105,6 +106,15 @@ public class GlobalExceptionHandler {
                 message,
                 System.currentTimeMillis());
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(UserSpecialtyException.class)
+    public ResponseEntity<ErrorResponse> handleUserSpecialty(UserSpecialtyException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                System.currentTimeMillis());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
     @Data
