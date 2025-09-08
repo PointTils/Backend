@@ -12,7 +12,7 @@ terraform {
   backend "s3" {
     bucket         = "pointtils-terraform-state"  # Precisa criar esse bucket manualmente antes
     key            = "terraform.tfstate"
-    region         = "us-east-1"
+    region         = "us-east-2"
     encrypt        = true
   }
 }
