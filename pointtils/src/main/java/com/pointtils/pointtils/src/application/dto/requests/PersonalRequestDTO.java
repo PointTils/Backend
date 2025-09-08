@@ -1,4 +1,4 @@
-package com.pointtils.pointtils.src.application.dto;
+package com.pointtils.pointtils.src.application.dto.requests;
 
 import java.time.LocalDate;
 
@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PersonalDataDTO {
+public class PersonalRequestDTO {
     
     @NotBlank(message = "Name is required")
     private String name;
@@ -31,7 +31,7 @@ public class PersonalDataDTO {
     private String phone;
     
     @NotBlank(message = "Gender is required")
-    @Pattern(regexp = "^[MF]$", message = "Gender must be M or F")
+    @Pattern(regexp = "^[MFO]$", message = "Gender must be M,F or O")
     private String gender;
     
     @NotNull(message = "Birthday is required")
@@ -40,5 +40,5 @@ public class PersonalDataDTO {
     @NotBlank(message = "CPF is required")
     private String cpf;
     
-    private String picture; 
+    private String picture;
 }

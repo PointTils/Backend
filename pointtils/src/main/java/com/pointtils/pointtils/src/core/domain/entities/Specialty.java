@@ -29,4 +29,8 @@ public class Specialty {
 
     @ManyToMany(mappedBy = "specialties")
     private Set<User> users = new HashSet<>();
+
+    public Specialty(Integer id){
+        this.id = id;
+    }
 }

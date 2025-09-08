@@ -1,17 +1,16 @@
 package com.pointtils.pointtils.src.core.domain.entities;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import jakarta.persistence.PrimaryKeyJoinColumn;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -51,6 +50,4 @@ public class Interpreter extends Person {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @OneToMany(mappedBy = "interpreter", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Schedule> schedules;
 }

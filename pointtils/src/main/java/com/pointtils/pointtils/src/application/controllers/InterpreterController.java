@@ -7,9 +7,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.pointtils.pointtils.src.application.dto.ApiResponse;
-import com.pointtils.pointtils.src.application.dto.InterpreterRequestDTO;
-import com.pointtils.pointtils.src.application.dto.InterpreterResponseDTO;
+import com.pointtils.pointtils.src.application.dto.requests.InterpreterRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.ApiResponse;
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
 import com.pointtils.pointtils.src.application.services.InterpreterRegisterService;
 
 import jakarta.validation.Valid;
@@ -22,14 +22,18 @@ public class InterpreterController {
     
     private final InterpreterRegisterService service;
 
-    @PostMapping("/register/interpreter")
+    @PostMapping("/register")
     public ResponseEntity<ApiResponse<InterpreterResponseDTO>> createInterpreter(
             @Valid @RequestBody InterpreterRequestDTO dto) {
-        
-        var interpetrer = service.register(dto);
-
-        ApiResponse<InterpreterResponseDTO> response = new ApiResponse<InterpreterResponseDTO>(true, "Interpreter registered with sucessely", interpetrer);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        try {
+            var interpetrer = service.register(dto);
+            ApiResponse<InterpreterResponseDTO> response =
+                ApiResponse.success("Intérprete cadastrado com sucesso", interpetrer);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (Exception e) {
+            ApiResponse<InterpreterResponseDTO> errorResponse = ApiResponse.error("Erro ao cadastrar intérprete: " + e.getMessage());
+                ApiResponse.error("Erro ao cadastrar intérprete: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        }
     }
 }

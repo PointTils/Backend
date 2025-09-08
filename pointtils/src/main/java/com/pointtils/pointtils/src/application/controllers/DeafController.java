@@ -11,9 +11,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.pointtils.pointtils.src.application.dto.ApiResponse;
-import com.pointtils.pointtils.src.application.dto.DeafRequestDTO;
-import com.pointtils.pointtils.src.application.dto.DeafResponseDTO;
+import com.pointtils.pointtils.src.application.dto.requests.DeafRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.ApiResponse;
+import com.pointtils.pointtils.src.application.dto.responses.DeafResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
 import com.pointtils.pointtils.src.application.services.DeafRegisterService;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -30,9 +31,15 @@ public class DeafController {
 
     @PostMapping("register/person")
     public ResponseEntity<ApiResponse<DeafResponseDTO>> createUser(@Valid @RequestBody DeafRequestDTO dto) {
-        DeafResponseDTO created = service.registerPerson(dto);
-        ApiResponse<DeafResponseDTO> response = new ApiResponse<DeafResponseDTO>(true, "User Register Successfully!", created);
+        try {
+            DeafResponseDTO created = service.registerPerson(dto);
+        ApiResponse<DeafResponseDTO> response = ApiResponse.success("Usuário surdo cadastrado com sucesso", created);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (Exception e) {
+            ApiResponse<DeafResponseDTO> errorResponse =
+                ApiResponse.error("Erro ao cadastrar usuário surdo: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        }
     }
 
     @GetMapping("/{id}")

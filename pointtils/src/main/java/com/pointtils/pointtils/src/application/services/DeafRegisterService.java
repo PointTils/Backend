@@ -5,9 +5,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.pointtils.pointtils.src.application.dto.DeafRequestDTO;
-import com.pointtils.pointtils.src.application.dto.DeafResponseDTO;
-import com.pointtils.pointtils.src.application.mapper.AccessibilityMapper;
+import com.pointtils.pointtils.src.application.dto.requests.DeafRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.DeafResponseDTO;
+import com.pointtils.pointtils.src.application.mapper.DeafResponseMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Location;
 import com.pointtils.pointtils.src.core.domain.entities.Person;
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
@@ -25,21 +25,21 @@ public class DeafRegisterService {
     
     private final PersonRepository personRepository;
     private final PasswordEncoder passwordEncoder;
+    private final DeafResponseMapper deafResponseMapper;
     
     public DeafResponseDTO registerPerson(DeafRequestDTO dto) {
         Person person = new Person();
 
-        person.setEmail(dto.getEmail());
-        person.setPassword(passwordEncoder.encode(dto.getPassword()));
-        person.setPhone(dto.getPhone());
-        person.setPicture(dto.getPicture());
+        person.setEmail(dto.getPersonalRequestDTO().getEmail());
+        person.setPassword(passwordEncoder.encode(dto.getPersonalRequestDTO().getPassword()));
+        person.setPhone(dto.getPersonalRequestDTO().getPhone());
+        person.setPicture(dto.getPersonalRequestDTO().getPicture());
         person.setStatus(UserStatus.ACTIVE);
-        person.setType(UserTypeE.CLIENT);
-        person.setName(dto.getName());
-        person.setGender(Gender.fromString(dto.getGender()));
-        person.setBirthday(dto.getBirthday());
-        person.setCpf(dto.getCpf());
-        person.setAp(AccessibilityMapper.toDomain(dto.getAccessibility()));
+        person.setType(UserTypeE.PERSON);
+        person.setName(dto.getPersonalRequestDTO().getName());
+        person.setGender(Gender.fromString(dto.getPersonalRequestDTO().getGender()));
+        person.setBirthday(dto.getPersonalRequestDTO().getBirthday());
+        person.setCpf(dto.getPersonalRequestDTO().getCpf());
         
         if (dto.getLocation() != null) {
             Location location = Location.builder()
@@ -51,48 +51,51 @@ public class DeafRegisterService {
             person.setLocation(location);
         }
         Person savedPerson = personRepository.save(person);
-        
-        return new DeafResponseDTO(savedPerson);
+        DeafResponseDTO response = deafResponseMapper.toResponseDTO(savedPerson);
+        return response;
     }
 
 
     public DeafResponseDTO findById(Long id) {
         Person person = personRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
-        return new DeafResponseDTO(person);
+        DeafResponseDTO response = deafResponseMapper.toResponseDTO(person);
+        return response;
     }
 
-    @Transactional
+
     public void delete(Long id) {
         if (!personRepository.existsById(id)) {
             throw new EntityNotFoundException("User not found with id: " + id);
         }
         personRepository.deleteById(id);
     }
-    @Transactional
+
     public DeafResponseDTO updatePartial(Long id, DeafRequestDTO dto) {
         Person person = personRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
 
-        if (dto.getName() != null) {
-            person.setName(dto.getName());
+        if (dto.getPersonalRequestDTO().getName() != null) {
+            person.setName(dto.getPersonalRequestDTO().getName());
         }
-        if (dto.getPassword() != null) {
-            person.setPassword(passwordEncoder.encode(dto.getPassword()));
+        if (dto.getPersonalRequestDTO().getPassword() != null) {
+            person.setPassword(passwordEncoder.encode(dto.getPersonalRequestDTO().getPassword()));
         }
-        if (dto.getPhone() != null) {
-            person.setPhone(dto.getPhone());
+        if (dto.getPersonalRequestDTO().getPhone() != null) {
+            person.setPhone(dto.getPersonalRequestDTO().getPhone());
         }
-        if (dto.getPicture() != null) {
-            person.setPicture(dto.getPicture());
+        if (dto.getPersonalRequestDTO().getPicture() != null) {
+            person.setPicture(dto.getPersonalRequestDTO().getPicture());
         }
-        if (dto.getBirthday() != null) {
-            person.setBirthday(dto.getBirthday());
+        if (dto.getPersonalRequestDTO().getBirthday() != null) {
+            person.setBirthday(dto.getPersonalRequestDTO().getBirthday());
         }
-        if (dto.getCpf() != null) {
-            person.setCpf(dto.getCpf());
+        if (dto.getPersonalRequestDTO().getCpf() != null) {
+            person.setCpf(dto.getPersonalRequestDTO().getCpf());
         }
         Person updated = personRepository.save(person);
-        return new DeafResponseDTO(updated);
+
+        DeafResponseDTO response = deafResponseMapper.toResponseDTO(updated);
+        return response;
     }
 }

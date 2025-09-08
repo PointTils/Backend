@@ -1,4 +1,4 @@
-package com.pointtils.pointtils.src.application.dto;
+package com.pointtils.pointtils.src.application.dto.requests;
 
 import java.math.BigDecimal;
 
@@ -17,15 +17,11 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProfessionalDataDTO {
+public class ProfessionalRequestDTO {
     
     @NotBlank(message = "CNPJ is required")
     @Pattern(regexp = "\\d{14}", message = "CNPJ must have 14 digits")
     private String cnpj;
-    
-    @NotNull(message = "Rating is required")
-    @DecimalMin(value = "0.0", message = "Rating must be non-negative")
-    private Double rating;
     
     @NotNull(message = "Minimum value is required")
     @DecimalMin(value = "0.0", message = "Minimum value must be positive")
