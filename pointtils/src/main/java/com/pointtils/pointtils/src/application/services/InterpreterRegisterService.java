@@ -15,6 +15,7 @@ import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -61,5 +62,88 @@ public class InterpreterRegisterService {
         
         InterpreterResponseDTO response = responseMapper.toResponseDTO(savedInterpreter);
         return response;
+    }
+
+    public void delete(Long id) {
+        if (!repository.existsById(id)) {
+            throw new EntityNotFoundException("User not found with id: " + id);
+        }
+        repository.deleteById(id);
+    }
+
+    @Transactional
+    public InterpreterResponseDTO updatePartial(Long id, InterpreterRequestDTO dto) {
+        Interpreter interpreter = repository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Intérprete não encontrado"));
+        // (personalData)
+        if (dto.getPersonalData() != null) {
+            var p = dto.getPersonalData();
+
+            if (p.getName() != null) {
+                interpreter.setName(p.getName());
+            }
+            if (p.getPassword() != null) {
+                interpreter.setPassword(passwordEncoder.encode(p.getPassword()));
+            }
+            if (p.getPhone() != null) {
+                interpreter.setPhone(p.getPhone());
+            }
+            if (p.getPicture() != null) {
+                interpreter.setPicture(p.getPicture());
+            }
+            if (p.getBirthday() != null) {
+                interpreter.setBirthday(p.getBirthday());
+            }
+            if (p.getCpf() != null) {
+                interpreter.setCpf(p.getCpf());
+            }
+            if (p.getEmail() != null) {
+                interpreter.setEmail(p.getEmail());
+            }
+            if (p.getGender() != null) {
+                interpreter.setGender(Gender.fromString(p.getGender()));
+            }
+        }
+        //(location) 
+        if (dto.getLocation() != null) {
+            var l = dto.getLocation();
+            Location loc = interpreter.getLocation();
+            if (loc == null) {
+                loc = Location.builder().user(interpreter).build();
+            }
+            if (l.getUf() != null) {
+                loc.setUf(l.getUf());
+            }
+            if (l.getCity() != null) {
+                loc.setCity(l.getCity());
+            }
+            interpreter.setLocation(loc);
+        }
+        //professionalData)
+        if (dto.getProfessionalData() != null) {
+            var prof = dto.getProfessionalData();
+
+            if (prof.getCnpj() != null) {
+                interpreter.setCnpj(prof.getCnpj());
+            }
+            if (prof.getMinValue() != null) {
+                interpreter.setMinValue(prof.getMinValue());
+            }
+            if (prof.getMaxValue() != null) {
+                interpreter.setMaxValue(prof.getMaxValue());
+            }
+            if (prof.getImageRights() != null) {
+                interpreter.setImageRights(prof.getImageRights());
+            }
+            if (prof.getModality() != null) {
+                interpreter.setModality(InterpreterMapper.toInterpreterModality(prof.getModality()));
+            }
+            if (prof.getDescription() != null) {
+                interpreter.setDescription(prof.getDescription());
+            }
+        }
+
+        Interpreter updated = repository.save(interpreter);
+        return responseMapper.toResponseDTO(updated);
     }
 }
