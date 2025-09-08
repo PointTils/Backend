@@ -3,6 +3,7 @@ package com.pointtils.pointtils.src.infrastructure.configs;
 
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
 import com.pointtils.pointtils.src.core.domain.exceptions.ClientTimeoutException;
+import com.pointtils.pointtils.src.core.domain.exceptions.UserSpecialtyException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -114,6 +115,15 @@ public class GlobalExceptionHandler {
                 System.currentTimeMillis());
 
         return new ResponseEntity<>(errorResponse, HttpStatus.GATEWAY_TIMEOUT);
+    }
+
+    @ExceptionHandler(UserSpecialtyException.class)
+    public ResponseEntity<ErrorResponse> handleUserSpecialty(UserSpecialtyException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                System.currentTimeMillis());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
     @Data
