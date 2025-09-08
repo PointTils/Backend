@@ -337,6 +337,21 @@ jobs:
             }
           }
           
+          # Executar Flyway repair para resolver problemas de checksum das migrações
+          echo "=== Executando Flyway repair para corrigir checksums das migrações ==="
+          docker run --network host \
+            -e FLYWAY_URL=jdbc:postgresql://127.0.0.1:5432/pointtilsdb \
+            -e FLYWAY_USER=${{ secrets.DB_USERNAME }} \
+            -e FLYWAY_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            flyway/flyway:9-alpine repair
+          
+          echo "=== Status das migrações após reparo ==="
+          docker run --network host \
+            -e FLYWAY_URL=jdbc:postgresql://127.0.0.1:5432/pointtilsdb \
+            -e FLYWAY_USER=${{ secrets.DB_USERNAME }} \
+            -e FLYWAY_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            flyway/flyway:9-alpine info
+          
           docker-compose up -d
           
           # Verificar se o contêiner está em execução
