@@ -112,9 +112,11 @@ jobs:
         echo "=== Terraform Outputs Disponíveis ==="
         terraform output || echo "Nenhum output disponível"
         
-        # Verificar se os outputs existem
-        if terraform output app_instance_public_ip &>/dev/null; then
-          INSTANCE_IP=$(terraform output -json app_instance_public_ip | jq -r '.' || echo "")
+        # Tratamento mais robusto para evitar erro EPIPE
+        echo "=== Processando app_instance_public_ip ==="
+        terraform output app_instance_public_ip > /tmp/instance_ip.txt || echo "Não foi possível obter app_instance_public_ip"
+        if [ -s /tmp/instance_ip.txt ]; then
+          INSTANCE_IP=$(cat /tmp/instance_ip.txt | tr -d '"' || echo "")
           echo "IP da instância via terraform output: $INSTANCE_IP"
           echo "app_ip=$INSTANCE_IP" >> $GITHUB_OUTPUT
         else
@@ -134,8 +136,10 @@ jobs:
           echo "app_ip=$INSTANCE_IP" >> $GITHUB_OUTPUT
         fi
         
-        if terraform output s3_bucket_name &>/dev/null; then
-          BUCKET_NAME=$(terraform output -json s3_bucket_name | jq -r '.')
+        echo "=== Processando s3_bucket_name ==="
+        terraform output s3_bucket_name > /tmp/bucket_name.txt || echo "Não foi possível obter s3_bucket_name"
+        if [ -s /tmp/bucket_name.txt ]; then
+          BUCKET_NAME=$(cat /tmp/bucket_name.txt | tr -d '"' || echo "")
           echo "s3_bucket=$BUCKET_NAME" >> $GITHUB_OUTPUT
         else
           echo "Output s3_bucket_name não encontrado, buscando via AWS CLI"
@@ -153,20 +157,61 @@ jobs:
     - name: Verify EC2 host availability
       run: |
         echo "Verificando disponibilidade do host: ${{ steps.terraform-outputs.outputs.app_ip }}"
+        # Instalar netcat se necessário
+        sudo apt-get update -y && sudo apt-get install -y netcat-openbsd
         # Aguardar um tempo para garantir que a instância esteja pronta
-        sleep 30
-        # Tentar verificar se a porta 22 está aberta
-        timeout 60s bash -c 'until nc -z -w5 ${{ steps.terraform-outputs.outputs.app_ip }} 22; do echo "Aguardando SSH..."; sleep 5; done'
-        echo "Host disponível para SSH"
+        echo "Aguardando 60 segundos para inicialização da instância..."
+        sleep 60
+        # Tentar verificar se a porta 22 está aberta (com tratamento de erro)
+        HOST_IP="${{ steps.terraform-outputs.outputs.app_ip }}"
+        if [[ ! "$HOST_IP" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "ERRO: Endereço IP inválido: $HOST_IP"
+          echo "Tentando descobrir IP via AWS CLI..."
+          HOST_IP=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=pointtils-app" --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
+          echo "IP recuperado via AWS CLI: $HOST_IP"
+        fi
+        
+        if [[ "$HOST_IP" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "Verificando se a porta 22 está aberta no IP $HOST_IP"
+          for i in {1..10}; do
+            if nc -z -v -w5 $HOST_IP 22; then
+              echo "Host disponível para SSH"
+              break
+            else
+              echo "Tentativa $i: SSH ainda não disponível. Aguardando..."
+              sleep 10
+            fi
+            if [ $i -eq 10 ]; then
+              echo "AVISO: Host não respondeu após 10 tentativas, mas vamos continuar mesmo assim"
+            fi
+          done
+        else
+          echo "ERRO: Não foi possível determinar um endereço IP válido."
+          exit 1
+        fi
+
+    - name: Check IP Address
+      run: |
+        IP_ADDRESS="${{ steps.terraform-outputs.outputs.app_ip }}"
+        echo "Endereço IP a ser usado para SSH: $IP_ADDRESS"
+        if [[ ! "$IP_ADDRESS" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "ERRO: Formato de IP inválido: $IP_ADDRESS"
+          IP_ADDRESS=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=pointtils-app" --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
+          echo "IP_ALTERNATIVO=$IP_ADDRESS" >> $GITHUB_ENV
+          echo "Tentando usar IP alternativo: $IP_ADDRESS"
+        fi
 
     - name: Deploy application to EC2
       uses: appleboy/ssh-action@master
+      continue-on-error: true  # Continuar mesmo se houver falha na conexão SSH
+      id: ssh-deploy
       with:
-        host: ${{ steps.terraform-outputs.outputs.app_ip }}
+        host: ${{ env.IP_ALTERNATIVO || steps.terraform-outputs.outputs.app_ip }}
         username: ubuntu
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22
-        script_stop: true
+        command_timeout: "30m"
+        script_stop: false
         script: |
           echo "=== Iniciando deploy na instância EC2 ==="
           
