@@ -289,6 +289,7 @@ jobs:
                 - SPRING_FLYWAY_LOCATIONS=classpath:db/migration
                 - SPRING_FLYWAY_BASELINE_ON_MIGRATE=true
                 - SPRING_FLYWAY_VALIDATE_ON_MIGRATE=true
+                - SPRING_FLYWAY_REPAIR_ON_MIGRATE=true
                 
                 # Configurações do Swagger/OpenAPI
                 - SPRINGDOC_API_DOCS_ENABLED=true
