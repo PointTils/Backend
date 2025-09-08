@@ -80,6 +80,15 @@ resource "aws_security_group" "app_sg" {
     description = "Allow HTTP traffic to the application"
   }
 
+  # Permitir PostgreSQL
+  ingress {
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow PostgreSQL"
+  }
+
   # Permitir SSH
   ingress {
     from_port   = 22
@@ -179,7 +188,7 @@ data "template_file" "user_data" {
               curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
               echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
               sudo apt-get update -y
-              sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+              sudo apt-get install -y docker-ce docker-ce-cli containerd.io awscli
               sudo systemctl enable docker
               sudo systemctl start docker
               sudo usermod -aG docker ubuntu
@@ -188,12 +197,17 @@ data "template_file" "user_data" {
               sudo curl -L "https://github.com/docker/compose/releases/download/v2.15.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
               sudo chmod +x /usr/local/bin/docker-compose
               
-              # Instalar PostgreSQL localmente (já que não temos RDS no orçamento)
+              # Instalar PostgreSQL localmente
               sudo apt-get install -y postgresql postgresql-contrib
               sudo systemctl enable postgresql
               sudo systemctl start postgresql
               
-              # Configurar PostgreSQL
+              # Configurar PostgreSQL para aceitar conexões de containers
+              sudo -u postgres psql -c "ALTER SYSTEM SET listen_addresses TO '*';"
+              sudo -u postgres bash -c 'echo "host    all             all             0.0.0.0/0               md5" >> /etc/postgresql/14/main/pg_hba.conf'
+              sudo systemctl restart postgresql
+              
+              # Configurar PostgreSQL usuário e banco
               sudo -u postgres psql -c "CREATE DATABASE pointtilsdb;"
               sudo -u postgres psql -c "CREATE USER pointtilsadmin WITH PASSWORD '${var.db_password}';"
               sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE pointtilsdb TO pointtilsadmin;"
@@ -203,6 +217,7 @@ data "template_file" "user_data" {
               SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/pointtilsdb
               SPRING_DATASOURCE_USERNAME=${var.db_username}
               SPRING_DATASOURCE_PASSWORD=${var.db_password}
+              AWS_REGION=${var.aws_region}
               ENVFILE
               
               echo "=== Configuração do servidor concluída ==="

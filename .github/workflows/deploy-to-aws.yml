@@ -230,6 +230,31 @@ jobs:
             exit 1
           fi
           
+          # Instalar e configurar AWS CLI
+          echo "=== Instalando AWS CLI ==="
+          sudo apt-get update -y
+          sudo apt-get install -y awscli python3-pip
+          
+          # Verificar instalação da AWS CLI
+          aws --version || {
+            echo "AWS CLI não está instalado, tentando com pip3"
+            pip3 install --user awscli
+            export PATH=$PATH:$HOME/.local/bin
+            aws --version || {
+              echo "Falha ao instalar AWS CLI"
+              exit 1
+            }
+          }
+          
+          # Configurar AWS CLI com as credenciais
+          mkdir -p ~/.aws
+          cat > ~/.aws/credentials << AWSCREDS
+          [default]
+          aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region=${{ secrets.AWS_REGION }}
+          AWSCREDS
+          
           # Criar diretório para a aplicação
           mkdir -p ~/pointtils
           
@@ -247,12 +272,24 @@ jobs:
                 - SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }}
                 - S3_BUCKET_NAME=${{ steps.terraform-outputs.outputs.s3_bucket }}
                 - AWS_REGION=${{ secrets.AWS_REGION }}
+                - AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+                - AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
               restart: always
+              network_mode: "host"  # Usar modo de rede host para facilitar conexão com PostgreSQL local
           EOF
           
           # Login no ECR
           echo "=== Fazendo login no ECR ==="
-          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
+          ECR_URL="${{ steps.terraform-outputs.outputs.ecr_repo }}"
+          ECR_REGISTRY="${ECR_URL%/*}"
+          
+          # Garantir que o login seja feito de forma não interativa
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} > ~/.ecr_password
+          cat ~/.ecr_password | docker login --username AWS --password-stdin $ECR_REGISTRY
+          rm -f ~/.ecr_password
+          
+          echo "=== Verificando login no ECR ==="
+          docker info | grep Registry || echo "Aviso: Registro não encontrado"
           
           # Parar contêineres anteriores, se existirem
           echo "=== Parando contêineres anteriores ==="
@@ -261,7 +298,18 @@ jobs:
           
           # Iniciar a aplicação
           echo "=== Iniciando a aplicação ==="
-          docker-compose pull
+          echo "Baixando imagem: ${{ steps.build-image.outputs.image }}"
+          docker pull ${{ steps.build-image.outputs.image }} || {
+            echo "Falha ao baixar imagem, tentando novamente com login manual"
+            echo "URL do ECR: $ECR_REGISTRY"
+            docker logout
+            aws ecr get-login --no-include-email --region ${{ secrets.AWS_REGION }} | bash
+            docker pull ${{ steps.build-image.outputs.image }} || {
+              echo "ERRO: Não foi possível baixar a imagem do ECR"
+              exit 1
+            }
+          }
+          
           docker-compose up -d
           
           # Verificar se o contêiner está em execução
@@ -281,9 +329,36 @@ jobs:
           sleep 10  # Aguardar alguns segundos para inicialização
           docker-compose logs app
           
+          # Verificar se o contêiner está em execução
+          echo "=== Verificando se o contêiner está em execução ==="
+          CONTAINER_RUNNING=$(docker ps | grep pointtils | grep -i up)
+          if [ -z "$CONTAINER_RUNNING" ]; then
+            echo "AVISO: Contêiner não parece estar em execução"
+            docker ps -a
+          else
+            echo "Contêiner em execução: $CONTAINER_RUNNING"
+          fi
+          
           # Testar se a aplicação está respondendo
           echo "=== Testando acesso à aplicação ==="
-          curl -I localhost:8080
+          MAX_ATTEMPTS=12
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            echo "Tentativa $i de $MAX_ATTEMPTS..."
+            if curl -sI --connect-timeout 5 localhost:8080 | grep -q "HTTP/"; then
+              echo "✅ Aplicação respondendo corretamente!"
+              APP_RUNNING=true
+              break
+            else
+              echo "Aplicação ainda não está respondendo. Aguardando..."
+              sleep 10
+            fi
+          done
+          
+          if [ "$APP_RUNNING" != "true" ]; then
+            echo "⚠️ Aplicação não respondeu após $MAX_ATTEMPTS tentativas"
+            echo "Logs do contêiner:"
+            docker-compose logs --tail 50 app
+          fi
           
           echo "=== Deploy concluído ==="
 
