@@ -22,7 +22,4 @@ variable "db_password" {
   sensitive   = true
 }
 
-variable "ssh_public_key" {
-  description = "Chave pública SSH para acesso às instâncias EC2"
-  type        = string
-}
+
