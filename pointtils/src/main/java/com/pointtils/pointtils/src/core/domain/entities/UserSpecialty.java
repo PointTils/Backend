@@ -28,7 +28,7 @@ public class UserSpecialty {
     private UUID id;
     
     @ManyToOne
-    @JoinColumn(name = "specialty_id", nullable = false)
+    @JoinColumn(name = "specialtie_id", nullable = false)
     private Specialty specialty;
     
     @ManyToOne
