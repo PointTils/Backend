@@ -8,12 +8,12 @@ output "app_instance_public_dns" {
   value       = aws_instance.pointtils_app.public_dns
 }
 
-output "database_endpoint" {
-  description = "Endpoint do banco de dados PostgreSQL"
-  value       = aws_db_instance.pointtils_db.endpoint
+output "s3_bucket_name" {
+  description = "Nome do bucket S3 para testes de API"
+  value       = aws_s3_bucket.pointtils_api_tests.bucket
 }
 
-output "database_name" {
-  description = "Nome do banco de dados PostgreSQL"
-  value       = aws_db_instance.pointtils_db.db_name
+output "ecr_repository_url" {
+  description = "URL do repositório ECR"
+  value       = aws_ecr_repository.pointtils.repository_url
 }

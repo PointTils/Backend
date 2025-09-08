@@ -1,6 +1,29 @@
-# Passos para implantar a aplicação Pointtils na AWS com Terraform
+# Infraestrutura AWS para a aplicação Pointtils
 
-Este guia detalha como implantar a aplicação Pointtils na AWS utilizando Terraform para gerenciar a infraestrutura como código.
+Este guia detalha como implantar a aplicação Pointtils na AWS utilizando Terraform para gerenciar a infraestrutura como código, conforme o orçamento aprovado.
+
+## Recursos AWS Provisionados
+
+1. **Amazon EC2**
+   - Instância t2.medium na região us-east-2 (Ohio)
+   - Servidor de aplicação Spring Boot
+   - Inclui PostgreSQL instalado localmente na instância
+
+2. **Amazon S3**
+   - Bucket para armazenamento de APIs para testes
+   - Configurado para armazenar até 1 GB de dados
+   - Suporta operações PUT, COPY, POST, LIST e GET
+
+3. **Amazon ECR**
+   - Repositório para armazenar imagens Docker
+   - Configurado para armazenar até 20 GB de imagens
+   - Política de ciclo de vida para manter somente as 10 imagens mais recentes
+
+## Custos Estimados
+
+Conforme o orçamento aprovado:
+- Custo mensal: $19.79 USD
+- Custo anual: $237.48 USD
 
 ## Pré-requisitos
 
@@ -129,7 +152,7 @@ Confirme digitando `yes` quando solicitado.
 
 ## Observações Importantes
 
-- A configuração atual cria uma instância EC2 t2.micro e um banco de dados PostgreSQL db.t3.micro, adequados para ambientes de desenvolvimento ou testes.
+- A configuração atual cria uma instância EC2 t2.medium e um banco de dados PostgreSQL db.t3.micro, adequados para ambientes de desenvolvimento ou testes.
 - Para ambientes de produção, considere utilizar tipos de instâncias maiores e configurar backups regulares.
 - Os grupos de segurança estão configurados para permitir acesso SSH e HTTP de qualquer IP. Para maior segurança, limite o acesso apenas aos IPs necessários.
 - Armazene as credenciais do banco de dados com segurança e nunca as inclua em repositórios de código.

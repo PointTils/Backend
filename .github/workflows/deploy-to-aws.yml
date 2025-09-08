@@ -1,0 +1,138 @@
+name: Deploy to AWS
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:  # Permite execução manual da pipeline
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: 'maven'
+
+    - name: Build with Maven
+      run: |
+        cd pointtils
+        ./mvnw clean package -DskipTests
+    
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build, tag, and push Docker image to Amazon ECR
+      id: build-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        cd pointtils
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: '1.5.0'
+        cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+    - name: Create terraform.tfvars file
+      run: |
+        cat > terraform/terraform.tfvars << EOF
+        aws_region     = "${{ secrets.AWS_REGION }}"
+        db_username    = "${{ secrets.DB_USERNAME }}"
+        db_password    = "${{ secrets.DB_PASSWORD }}"
+        ssh_public_key = "${{ secrets.SSH_PUBLIC_KEY }}"
+        EOF
+
+    - name: Terraform Init
+      working-directory: terraform
+      run: terraform init
+
+    - name: Terraform Validate
+      working-directory: terraform
+      run: terraform validate
+
+    - name: Terraform Plan
+      working-directory: terraform
+      run: terraform plan -out=tfplan
+
+    - name: Terraform Apply
+      working-directory: terraform
+      run: terraform apply -auto-approve tfplan
+
+    - name: Get Terraform outputs
+      working-directory: terraform
+      id: terraform-outputs
+      run: |
+        echo "::set-output name=app_ip::$(terraform output -raw app_instance_public_ip)"
+        echo "::set-output name=ecr_repo::$(terraform output -raw ecr_repository_url)"
+        echo "::set-output name=s3_bucket::$(terraform output -raw s3_bucket_name)"
+
+    - name: Deploy application to EC2
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ steps.terraform-outputs.outputs.app_ip }}
+        username: ubuntu
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          # Criar diretório para a aplicação
+          mkdir -p ~/pointtils
+          
+          # Criar arquivo docker-compose.yml
+          cat > ~/pointtils/docker-compose.yml << EOF
+          version: '3'
+          services:
+            app:
+              image: ${{ steps.build-image.outputs.image }}
+              ports:
+                - "8080:8080"
+              env_file:
+                - .env
+              restart: always
+          EOF
+          
+          # Configurar variáveis de ambiente
+          cat > ~/pointtils/.env << EOF
+          SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/pointtilsdb
+          SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME }}
+          SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }}
+          S3_BUCKET_NAME=${{ steps.terraform-outputs.outputs.s3_bucket }}
+          AWS_REGION=${{ secrets.AWS_REGION }}
+          EOF
+          
+          # Login no ECR
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
+          
+          # Iniciar a aplicação
+          cd ~/pointtils
+          docker-compose pull
+          docker-compose up -d
+
+    - name: Deployment Summary
+      run: |
+        echo "Deployment completed successfully!"
+        echo "Application URL: http://${{ steps.terraform-outputs.outputs.app_ip }}:8080"

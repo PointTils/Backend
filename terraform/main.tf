@@ -1,5 +1,5 @@
 provider "aws" {
-  region = var.aws_region
+  region = var.aws_region  # Agora usando us-east-2 (Ohio)
 }
 
 # Criando uma VPC
@@ -32,24 +32,7 @@ resource "aws_subnet" "public_subnet_2" {
   }
 }
 
-# Criando subnets privadas para o banco de dados
-resource "aws_subnet" "private_subnet_1" {
-  vpc_id            = aws_vpc.pointtils_vpc.id
-  cidr_block        = "10.0.3.0/24"
-  availability_zone = "${var.aws_region}a"
-  tags = {
-    Name = "pointtils-private-subnet-1"
-  }
-}
-
-resource "aws_subnet" "private_subnet_2" {
-  vpc_id            = aws_vpc.pointtils_vpc.id
-  cidr_block        = "10.0.4.0/24"
-  availability_zone = "${var.aws_region}b"
-  tags = {
-    Name = "pointtils-private-subnet-2"
-  }
-}
+# Não precisamos mais de subnets privadas já que não temos RDS
 
 # Internet Gateway
 resource "aws_internet_gateway" "pointtils_igw" {
@@ -120,66 +103,10 @@ resource "aws_security_group" "app_sg" {
   }
 }
 
-# Grupo de segurança para o banco de dados
-resource "aws_security_group" "db_sg" {
-  name        = "pointtils-db-sg"
-  description = "Security group for Pointtils database"
-  vpc_id      = aws_vpc.pointtils_vpc.id
+# Removido grupo de segurança para o banco de dados e subnet group para o RDS
 
-  # Permitir tráfego de entrada na porta do PostgreSQL apenas da subnet da aplicação
-  ingress {
-    from_port       = 5432
-    to_port         = 5432
-    protocol        = "tcp"
-    security_groups = [aws_security_group.app_sg.id]
-    description     = "Allow PostgreSQL traffic from application servers"
-  }
-
-  # Permitir todo o tráfego de saída
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow all outbound traffic"
-  }
-
-  tags = {
-    Name = "pointtils-db-sg"
-  }
-}
-
-# Subnet group para o RDS
-resource "aws_db_subnet_group" "pointtils_db_subnet_group" {
-  name       = "pointtils-db-subnet-group"
-  subnet_ids = [aws_subnet.private_subnet_1.id, aws_subnet.private_subnet_2.id]
-
-  tags = {
-    Name = "Pointtils DB Subnet Group"
-  }
-}
-
-# Instância RDS PostgreSQL
-resource "aws_db_instance" "pointtils_db" {
-  identifier             = "pointtils-db"
-  engine                 = "postgres"
-  engine_version         = "14"
-  instance_class         = "db.t3.micro"
-  allocated_storage      = 20
-  storage_type           = "gp2"
-  db_name                = "pointtilsdb"
-  username               = var.db_username
-  password               = var.db_password
-  parameter_group_name   = "default.postgres14"
-  db_subnet_group_name   = aws_db_subnet_group.pointtils_db_subnet_group.name
-  vpc_security_group_ids = [aws_security_group.db_sg.id]
-  skip_final_snapshot    = true
-  publicly_accessible    = false
-
-  tags = {
-    Name = "pointtils-db"
-  }
-}
+# Nota: Removido RDS PostgreSQL pois não consta no orçamento
+# A aplicação usará um banco de dados local no EC2 ou externo gerenciado separadamente
 
 # IAM role para a instância EC2
 resource "aws_iam_role" "ec2_role" {
@@ -261,9 +188,19 @@ data "template_file" "user_data" {
               sudo curl -L "https://github.com/docker/compose/releases/download/v2.15.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
               sudo chmod +x /usr/local/bin/docker-compose
               
+              # Instalar PostgreSQL localmente (já que não temos RDS no orçamento)
+              sudo apt-get install -y postgresql postgresql-contrib
+              sudo systemctl enable postgresql
+              sudo systemctl start postgresql
+              
+              # Configurar PostgreSQL
+              sudo -u postgres psql -c "CREATE DATABASE pointtilsdb;"
+              sudo -u postgres psql -c "CREATE USER pointtilsadmin WITH PASSWORD '${var.db_password}';"
+              sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE pointtilsdb TO pointtilsadmin;"
+              
               # Criar arquivo .env para variáveis de ambiente
               cat > /home/ubuntu/.env << ENVFILE
-              SPRING_DATASOURCE_URL=jdbc:postgresql://${aws_db_instance.pointtils_db.endpoint}/pointtilsdb
+              SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/pointtilsdb
               SPRING_DATASOURCE_USERNAME=${var.db_username}
               SPRING_DATASOURCE_PASSWORD=${var.db_password}
               ENVFILE
@@ -272,10 +209,10 @@ data "template_file" "user_data" {
               EOF
 }
 
-# Instância EC2 para a aplicação Pointtils
+# Instância EC2 para a aplicação Pointtils (Conforme orçamento: t2.medium em Ohio)
 resource "aws_instance" "pointtils_app" {
-  ami                    = var.ec2_ami
-  instance_type          = "t2.micro"
+  ami                    = "ami-0a59f0e26c55590e9" # Ubuntu 22.04 LTS para us-east-2 (Ohio)
+  instance_type          = "t2.medium"
   key_name               = aws_key_pair.pointtils_key.key_name
   vpc_security_group_ids = [aws_security_group.app_sg.id]
   subnet_id              = aws_subnet.public_subnet_1.id
@@ -285,8 +222,6 @@ resource "aws_instance" "pointtils_app" {
   tags = {
     Name = "pointtils-app"
   }
-
-  depends_on = [aws_db_instance.pointtils_db]
 }
 
 # Elastic IP para a instância EC2
@@ -296,4 +231,63 @@ resource "aws_eip" "pointtils_eip" {
   tags = {
     Name = "pointtils-eip"
   }
+}
+
+# Amazon S3 Bucket para armazenamento de APIs para teste (conforme orçamento)
+resource "aws_s3_bucket" "pointtils_api_tests" {
+  bucket = "pointtils-api-tests-${random_id.bucket_suffix.hex}"
+
+  tags = {
+    Name = "pointtils-api-tests"
+  }
+}
+
+resource "random_id" "bucket_suffix" {
+  byte_length = 4
+}
+
+# Configuração de acesso ao bucket S3
+resource "aws_s3_bucket_public_access_block" "pointtils_api_tests" {
+  bucket = aws_s3_bucket.pointtils_api_tests.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+# Amazon ECR Repository (conforme orçamento)
+resource "aws_ecr_repository" "pointtils" {
+  name                 = "pointtils"
+  image_tag_mutability = "MUTABLE"
+  
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+  
+  tags = {
+    Name = "pointtils-ecr"
+  }
+}
+
+# Lifecycle Policy para o ECR (limitar o armazenamento a 20GB conforme orçamento)
+resource "aws_ecr_lifecycle_policy" "pointtils" {
+  repository = aws_ecr_repository.pointtils.name
+
+  policy = jsonencode({
+    rules = [
+      {
+        rulePriority = 1
+        description  = "Keep only the latest 10 images"
+        selection = {
+          tagStatus     = "any"
+          countType     = "imageCountMoreThan"
+          countNumber   = 10
+        }
+        action = {
+          type = "expire"
+        }
+      }
+    ]
+  })
 }
