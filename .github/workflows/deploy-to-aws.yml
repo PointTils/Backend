@@ -97,7 +97,6 @@ jobs:
       id: terraform-outputs
       run: |
         echo "::set-output name=app_ip::$(terraform output -raw app_instance_public_ip)"
-        echo "::set-output name=ecr_repo::$(terraform output -raw ecr_repository_url)"
         echo "::set-output name=s3_bucket::$(terraform output -raw s3_bucket_name)"
 
     - name: Deploy application to EC2
