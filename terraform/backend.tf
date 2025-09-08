@@ -14,6 +14,5 @@ terraform {
     key            = "terraform.tfstate"
     region         = "us-east-1"
     encrypt        = true
-    dynamodb_table = "pointtils-terraform-locks"  # Precisa criar essa tabela manualmente antes
   }
 }
