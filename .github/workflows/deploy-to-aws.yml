@@ -267,9 +267,35 @@ jobs:
               ports:
                 - "8080:8080"
               environment:
-                - SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/pointtilsdb
+                # Configurações básicas do Spring
+                - SPRING_APPLICATION_NAME=pointtils
+                - SPRING_PROFILES_ACTIVE=prod
+                - SERVER_PORT=8080
+                
+                # Configurações de segurança JWT
+                - JWT_SECRET=${{ secrets.JWT_SECRET || 'defaultsecretkey1234567890123456789012345678901234' }}
+                - JWT_EXPIRATION_TIME=3600000
+                - JWT_REFRESH_EXPIRATION_TIME=86400000
+                
+                # Configurações de banco de dados
+                - SPRING_DATASOURCE_URL=jdbc:postgresql://127.0.0.1:5432/pointtilsdb
                 - SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME }}
                 - SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }}
+                - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+                - SPRING_JPA_SHOW_SQL=true
+                
+                # Configurações do Flyway
+                - SPRING_FLYWAY_ENABLED=true
+                - SPRING_FLYWAY_LOCATIONS=classpath:db/migration
+                - SPRING_FLYWAY_BASELINE_ON_MIGRATE=true
+                - SPRING_FLYWAY_VALIDATE_ON_MIGRATE=true
+                
+                # Configurações do Swagger/OpenAPI
+                - SPRINGDOC_API_DOCS_ENABLED=true
+                - SPRINGDOC_SWAGGER_UI_ENABLED=true
+                - SPRINGDOC_SWAGGER_UI_PATH=/swagger-ui.html
+                
+                # Configurações da AWS
                 - S3_BUCKET_NAME=${{ steps.terraform-outputs.outputs.s3_bucket }}
                 - AWS_REGION=${{ secrets.AWS_REGION }}
                 - AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -342,6 +368,25 @@ jobs:
           # Testar se a aplicação está respondendo
           echo "=== Testando acesso à aplicação ==="
           MAX_ATTEMPTS=12
+          
+          # Criar um script para depuração
+          cat > ~/pointtils/debug.sh << 'DEBUGSCRIPT'
+          #!/bin/bash
+          echo "=== Verificando variáveis de ambiente no contêiner ==="
+          docker exec $(docker ps -q -f name=pointtils_app) env | sort
+          
+          echo "=== Verificando conectividade com PostgreSQL ==="
+          docker exec $(docker ps -q -f name=pointtils_app) nc -zv localhost 5432 || echo "Falha ao conectar ao PostgreSQL"
+          
+          echo "=== Verificando logs da aplicação ==="
+          docker-compose logs app
+          DEBUGSCRIPT
+          chmod +x ~/pointtils/debug.sh
+          
+          # Esperar um pouco para a aplicação inicializar
+          sleep 20
+          
+          # Tentar acessar a aplicação várias vezes
           for i in $(seq 1 $MAX_ATTEMPTS); do
             echo "Tentativa $i de $MAX_ATTEMPTS..."
             if curl -sI --connect-timeout 5 localhost:8080 | grep -q "HTTP/"; then
@@ -350,14 +395,27 @@ jobs:
               break
             else
               echo "Aplicação ainda não está respondendo. Aguardando..."
-              sleep 10
+              sleep 15
+              
+              # A cada 3 tentativas, verificar os logs
+              if [ $((i % 3)) -eq 0 ]; then
+                echo "Verificando logs da aplicação..."
+                docker-compose logs --tail 20 app
+              fi
             fi
           done
           
           if [ "$APP_RUNNING" != "true" ]; then
             echo "⚠️ Aplicação não respondeu após $MAX_ATTEMPTS tentativas"
-            echo "Logs do contêiner:"
-            docker-compose logs --tail 50 app
+            echo "Executando script de debug..."
+            ~/pointtils/debug.sh
+            
+            # Tentar reiniciar a aplicação
+            echo "Tentando reiniciar o contêiner..."
+            docker-compose down
+            docker-compose up -d
+            sleep 30
+            docker-compose logs app
           fi
           
           echo "=== Deploy concluído ==="

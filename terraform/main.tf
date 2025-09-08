@@ -204,13 +204,31 @@ data "template_file" "user_data" {
               
               # Configurar PostgreSQL para aceitar conexões de containers
               sudo -u postgres psql -c "ALTER SYSTEM SET listen_addresses TO '*';"
-              sudo -u postgres bash -c 'echo "host    all             all             0.0.0.0/0               md5" >> /etc/postgresql/14/main/pg_hba.conf'
+              
+              # Identificar a versão do PostgreSQL instalada
+              PG_VERSION=$(ls -d /etc/postgresql/* | sort -V | tail -n1 | xargs basename)
+              echo "PostgreSQL version: $PG_VERSION"
+              
+              # Configurar PostgreSQL para aceitar conexões
+              sudo -u postgres bash -c "echo \"host    all             all             0.0.0.0/0               md5\" >> /etc/postgresql/$PG_VERSION/main/pg_hba.conf"
+              sudo -u postgres bash -c "echo \"host    all             all             127.0.0.1/32            trust\" >> /etc/postgresql/$PG_VERSION/main/pg_hba.conf"
+              
+              # Verificar e ajustar configuração do PostgreSQL
+              sudo cat /etc/postgresql/$PG_VERSION/main/postgresql.conf | grep listen_addresses
+              sudo cat /etc/postgresql/$PG_VERSION/main/pg_hba.conf | tail -n 5
+              
+              # Reiniciar o PostgreSQL para aplicar as mudanças
               sudo systemctl restart postgresql
+              sudo systemctl status postgresql
               
               # Configurar PostgreSQL usuário e banco
               sudo -u postgres psql -c "CREATE DATABASE pointtilsdb;"
               sudo -u postgres psql -c "CREATE USER pointtilsadmin WITH PASSWORD '${var.db_password}';"
               sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE pointtilsdb TO pointtilsadmin;"
+              sudo -u postgres psql -c "ALTER USER pointtilsadmin WITH SUPERUSER;"
+              
+              # Verificar se o usuário foi criado corretamente
+              sudo -u postgres psql -c "\\du" | grep pointtilsadmin
               
               # Criar arquivo .env para variáveis de ambiente
               cat > /home/ubuntu/.env << ENVFILE
