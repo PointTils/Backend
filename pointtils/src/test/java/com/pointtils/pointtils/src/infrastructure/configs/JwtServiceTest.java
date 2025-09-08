@@ -1,4 +1,4 @@
-package com.pointtils.pointtils;
+package com.pointtils.pointtils.src.infrastructure.configs;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -7,11 +7,17 @@ import io.jsonwebtoken.security.SignatureException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
-import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
 
 import java.util.Date;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class JwtServiceTest {
     private JwtService jwtService;
@@ -84,7 +90,7 @@ class JwtServiceTest {
         // Then
         assertNotNull(issuedAt);
         long issuedAtTime = issuedAt.getTime();
-        assertTrue(issuedAtTime >= beforeTokenGeneration, 
+        assertTrue(issuedAtTime >= beforeTokenGeneration,
                 "IssuedAt time " + issuedAtTime + " should be >= " + beforeTokenGeneration);
         assertTrue(issuedAtTime <= afterTokenGeneration,
                 "IssuedAt time " + issuedAtTime + " should be <= " + afterTokenGeneration);
@@ -140,7 +146,7 @@ class JwtServiceTest {
         JwtService expiredJwtService = new JwtService();
         ReflectionTestUtils.setField(expiredJwtService, "secretKey", TEST_SECRET_KEY);
         ReflectionTestUtils.setField(expiredJwtService, "jwtExpiration", -60000L); // Already expired (negative 1 minute)
-        
+
         String expiredToken = expiredJwtService.generateToken("testuser");
 
         // When & Then - Expect an ExpiredJwtException to be thrown when checking expired token
@@ -166,7 +172,7 @@ class JwtServiceTest {
         JwtService differentKeyService = new JwtService();
         ReflectionTestUtils.setField(differentKeyService, "secretKey", "ZGlmZmVyZW50a2V5ZGlmZmVyZW50a2V5ZGlmZmVyZW50a2V5ZGlmZmVyZW50a2V5");
         ReflectionTestUtils.setField(differentKeyService, "jwtExpiration", JWT_EXPIRATION);
-        
+
         String tokenWithDifferentKey = differentKeyService.generateToken("testuser");
 
         // When & Then
