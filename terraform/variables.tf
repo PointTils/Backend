@@ -22,4 +22,10 @@ variable "db_password" {
   sensitive   = true
 }
 
+variable "create_ecr" {
+  description = "Indica se o repositório ECR deve ser criado (false se já existir)"
+  type        = bool
+  default     = false
+}
+
 

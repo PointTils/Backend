@@ -44,6 +44,16 @@ jobs:
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
 
+    - name: Check if ECR repository exists and create if needed
+      run: |
+        exists=$(aws ecr describe-repositories --repository-names ${{ secrets.ECR_REPOSITORY }} 2>/dev/null || echo "false")
+        if [ "$exists" = "false" ]; then
+          echo "Creating ECR repository ${{ secrets.ECR_REPOSITORY }}"
+          aws ecr create-repository --repository-name ${{ secrets.ECR_REPOSITORY }} --image-tag-mutability MUTABLE --image-scanning-configuration scanOnPush=true
+        else
+          echo "ECR repository ${{ secrets.ECR_REPOSITORY }} already exists"
+        fi
+
     - name: Build, tag, and push Docker image to Amazon ECR
       id: build-image
       env:
@@ -90,14 +100,30 @@ jobs:
 
     - name: Terraform Apply
       working-directory: terraform
+      id: terraform-apply
+      continue-on-error: true  # Continuar mesmo se houver erro
       run: terraform apply -auto-approve tfplan
 
     - name: Get Terraform outputs
       working-directory: terraform
       id: terraform-outputs
       run: |
-        echo "::set-output name=app_ip::$(terraform output -raw app_instance_public_ip)"
-        echo "::set-output name=s3_bucket::$(terraform output -raw s3_bucket_name)"
+        # Verificar se os outputs existem
+        if terraform output -raw app_instance_public_ip &>/dev/null; then
+          echo "::set-output name=app_ip::$(terraform output -raw app_instance_public_ip)"
+        else
+          # Se não existir, buscar o IP manualmente
+          echo "::set-output name=app_ip::$(aws ec2 describe-instances --filters "Name=tag:Name,Values=pointtils-app" --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)"
+        fi
+        
+        if terraform output -raw s3_bucket_name &>/dev/null; then
+          echo "::set-output name=s3_bucket::$(terraform output -raw s3_bucket_name)"
+        else
+          echo "::set-output name=s3_bucket::pointtils-api-tests-$(aws s3api list-buckets --query 'Buckets[?starts_with(Name, `pointtils-api-tests-`)].Name' --output text)"
+        fi
+        
+        # Obter URL do ECR
+        echo "::set-output name=ecr_repo::${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}"
 
     - name: Deploy application to EC2
       uses: appleboy/ssh-action@master

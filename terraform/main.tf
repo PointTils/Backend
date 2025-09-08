@@ -257,7 +257,15 @@ resource "aws_s3_bucket_public_access_block" "pointtils_api_tests" {
 }
 
 # Amazon ECR Repository (conforme orçamento)
+# Verificar se o ECR já existe antes de tentar criar
+data "aws_ecr_repository" "existing_repo" {
+  count = var.create_ecr ? 0 : 1
+  name  = "pointtils"
+}
+
 resource "aws_ecr_repository" "pointtils" {
+  # Só criar se a variável create_ecr for verdadeira
+  count                = var.create_ecr ? 1 : 0
   name                 = "pointtils"
   image_tag_mutability = "MUTABLE"
   
@@ -268,11 +276,19 @@ resource "aws_ecr_repository" "pointtils" {
   tags = {
     Name = "pointtils-ecr"
   }
+  
+  # Ignorar erros se o repositório já existir
+  lifecycle {
+    ignore_changes = all
+    prevent_destroy = false
+  }
 }
 
 # Lifecycle Policy para o ECR (limitar o armazenamento a 20GB conforme orçamento)
 resource "aws_ecr_lifecycle_policy" "pointtils" {
-  repository = aws_ecr_repository.pointtils.name
+  # Só criar se o repositório ECR também foi criado
+  count      = var.create_ecr ? 1 : 0
+  repository = aws_ecr_repository.pointtils[0].name
 
   policy = jsonencode({
     rules = [

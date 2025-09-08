@@ -15,5 +15,5 @@ output "s3_bucket_name" {
 
 output "ecr_repository_url" {
   description = "URL do repositório ECR"
-  value       = aws_ecr_repository.pointtils.repository_url
+  value       = var.create_ecr && length(aws_ecr_repository.pointtils) > 0 ? aws_ecr_repository.pointtils[0].repository_url : "pointtils-repository-already-exists"
 }
