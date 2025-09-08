@@ -1,5 +1,0 @@
-# Exemplo de valores para as variáveis (NÃO incluir em repositórios públicos)
-aws_region     = "us-east-1"
-db_username    = "pointtilsadmin"
-db_password    = "SenhaSegura123!"  # Mude para uma senha mais segura em produção
-ssh_public_key = "ssh-rsa AAAAB3NzaC..."  # Substitua pela sua chave pública SSH
