@@ -1,7 +1,5 @@
 package com.pointtils.pointtils.src.application.services;
 
-import java.util.UUID;
-
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 public class AuthService {
 
     private final UserRepository userRepository;
-    private final JwtService jwtTokenPrivider;
+    private final JwtService jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
     private final RedisBlacklistService redisBlacklistService;
 
@@ -56,8 +54,8 @@ public class AuthService {
             throw new AuthenticationException("Credenciais inválidas");
         }
 
-        String accessToken = jwtTokenPrivider.generateToken(user.getEmail());
-        String refreshToken = jwtTokenPrivider.generateRefreshToken(user.getEmail());
+        String accessToken = jwtTokenProvider.generateToken(user.getEmail());
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
 
         UserDTO userDTO = new UserDTO(
                 user.getId(),
@@ -71,8 +69,8 @@ public class AuthService {
                 accessToken,
                 refreshToken,
                 "Bearer",
-                jwtTokenPrivider.getExpirationTime(),
-                jwtTokenPrivider.getRefreshExpirationTime()
+                jwtTokenProvider.getExpirationTime(),
+                jwtTokenProvider.getRefreshExpirationTime()
         );
 
         return new LoginResponseDTO(
@@ -87,18 +85,18 @@ public class AuthService {
             throw new AuthenticationException("Refresh token não fornecido");
         }
 
-        if (jwtTokenPrivider.isTokenExpired(token) || !jwtTokenPrivider.validateToken(token)) {
+        if (jwtTokenProvider.isTokenExpired(token) || !jwtTokenProvider.validateToken(token)) {
             throw new AuthenticationException("Refresh token inválido ou expirado");
         }
 
-        String email = jwtTokenPrivider.getEmailFromToken(token);
+        String email = jwtTokenProvider.getEmailFromToken(token);
         User user = userRepository.findByEmail(email);
         if (user == null) {
             throw new AuthenticationException("Usuário não encontrado");
         }
 
-        String accessToken = jwtTokenPrivider.generateToken(user.getEmail());
-        String refreshToken = jwtTokenPrivider.generateRefreshToken(user.getEmail());
+        String accessToken = jwtTokenProvider.generateToken(user.getEmail());
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
 
         return new RefreshTokenResponseDTO(
                 true,
@@ -107,17 +105,17 @@ public class AuthService {
                         accessToken,
                         refreshToken,
                         "Bearer",
-                        jwtTokenPrivider.getExpirationTime(),
-                        jwtTokenPrivider.getRefreshExpirationTime()
+                        jwtTokenProvider.getExpirationTime(),
+                        jwtTokenProvider.getRefreshExpirationTime()
                 ))
         );
     }
 
     public Boolean logout(String accessToken, String refreshToken) {
-        if (!jwtTokenPrivider.validateToken(accessToken) || jwtTokenPrivider.isTokenExpired(accessToken)) {
+        if (!jwtTokenProvider.validateToken(accessToken) || jwtTokenProvider.isTokenExpired(accessToken)) {
             throw new AuthenticationException("Access token inválido ou expirado");
         }
-        if (!jwtTokenPrivider.validateToken(refreshToken) || jwtTokenPrivider.isTokenExpired(refreshToken)) {
+        if (!jwtTokenProvider.validateToken(refreshToken) || jwtTokenProvider.isTokenExpired(refreshToken)) {
             throw new AuthenticationException("Refresh token inválido ou expirado");
         }
 
