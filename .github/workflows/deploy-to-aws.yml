@@ -112,13 +112,27 @@ jobs:
         echo "=== Terraform Outputs Disponíveis ==="
         terraform output || echo "Nenhum output disponível"
         
-        # Tratamento mais robusto para evitar erro EPIPE
-        echo "=== Processando app_instance_public_ip ==="
-        terraform output app_instance_public_ip > /tmp/instance_ip.txt || echo "Não foi possível obter app_instance_public_ip"
-        if [ -s /tmp/instance_ip.txt ]; then
-          INSTANCE_IP=$(cat /tmp/instance_ip.txt | tr -d '"' || echo "")
-          echo "IP da instância via terraform output: $INSTANCE_IP"
-          echo "app_ip=$INSTANCE_IP" >> $GITHUB_OUTPUT
+        # Usar AWS CLI diretamente em vez de depender dos outputs do Terraform
+        echo "=== Buscando recursos via AWS CLI ==="
+        # Buscar instância EC2 pelo nome
+        INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=pointtils-app" --query 'Reservations[*].Instances[*].InstanceId' --output text)
+        if [ -n "$INSTANCE_ID" ]; then
+          echo "Instance ID encontrado: $INSTANCE_ID"
+          
+          # Buscar Elastic IP associado
+          INSTANCE_IP=$(aws ec2 describe-addresses --filters "Name=instance-id,Values=$INSTANCE_ID" --query 'Addresses[0].PublicIp' --output text)
+          if [ -z "$INSTANCE_IP" ] || [ "$INSTANCE_IP" = "None" ]; then
+            echo "Elastic IP não encontrado, usando IP público direto da instância"
+            INSTANCE_IP=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
+          fi
+          
+          if [[ "$INSTANCE_IP" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "IP válido encontrado: $INSTANCE_IP"
+            echo "app_ip=$INSTANCE_IP" >> $GITHUB_OUTPUT
+          else
+            echo "ERRO: Não foi possível determinar um IP válido. Valor obtido: $INSTANCE_IP"
+            exit 1
+          fi
         else
           echo "Output app_instance_public_ip não encontrado, buscando via AWS CLI"
           # Buscar o IP manualmente
@@ -136,15 +150,20 @@ jobs:
           echo "app_ip=$INSTANCE_IP" >> $GITHUB_OUTPUT
         fi
         
-        echo "=== Processando s3_bucket_name ==="
-        terraform output s3_bucket_name > /tmp/bucket_name.txt || echo "Não foi possível obter s3_bucket_name"
-        if [ -s /tmp/bucket_name.txt ]; then
-          BUCKET_NAME=$(cat /tmp/bucket_name.txt | tr -d '"' || echo "")
+          echo "Output app_instance_public_ip não encontrado ou inválido"
+          echo "app_ip=127.0.0.1" >> $GITHUB_OUTPUT  # IP placeholder para evitar erros
+          exit 1
+        fi
+        
+        # Buscar bucket S3
+        echo "=== Buscando bucket S3 ==="
+        BUCKET_NAME=$(aws s3api list-buckets --query 'Buckets[?starts_with(Name, `pointtils-api-tests-`)].Name' --output text)
+        if [ -n "$BUCKET_NAME" ]; then
+          echo "Bucket S3 encontrado: $BUCKET_NAME"
           echo "s3_bucket=$BUCKET_NAME" >> $GITHUB_OUTPUT
         else
-          echo "Output s3_bucket_name não encontrado, buscando via AWS CLI"
-          BUCKET_NAME=$(aws s3api list-buckets --query 'Buckets[?starts_with(Name, `pointtils-api-tests-`)].Name' --output text)
-          echo "s3_bucket=$BUCKET_NAME" >> $GITHUB_OUTPUT
+          echo "Nenhum bucket S3 com o prefixo 'pointtils-api-tests-' encontrado"
+          echo "s3_bucket=pointtils-api-tests-default" >> $GITHUB_OUTPUT
         fi
         
         # Obter URL do ECR
@@ -162,51 +181,39 @@ jobs:
         # Aguardar um tempo para garantir que a instância esteja pronta
         echo "Aguardando 60 segundos para inicialização da instância..."
         sleep 60
-        # Tentar verificar se a porta 22 está aberta (com tratamento de erro)
-        HOST_IP="${{ steps.terraform-outputs.outputs.app_ip }}"
-        if [[ ! "$HOST_IP" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-          echo "ERRO: Endereço IP inválido: $HOST_IP"
-          echo "Tentando descobrir IP via AWS CLI..."
-          HOST_IP=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=pointtils-app" --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
-          echo "IP recuperado via AWS CLI: $HOST_IP"
-        fi
         
-        if [[ "$HOST_IP" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-          echo "Verificando se a porta 22 está aberta no IP $HOST_IP"
-          for i in {1..10}; do
-            if nc -z -v -w5 $HOST_IP 22; then
-              echo "Host disponível para SSH"
-              break
-            else
-              echo "Tentativa $i: SSH ainda não disponível. Aguardando..."
-              sleep 10
-            fi
-            if [ $i -eq 10 ]; then
-              echo "AVISO: Host não respondeu após 10 tentativas, mas vamos continuar mesmo assim"
-            fi
-          done
-        else
-          echo "ERRO: Não foi possível determinar um endereço IP válido."
-          exit 1
-        fi
+        # Usar o IP já validado pelo passo anterior
+        HOST_IP="${{ steps.terraform-outputs.outputs.app_ip }}"
+        echo "Verificando se a porta 22 está aberta no IP $HOST_IP"
+        
+        # Tentar conectar várias vezes com um timeout
+        for i in {1..12}; do
+          if nc -z -v -w5 $HOST_IP 22; then
+            echo "Host disponível para SSH"
+            echo "HOST_READY=true" >> $GITHUB_ENV
+            break
+          else
+            echo "Tentativa $i: SSH ainda não disponível. Aguardando..."
+            sleep 15
+          fi
+          
+          if [ $i -eq 12 ]; then
+            echo "AVISO: Host não respondeu após 12 tentativas, mas vamos continuar mesmo assim"
+            echo "HOST_READY=false" >> $GITHUB_ENV
+          fi
+        done
 
     - name: Check IP Address
       run: |
         IP_ADDRESS="${{ steps.terraform-outputs.outputs.app_ip }}"
         echo "Endereço IP a ser usado para SSH: $IP_ADDRESS"
-        if [[ ! "$IP_ADDRESS" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-          echo "ERRO: Formato de IP inválido: $IP_ADDRESS"
-          IP_ADDRESS=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=pointtils-app" --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
-          echo "IP_ALTERNATIVO=$IP_ADDRESS" >> $GITHUB_ENV
-          echo "Tentando usar IP alternativo: $IP_ADDRESS"
-        fi
 
     - name: Deploy application to EC2
       uses: appleboy/ssh-action@master
       continue-on-error: true  # Continuar mesmo se houver falha na conexão SSH
       id: ssh-deploy
       with:
-        host: ${{ env.IP_ALTERNATIVO || steps.terraform-outputs.outputs.app_ip }}
+        host: ${{ steps.terraform-outputs.outputs.app_ip }}
         username: ubuntu
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22
@@ -282,7 +289,11 @@ jobs:
     - name: Deployment Summary
       run: |
         echo "======================================"
-        echo "✅ Deployment completed successfully!"
+        if [ "${{ env.HOST_READY }}" == "true" ]; then
+          echo "✅ Deployment completed successfully!"
+        else
+          echo "⚠️ Deployment may have issues - host was not fully ready"
+        fi
         echo "======================================"
         echo "Application URL: http://${{ steps.terraform-outputs.outputs.app_ip }}:8080"
         echo "SSH Access: ssh ubuntu@${{ steps.terraform-outputs.outputs.app_ip }}"
