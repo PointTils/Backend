@@ -106,7 +106,17 @@ jobs:
         host: ${{ steps.terraform-outputs.outputs.app_ip }}
         username: ubuntu
         key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script_stop: true
         script: |
+          echo "=== Iniciando deploy na instância EC2 ==="
+          
+          # Verificar se o Docker está instalado
+          docker --version
+          if [ $? -ne 0 ]; then
+            echo "Docker não está instalado corretamente"
+            exit 1
+          fi
+          
           # Criar diretório para a aplicação
           mkdir -p ~/pointtils
           
@@ -118,29 +128,62 @@ jobs:
               image: ${{ steps.build-image.outputs.image }}
               ports:
                 - "8080:8080"
-              env_file:
-                - .env
+              environment:
+                - SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/pointtilsdb
+                - SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME }}
+                - SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }}
+                - S3_BUCKET_NAME=${{ steps.terraform-outputs.outputs.s3_bucket }}
+                - AWS_REGION=${{ secrets.AWS_REGION }}
               restart: always
           EOF
           
-          # Configurar variáveis de ambiente
-          cat > ~/pointtils/.env << EOF
-          SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/pointtilsdb
-          SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME }}
-          SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }}
-          S3_BUCKET_NAME=${{ steps.terraform-outputs.outputs.s3_bucket }}
-          AWS_REGION=${{ secrets.AWS_REGION }}
-          EOF
-          
           # Login no ECR
+          echo "=== Fazendo login no ECR ==="
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
           
-          # Iniciar a aplicação
+          # Parar contêineres anteriores, se existirem
+          echo "=== Parando contêineres anteriores ==="
           cd ~/pointtils
+          docker-compose down || true
+          
+          # Iniciar a aplicação
+          echo "=== Iniciando a aplicação ==="
           docker-compose pull
           docker-compose up -d
+          
+          # Verificar se o contêiner está em execução
+          echo "=== Verificando status do contêiner ==="
+          docker ps
+          
+          # Verificar status do PostgreSQL
+          echo "=== Verificando status do PostgreSQL ==="
+          sudo systemctl status postgresql
+          
+          # Verificar se o banco de dados foi criado
+          echo "=== Verificando banco de dados ==="
+          sudo -u postgres psql -c "\\l" | grep pointtilsdb
+          
+          # Verificar logs do contêiner para debugging
+          echo "=== Logs da aplicação ==="
+          sleep 10  # Aguardar alguns segundos para inicialização
+          docker-compose logs app
+          
+          # Testar se a aplicação está respondendo
+          echo "=== Testando acesso à aplicação ==="
+          curl -I localhost:8080
+          
+          echo "=== Deploy concluído ==="
 
     - name: Deployment Summary
       run: |
-        echo "Deployment completed successfully!"
+        echo "======================================"
+        echo "✅ Deployment completed successfully!"
+        echo "======================================"
         echo "Application URL: http://${{ steps.terraform-outputs.outputs.app_ip }}:8080"
+        echo "SSH Access: ssh ubuntu@${{ steps.terraform-outputs.outputs.app_ip }}"
+        echo "ECR Repository: ${{ steps.terraform-outputs.outputs.ecr_repo }}"
+        echo "S3 Bucket: ${{ steps.terraform-outputs.outputs.s3_bucket }}"
+        echo "======================================"
+        echo "Para verificar logs da aplicação:"
+        echo "ssh ubuntu@${{ steps.terraform-outputs.outputs.app_ip }} 'cd ~/pointtils && docker-compose logs'"
+        echo "======================================"
