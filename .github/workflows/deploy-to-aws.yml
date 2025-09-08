@@ -57,6 +57,11 @@ jobs:
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
         echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
+    - name: Create SSH key file
+      run: |
+        mkdir -p ./terraform
+        echo "${{ secrets.SSH_PUBLIC_KEY }}" > ./terraform/pointtils_key.pub
+
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
       with:
@@ -69,7 +74,6 @@ jobs:
         aws_region     = "${{ secrets.AWS_REGION }}"
         db_username    = "${{ secrets.DB_USERNAME }}"
         db_password    = "${{ secrets.DB_PASSWORD }}"
-        ssh_public_key = "${{ secrets.SSH_PUBLIC_KEY }}"
         EOF
 
     - name: Terraform Init
