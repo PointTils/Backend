@@ -18,9 +18,11 @@ import jakarta.servlet.http.HttpServletResponse;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
+    private final RedisBlacklistService redisBlacklistService;
 
-    public JwtAuthenticationFilter(JwtService jwtService) {
+    public JwtAuthenticationFilter(JwtService jwtService, RedisBlacklistService redisBlacklistService) {
         this.jwtService = jwtService;
+        this.redisBlacklistService = redisBlacklistService;
     }
 
     @Override
@@ -34,6 +36,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
+            return;
+        }
+        if (redisBlacklistService.isBlacklisted(authHeader.substring(7))) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Token inválido");
             return;
         }
 

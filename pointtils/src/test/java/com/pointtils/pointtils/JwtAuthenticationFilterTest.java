@@ -1,29 +1,34 @@
 package com.pointtils.pointtils;
 
-import com.pointtils.pointtils.src.infrastructure.configs.JwtAuthenticationFilter;
-import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.util.ReflectionTestUtils;
-
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.eq;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import com.pointtils.pointtils.src.infrastructure.configs.JwtAuthenticationFilter;
+import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
+import com.pointtils.pointtils.src.infrastructure.configs.RedisBlacklistService;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @ExtendWith(MockitoExtension.class)
 class JwtAuthenticationFilterTest {
@@ -42,6 +47,9 @@ class JwtAuthenticationFilterTest {
 
     @Mock
     private PrintWriter printWriter;
+
+    @Mock
+    private RedisBlacklistService redisBlacklistService;
 
     @InjectMocks
     private JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -90,6 +98,7 @@ class JwtAuthenticationFilterTest {
         // Given
         String token = "validjwttoken";
         when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
+        when(redisBlacklistService.isBlacklisted(token)).thenReturn(false);
         when(jwtService.isTokenExpired(token)).thenReturn(true);
         when(response.getWriter()).thenReturn(printWriter);
 
@@ -109,6 +118,7 @@ class JwtAuthenticationFilterTest {
         String token = "validjwttoken";
         String subject = "testuser";
         when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
+        when(redisBlacklistService.isBlacklisted(token)).thenReturn(false);
         when(jwtService.isTokenExpired(token)).thenReturn(false);
         when(jwtService.extractClaim(eq(token), any())).thenReturn(subject);
 
@@ -128,6 +138,7 @@ class JwtAuthenticationFilterTest {
         // Given
         String token = "invalidjwttoken";
         when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
+        when(redisBlacklistService.isBlacklisted(token)).thenReturn(false);
         when(jwtService.isTokenExpired(token)).thenThrow(new RuntimeException("Invalid token"));
         when(response.getWriter()).thenReturn(printWriter);
 
@@ -149,6 +160,7 @@ class JwtAuthenticationFilterTest {
         String subject = "testuser";
         
         when(request.getHeader("Authorization")).thenReturn(bearerToken);
+        when(redisBlacklistService.isBlacklisted(token)).thenReturn(false);
         when(jwtService.isTokenExpired(token)).thenReturn(false);
         when(jwtService.extractClaim(eq(token), any())).thenReturn(subject);
 
@@ -169,6 +181,7 @@ class JwtAuthenticationFilterTest {
     void shouldHandleEmptyBearerToken() throws Exception {
         // Given
         when(request.getHeader("Authorization")).thenReturn("Bearer ");
+        when(redisBlacklistService.isBlacklisted("")).thenReturn(false);
         when(jwtService.isTokenExpired("")).thenThrow(new RuntimeException("Empty token"));
         when(response.getWriter()).thenReturn(printWriter);
 
@@ -180,6 +193,21 @@ class JwtAuthenticationFilterTest {
         // which will be caught and handled in the exception block
         verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         verify(printWriter).write("Unauthorized.");
+        verify(filterChain, never()).doFilter(request, response);
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+    }
+
+    @Test
+    void shouldReturnUnauthorizedWhenTokenIsBlacklisted() throws Exception {
+        String token = "blacklistedToken";
+        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
+        when(redisBlacklistService.isBlacklisted(token)).thenReturn(true);
+        when(response.getWriter()).thenReturn(printWriter);
+
+        doFilterInternalMethod.invoke(jwtAuthenticationFilter, request, response, filterChain);
+
+        verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        verify(printWriter).write("Token inválido");
         verify(filterChain, never()).doFilter(request, response);
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
