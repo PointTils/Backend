@@ -5,11 +5,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.DeafResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
 import com.pointtils.pointtils.src.application.mapper.InterpreterMapper;
 import com.pointtils.pointtils.src.application.mapper.InterpreterResponseMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
 import com.pointtils.pointtils.src.core.domain.entities.Location;
+import com.pointtils.pointtils.src.core.domain.entities.Person;
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
@@ -63,6 +65,14 @@ public class InterpreterRegisterService {
         InterpreterResponseDTO response = responseMapper.toResponseDTO(savedInterpreter);
         return response;
     }
+
+    public InterpreterResponseDTO findById(Long id) {
+        Interpreter interpreter = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
+        InterpreterResponseDTO response = responseMapper.toResponseDTO(interpreter);
+        return response;
+    }
+
 
     public void delete(Long id) {
         if (!repository.existsById(id)) {

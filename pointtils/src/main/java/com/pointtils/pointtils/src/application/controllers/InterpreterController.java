@@ -3,6 +3,7 @@ package com.pointtils.pointtils.src.application.controllers;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -42,6 +43,17 @@ public class InterpreterController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<InterpreterResponseDTO> findById(@PathVariable Long id) {
+        try {
+            InterpreterResponseDTO interpreter = service.findById(id);
+            return ResponseEntity.ok(interpreter);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
