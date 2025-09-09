@@ -52,12 +52,14 @@ public class InterpreterResponseMapper {
             .build();
             dto.setProfessionalInfo(professionalDto);
             
-            LocationDTO locationDto = LocationDTO.builder()
-                .id(interpreter.getLocation().getId())
-                .uf(interpreter.getLocation().getUf())
-                .city(interpreter.getLocation().getCity())
-            .build();
-            dto.setLocation(locationDto);
+            if (interpreter.getLocation() != null) {
+                LocationDTO locationDto = LocationDTO.builder()
+                    .id(interpreter.getLocation().getId())
+                    .uf(interpreter.getLocation().getUf())
+                    .city(interpreter.getLocation().getCity())
+                .build();
+                dto.setLocation(locationDto);
+            }
             
         
             List<SpecialtyResponseDTO> specialtyDtos = interpreter.getSpecialties()

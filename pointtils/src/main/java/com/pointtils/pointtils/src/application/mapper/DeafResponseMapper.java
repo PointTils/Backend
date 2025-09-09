@@ -23,12 +23,14 @@ public class DeafResponseMapper {
         dto.setBirthday(person.getBirthday());
         dto.setCpf(maskCpf(person.getCpf()));
 
-        LocationDTO locationDto = LocationDTO.builder()
-            .id(person.getLocation().getId())
-            .uf(person.getLocation().getUf())
-            .city(person.getLocation().getCity())
-        .build();
-        dto.setLocation(locationDto);
+        if (dto.getLocation() != null) {
+            LocationDTO locationDto = LocationDTO.builder()
+                .id(person.getLocation().getId())
+                .uf(person.getLocation().getUf())
+                .city(person.getLocation().getCity())
+            .build();
+            dto.setLocation(locationDto);
+        }
     
         return dto;
     }

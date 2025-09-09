@@ -51,7 +51,7 @@ public class SpecialtyService {
             throw new RuntimeException("Specialty with name '" + name + "' already exists");
         }
         
-        Specialty specialty = new Specialty(UUID.randomUUID(), name);
+        Specialty specialty = new Specialty(name);
         return specialtyRepository.save(specialty);
     }
     
