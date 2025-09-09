@@ -1,6 +1,8 @@
 package com.pointtils.pointtils.src.application.services;
 
 
+import java.util.UUID;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,7 +58,7 @@ public class DeafRegisterService {
     }
 
 
-    public DeafResponseDTO findById(Long id) {
+    public DeafResponseDTO findById(UUID id) {
         Person person = personRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
         DeafResponseDTO response = deafResponseMapper.toResponseDTO(person);
@@ -64,14 +66,14 @@ public class DeafRegisterService {
     }
 
 
-    public void delete(Long id) {
+    public void delete(UUID id) {
         if (!personRepository.existsById(id)) {
             throw new EntityNotFoundException("User not found with id: " + id);
         }
         personRepository.deleteById(id);
     }
 
-    public DeafResponseDTO updatePartial(Long id, DeafRequestDTO dto) {
+    public DeafResponseDTO updatePartial(UUID id, DeafRequestDTO dto) {
         Person person = personRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
 

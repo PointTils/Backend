@@ -85,7 +85,7 @@ public class InterpreterRegisterService {
     }
 
     @Transactional
-    public InterpreterResponseDTO updatePartial(Long id, InterpreterRequestDTO dto) {
+    public InterpreterResponseDTO updatePartial(UUID id, InterpreterRequestDTO dto) {
         Interpreter interpreter = repository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Intérprete não encontrado"));
         // (personalData)
