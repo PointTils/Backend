@@ -10,7 +10,7 @@ import com.pointtils.pointtils.src.core.domain.entities.Appointment;
 import com.pointtils.pointtils.src.core.domain.entities.Rating;
 
 @Repository
-public interface RatingRepository extends JpaRepository<Rating, Long> {
+public interface RatingRepository extends JpaRepository<Rating, UUID> {
     
     List<Rating> findByAppointment(Appointment appointment);
     

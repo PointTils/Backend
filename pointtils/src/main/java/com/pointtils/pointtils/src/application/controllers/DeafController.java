@@ -1,5 +1,7 @@
 package com.pointtils.pointtils.src.application.controllers;
 
+import java.util.UUID;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -43,7 +45,7 @@ public class DeafController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DeafResponseDTO> findById(@PathVariable Long id) {
+    public ResponseEntity<DeafResponseDTO> findById(@PathVariable UUID id) {
         try {
             DeafResponseDTO deaf = service.findById(id);
             return ResponseEntity.ok(deaf);
@@ -53,13 +55,13 @@ public class DeafController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<DeafResponseDTO> updateUser(@PathVariable Long id, @RequestBody @Valid DeafRequestDTO dto) {
+    public ResponseEntity<DeafResponseDTO> updateUser(@PathVariable UUID id, @RequestBody @Valid DeafRequestDTO dto) {
     try {
         DeafResponseDTO updated = service.updatePartial(id, dto);
         return ResponseEntity.ok(updated);

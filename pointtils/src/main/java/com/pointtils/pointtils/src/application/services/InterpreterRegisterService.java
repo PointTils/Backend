@@ -21,6 +21,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -68,7 +69,7 @@ public class InterpreterRegisterService {
         return response;
     }
 
-    public InterpreterResponseDTO findById(Long id) {
+    public InterpreterResponseDTO findById(UUID id) {
         Interpreter interpreter = repository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
         InterpreterResponseDTO response = responseMapper.toResponseDTO(interpreter);
@@ -76,7 +77,7 @@ public class InterpreterRegisterService {
     }
 
 
-    public void delete(Long id) {
+    public void delete(UUID id) {
         if (!repository.existsById(id)) {
             throw new EntityNotFoundException("User not found with id: " + id);
         }

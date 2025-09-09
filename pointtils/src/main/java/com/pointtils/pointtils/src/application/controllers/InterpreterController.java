@@ -1,5 +1,7 @@
 package com.pointtils.pointtils.src.application.controllers;
 
+import java.util.UUID;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -45,7 +47,7 @@ public class InterpreterController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<InterpreterResponseDTO> findById(@PathVariable Long id) {
+    public ResponseEntity<InterpreterResponseDTO> findById(@PathVariable UUID id) {
         try {
             InterpreterResponseDTO interpreter = service.findById(id);
             return ResponseEntity.ok(interpreter);
@@ -56,13 +58,13 @@ public class InterpreterController {
 
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<InterpreterResponseDTO> updateUser(@PathVariable Long id, @RequestBody @Valid InterpreterRequestDTO dto) {
+    public ResponseEntity<InterpreterResponseDTO> updateUser(@PathVariable UUID id, @RequestBody @Valid InterpreterRequestDTO dto) {
         try {
             InterpreterResponseDTO updated = service.updatePartial(id, dto);
             return ResponseEntity.ok(updated);

@@ -10,7 +10,7 @@ import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
 import com.pointtils.pointtils.src.core.domain.entities.InterpreterDocuments;
 
 @Repository
-public interface InterpreterDocumentsRepository extends JpaRepository<InterpreterDocuments, Long> {
+public interface InterpreterDocumentsRepository extends JpaRepository<InterpreterDocuments, UUID> {
     
     List<InterpreterDocuments> findByInterpreter(Interpreter interpreter);
     
