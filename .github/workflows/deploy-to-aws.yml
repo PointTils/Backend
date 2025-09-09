@@ -277,6 +277,10 @@ jobs:
                 - JWT_EXPIRATION_TIME=3600000
                 - JWT_REFRESH_EXPIRATION_TIME=86400000
                 
+                # Configurações de clientes externos
+                - CLIENT_IBGE_STATE_URL=https://servicodados.ibge.gov.br/api/v1/localidades/estados
+                - CLIENT_IBGE_CITY_URL=https://servicodados.ibge.gov.br/api/v1/localidades/municipios
+                
                 # Configurações de banco de dados
                 - SPRING_DATASOURCE_URL=jdbc:postgresql://127.0.0.1:5432/pointtilsdb
                 - SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME }}
