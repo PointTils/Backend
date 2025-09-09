@@ -1,14 +1,17 @@
 
 package com.pointtils.pointtils.src.infrastructure.configs;
+
+import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
+import com.pointtils.pointtils.src.core.domain.exceptions.ClientTimeoutException;
+import com.pointtils.pointtils.src.core.domain.exceptions.UserSpecialtyException;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
-
-import jakarta.persistence.EntityNotFoundException;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -16,47 +19,122 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleEntityNotFoundException(
             EntityNotFoundException ex, WebRequest request) {
-        
+
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
                 ex.getMessage(),
                 System.currentTimeMillis());
-        
+
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
             IllegalArgumentException ex, WebRequest request) {
-        
+
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 "Dados inválidos: " + ex.getMessage(),
                 System.currentTimeMillis());
-        
+
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
-
-    // @ExceptionHandler(AccessDeniedException.class)
-    // public ResponseEntity<ErrorResponse> accessDeniedException(
-    //         AccessDeniedException ex, WebRequest request) {
-    //     ErrorResponse errorResponse = new ErrorResponse(
-    //             HttpStatus.FORBIDDEN.value(),
-    //             "Acesso negado. Você não tem permissão para acessar este recurso.",
-    //             System.currentTimeMillis());
-    //     return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
-    // }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(
             Exception ex, WebRequest request) {
-        ex.printStackTrace();
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "An unexpected error occurred",
                 System.currentTimeMillis());
-        
+
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthentication(AuthenticationException ex) {
+        String message = ex.getMessage();
+
+        if ("O campo email é obrigatório".equals(message) || "O campo senha é obrigatório".equals(message)) {
+            ErrorResponse errorResponse = new ErrorResponse(
+                    HttpStatus.BAD_REQUEST.value(),
+                    message,
+                    System.currentTimeMillis());
+            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        }
+        if ("Formato de e-mail inválido".equals(message) || "Formato de senha inválida".equals(message)) {
+            ErrorResponse errorResponse = new ErrorResponse(
+                    HttpStatus.UNPROCESSABLE_ENTITY.value(),
+                    message,
+                    System.currentTimeMillis());
+            return new ResponseEntity<>(errorResponse, HttpStatus.UNPROCESSABLE_ENTITY);
+        }
+        if ("Usuário não encontrado".equals(message)) {
+            ErrorResponse errorResponse = new ErrorResponse(
+                    HttpStatus.NOT_FOUND.value(),
+                    message,
+                    System.currentTimeMillis());
+            return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+        }
+        if ("Muitas tentativas de login".equals(message)) {
+            ErrorResponse errorResponse = new ErrorResponse(
+                    HttpStatus.TOO_MANY_REQUESTS.value(),
+                    message,
+                    System.currentTimeMillis());
+            return new ResponseEntity<>(errorResponse, HttpStatus.TOO_MANY_REQUESTS);
+        }
+        if ("Credenciais inválidas".equals(message)) {
+            ErrorResponse errorResponse = new ErrorResponse(
+                    HttpStatus.UNAUTHORIZED.value(),
+                    message,
+                    System.currentTimeMillis());
+            return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+        }
+        if ("Usuário bloqueado".equals(message)) {
+            ErrorResponse errorResponse = new ErrorResponse(
+                    HttpStatus.FORBIDDEN.value(),
+                    message,
+                    System.currentTimeMillis());
+            return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+        }
+        if ("Refresh token não fornecido".equals(message)) {
+            ErrorResponse errorResponse = new ErrorResponse(
+                    HttpStatus.BAD_REQUEST.value(),
+                    message,
+                    System.currentTimeMillis());
+            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        }
+        if ("Refresh token inválido ou expirado".equals(message)) {
+            ErrorResponse errorResponse = new ErrorResponse(
+                    HttpStatus.UNAUTHORIZED.value(),
+                    message,
+                    System.currentTimeMillis());
+            return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+        }
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                message,
+                System.currentTimeMillis());
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(ClientTimeoutException.class)
+    public ResponseEntity<ErrorResponse> handleClientTimeoutException(ClientTimeoutException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.GATEWAY_TIMEOUT.value(),
+                ex.getMessage(),
+                System.currentTimeMillis());
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.GATEWAY_TIMEOUT);
+    }
+
+    @ExceptionHandler(UserSpecialtyException.class)
+    public ResponseEntity<ErrorResponse> handleUserSpecialty(UserSpecialtyException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                System.currentTimeMillis());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
     @Data

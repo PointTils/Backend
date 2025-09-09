@@ -1,13 +1,13 @@
 package com.pointtils.pointtils.src.application.dto.responses;
 
-import java.time.LocalDate;
-
 import com.pointtils.pointtils.src.application.dto.LocationDTO;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.time.LocalDate;
+import java.util.UUID;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -15,7 +15,7 @@ import lombok.Setter;
 @Setter
 public class DeafResponseDTO {
 
-    private Long id;
+    private UUID id;
     private String email;
     private String phone;
     private String picture;
@@ -27,8 +27,4 @@ public class DeafResponseDTO {
     private String cpf;
     private LocationDTO location;
     private LocalDate created_at = LocalDate.now();
-    
-
-
-    
 }

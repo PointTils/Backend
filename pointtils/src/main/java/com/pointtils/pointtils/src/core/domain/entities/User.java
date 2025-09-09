@@ -1,11 +1,7 @@
 package com.pointtils.pointtils.src.core.domain.entities;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,7 +9,6 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
@@ -28,21 +23,28 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.UuidGenerator;
 
-@Table(name = "users")
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
-@AllArgsConstructor
-@NoArgsConstructor
+@Table(name = "user_account")
 @Getter
 @Setter
 @SuperBuilder
-public class User {
-    
+@AllArgsConstructor
+@NoArgsConstructor
+public abstract class User {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    
+    @GeneratedValue
+    @UuidGenerator
+    @Column(name = "id", updatable = false, nullable = false, columnDefinition = "uuid")
+    private UUID id;
+
     @Column(nullable = false, unique = true, length = 255)
     private String email;
 
@@ -66,13 +68,16 @@ public class User {
     @Column(nullable = false)
     private UserTypeE type;
 
-
     @ManyToMany
     @JoinTable(
-        name = "user_specialties",
-        joinColumns = @JoinColumn(name = "user_id"),
-        inverseJoinColumns = @JoinColumn(name = "specialtie_id")
+            name = "user_specialties",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "specialtie_id")
     )
     @Builder.Default
     private Set<Specialty> specialties = new HashSet<>();
+
+    public abstract String getDisplayName();
+
+    public abstract String getType();
 }

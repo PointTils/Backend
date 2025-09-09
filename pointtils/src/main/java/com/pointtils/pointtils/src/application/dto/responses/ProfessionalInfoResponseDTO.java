@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ProfessionalInfoResponseDTO {
     private String cnpj;
-    private Double rating;
+    private BigDecimal rating;
     
     @JsonProperty("min_value")
     private BigDecimal minValue;

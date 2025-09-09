@@ -1,5 +1,6 @@
 package com.pointtils.pointtils.src.application.mapper;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -42,7 +43,7 @@ public class InterpreterResponseMapper {
             
             ProfessionalInfoResponseDTO professionalDto = ProfessionalInfoResponseDTO.builder()
                 .cnpj(interpreter.getCnpj())
-                .rating(interpreter.getRating() != null ? interpreter.getRating() : 0.0)
+                .rating(interpreter.getRating() != null ? interpreter.getRating() : BigDecimal.ZERO)
                 .minValue(interpreter.getMinValue())
                 .maxValue(interpreter.getMaxValue())
                 .modality(interpreter.getModality().name())

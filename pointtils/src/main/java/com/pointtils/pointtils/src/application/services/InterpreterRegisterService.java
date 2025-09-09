@@ -20,6 +20,8 @@ import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterReposi
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -42,7 +44,7 @@ public class InterpreterRegisterService {
             .birthday(request.getPersonalData().getBirthday())
             .cpf(request.getPersonalData().getCpf())
             .cnpj(request.getProfessionalData().getCnpj())
-            .rating(0.0)
+            .rating(BigDecimal.ZERO)
             .minValue(request.getProfessionalData().getMinValue())
             .maxValue(request.getProfessionalData().getMaxValue())
             .imageRights(request.getProfessionalData().getImageRights())

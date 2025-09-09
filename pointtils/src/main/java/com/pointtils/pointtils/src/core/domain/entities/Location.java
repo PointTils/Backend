@@ -3,7 +3,6 @@ package com.pointtils.pointtils.src.core.domain.entities;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
@@ -14,6 +13,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.UuidGenerator;
+
+import java.util.UUID;
 
 @Entity
 @Table(name = "location")
@@ -24,19 +26,21 @@ import lombok.ToString;
 @Setter
 @ToString
 public class Location {
-    
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    
+    @GeneratedValue
+    @UuidGenerator
+    @Column(name = "id", updatable = false, nullable = false, columnDefinition = "uuid")
+    private UUID id;
+
     @Column(name = "UF", length = 2)
     private String uf;
-    
+
     @Column(name = "city", length = 255)
     private String city;
-    
+
     @OneToOne
-    @JoinColumn(name = "fk_location_user_id_user", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     public Location(String uf, String city, User user) {

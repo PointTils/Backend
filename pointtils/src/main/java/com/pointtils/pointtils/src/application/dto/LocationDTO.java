@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.util.UUID;
+
 @Data
 @Builder
 @AllArgsConstructor
@@ -17,12 +19,12 @@ import lombok.ToString;
 @Setter
 @ToString
 public class LocationDTO {
-    
-    private Long id;
+
+    private UUID id;
 
     @NotBlank(message = "UF is required")
     private String uf;
-    
+
     @NotBlank(message = "City is required")
     private String city;
 

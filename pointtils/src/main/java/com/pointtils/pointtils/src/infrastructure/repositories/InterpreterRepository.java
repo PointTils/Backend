@@ -1,5 +1,6 @@
 package com.pointtils.pointtils.src.infrastructure.repositories;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,5 +14,5 @@ public interface InterpreterRepository extends JpaRepository<Interpreter, Long> 
     
     List<Interpreter> findByModality(InterpreterModality modality);
 
-    List<Interpreter> findByRatingGreaterThanEqual(Double rating);
+    List<Interpreter> findByRatingGreaterThanEqual(BigDecimal rating);
 }

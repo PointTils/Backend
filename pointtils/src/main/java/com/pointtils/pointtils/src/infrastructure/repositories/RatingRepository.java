@@ -1,6 +1,7 @@
 package com.pointtils.pointtils.src.infrastructure.repositories;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -13,5 +14,5 @@ public interface RatingRepository extends JpaRepository<Rating, Long> {
     
     List<Rating> findByAppointment(Appointment appointment);
     
-    List<Rating> findByAppointmentInterpreterIdOrderByStarsDesc(Long interpreterId);
+    List<Rating> findByAppointmentInterpreterIdOrderByStarsDesc(UUID interpreterId);
 }

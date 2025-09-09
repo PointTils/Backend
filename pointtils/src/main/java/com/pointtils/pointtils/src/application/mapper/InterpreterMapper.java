@@ -20,7 +20,7 @@ public class InterpreterMapper {
     }
     
     public static ProfessionalRequestDTO toDto(Interpreter interpreter) {
-        ProfessionalRequestDTO dto = ProfessionalRequestDTO.builder()
+        return ProfessionalRequestDTO.builder()
             .cnpj(interpreter.getCnpj())
             .minValue(interpreter.getMinValue())
             .maxValue(interpreter.getMaxValue())
@@ -28,6 +28,5 @@ public class InterpreterMapper {
             .description(interpreter.getDescription())
             .imageRights(interpreter.getImageRights())
         .build();
-        return dto;
     }
 }

@@ -1,16 +1,10 @@
 package com.pointtils.pointtils.src.core.domain.entities;
 
-import java.math.BigDecimal;
-
 import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.PrimaryKeyJoinColumn;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -19,6 +13,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "interpreter")
@@ -30,10 +26,10 @@ import lombok.experimental.SuperBuilder;
 @Setter
 @ToString
 public class Interpreter extends Person {
-    
+
     private String cnpj;
 
-    private Double rating;
+    private BigDecimal rating;
 
     @Column(name = "min_value")
     private BigDecimal minValue;
