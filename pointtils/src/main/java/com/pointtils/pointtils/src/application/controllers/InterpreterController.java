@@ -1,5 +1,6 @@
 package com.pointtils.pointtils.src.application.controllers;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -9,14 +10,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.pointtils.pointtils.src.application.dto.requests.DeafRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ApiResponse;
-import com.pointtils.pointtils.src.application.dto.responses.DeafResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
 import com.pointtils.pointtils.src.application.services.InterpreterRegisterService;
 
@@ -40,7 +40,7 @@ public class InterpreterController {
                 ApiResponse.success("Intérprete cadastrado com sucesso", interpetrer);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (Exception e) {
-            ApiResponse<InterpreterResponseDTO> errorResponse = ApiResponse.error("Erro ao cadastrar intérprete: " + e.getMessage());
+            ApiResponse<InterpreterResponseDTO> errorResponse = 
                 ApiResponse.error("Erro ao cadastrar intérprete: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
@@ -53,6 +53,20 @@ public class InterpreterController {
             return ResponseEntity.ok(interpreter);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<InterpreterResponseDTO>>> findAll() {
+        try {
+            List<InterpreterResponseDTO> interpreters = service.findAll();
+            ApiResponse<List<InterpreterResponseDTO>> response = 
+                ApiResponse.success("Intérpretes encontrados com sucesso", interpreters);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            ApiResponse<List<InterpreterResponseDTO>> errorResponse = 
+                ApiResponse.error("Erro ao buscar intérpretes: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 
@@ -70,6 +84,24 @@ public class InterpreterController {
             return ResponseEntity.ok(updated);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<InterpreterResponseDTO>> updateComplete(@PathVariable UUID id, @RequestBody @Valid InterpreterRequestDTO dto) {
+        try {
+            InterpreterResponseDTO updated = service.updateComplete(id, dto);
+            ApiResponse<InterpreterResponseDTO> response = 
+                ApiResponse.success("Intérprete atualizado com sucesso", updated);
+            return ResponseEntity.ok(response);
+        } catch (EntityNotFoundException e) {
+            ApiResponse<InterpreterResponseDTO> errorResponse = 
+                ApiResponse.error("Intérprete não encontrado");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        } catch (Exception e) {
+            ApiResponse<InterpreterResponseDTO> errorResponse = 
+                ApiResponse.error("Erro ao atualizar intérprete: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
     }
 }

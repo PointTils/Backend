@@ -1,6 +1,8 @@
 package com.pointtils.pointtils.src.infrastructure.configs;
 
 
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -15,8 +17,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -36,8 +36,9 @@ public class SecurityConfiguration {
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/v1/deaf-users/register/**").permitAll()
-                        .requestMatchers("/v1/interpreters/register/**").permitAll()
+                        .requestMatchers("/v1/deaf-users/**").permitAll()
+                        .requestMatchers("/v1/interpreters/**").permitAll()
+                        .requestMatchers("/v1/specialties/**").permitAll()
                         .requestMatchers("/v1/auth/login").permitAll()
                         .requestMatchers("/v1/auth/refresh").permitAll()
                         .requestMatchers("/api/jwt/**", "/auth/**").permitAll()

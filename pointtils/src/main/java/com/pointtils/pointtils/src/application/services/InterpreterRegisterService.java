@@ -1,17 +1,20 @@
 package com.pointtils.pointtils.src.application.services;
 
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterRequestDTO;
-import com.pointtils.pointtils.src.application.dto.responses.DeafResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
 import com.pointtils.pointtils.src.application.mapper.InterpreterMapper;
 import com.pointtils.pointtils.src.application.mapper.InterpreterResponseMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
 import com.pointtils.pointtils.src.core.domain.entities.Location;
-import com.pointtils.pointtils.src.core.domain.entities.Person;
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
@@ -19,9 +22,6 @@ import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterReposi
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-
-import java.math.BigDecimal;
-import java.util.UUID;
 
 @Service
 @Transactional
@@ -84,7 +84,58 @@ public class InterpreterRegisterService {
         repository.deleteById(id);
     }
 
-    @Transactional
+    public List<InterpreterResponseDTO> findAll() {
+        List<Interpreter> interpreters = repository.findAll();
+        return interpreters.stream()
+                .map(responseMapper::toResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    public InterpreterResponseDTO updateComplete(UUID id, InterpreterRequestDTO dto) {
+        Interpreter interpreter = repository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Intérprete não encontrado"));
+
+        // Atualizar todos os campos obrigatórios
+        if (dto.getPersonalData() != null) {
+            var p = dto.getPersonalData();
+            interpreter.setName(p.getName());
+            interpreter.setEmail(p.getEmail());
+            interpreter.setPhone(p.getPhone());
+            interpreter.setPicture(p.getPicture());
+            interpreter.setBirthday(p.getBirthday());
+            interpreter.setCpf(p.getCpf());
+            interpreter.setGender(Gender.fromString(p.getGender()));
+            
+            if (p.getPassword() != null) {
+                interpreter.setPassword(passwordEncoder.encode(p.getPassword()));
+            }
+        }
+
+        if (dto.getProfessionalData() != null) {
+            var prof = dto.getProfessionalData();
+            interpreter.setCnpj(prof.getCnpj());
+            interpreter.setMinValue(prof.getMinValue());
+            interpreter.setMaxValue(prof.getMaxValue());
+            interpreter.setImageRights(prof.getImageRights());
+            interpreter.setModality(InterpreterMapper.toInterpreterModality(prof.getModality()));
+            interpreter.setDescription(prof.getDescription());
+        }
+
+        if (dto.getLocation() != null) {
+            var l = dto.getLocation();
+            Location location = interpreter.getLocation();
+            if (location == null) {
+                location = Location.builder().user(interpreter).build();
+            }
+            location.setUf(l.getUf());
+            location.setCity(l.getCity());
+            interpreter.setLocation(location);
+        }
+
+        Interpreter updated = repository.save(interpreter);
+        return responseMapper.toResponseDTO(updated);
+    }
+
     public InterpreterResponseDTO updatePartial(UUID id, InterpreterRequestDTO dto) {
         Interpreter interpreter = repository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Intérprete não encontrado"));
