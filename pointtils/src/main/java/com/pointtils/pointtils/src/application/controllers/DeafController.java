@@ -32,7 +32,7 @@ import lombok.AllArgsConstructor;
 public class DeafController {
     private final DeafRegisterService service;
 
-    @PostMapping("register/person")
+    @PostMapping("/register")
     public ResponseEntity<ApiResponse<DeafResponseDTO>> createUser(@Valid @RequestBody DeafRequestDTO dto) {
         try {
             DeafResponseDTO created = service.registerPerson(dto);

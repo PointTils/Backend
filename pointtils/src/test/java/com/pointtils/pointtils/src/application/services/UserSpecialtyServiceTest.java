@@ -66,7 +66,8 @@ class UserSpecialtyServiceTest {
         user.setPhone("11999999999");
         user.setStatus(UserStatus.ACTIVE);
 
-        specialty = new Specialty(specialtyId, "Test Specialty");
+        specialty = new Specialty("Test Specialty");
+        specialty.setId(specialtyId);
 
         userSpecialty = new UserSpecialty(specialty, user);
         userSpecialty.setId(UUID.randomUUID());
@@ -299,7 +300,8 @@ class UserSpecialtyServiceTest {
         // Arrange
         UUID userSpecialtyId = UUID.randomUUID();
         UUID newSpecialtyId = UUID.randomUUID();
-        Specialty newSpecialty = new Specialty(newSpecialtyId, "New Specialty");
+        Specialty newSpecialty = new Specialty("New Specialty");
+        newSpecialty.setId(newSpecialtyId);
 
         when(userSpecialtyRepository.findById(userSpecialtyId)).thenReturn(Optional.of(userSpecialty));
         when(specialtyRepository.findById(newSpecialtyId)).thenReturn(Optional.of(newSpecialty));
@@ -370,7 +372,8 @@ class UserSpecialtyServiceTest {
         // Arrange
         UUID userSpecialtyId = UUID.randomUUID();
         UUID newSpecialtyId = UUID.randomUUID();
-        Specialty newSpecialty = new Specialty(newSpecialtyId, "New Specialty");
+        Specialty newSpecialty = new Specialty("New Specialty");
+        specialty.setId(newSpecialtyId);
 
         when(userSpecialtyRepository.findById(userSpecialtyId)).thenReturn(Optional.of(userSpecialty));
         when(specialtyRepository.findById(newSpecialtyId)).thenReturn(Optional.of(newSpecialty));

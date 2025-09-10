@@ -8,6 +8,7 @@ import com.pointtils.pointtils.src.application.services.AuthService;
 import com.pointtils.pointtils.src.core.domain.entities.Enterprise;
 import com.pointtils.pointtils.src.core.domain.entities.Person;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
+import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
 import com.pointtils.pointtils.src.infrastructure.configs.LoginAttemptService;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
@@ -62,6 +63,7 @@ class AuthControllerTest {
         person.setPhone("51999999999");
         person.setPicture("picture_url");
         person.setStatus(UserStatus.ACTIVE);
+        person.setType(UserTypeE.CLIENT);
 
         userRepository.save(person);
 
@@ -72,6 +74,7 @@ class AuthControllerTest {
         enterprise.setPhone("51888888888");
         enterprise.setPicture("enterprise_picture_url");
         enterprise.setStatus(UserStatus.ACTIVE);
+        enterprise.setType(UserTypeE.ENTERPRISE);
 
         userRepository.save(enterprise);
     }

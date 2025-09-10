@@ -1,13 +1,12 @@
 package com.pointtils.pointtils.src.application.controllers;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import java.util.List;
-import java.util.UUID;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pointtils.pointtils.src.application.dto.AddUserSpecialtiesRequestDTO;
+import com.pointtils.pointtils.src.application.dto.UserSpecialtyResponseDTO;
+import com.pointtils.pointtils.src.application.services.UserSpecialtyService;
+import com.pointtils.pointtils.src.core.domain.entities.Specialty;
+import com.pointtils.pointtils.src.core.domain.entities.User;
+import com.pointtils.pointtils.src.core.domain.entities.UserSpecialty;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,13 +17,19 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pointtils.pointtils.src.application.dto.AddUserSpecialtiesRequestDTO;
-import com.pointtils.pointtils.src.application.dto.UserSpecialtyResponseDTO;
-import com.pointtils.pointtils.src.application.services.UserSpecialtyService;
-import com.pointtils.pointtils.src.core.domain.entities.Specialty;
-import com.pointtils.pointtils.src.core.domain.entities.User;
-import com.pointtils.pointtils.src.core.domain.entities.UserSpecialty;
+import java.util.List;
+import java.util.UUID;
+
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
 class UserSpecialtyControllerTest {
@@ -48,7 +53,7 @@ class UserSpecialtyControllerTest {
     void setUp() {
         userId = UUID.randomUUID();
         specialtyId = UUID.randomUUID();
-        
+
         User user = new User() {
             @Override
             public String getDisplayName() {
@@ -62,16 +67,17 @@ class UserSpecialtyControllerTest {
         };
         user.setId(userId);
 
-        Specialty specialty = new Specialty(specialtyId, "Test Specialty");
+        Specialty specialty = new Specialty("Test Specialty");
+        specialty.setId(specialtyId);
 
         userSpecialty = new UserSpecialty(specialty, user);
         userSpecialty.setId(UUID.randomUUID());
 
         userSpecialtyResponseDTO = new UserSpecialtyResponseDTO(
-            userSpecialty.getId(),
-            userId,
-            specialtyId,
-            "Test Specialty"
+                userSpecialty.getId(),
+                userId,
+                specialtyId,
+                "Test Specialty"
         );
 
         // Setup MockMvc
@@ -97,7 +103,7 @@ class UserSpecialtyControllerTest {
     void getUserSpecialties_WhenUserNotExists_ShouldReturnNotFound() throws Exception {
         // Arrange
         when(userSpecialtyService.getUserSpecialties(userId))
-            .thenThrow(new RuntimeException("User not found"));
+                .thenThrow(new RuntimeException("User not found"));
 
         // Act & Assert
         mockMvc.perform(get("/v1/users/{userId}/specialties", userId))
@@ -111,17 +117,17 @@ class UserSpecialtyControllerTest {
     void addUserSpecialties_ShouldAddSpecialties() throws Exception {
         // Arrange
         AddUserSpecialtiesRequestDTO request = new AddUserSpecialtiesRequestDTO(
-            List.of(specialtyId), false
+                List.of(specialtyId), false
         );
-        
+
         when(userSpecialtyService.addUserSpecialties(userId, List.of(specialtyId), false))
-            .thenReturn(List.of(userSpecialty));
+                .thenReturn(List.of(userSpecialty));
         when(userSpecialtyService.countUserSpecialties(userId)).thenReturn(1L);
 
         // Act & Assert
         mockMvc.perform(post("/v1/users/{userId}/specialties", userId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Especialidades adicionadas com sucesso"))
@@ -134,16 +140,16 @@ class UserSpecialtyControllerTest {
     void addUserSpecialties_WhenInvalidRequest_ShouldReturnBadRequest() throws Exception {
         // Arrange
         AddUserSpecialtiesRequestDTO request = new AddUserSpecialtiesRequestDTO(
-            List.of(specialtyId), false
+                List.of(specialtyId), false
         );
-        
+
         when(userSpecialtyService.addUserSpecialties(userId, List.of(specialtyId), false))
-            .thenThrow(new RuntimeException("Invalid specialty IDs"));
+                .thenThrow(new RuntimeException("Invalid specialty IDs"));
 
         // Act & Assert
         mockMvc.perform(post("/v1/users/{userId}/specialties", userId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false));
 
@@ -154,12 +160,12 @@ class UserSpecialtyControllerTest {
     void replaceUserSpecialties_ShouldReplaceSpecialties() throws Exception {
         // Arrange
         when(userSpecialtyService.replaceUserSpecialties(userId, List.of(specialtyId)))
-            .thenReturn(List.of(userSpecialty));
+                .thenReturn(List.of(userSpecialty));
 
         // Act & Assert
         mockMvc.perform(put("/v1/users/{userId}/specialties", userId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(List.of(specialtyId))))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(List.of(specialtyId))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Especialidades do usuário atualizadas com sucesso"))
@@ -184,7 +190,7 @@ class UserSpecialtyControllerTest {
     void removeUserSpecialty_WhenNotExists_ShouldReturnNotFound() throws Exception {
         // Arrange
         doThrow(new RuntimeException("User specialty not found"))
-            .when(userSpecialtyService).removeUserSpecialty(userId, specialtyId);
+                .when(userSpecialtyService).removeUserSpecialty(userId, specialtyId);
 
         // Act & Assert
         mockMvc.perform(delete("/v1/users/{userId}/specialties/{specialtyId}", userId, specialtyId))
@@ -201,7 +207,7 @@ class UserSpecialtyControllerTest {
 
         // Act & Assert
         mockMvc.perform(delete("/v1/users/{userId}/specialties", userId)
-                .param("specialtyIds", specialtyId.toString()))
+                        .param("specialtyIds", specialtyId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Especialidades removidas com sucesso"));

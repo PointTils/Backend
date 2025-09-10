@@ -1,13 +1,9 @@
 package com.pointtils.pointtils.src.application.controllers;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import java.util.List;
-import java.util.UUID;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pointtils.pointtils.src.application.dto.UpdateSpecialtyRequestDTO;
+import com.pointtils.pointtils.src.application.services.SpecialtyService;
+import com.pointtils.pointtils.src.core.domain.entities.Specialty;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,10 +14,20 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pointtils.pointtils.src.application.dto.UpdateSpecialtyRequestDTO;
-import com.pointtils.pointtils.src.application.services.SpecialtyService;
-import com.pointtils.pointtils.src.core.domain.entities.Specialty;
+import java.util.List;
+import java.util.UUID;
+
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
 class SpecialtyControllerTest {
@@ -42,7 +48,8 @@ class SpecialtyControllerTest {
     @BeforeEach
     void setUp() {
         specialtyId = UUID.randomUUID();
-        specialty = new Specialty(specialtyId, "Test Specialty");
+        specialty = new Specialty("Test Specialty");
+        specialty.setId(specialtyId);
 
         mockMvc = MockMvcBuilders.standaloneSetup(specialtyController).build();
     }
@@ -79,7 +86,7 @@ class SpecialtyControllerTest {
     void getSpecialtyById_WhenNotExists_ShouldReturnNotFound() throws Exception {
         // Arrange
         when(specialtyService.getSpecialtyById(specialtyId))
-            .thenThrow(new RuntimeException("Specialty not found"));
+                .thenThrow(new RuntimeException("Specialty not found"));
 
         // Act & Assert
         mockMvc.perform(get("/v1/specialties/{id}", specialtyId))
@@ -95,7 +102,7 @@ class SpecialtyControllerTest {
 
         // Act & Assert
         mockMvc.perform(get("/v1/specialties/search")
-                .param("name", "test"))
+                        .param("name", "test"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(specialtyId.toString()))
                 .andExpect(jsonPath("$[0].name").value("Test Specialty"));
@@ -107,11 +114,11 @@ class SpecialtyControllerTest {
     void searchSpecialtiesByName_WhenServiceThrowsException_ShouldReturnInternalServerError() throws Exception {
         // Arrange
         when(specialtyService.searchSpecialtiesByName("test"))
-            .thenThrow(new RuntimeException("Database error"));
+                .thenThrow(new RuntimeException("Database error"));
 
         // Act & Assert
         mockMvc.perform(get("/v1/specialties/search")
-                .param("name", "test"))
+                        .param("name", "test"))
                 .andExpect(status().isInternalServerError());
 
         verify(specialtyService).searchSpecialtiesByName("test");
@@ -124,7 +131,7 @@ class SpecialtyControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/v1/specialties")
-                .param("name", "New Specialty"))
+                        .param("name", "New Specialty"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(specialtyId.toString()))
                 .andExpect(jsonPath("$.name").value("Test Specialty"));
@@ -139,7 +146,7 @@ class SpecialtyControllerTest {
 
         // Act & Assert
         mockMvc.perform(put("/v1/specialties/{id}", specialtyId)
-                .param("name", "Updated Name"))
+                        .param("name", "Updated Name"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(specialtyId.toString()))
                 .andExpect(jsonPath("$.name").value("Test Specialty"));
@@ -152,13 +159,13 @@ class SpecialtyControllerTest {
         // Arrange
         UpdateSpecialtyRequestDTO request = new UpdateSpecialtyRequestDTO();
         request.setName("Updated Name");
-        
+
         when(specialtyService.partialUpdateSpecialty(specialtyId, "Updated Name")).thenReturn(specialty);
 
         // Act & Assert
         mockMvc.perform(patch("/v1/specialties/{id}", specialtyId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(specialtyId.toString()))
                 .andExpect(jsonPath("$.name").value("Test Specialty"));
@@ -171,14 +178,14 @@ class SpecialtyControllerTest {
         // Arrange
         UpdateSpecialtyRequestDTO request = new UpdateSpecialtyRequestDTO();
         request.setName("Updated Name");
-        
+
         when(specialtyService.partialUpdateSpecialty(specialtyId, "Updated Name"))
-            .thenThrow(new RuntimeException("Invalid request"));
+                .thenThrow(new RuntimeException("Invalid request"));
 
         // Act & Assert
         mockMvc.perform(patch("/v1/specialties/{id}", specialtyId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
 
         verify(specialtyService).partialUpdateSpecialty(specialtyId, "Updated Name");
@@ -200,7 +207,7 @@ class SpecialtyControllerTest {
     void deleteSpecialty_WhenNotExists_ShouldReturnNotFound() throws Exception {
         // Arrange
         doThrow(new RuntimeException("Specialty not found"))
-            .when(specialtyService).deleteSpecialty(specialtyId);
+                .when(specialtyService).deleteSpecialty(specialtyId);
 
         // Act & Assert
         mockMvc.perform(delete("/v1/specialties/{id}", specialtyId))

@@ -2,7 +2,6 @@ package com.pointtils.pointtils.src.application.mapper;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
@@ -26,7 +25,7 @@ public class InterpreterResponseMapper {
             UserResponseDTO userDto = UserResponseDTO.builder()
                 .id(interpreter.getId())
                 .email(interpreter.getEmail())
-                .type(interpreter.getType().toString().toLowerCase())
+                .type(interpreter.getType().toLowerCase())
                 .status(interpreter.getStatus().toString().toLowerCase())
                 .phone(interpreter.getPhone())
                 .picture(interpreter.getPicture())
@@ -65,7 +64,7 @@ public class InterpreterResponseMapper {
             List<SpecialtyResponseDTO> specialtyDtos = interpreter.getSpecialties()
                 .stream()
                 .map(specialty -> SpecialtyResponseDTO.builder().id(specialty.getId()).name(specialty.getName()).build())
-                .collect(Collectors.toList());
+                .toList();
             dto.setSpecialties(specialtyDtos);
             
         }

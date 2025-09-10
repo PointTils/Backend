@@ -98,7 +98,7 @@ class AuthServiceTest {
                 () -> loginService.login("usuario@exemplo.com", "senha123")
         );
 
-        assertEquals("Usuário bloqueado", ex.getMessage());
+        assertEquals("Usuário inativo", ex.getMessage());
     }
 
     @Test

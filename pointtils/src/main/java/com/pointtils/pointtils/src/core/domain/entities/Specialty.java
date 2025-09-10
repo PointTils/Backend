@@ -35,10 +35,6 @@ public class Specialty {
     @ManyToMany(mappedBy = "specialties")
     private Set<User> users = new HashSet<>();
 
-    public Specialty(UUID id, String name) {
-        this.id = id;
-        this.name = name;
-    }
     public Specialty(String name) {
         this.name = name;
     }
