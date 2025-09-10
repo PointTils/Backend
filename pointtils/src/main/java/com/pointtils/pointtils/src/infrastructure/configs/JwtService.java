@@ -77,8 +77,9 @@ public class JwtService {
     }
 
     private Key getSignInKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
-        return Keys.hmacShaKeyFor(keyBytes);
+        // Usar a chave diretamente sem decodificação Base64
+        // A chave deve ter pelo menos 256 bits (32 caracteres) para HS256
+        return Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 
     public String getEmailFromToken(String token) {
