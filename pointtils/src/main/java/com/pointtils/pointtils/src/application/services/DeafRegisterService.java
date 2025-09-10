@@ -90,7 +90,7 @@ public class DeafRegisterService {
     }
 
     public List<DeafResponseDTO> findAll() {
-        List<Person> persons = personRepository.findAll();
+        List<Person> persons = personRepository.findAllByType(UserTypeE.CLIENT);
         return persons.stream()
                 .map(deafResponseMapper::toResponseDTO)
                 .toList();

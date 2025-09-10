@@ -22,7 +22,7 @@ public class DeafResponseMapper {
         dto.setBirthday(person.getBirthday());
         dto.setCpf(maskCpf(person.getCpf()));
 
-        if (dto.getLocation() != null) {
+        if (person.getLocation() != null) {
             LocationDTO locationDto = LocationDTO.builder()
                     .id(person.getLocation().getId())
                     .uf(person.getLocation().getUf())
