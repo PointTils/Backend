@@ -1,14 +1,5 @@
 package com.pointtils.pointtils.src.application.services;
 
-
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.pointtils.pointtils.src.application.dto.requests.DeafRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.DeafResponseDTO;
 import com.pointtils.pointtils.src.application.mapper.DeafResponseMapper;
@@ -18,19 +9,25 @@ import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
 import com.pointtils.pointtils.src.infrastructure.repositories.PersonRepository;
-
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.UUID;
 
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class DeafRegisterService {
-    
+
+    private static final String USER_NOT_FOUND = "Usuário não encontrado";
     private final PersonRepository personRepository;
     private final PasswordEncoder passwordEncoder;
     private final DeafResponseMapper deafResponseMapper;
-    
+
     public DeafResponseDTO registerPerson(DeafRequestDTO dto) {
         Person person = new Person();
 
@@ -44,34 +41,32 @@ public class DeafRegisterService {
         person.setGender(Gender.fromString(dto.getPersonalRequestDTO().getGender()));
         person.setBirthday(dto.getPersonalRequestDTO().getBirthday());
         person.setCpf(dto.getPersonalRequestDTO().getCpf());
-        
+
         if (dto.getLocation() != null) {
             Location location = Location.builder()
-            .uf(dto.getLocation().getUf())
-            .city(dto.getLocation().getCity())
-            .user(person)
-            .build();
-        
+                    .uf(dto.getLocation().getUf())
+                    .city(dto.getLocation().getCity())
+                    .user(person)
+                    .build();
+
             person.setLocation(location);
         }
         Person savedPerson = personRepository.save(person);
-        DeafResponseDTO response = deafResponseMapper.toResponseDTO(savedPerson);
-        return response;
+        return deafResponseMapper.toResponseDTO(savedPerson);
     }
 
 
     public DeafResponseDTO findById(UUID id) {
         Person person = personRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
-        DeafResponseDTO response = deafResponseMapper.toResponseDTO(person);
-        return response;
+                .orElseThrow(() -> new EntityNotFoundException(USER_NOT_FOUND));
+        return deafResponseMapper.toResponseDTO(person);
     }
 
 
     public void delete(UUID id) {
         Person person = personRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
-        
+
         try {
             personRepository.delete(person);
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
@@ -95,12 +90,12 @@ public class DeafRegisterService {
         List<Person> persons = personRepository.findAll();
         return persons.stream()
                 .map(deafResponseMapper::toResponseDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public DeafResponseDTO updateComplete(UUID id, DeafRequestDTO dto) {
         Person person = personRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException(USER_NOT_FOUND));
 
         if (dto.getPersonalRequestDTO() != null) {
             var p = dto.getPersonalRequestDTO();
@@ -111,7 +106,7 @@ public class DeafRegisterService {
             person.setBirthday(p.getBirthday());
             person.setCpf(p.getCpf());
             person.setGender(Gender.fromString(p.getGender()));
-            
+
             if (p.getPassword() != null) {
                 person.setPassword(passwordEncoder.encode(p.getPassword()));
             }
@@ -134,11 +129,11 @@ public class DeafRegisterService {
 
     public DeafResponseDTO updatePartial(UUID id, DeafRequestDTO dto) {
         Person person = personRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException(USER_NOT_FOUND));
 
         if (dto.getPersonalRequestDTO() != null) {
             var p = dto.getPersonalRequestDTO();
-            
+
             if (p.getName() != null) {
                 person.setName(p.getName());
             }
@@ -181,7 +176,6 @@ public class DeafRegisterService {
         }
 
         Person updated = personRepository.save(person);
-        DeafResponseDTO response = deafResponseMapper.toResponseDTO(updated);
-        return response;
+        return deafResponseMapper.toResponseDTO(updated);
     }
 }

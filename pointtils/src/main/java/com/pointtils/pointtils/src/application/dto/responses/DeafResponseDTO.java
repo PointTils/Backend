@@ -1,5 +1,6 @@
 package com.pointtils.pointtils.src.application.dto.responses;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.pointtils.pointtils.src.application.dto.LocationDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -26,5 +27,6 @@ public class DeafResponseDTO {
     private LocalDate birthday;
     private String cpf;
     private LocationDTO location;
-    private LocalDate created_at = LocalDate.now();
+    @JsonProperty("created_at")
+    private LocalDate createdAt = LocalDate.now();
 }

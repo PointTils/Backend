@@ -25,7 +25,9 @@ import java.util.UUID;
 })
 public class InterpreterResponseDTO {
 
-    private UUID id_interpreter;
+    @JsonProperty("id_interpreter")
+    private UUID idInterpreter;
+
     private UserResponseDTO user;
     private PersonResponseDTO person;
 
