@@ -1,6 +1,17 @@
 package com.pointtils.pointtils.src.application.services;
 
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.PersonalPatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.ProfessionalPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
 import com.pointtils.pointtils.src.application.mapper.InterpreterMapper;
 import com.pointtils.pointtils.src.application.mapper.InterpreterResponseMapper;
@@ -10,15 +21,9 @@ import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
+
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.UUID;
 
 @Service
 @Transactional
@@ -90,7 +95,6 @@ public class InterpreterRegisterService {
         Interpreter interpreter = repository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Intérprete não encontrado"));
 
-        // Atualizar todos os campos obrigatórios
         if (dto.getPersonalData() != null) {
             var p = dto.getPersonalData();
             interpreter.setName(p.getName());
@@ -131,57 +135,34 @@ public class InterpreterRegisterService {
         return responseMapper.toResponseDTO(updated);
     }
 
-    public InterpreterResponseDTO updatePartial(UUID id, InterpreterRequestDTO dto) {
+    public InterpreterResponseDTO updatePartial(UUID id, InterpreterPatchRequestDTO dto) {
         Interpreter interpreter = repository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Intérprete não encontrado"));
-        // (personalData)
-        if (dto.getPersonalData() != null) {
-            var p = dto.getPersonalData();
+                .orElseThrow(() -> new EntityNotFoundException("Interpreter not found with id: " + id));
 
-            if (p.getName() != null) {
-                interpreter.setName(p.getName());
+        PersonalPatchRequestDTO personal = dto.getPersonalData();
+        if (personal != null) {
+            if (personal.getName() != null) {
+                interpreter.setName(personal.getName());
             }
-            if (p.getPassword() != null) {
-                interpreter.setPassword(passwordEncoder.encode(p.getPassword()));
+            if (personal.getEmail() != null) {
+                interpreter.setEmail(personal.getEmail());
             }
-            if (p.getPhone() != null) {
-                interpreter.setPhone(p.getPhone());
+            if (personal.getPhone() != null) {
+                interpreter.setPhone(personal.getPhone());
             }
-            if (p.getPicture() != null) {
-                interpreter.setPicture(p.getPicture());
+            if (personal.getBirthday() != null) {
+                interpreter.setBirthday(personal.getBirthday());
             }
-            if (p.getBirthday() != null) {
-                interpreter.setBirthday(p.getBirthday());
+            if (personal.getCpf() != null) {
+                interpreter.setCpf(personal.getCpf());
             }
-            if (p.getCpf() != null) {
-                interpreter.setCpf(p.getCpf());
-            }
-            if (p.getEmail() != null) {
-                interpreter.setEmail(p.getEmail());
-            }
-            if (p.getGender() != null) {
-                interpreter.setGender(Gender.fromString(p.getGender()));
+            if (personal.getGender() != null) {
+                interpreter.setGender(Gender.fromString(personal.getGender()));
             }
         }
-        //(location) 
-        if (dto.getLocation() != null) {
-            var l = dto.getLocation();
-            Location loc = interpreter.getLocation();
-            if (loc == null) {
-                loc = Location.builder().user(interpreter).build();
-            }
-            if (l.getUf() != null) {
-                loc.setUf(l.getUf());
-            }
-            if (l.getCity() != null) {
-                loc.setCity(l.getCity());
-            }
-            interpreter.setLocation(loc);
-        }
-        //professionalData)
-        if (dto.getProfessionalData() != null) {
-            var prof = dto.getProfessionalData();
 
+        ProfessionalPatchRequestDTO prof = dto.getProfessionalData();
+        if (prof != null) {
             if (prof.getCnpj() != null) {
                 interpreter.setCnpj(prof.getCnpj());
             }

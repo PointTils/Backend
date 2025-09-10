@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ApiResponse;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
@@ -78,7 +79,7 @@ public class InterpreterController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<InterpreterResponseDTO> updateUser(@PathVariable UUID id, @RequestBody @Valid InterpreterRequestDTO dto) {
+    public ResponseEntity<InterpreterResponseDTO> updateUser(@PathVariable UUID id, @RequestBody @Valid InterpreterPatchRequestDTO dto) {
         try {
             InterpreterResponseDTO updated = service.updatePartial(id, dto);
             return ResponseEntity.ok(updated);

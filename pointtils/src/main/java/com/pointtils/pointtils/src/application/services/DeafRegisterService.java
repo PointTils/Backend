@@ -1,5 +1,13 @@
 package com.pointtils.pointtils.src.application.services;
 
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.pointtils.pointtils.src.application.dto.requests.DeafPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.DeafRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.DeafResponseDTO;
 import com.pointtils.pointtils.src.application.mapper.DeafResponseMapper;
@@ -9,14 +17,9 @@ import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
 import com.pointtils.pointtils.src.infrastructure.repositories.PersonRepository;
+
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.UUID;
 
 @Service
 @Transactional
@@ -127,7 +130,7 @@ public class DeafRegisterService {
         return deafResponseMapper.toResponseDTO(updated);
     }
 
-    public DeafResponseDTO updatePartial(UUID id, DeafRequestDTO dto) {
+    public DeafResponseDTO updatePartial(UUID id, DeafPatchRequestDTO dto) {
         Person person = personRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(USER_NOT_FOUND));
 

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.pointtils.pointtils.src.application.dto.requests.DeafPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.DeafRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ApiResponse;
 import com.pointtils.pointtils.src.application.dto.responses.DeafResponseDTO;
@@ -76,7 +77,7 @@ public class DeafController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<DeafResponseDTO> updateUser(@PathVariable UUID id, @RequestBody @Valid DeafRequestDTO dto) {
+    public ResponseEntity<DeafResponseDTO> updateUser(@PathVariable UUID id, @RequestBody @Valid DeafPatchRequestDTO dto) {
     try {
         DeafResponseDTO updated = service.updatePartial(id, dto);
         return ResponseEntity.ok(updated);
