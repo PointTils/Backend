@@ -259,12 +259,11 @@ jobs:
           
           # Criar arquivo docker-compose.yml
           cat > ~/pointtils/docker-compose.yml << EOF
-          version: '3'
+          version: '3.8'
           services:
             app:
               image: ${{ steps.build-image.outputs.image }}
-              ports:
-                - "8080:8080"
+              container_name: pointtils
               environment:
                 # Configurações básicas do Spring
                 - SPRING_APPLICATION_NAME=pointtils
@@ -280,19 +279,18 @@ jobs:
                 - CLIENT_IBGE_STATE_URL=https://servicodados.ibge.gov.br/api/v1/localidades/estados
                 - CLIENT_IBGE_CITY_URL=https://servicodados.ibge.gov.br/api/v1/localidades/municipios
                 
-                # Configurações de banco de dados
-                - SPRING_DATASOURCE_URL=jdbc:postgresql://127.0.0.1:5432/pointtilsdb
+                # Configurações de banco de dados - usando nome do container
+                - SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-db:5432/pointtilsdb
                 - SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME }}
                 - SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }}
-                - SPRING_JPA_HIBERNATE_DDL_AUTO=update
-                - SPRING_JPA_SHOW_SQL=true
+                - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
+                - SPRING_JPA_SHOW_SQL=false
                 
-                # Configurações do Flyway - desabilitando validação para permitir deploy
+                # Configurações do Flyway
                 - SPRING_FLYWAY_ENABLED=true
                 - SPRING_FLYWAY_LOCATIONS=classpath:db/migration
                 - SPRING_FLYWAY_BASELINE_ON_MIGRATE=true
-                - SPRING_FLYWAY_VALIDATE_ON_MIGRATE=false
-                - SPRING_FLYWAY_REPAIR_ON_MIGRATE=true
+                - SPRING_FLYWAY_VALIDATE_ON_MIGRATE=true
                 
                 # Configurações do Swagger/OpenAPI
                 - SPRINGDOC_API_DOCS_ENABLED=true
@@ -304,8 +302,42 @@ jobs:
                 - AWS_REGION=${{ secrets.AWS_REGION }}
                 - AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
                 - AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-              restart: always
-              network_mode: "host"  # Usar modo de rede host para facilitar conexão com PostgreSQL local
+              ports:
+                - "8080:8080"
+              depends_on:
+                pointtils-db:
+                  condition: service_healthy
+              networks:
+                - pointtils-network
+              restart: unless-stopped
+
+            pointtils-db:
+              image: postgres:15
+              container_name: pointtils-db
+              environment:
+                POSTGRES_DB: pointtilsdb
+                POSTGRES_USER: ${{ secrets.DB_USERNAME }}
+                POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+              ports:
+                - "5432:5432"
+              volumes:
+                - postgres_data:/var/lib/postgresql/data
+              networks:
+                - pointtils-network
+              healthcheck:
+                test: ["CMD-SHELL", "pg_isready -U ${{ secrets.DB_USERNAME }} -d pointtilsdb"]
+                interval: 30s
+                timeout: 10s
+                retries: 3
+                start_period: 40s
+              restart: unless-stopped
+
+          volumes:
+            postgres_data:
+
+          networks:
+            pointtils-network:
+              driver: bridge
           EOF
           
           # Login no ECR
@@ -340,68 +372,21 @@ jobs:
             }
           }
           
-          # Verificar banco de dados e corrigir problemas com migrações Flyway
-          echo "=== Verificando banco de dados e reparando migrações Flyway ==="
+          # Verificar se os containers estão rodando
+          echo "=== Verificando status dos containers ==="
+          docker-compose ps
           
-          # Verificar se PostgreSQL está instalado e rodando
-          echo "Verificando status do PostgreSQL"
-          sudo systemctl status postgresql || {
-            echo "PostgreSQL não está rodando. Tentando iniciar..."
-            sudo systemctl start postgresql
-            sleep 5
+          # Aguardar o banco de dados ficar pronto
+          echo "=== Aguardando banco de dados ficar pronto ==="
+          sleep 30
+          
+          # Verificar se o banco está acessível
+          echo "=== Verificando conectividade com o banco de dados ==="
+          docker-compose exec -T pointtils-db pg_isready -U ${{ secrets.DB_USERNAME }} -d pointtilsdb || {
+            echo "Banco de dados não está respondendo, tentando reiniciar..."
+            docker-compose restart pointtils-db
+            sleep 20
           }
-          
-          # Garantir que o banco existe
-          echo "Verificando se o banco de dados existe"
-          sudo -u postgres psql -lqt | cut -d \| -f 1 | grep -qw pointtilsdb || {
-            echo "Banco de dados não existe. Criando..."
-            sudo -u postgres psql -c "CREATE DATABASE pointtilsdb;"
-            echo "Banco de dados criado."
-          }
-          
-          # Garantir que o usuário tem acesso
-          echo "Verificando usuário do banco"
-          sudo -u postgres psql -c "CREATE USER ${DB_USERNAME:-pointtils} WITH PASSWORD '${DB_PASSWORD:-pointtils}' SUPERUSER;" || true
-          sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE pointtilsdb TO ${DB_USERNAME:-pointtils};" || true
-          
-          # Corrigir problemas na tabela flyway_schema_history diretamente no banco
-          echo "Tentando corrigir tabela flyway_schema_history diretamente"
-          # Script SQL para resolver o problema
-          cat > ~/flyway_fix.sql << EOF
-          -- Verificar se a tabela existe
-          DO \$\$
-          BEGIN
-            IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'flyway_schema_history') THEN
-              -- Atualizar checksums
-              UPDATE flyway_schema_history SET checksum = 1121529185 WHERE version = '1';
-              UPDATE flyway_schema_history SET checksum = -1130665790 WHERE version = '2';
-              RAISE NOTICE 'Checksums atualizados na tabela flyway_schema_history';
-            ELSE
-              RAISE NOTICE 'Tabela flyway_schema_history não existe, nada a fazer';
-            END IF;
-          END
-          \$\$;
-          EOF
-          
-          # Executar o script
-          sudo -u postgres psql -d pointtilsdb -f ~/flyway_fix.sql
-          
-          # Tentar executar flyway repair usando um contêiner Docker
-          echo "=== Executando Flyway repair via Docker ==="
-          docker run --network host \
-            -e FLYWAY_URL=jdbc:postgresql://127.0.0.1:5432/pointtilsdb \
-            -e FLYWAY_USER=${DB_USERNAME:-pointtils} \
-            -e FLYWAY_PASSWORD=${DB_PASSWORD:-pointtils} \
-            -e FLYWAY_VALIDATE_MIGRATION_NAMING=false \
-            flyway/flyway:9-alpine repair || echo "Falha no repair via Docker, continuando..."
-          
-          # Verificar status das migrações
-          echo "=== Verificando status das migrações ==="
-          docker run --network host \
-            -e FLYWAY_URL=jdbc:postgresql://127.0.0.1:5432/pointtilsdb \
-            -e FLYWAY_USER=${DB_USERNAME:-pointtils} \
-            -e FLYWAY_PASSWORD=${DB_PASSWORD:-pointtils} \
-            flyway/flyway:9-alpine info || echo "Falha ao obter info do Flyway, continuando..."
           
           docker-compose up -d
           
