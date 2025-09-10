@@ -394,13 +394,9 @@ jobs:
           echo "=== Verificando status do contêiner ==="
           docker ps
           
-          # Verificar status do PostgreSQL
-          echo "=== Verificando status do PostgreSQL ==="
-          sudo systemctl status postgresql
-          
-          # Verificar se o banco de dados foi criado
-          echo "=== Verificando banco de dados ==="
-          sudo -u postgres psql -c "\\l" | grep pointtilsdb
+          # Verificar status do PostgreSQL no container
+          echo "=== Verificando status do PostgreSQL no container ==="
+          docker-compose logs pointtils-db | tail -10
           
           # Verificar logs do contêiner para debugging
           echo "=== Logs da aplicação ==="
