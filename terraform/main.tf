@@ -177,6 +177,7 @@ resource "aws_key_pair" "pointtils_key" {
 data "template_file" "user_data" {
   template = <<-EOF
               #!/bin/bash
+              set -e  # Exit on any error
               echo "=== Iniciando configuração do servidor ==="
               
               # Atualizar pacotes
@@ -197,48 +198,72 @@ data "template_file" "user_data" {
               sudo curl -L "https://github.com/docker/compose/releases/download/v2.15.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
               sudo chmod +x /usr/local/bin/docker-compose
               
-              # Instalar PostgreSQL localmente
-              sudo apt-get install -y postgresql postgresql-contrib
-              sudo systemctl enable postgresql
-              sudo systemctl start postgresql
-              
-              # Configurar PostgreSQL para aceitar conexões de containers
-              sudo -u postgres psql -c "ALTER SYSTEM SET listen_addresses TO '*';"
-              
-              # Identificar a versão do PostgreSQL instalada
-              PG_VERSION=$(ls -d /etc/postgresql/* | sort -V | tail -n1 | xargs basename)
-              echo "PostgreSQL version: $PG_VERSION"
-              
-              # Configurar PostgreSQL para aceitar conexões
-              sudo -u postgres bash -c "echo \"host    all             all             0.0.0.0/0               md5\" >> /etc/postgresql/$PG_VERSION/main/pg_hba.conf"
-              sudo -u postgres bash -c "echo \"host    all             all             127.0.0.1/32            trust\" >> /etc/postgresql/$PG_VERSION/main/pg_hba.conf"
-              
-              # Verificar e ajustar configuração do PostgreSQL
-              sudo cat /etc/postgresql/$PG_VERSION/main/postgresql.conf | grep listen_addresses
-              sudo cat /etc/postgresql/$PG_VERSION/main/pg_hba.conf | tail -n 5
-              
-              # Reiniciar o PostgreSQL para aplicar as mudanças
-              sudo systemctl restart postgresql
-              sudo systemctl status postgresql
-              
-              # Configurar PostgreSQL usuário e banco
-              sudo -u postgres psql -c "CREATE DATABASE pointtilsdb;"
-              sudo -u postgres psql -c "CREATE USER pointtilsadmin WITH PASSWORD '${var.db_password}';"
-              sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE pointtilsdb TO pointtilsadmin;"
-              sudo -u postgres psql -c "ALTER USER pointtilsadmin WITH SUPERUSER;"
-              
-              # Verificar se o usuário foi criado corretamente
-              sudo -u postgres psql -c "\\du" | grep pointtilsadmin
+              # Clonar o repositório da aplicação
+              cd /home/ubuntu
+              if [ ! -d "Backend" ]; then
+                git clone https://github.com/PointTils/Backend.git
+              else
+                cd Backend
+                git pull origin main
+              fi
               
               # Criar arquivo .env para variáveis de ambiente
-              cat > /home/ubuntu/.env << ENVFILE
-              SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/pointtilsdb
+              cat > /home/ubuntu/Backend/.env << ENVFILE
+              # Database Configuration
+              POSTGRES_USER=${var.db_username}
+              POSTGRES_PASSWORD=${var.db_password}
+              POSTGRES_DB=pointtils
+              
+              # Spring Application Configuration
+              SPRING_APPLICATION_NAME=pointtils-api
+              SERVER_PORT=8080
+              
+              # Spring DataSource Configuration
+              SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-db:5432/pointtils
               SPRING_DATASOURCE_USERNAME=${var.db_username}
               SPRING_DATASOURCE_PASSWORD=${var.db_password}
-              AWS_REGION=${var.aws_region}
+              
+              # JPA/Hibernate Configuration
+              SPRING_JPA_HIBERNATE_DDL_AUTO=validate
+              SPRING_JPA_SHOW_SQL=true
+              
+              # JWT Configuration
+              JWT_SECRET=testandoUmaNovaSenhaMasterComMaisDeTrintaEdoisCaracteres
+              JWT_ISSUER=pointtils-api
+              JWT_EXPIRATION_TIME=900000
+              JWT_REFRESH_EXPIRATION_TIME=604800000
+              
+              # Flyway Configuration
+              SPRING_FLYWAY_ENABLED=true
+              SPRING_FLYWAY_LOCATIONS=classpath:db/migration
+              SPRING_FLYWAY_BASELINE_ON_MIGRATE=true
+              SPRING_FLYWAY_VALIDATE_ON_MIGRATE=true
+              
+              # Swagger/OpenAPI Configuration
+              SPRINGDOC_API_DOCS_ENABLED=true
+              SPRINGDOC_SWAGGER_UI_ENABLED=true
+              SPRINGDOC_SWAGGER_UI_PATH=/swagger-ui.html
               ENVFILE
               
+              # Iniciar a aplicação com Docker Compose de produção
+              cd /home/ubuntu/Backend
+              sudo docker-compose -f docker-compose.prod.yaml build
+              sudo docker-compose -f docker-compose.prod.yaml up -d
+              
+              # Aguardar a aplicação iniciar e verificar status
+              echo "Aguardando aplicação iniciar..."
+              sleep 30
+              
+              # Verificar se os containers estão rodando
+              echo "Verificando status dos containers:"
+              sudo docker-compose -f docker-compose.prod.yaml ps
+              
+              # Verificar logs para debugging
+              echo "Verificando logs da aplicação:"
+              sudo docker-compose -f docker-compose.prod.yaml logs --tail=20 pointtils
+              
               echo "=== Configuração do servidor concluída ==="
+              echo "=== Aplicação iniciada com Docker Compose de produção ==="
               EOF
 }
 
