@@ -69,23 +69,11 @@ public class DeafRegisterService {
     public void delete(UUID id) {
         Person person = personRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
-
         try {
-            personRepository.delete(person);
-        } catch (org.springframework.dao.DataIntegrityViolationException e) {
-            String errorMessage = e.getMessage();
-            if (errorMessage.contains("fk_appointment_user")) {
-                throw new RuntimeException("Não é possível deletar este usuário pois ele possui agendamentos associados. " +
-                        "Delete primeiro os agendamentos relacionados a este usuário.");
-            } else if (errorMessage.contains("user_specialties")) {
-                throw new RuntimeException("Não é possível deletar este usuário pois ele possui especialidades associadas. " +
-                        "Delete primeiro as especialidades relacionadas a este usuário.");
-            } else {
-                throw new RuntimeException("Não é possível deletar este usuário pois ele possui dependências no sistema. " +
-                        "Erro: " + errorMessage);
-            }
+            person.setStatus(UserStatus.INACTIVE);
+            personRepository.save(person);
         } catch (Exception e) {
-            throw new RuntimeException("Erro inesperado ao deletar usuário: " + e.getMessage(), e);
+            throw new RuntimeException("Erro inesperado ao marcar usuário como deletado: " + e.getMessage(), e);
         }
     }
 

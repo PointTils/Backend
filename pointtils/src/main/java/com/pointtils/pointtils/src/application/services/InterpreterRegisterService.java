@@ -78,10 +78,14 @@ public class InterpreterRegisterService {
 
 
     public void delete(UUID id) {
-        if (!repository.existsById(id)) {
-            throw new EntityNotFoundException("User not found with id: " + id);
+        Interpreter delete = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
+        try {
+            delete.setStatus(UserStatus.INACTIVE);
+            repository.save(delete);
+        } catch (Exception e) {
+            throw new RuntimeException("Erro inesperado ao marcar usuário como deletado: " + e.getMessage(), e);
         }
-        repository.deleteById(id);
     }
 
     public List<InterpreterResponseDTO> findAll() {
