@@ -209,9 +209,9 @@ data "template_file" "user_data" {
               
               # Criar arquivo .env para variáveis de ambiente
               cat > /home/ubuntu/Backend/.env << ENVFILE
-              # Database Configuration
-              POSTGRES_USER=${var.db_username}
-              POSTGRES_PASSWORD=${var.db_password}
+              # Database Container Configuration
+              POSTGRES_USER=postgres
+              POSTGRES_PASSWORD=postgres
               POSTGRES_DB=pointtils
               
               # Spring Application Configuration
