@@ -3,6 +3,7 @@ package com.pointtils.pointtils.src.application.controllers;
 import java.util.List;
 import java.util.UUID;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -47,6 +48,7 @@ public class DeafController {
     }
 
     @GetMapping("/{id}")
+    @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<DeafResponseDTO> findById(@PathVariable UUID id) {
         try {
             DeafResponseDTO deaf = service.findById(id);
@@ -57,6 +59,7 @@ public class DeafController {
     }
 
     @GetMapping
+    @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<ApiResponse<List<DeafResponseDTO>>> findAll() {
         try {
             List<DeafResponseDTO> deafUsers = service.findAll();
@@ -71,12 +74,14 @@ public class DeafController {
     }
 
     @DeleteMapping("/{id}")
+    @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}")
+    @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<DeafResponseDTO> updateUser(@PathVariable UUID id, @RequestBody @Valid DeafPatchRequestDTO dto) {
     try {
         DeafResponseDTO updated = service.updatePartial(id, dto);
@@ -87,6 +92,7 @@ public class DeafController {
 }
 
     @PutMapping("/{id}")
+    @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<ApiResponse<DeafResponseDTO>> updateComplete(@PathVariable UUID id, @RequestBody @Valid DeafRequestDTO dto) {
         try {
             DeafResponseDTO updated = service.updateComplete(id, dto);

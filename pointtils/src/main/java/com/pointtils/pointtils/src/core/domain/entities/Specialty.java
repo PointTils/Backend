@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import org.hibernate.annotations.UuidGenerator;
 
 import jakarta.persistence.Column;
@@ -32,6 +33,7 @@ public class Specialty {
     @Column(nullable = false)
     private String name;
 
+    @JsonBackReference
     @ManyToMany(mappedBy = "specialties")
     private Set<User> users = new HashSet<>();
 
