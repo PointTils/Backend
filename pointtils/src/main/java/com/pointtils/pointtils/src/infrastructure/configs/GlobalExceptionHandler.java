@@ -12,14 +12,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.HashMap;
@@ -32,9 +30,7 @@ import java.util.UUID;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleEntityNotFoundException(
-            EntityNotFoundException ex, WebRequest request) {
-
+    public ResponseEntity<ErrorResponse> handleEntityNotFoundException(EntityNotFoundException ex) {
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
                 ex.getMessage(),
@@ -44,9 +40,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
-            IllegalArgumentException ex, WebRequest request) {
-
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex) {
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 "Dados inválidos: " + ex.getMessage(),
@@ -92,7 +86,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex) {
         log.error("Erro inesperado", ex);
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
@@ -230,17 +224,17 @@ public class GlobalExceptionHandler {
 				errors.put(error.getField(), error.getDefaultMessage())
 		);
 		
-		String message = "Invalid entry data: " + errors.toString();
-		
-		HttpStatus status = hasRequiredFieldErrors ? HttpStatus.BAD_REQUEST :
-				(hasFormatErrors ? HttpStatus.UNPROCESSABLE_ENTITY : HttpStatus.BAD_REQUEST);
+		String message = "Invalid entry data: " + errors;
+
+        HttpStatus fieldFormatErrorStatus = hasFormatErrors ? HttpStatus.UNPROCESSABLE_ENTITY : HttpStatus.BAD_REQUEST;
+		HttpStatus finalStatus = hasRequiredFieldErrors ? HttpStatus.BAD_REQUEST : fieldFormatErrorStatus;
 		
 		ErrorResponse errorResponse = new ErrorResponse(
-				status.value(),
+                finalStatus.value(),
 				message,
 				System.currentTimeMillis());
 		
-		return new ResponseEntity<>(errorResponse, status);
+		return new ResponseEntity<>(errorResponse, finalStatus);
 	}
 
     @Data

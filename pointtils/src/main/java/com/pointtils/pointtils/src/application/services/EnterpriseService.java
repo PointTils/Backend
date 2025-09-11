@@ -89,7 +89,7 @@ public class EnterpriseService {
 		if (dto.getPicture() != null) enterprise.setPicture(dto.getPicture());
 		
 		Enterprise patchedEnterprise = enterpriseRepository.save(enterprise);
-		return new  EnterpriseResponseDTO(patchedEnterprise);
+		return new EnterpriseResponseDTO(patchedEnterprise);
 	}
 	
 	public void delete(UUID id) {
