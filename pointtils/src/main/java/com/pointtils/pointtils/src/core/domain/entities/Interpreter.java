@@ -8,11 +8,14 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.PrimaryKeyJoinColumn;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 
@@ -25,6 +28,7 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 @ToString
+@EqualsAndHashCode(callSuper = true)
 public class Interpreter extends Person {
 
     private String cnpj;
@@ -41,6 +45,7 @@ public class Interpreter extends Person {
     private Boolean imageRights;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private InterpreterModality modality;
 
     @Column(columnDefinition = "TEXT")
