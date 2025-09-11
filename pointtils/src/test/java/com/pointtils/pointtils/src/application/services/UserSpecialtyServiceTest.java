@@ -1,13 +1,13 @@
 package com.pointtils.pointtils.src.application.services;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
+import com.pointtils.pointtils.src.core.domain.entities.Specialty;
+import com.pointtils.pointtils.src.core.domain.entities.User;
+import com.pointtils.pointtils.src.core.domain.entities.UserSpecialty;
+import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
+import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
+import com.pointtils.pointtils.src.infrastructure.repositories.SpecialtyRepository;
+import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
+import com.pointtils.pointtils.src.infrastructure.repositories.UserSpecialtyRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,12 +15,19 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.pointtils.pointtils.src.core.domain.entities.Specialty;
-import com.pointtils.pointtils.src.core.domain.entities.User;
-import com.pointtils.pointtils.src.core.domain.entities.UserSpecialty;
-import com.pointtils.pointtils.src.infrastructure.repositories.SpecialtyRepository;
-import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
-import com.pointtils.pointtils.src.infrastructure.repositories.UserSpecialtyRepository;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class UserSpecialtyServiceTest {
@@ -47,7 +54,7 @@ class UserSpecialtyServiceTest {
     void setUp() {
         userId = UUID.randomUUID();
         specialtyId = UUID.randomUUID();
-        
+
         user = new User() {
             @Override
             public String getDisplayName() {
@@ -55,15 +62,15 @@ class UserSpecialtyServiceTest {
             }
 
             @Override
-            public String getType() {
-                return "CLIENT";
+            public UserTypeE getType() {
+                return UserTypeE.CLIENT;
             }
         };
         user.setId(userId);
         user.setEmail("test@email.com");
         user.setPassword("password");
         user.setPhone("11999999999");
-        user.setStatus("ACTIVE");
+        user.setStatus(UserStatus.ACTIVE);
 
         specialty = new Specialty("Test Specialty");
         specialty.setId(specialtyId);
@@ -91,7 +98,7 @@ class UserSpecialtyServiceTest {
     void getUserSpecialty_WhenExists_ShouldReturnUserSpecialty() {
         // Arrange
         when(userSpecialtyRepository.findByUserIdAndSpecialtyId(userId, specialtyId))
-            .thenReturn(Optional.of(userSpecialty));
+                .thenReturn(Optional.of(userSpecialty));
 
         // Act
         UserSpecialty result = userSpecialtyService.getUserSpecialty(userId, specialtyId);
@@ -106,7 +113,7 @@ class UserSpecialtyServiceTest {
     void getUserSpecialty_WhenNotExists_ShouldThrowException() {
         // Arrange
         when(userSpecialtyRepository.findByUserIdAndSpecialtyId(userId, specialtyId))
-            .thenReturn(Optional.empty());
+                .thenReturn(Optional.empty());
 
         // Act & Assert
         assertThrows(RuntimeException.class, () -> userSpecialtyService.getUserSpecialty(userId, specialtyId));
@@ -193,8 +200,8 @@ class UserSpecialtyServiceTest {
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(RuntimeException.class, () -> 
-            userSpecialtyService.addUserSpecialties(userId, specialtyIds, false));
+        assertThrows(RuntimeException.class, () ->
+                userSpecialtyService.addUserSpecialties(userId, specialtyIds, false));
         verify(userRepository).findById(userId);
         verify(specialtyRepository, never()).findByIds(any());
     }
@@ -209,8 +216,8 @@ class UserSpecialtyServiceTest {
         when(specialtyRepository.findByIds(specialtyIds)).thenReturn(specialties);
 
         // Act & Assert
-        assertThrows(RuntimeException.class, () -> 
-            userSpecialtyService.addUserSpecialties(userId, specialtyIds, false));
+        assertThrows(RuntimeException.class, () ->
+                userSpecialtyService.addUserSpecialties(userId, specialtyIds, false));
         verify(userRepository).findById(userId);
         verify(specialtyRepository).findByIds(specialtyIds);
         verify(userSpecialtyRepository, never()).saveAll(any());
@@ -258,8 +265,8 @@ class UserSpecialtyServiceTest {
         when(userSpecialtyRepository.existsByUserIdAndSpecialtyId(userId, specialtyId)).thenReturn(false);
 
         // Act & Assert
-        assertThrows(RuntimeException.class, () -> 
-            userSpecialtyService.removeUserSpecialty(userId, specialtyId));
+        assertThrows(RuntimeException.class, () ->
+                userSpecialtyService.removeUserSpecialty(userId, specialtyId));
         verify(userSpecialtyRepository).existsByUserIdAndSpecialtyId(userId, specialtyId);
         verify(userSpecialtyRepository, never()).deleteByUserIdAndSpecialtyId(any(), any());
     }
@@ -269,7 +276,7 @@ class UserSpecialtyServiceTest {
         // Arrange
         List<UUID> specialtyIds = List.of(specialtyId);
         when(userSpecialtyRepository.findByUserIdAndSpecialtyIds(userId, specialtyIds))
-            .thenReturn(List.of(userSpecialty));
+                .thenReturn(List.of(userSpecialty));
         doNothing().when(userSpecialtyRepository).deleteByUserIdAndSpecialtyIds(userId, specialtyIds);
 
         // Act
@@ -285,11 +292,11 @@ class UserSpecialtyServiceTest {
         // Arrange
         List<UUID> specialtyIds = List.of(specialtyId, UUID.randomUUID());
         when(userSpecialtyRepository.findByUserIdAndSpecialtyIds(userId, specialtyIds))
-            .thenReturn(List.of(userSpecialty));
+                .thenReturn(List.of(userSpecialty));
 
         // Act & Assert
-        assertThrows(RuntimeException.class, () -> 
-            userSpecialtyService.removeUserSpecialties(userId, specialtyIds));
+        assertThrows(RuntimeException.class, () ->
+                userSpecialtyService.removeUserSpecialties(userId, specialtyIds));
         verify(userSpecialtyRepository).findByUserIdAndSpecialtyIds(userId, specialtyIds);
         verify(userSpecialtyRepository, never()).deleteByUserIdAndSpecialtyIds(any(), any());
     }
@@ -328,8 +335,8 @@ class UserSpecialtyServiceTest {
         when(userSpecialtyRepository.findById(userSpecialtyId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(RuntimeException.class, () -> 
-            userSpecialtyService.updateUserSpecialty(userSpecialtyId, userId, newSpecialtyId));
+        assertThrows(RuntimeException.class, () ->
+                userSpecialtyService.updateUserSpecialty(userSpecialtyId, userId, newSpecialtyId));
         verify(userSpecialtyRepository).findById(userSpecialtyId);
         verify(specialtyRepository, never()).findById(any());
     }
@@ -344,8 +351,8 @@ class UserSpecialtyServiceTest {
         when(userSpecialtyRepository.findById(userSpecialtyId)).thenReturn(Optional.of(userSpecialty));
 
         // Act & Assert
-        assertThrows(RuntimeException.class, () -> 
-            userSpecialtyService.updateUserSpecialty(userSpecialtyId, differentUserId, newSpecialtyId));
+        assertThrows(RuntimeException.class, () ->
+                userSpecialtyService.updateUserSpecialty(userSpecialtyId, differentUserId, newSpecialtyId));
         verify(userSpecialtyRepository).findById(userSpecialtyId);
         verify(specialtyRepository, never()).findById(any());
     }
@@ -360,8 +367,8 @@ class UserSpecialtyServiceTest {
         when(specialtyRepository.findById(newSpecialtyId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(RuntimeException.class, () -> 
-            userSpecialtyService.updateUserSpecialty(userSpecialtyId, userId, newSpecialtyId));
+        assertThrows(RuntimeException.class, () ->
+                userSpecialtyService.updateUserSpecialty(userSpecialtyId, userId, newSpecialtyId));
         verify(userSpecialtyRepository).findById(userSpecialtyId);
         verify(specialtyRepository).findById(newSpecialtyId);
     }
@@ -372,15 +379,15 @@ class UserSpecialtyServiceTest {
         UUID userSpecialtyId = UUID.randomUUID();
         UUID newSpecialtyId = UUID.randomUUID();
         Specialty newSpecialty = new Specialty("New Specialty");
-        newSpecialty.setId(newSpecialtyId);
+        specialty.setId(newSpecialtyId);
 
         when(userSpecialtyRepository.findById(userSpecialtyId)).thenReturn(Optional.of(userSpecialty));
         when(specialtyRepository.findById(newSpecialtyId)).thenReturn(Optional.of(newSpecialty));
         when(userSpecialtyRepository.existsByUserIdAndSpecialtyId(userId, newSpecialtyId)).thenReturn(true);
 
         // Act & Assert
-        assertThrows(RuntimeException.class, () -> 
-            userSpecialtyService.updateUserSpecialty(userSpecialtyId, userId, newSpecialtyId));
+        assertThrows(RuntimeException.class, () ->
+                userSpecialtyService.updateUserSpecialty(userSpecialtyId, userId, newSpecialtyId));
         verify(userSpecialtyRepository).findById(userSpecialtyId);
         verify(specialtyRepository).findById(newSpecialtyId);
         verify(userSpecialtyRepository).existsByUserIdAndSpecialtyId(userId, newSpecialtyId);

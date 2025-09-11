@@ -1,5 +1,6 @@
 package com.pointtils.pointtils.src.application.services;
 
+import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -44,8 +45,8 @@ public class AuthService {
             throw new AuthenticationException("Usuário não encontrado");
         }
 
-        if ("blocked".equals(user.getStatus())) {
-            throw new AuthenticationException("Usuário bloqueado");
+        if (UserStatus.INACTIVE.equals(user.getStatus())) {
+            throw new AuthenticationException("Usuário inativo");
         }
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
@@ -59,8 +60,8 @@ public class AuthService {
                 user.getId(),
                 user.getEmail(),
                 user.getDisplayName(),
-                user.getType(),
-                user.getStatus()
+                user.getType().name(),
+                user.getStatus().name()
         );
 
         TokensDTO tokensDTO = new TokensDTO(

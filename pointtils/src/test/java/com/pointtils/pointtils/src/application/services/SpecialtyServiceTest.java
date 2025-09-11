@@ -1,13 +1,7 @@
 package com.pointtils.pointtils.src.application.services;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
+import com.pointtils.pointtils.src.core.domain.entities.Specialty;
+import com.pointtils.pointtils.src.infrastructure.repositories.SpecialtyRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,8 +9,20 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.pointtils.pointtils.src.core.domain.entities.Specialty;
-import com.pointtils.pointtils.src.infrastructure.repositories.SpecialtyRepository;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class SpecialtyServiceTest {
@@ -193,8 +199,8 @@ class SpecialtyServiceTest {
     void updateSpecialty_WhenSpecialtyExistsAndNameNotTaken_ShouldUpdateSpecialty() {
         // Arrange
         Specialty existingSpecialty = new Specialty("Old Name");
-        existingSpecialty.setId(specialtyId);
-        
+        specialty.setId(specialtyId);
+
         when(specialtyRepository.findById(specialtyId)).thenReturn(Optional.of(existingSpecialty));
         when(specialtyRepository.existsByName("New Name")).thenReturn(false);
         when(specialtyRepository.save(any(Specialty.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -226,8 +232,8 @@ class SpecialtyServiceTest {
     void updateSpecialty_WhenNameTakenByDifferentSpecialty_ShouldThrowException() {
         // Arrange
         Specialty existingSpecialty = new Specialty("Old Name");
-        existingSpecialty.setId(specialtyId);
-        
+        specialty.setId(specialtyId);
+
         when(specialtyRepository.findById(specialtyId)).thenReturn(Optional.of(existingSpecialty));
         when(specialtyRepository.existsByName("Taken Name")).thenReturn(true);
 
@@ -267,8 +273,8 @@ class SpecialtyServiceTest {
     void partialUpdateSpecialty_WhenNameProvidedAndNotTaken_ShouldUpdateSpecialty() {
         // Arrange
         Specialty existingSpecialty = new Specialty("Old Name");
-        existingSpecialty.setId(specialtyId);
-        
+        specialty.setId(specialtyId);
+
         when(specialtyRepository.findById(specialtyId)).thenReturn(Optional.of(existingSpecialty));
         when(specialtyRepository.existsByName("New Name")).thenReturn(false);
         when(specialtyRepository.save(any(Specialty.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -288,8 +294,8 @@ class SpecialtyServiceTest {
     void partialUpdateSpecialty_WhenNameIsNull_ShouldNotUpdateName() {
         // Arrange
         Specialty existingSpecialty = new Specialty("Old Name");
-        existingSpecialty.setId(specialtyId);
-        
+        specialty.setId(specialtyId);
+
         when(specialtyRepository.findById(specialtyId)).thenReturn(Optional.of(existingSpecialty));
         when(specialtyRepository.save(any(Specialty.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -308,8 +314,8 @@ class SpecialtyServiceTest {
     void partialUpdateSpecialty_WhenNameTakenByDifferentSpecialty_ShouldThrowException() {
         // Arrange
         Specialty existingSpecialty = new Specialty("Old Name");
-        existingSpecialty.setId(specialtyId);
-        
+        specialty.setId(specialtyId);
+
         when(specialtyRepository.findById(specialtyId)).thenReturn(Optional.of(existingSpecialty));
         when(specialtyRepository.existsByName("Taken Name")).thenReturn(true);
 
