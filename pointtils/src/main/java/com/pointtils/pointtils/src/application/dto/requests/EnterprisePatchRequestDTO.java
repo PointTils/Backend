@@ -1,0 +1,39 @@
+package com.pointtils.pointtils.src.application.dto.requests;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.pointtils.pointtils.src.application.dto.LocationDTO;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Pattern;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class EnterprisePatchRequestDTO {
+	@JsonProperty("corporate_reason")
+	private String corporateReason;
+
+	@Pattern(regexp = "^\\d{14}$", message = "Invalid CNPJ")
+	private String cnpj;
+	
+	@Email(message = "Invalid Email")
+	private String email;
+
+	private String password;
+
+	private String phone;
+
+	private String picture;
+
+	private String status;
+
+	private String type;
+	
+	@Valid
+	private LocationDTO location;
+}

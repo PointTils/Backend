@@ -39,6 +39,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.POST, "/v1/deaf-users/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/v1/interpreters/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/v1/enterprise-users/**").permitAll()
                         .requestMatchers("/v1/specialties/**").permitAll()
                         .requestMatchers("/v1/auth/login").permitAll()
                         .requestMatchers("/v1/auth/refresh").permitAll()

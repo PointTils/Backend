@@ -1,13 +1,11 @@
 package com.pointtils.pointtils.src.infrastructure.configs;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.context.request.WebRequest;
 
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
 import com.pointtils.pointtils.src.core.domain.exceptions.UserSpecialtyException;
@@ -17,12 +15,10 @@ import jakarta.persistence.EntityNotFoundException;
 class GlobalExceptionHandlerTest {
 
     private GlobalExceptionHandler globalExceptionHandler;
-    private WebRequest webRequest;
 
     @BeforeEach
     void setUp() {
         globalExceptionHandler = new GlobalExceptionHandler();
-        webRequest = mock(WebRequest.class);
     }
 
     @Test
@@ -32,7 +28,7 @@ class GlobalExceptionHandlerTest {
 
         // Act
         ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = 
-            globalExceptionHandler.handleEntityNotFoundException(ex, webRequest);
+            globalExceptionHandler.handleEntityNotFoundException(ex);
 
         // Assert
         assertNotNull(response);
@@ -50,7 +46,7 @@ class GlobalExceptionHandlerTest {
 
         // Act
         ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = 
-            globalExceptionHandler.handleGlobalException(ex, webRequest);
+            globalExceptionHandler.handleGlobalException(ex);
 
         // Assert
         assertNotNull(response);
