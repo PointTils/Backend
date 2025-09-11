@@ -1,12 +1,5 @@
 package com.pointtils.pointtils.src.application.services;
 
-import java.util.List;
-import java.util.UUID;
-
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.pointtils.pointtils.src.application.dto.requests.DeafPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.DeafRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.DeafResponseDTO;
@@ -17,16 +10,22 @@ import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
 import com.pointtils.pointtils.src.infrastructure.repositories.PersonRepository;
-
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.UUID;
+
+@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class DeafRegisterService {
 
-    private static final String USER_NOT_FOUND = "Usuário não encontrado";
     private final PersonRepository personRepository;
     private final PasswordEncoder passwordEncoder;
     private final DeafResponseMapper deafResponseMapper;
@@ -60,21 +59,15 @@ public class DeafRegisterService {
 
 
     public DeafResponseDTO findById(UUID id) {
-        Person person = personRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(USER_NOT_FOUND));
+        Person person = findPersonById(id);
         return deafResponseMapper.toResponseDTO(person);
     }
 
 
     public void delete(UUID id) {
-        Person person = personRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(USER_NOT_FOUND));
-        try {
-            person.setStatus(UserStatus.INACTIVE);
-            personRepository.save(person);
-        } catch (Exception e) {
-            throw new RuntimeException("Erro inesperado ao marcar usuário como deletado: " + e.getMessage(), e);
-        }
+        Person person = findPersonById(id);
+        person.setStatus(UserStatus.INACTIVE);
+        personRepository.save(person);
     }
 
     public List<DeafResponseDTO> findAll() {
@@ -85,9 +78,7 @@ public class DeafRegisterService {
     }
 
     public DeafResponseDTO updateComplete(UUID id, DeafRequestDTO dto) {
-        Person person = personRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(USER_NOT_FOUND));
-
+        Person person = findPersonById(id);
         if (dto.getPersonalRequestDTO() != null) {
             var p = dto.getPersonalRequestDTO();
             person.setName(p.getName());
@@ -119,37 +110,8 @@ public class DeafRegisterService {
     }
 
     public DeafResponseDTO updatePartial(UUID id, DeafPatchRequestDTO dto) {
-        Person person = personRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(USER_NOT_FOUND));
-
-        if (dto.getPersonalRequestDTO() != null) {
-            var p = dto.getPersonalRequestDTO();
-
-            if (p.getName() != null) {
-                person.setName(p.getName());
-            }
-            if (p.getPassword() != null) {
-                person.setPassword(passwordEncoder.encode(p.getPassword()));
-            }
-            if (p.getPhone() != null) {
-                person.setPhone(p.getPhone());
-            }
-            if (p.getPicture() != null) {
-                person.setPicture(p.getPicture());
-            }
-            if (p.getBirthday() != null) {
-                person.setBirthday(p.getBirthday());
-            }
-            if (p.getCpf() != null) {
-                person.setCpf(p.getCpf());
-            }
-            if (p.getEmail() != null) {
-                person.setEmail(p.getEmail());
-            }
-            if (p.getGender() != null) {
-                person.setGender(Gender.fromString(p.getGender()));
-            }
-        }
+        Person person = findPersonById(id);
+        executePartialUpdateOfPersonalData(dto, person);
 
         if (dto.getLocation() != null) {
             var l = dto.getLocation();
@@ -168,5 +130,41 @@ public class DeafRegisterService {
 
         Person updated = personRepository.save(person);
         return deafResponseMapper.toResponseDTO(updated);
+    }
+
+    private void executePartialUpdateOfPersonalData(DeafPatchRequestDTO dto, Person person) {
+        if (dto.getPersonalRequestDTO() == null) {
+            return;
+        }
+        var personalRequest = dto.getPersonalRequestDTO();
+        if (personalRequest.getName() != null) {
+            person.setName(personalRequest.getName());
+        }
+        if (personalRequest.getPassword() != null) {
+            person.setPassword(passwordEncoder.encode(personalRequest.getPassword()));
+        }
+        if (personalRequest.getPhone() != null) {
+            person.setPhone(personalRequest.getPhone());
+        }
+        if (personalRequest.getPicture() != null) {
+            person.setPicture(personalRequest.getPicture());
+        }
+        if (personalRequest.getBirthday() != null) {
+            person.setBirthday(personalRequest.getBirthday());
+        }
+        if (personalRequest.getCpf() != null) {
+            person.setCpf(personalRequest.getCpf());
+        }
+        if (personalRequest.getEmail() != null) {
+            person.setEmail(personalRequest.getEmail());
+        }
+        if (personalRequest.getGender() != null) {
+            person.setGender(Gender.fromString(personalRequest.getGender()));
+        }
+    }
+
+    private Person findPersonById(UUID id) {
+        return personRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
     }
 }
