@@ -64,9 +64,8 @@ public class JwtService {
 
     private String buildToken(
             String subject,
-            long expirationMinutes
+            long expirationMillis
     ) {
-        long expirationMillis = expirationMinutes * 60 * 1000; // Convert minutes to milliseconds
         return Jwts
                 .builder()
                 .setSubject(subject)
