@@ -26,9 +26,4 @@ public class Enterprise extends User {
     public String getDisplayName() {
         return corporateReason;
     }
-
-    @Override
-    public String getType() {
-        return "enterprise";
-    }
 }

@@ -1,9 +1,13 @@
 package com.pointtils.pointtils.src.application.controllers;
 
-import java.util.List;
-import java.util.UUID;
-
+import com.pointtils.pointtils.src.application.dto.requests.DeafPatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.DeafRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.ApiResponse;
+import com.pointtils.pointtils.src.application.dto.responses.DeafResponseDTO;
+import com.pointtils.pointtils.src.application.services.DeafRegisterService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,61 +20,36 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.pointtils.pointtils.src.application.dto.requests.DeafPatchRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.DeafRequestDTO;
-import com.pointtils.pointtils.src.application.dto.responses.ApiResponse;
-import com.pointtils.pointtils.src.application.dto.responses.DeafResponseDTO;
-import com.pointtils.pointtils.src.application.services.DeafRegisterService;
-
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/v1/deaf-users")
 @AllArgsConstructor
-
-
 public class DeafController {
     private final DeafRegisterService service;
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<DeafResponseDTO>> createUser(@Valid @RequestBody DeafRequestDTO dto) {
-        try {
-            DeafResponseDTO created = service.registerPerson(dto);
+        DeafResponseDTO created = service.registerPerson(dto);
         ApiResponse<DeafResponseDTO> response = ApiResponse.success("Usuário surdo cadastrado com sucesso", created);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (Exception e) {
-            ApiResponse<DeafResponseDTO> errorResponse =
-                ApiResponse.error("Erro ao cadastrar usuário surdo: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-        }
     }
 
     @GetMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<DeafResponseDTO> findById(@PathVariable UUID id) {
-        try {
-            DeafResponseDTO deaf = service.findById(id);
-            return ResponseEntity.ok(deaf);
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<ApiResponse<DeafResponseDTO>> findById(@PathVariable UUID id) {
+        DeafResponseDTO deaf = service.findById(id);
+        return ResponseEntity.ok(ApiResponse.success("Usuário surdo encontrado com sucesso", deaf));
     }
 
     @GetMapping
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<ApiResponse<List<DeafResponseDTO>>> findAll() {
-        try {
-            List<DeafResponseDTO> deafUsers = service.findAll();
-            ApiResponse<List<DeafResponseDTO>> response = 
+        List<DeafResponseDTO> deafUsers = service.findAll();
+        ApiResponse<List<DeafResponseDTO>> response =
                 ApiResponse.success("Usuários surdos encontrados com sucesso", deafUsers);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            ApiResponse<List<DeafResponseDTO>> errorResponse = 
-                ApiResponse.error("Erro ao buscar usuários surdos: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-        }
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
@@ -82,33 +61,17 @@ public class DeafController {
 
     @PatchMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<DeafResponseDTO> updateUser(@PathVariable UUID id, @RequestBody @Valid DeafPatchRequestDTO dto) {
-    try {
+    public ResponseEntity<ApiResponse<DeafResponseDTO>> updateUser(@PathVariable UUID id,
+                                                                   @RequestBody @Valid DeafPatchRequestDTO dto) {
         DeafResponseDTO updated = service.updatePartial(id, dto);
-        return ResponseEntity.ok(updated);
-    } catch (EntityNotFoundException e) {
-        return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(ApiResponse.success("Usuário surdo atualizado com sucesso", updated));
     }
-}
 
     @PutMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<ApiResponse<DeafResponseDTO>> updateComplete(@PathVariable UUID id, @RequestBody @Valid DeafRequestDTO dto) {
-        try {
-            DeafResponseDTO updated = service.updateComplete(id, dto);
-            ApiResponse<DeafResponseDTO> response = 
-                ApiResponse.success("Usuário surdo atualizado com sucesso", updated);
-            return ResponseEntity.ok(response);
-        } catch (EntityNotFoundException e) {
-            ApiResponse<DeafResponseDTO> errorResponse = 
-                ApiResponse.error("Usuário não encontrado");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
-        } catch (Exception e) {
-            ApiResponse<DeafResponseDTO> errorResponse = 
-                ApiResponse.error("Erro ao atualizar usuário: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-        }
+    public ResponseEntity<ApiResponse<DeafResponseDTO>> updateComplete(@PathVariable UUID id,
+                                                                       @RequestBody @Valid DeafRequestDTO dto) {
+        DeafResponseDTO updated = service.updateComplete(id, dto);
+        return ResponseEntity.ok(ApiResponse.success("Usuário surdo atualizado com sucesso", updated));
     }
-
-
 }

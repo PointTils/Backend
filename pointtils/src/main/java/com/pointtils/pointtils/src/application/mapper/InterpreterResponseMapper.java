@@ -23,8 +23,8 @@ public class InterpreterResponseMapper {
         UserResponseDTO userDto = UserResponseDTO.builder()
                 .id(interpreter.getId())
                 .email(interpreter.getEmail())
-                .type(interpreter.getType().toLowerCase())
-                .status(interpreter.getStatus().toString().toLowerCase())
+                .type(interpreter.getType().name())
+                .status(interpreter.getStatus().toString())
                 .phone(interpreter.getPhone())
                 .picture(interpreter.getPicture())
                 .build();

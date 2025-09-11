@@ -68,7 +68,7 @@ public class DeafRegisterService {
 
     public void delete(UUID id) {
         Person person = personRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException(USER_NOT_FOUND));
         try {
             person.setStatus(UserStatus.INACTIVE);
             personRepository.save(person);

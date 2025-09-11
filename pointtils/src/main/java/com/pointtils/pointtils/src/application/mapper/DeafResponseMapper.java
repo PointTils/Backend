@@ -17,7 +17,7 @@ public class DeafResponseMapper {
         dto.setPhone(person.getPhone());
         dto.setPicture(person.getPicture());
         dto.setStatus(person.getStatus() != null ? person.getStatus().toString() : null);
-        dto.setType(person.getType() != null ? person.getType() : null);
+        dto.setType(person.getType() != null ? person.getType().name() : null);
         dto.setGender(person.getGender() != null ? person.getGender().toString() : null);
         dto.setBirthday(person.getBirthday());
         dto.setCpf(maskCpf(person.getCpf()));

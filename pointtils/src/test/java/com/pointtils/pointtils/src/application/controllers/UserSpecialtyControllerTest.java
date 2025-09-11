@@ -7,6 +7,7 @@ import com.pointtils.pointtils.src.application.services.UserSpecialtyService;
 import com.pointtils.pointtils.src.core.domain.entities.Specialty;
 import com.pointtils.pointtils.src.core.domain.entities.User;
 import com.pointtils.pointtils.src.core.domain.entities.UserSpecialty;
+import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,8 +62,8 @@ class UserSpecialtyControllerTest {
             }
 
             @Override
-            public String getType() {
-                return "CLIENT";
+            public UserTypeE getType() {
+                return UserTypeE.CLIENT;
             }
         };
         user.setId(userId);

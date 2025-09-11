@@ -60,7 +60,7 @@ public class AuthService {
                 user.getId(),
                 user.getEmail(),
                 user.getDisplayName(),
-                user.getType(),
+                user.getType().name(),
                 user.getStatus().name()
         );
 
