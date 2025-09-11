@@ -414,8 +414,6 @@ class EnterpriseControllerTest {
 
         List<Enterprise> enterprises = enterpriseRepository.findAll();
         UUID createdId = enterprises.get(0).getId();
-	
-		System.out.println("createdId = " + createdId);
 		
         mockMvc.perform(delete("/v1/enterprise-users/{id}", createdId)
 				        .with(user("testuser").roles("USER"))

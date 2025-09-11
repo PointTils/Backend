@@ -195,7 +195,7 @@ public class GlobalExceptionHandler {
 		
 		String message;
 		if (requiredType != null && UUID.class.equals(requiredType)) {
-			message = String.format("Invalid UUID", paramName);
+			message = "Invalid UUID";
 		} else {
 			message = String.format("Invalid value for parameter '%s'", paramName);
 		}

@@ -18,7 +18,7 @@ public class EnterprisePatchRequestDTO {
 	@JsonProperty("corporate_reason")
 	private String corporateReason;
 
-	@Pattern(regexp = "\\d{14}", message = "Invalid CNPJ")
+	@Pattern(regexp = "^\\d{14}$", message = "Invalid CNPJ")
 	private String cnpj;
 	
 	@Email(message = "Invalid Email")

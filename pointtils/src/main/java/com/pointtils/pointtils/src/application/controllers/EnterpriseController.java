@@ -34,7 +34,7 @@ public class EnterpriseController {
 		
 		if (enterpriseList.isEmpty()) return ResponseEntity.noContent().build();
 		
-		return ResponseEntity.ok(service.findAll());
+		return ResponseEntity.ok(enterpriseList);
 	}
 	
 	@GetMapping("/{id}")

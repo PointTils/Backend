@@ -79,7 +79,7 @@ public class EnterpriseService {
 			UUID id,
 			EnterprisePatchRequestDTO dto
 	) {
-		Enterprise enterprise = enterpriseRepository.findById(id)
+		Enterprise enterprise = enterpriseRepository.findByIdAndStatus(id, UserStatus.ACTIVE)
 				.orElseThrow(() -> new EntityNotFoundException(ENTERPRISE_NOT_FOUND_MSG));
 		
 		if (dto.getCorporateReason() != null) enterprise.setCorporateReason(dto.getCorporateReason());
