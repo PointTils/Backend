@@ -23,11 +23,16 @@ import com.pointtils.pointtils.src.application.dto.UserSpecialtyResponseDTO;
 import com.pointtils.pointtils.src.application.services.UserSpecialtyService;
 import com.pointtils.pointtils.src.core.domain.entities.UserSpecialty;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/v1/users/{userId}/specialties")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
+@Tag(name = "User Specialty Controller", description = "Endpoints para gerenciar especialidades de usuários")
 public class UserSpecialtyController {
     
     private final UserSpecialtyService userSpecialtyService;
