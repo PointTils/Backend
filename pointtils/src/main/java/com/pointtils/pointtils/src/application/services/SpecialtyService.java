@@ -3,6 +3,7 @@ package com.pointtils.pointtils.src.application.services;
 import java.util.List;
 import java.util.UUID;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
 import com.pointtils.pointtils.src.core.domain.entities.Specialty;
@@ -22,12 +23,12 @@ public class SpecialtyService {
     
     public Specialty getSpecialtyById(UUID id) {
         return specialtyRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Specialty not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Especialidade com id " + id + " não encontrada"));
     }
     
     public Specialty getSpecialtyByName(String name) {
         return specialtyRepository.findByName(name)
-                .orElseThrow(() -> new RuntimeException("Specialty not found with name: " + name));
+                .orElseThrow(() -> new EntityNotFoundException("Especialidade com nome " + name + " não encontrada"));
     }
     
     public List<Specialty> searchSpecialtiesByName(String name) {
@@ -48,7 +49,7 @@ public class SpecialtyService {
     
     public Specialty createSpecialty(String name) {
         if (specialtyRepository.existsByName(name)) {
-            throw new RuntimeException("Specialty with name '" + name + "' already exists");
+            throw new IllegalArgumentException("Especialidade com nome '" + name + "' já existe");
         }
         
         Specialty specialty = new Specialty(name);
@@ -59,7 +60,7 @@ public class SpecialtyService {
         Specialty specialty = getSpecialtyById(id);
         
         if (!specialty.getName().equals(name) && specialtyRepository.existsByName(name)) {
-            throw new RuntimeException("Specialty with name '" + name + "' already exists");
+            throw new IllegalArgumentException("Especialidade com nome '" + name + "' já existe");
         }
         
         specialty.setName(name);
@@ -71,7 +72,7 @@ public class SpecialtyService {
         
         if (name != null) {
             if (!specialty.getName().equals(name) && specialtyRepository.existsByName(name)) {
-                throw new RuntimeException("Specialty with name '" + name + "' already exists");
+                throw new IllegalArgumentException("Especialidade com nome '" + name + "' já existe");
             }
             specialty.setName(name);
         }

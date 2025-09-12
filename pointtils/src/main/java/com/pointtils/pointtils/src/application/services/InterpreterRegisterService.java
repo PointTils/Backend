@@ -65,7 +65,6 @@ public class InterpreterRegisterService {
         }
 
         Interpreter savedInterpreter = repository.save(interpreter);
-
         return responseMapper.toResponseDTO(savedInterpreter);
     }
 
@@ -91,34 +90,34 @@ public class InterpreterRegisterService {
         Interpreter interpreter = findInterpreterById(id);
 
         if (dto.getPersonalData() != null) {
-            var p = dto.getPersonalData();
-            interpreter.setName(p.getName());
-            interpreter.setEmail(p.getEmail());
-            interpreter.setPhone(p.getPhone());
-            interpreter.setPicture(p.getPicture());
-            interpreter.setBirthday(p.getBirthday());
-            interpreter.setCpf(p.getCpf());
-            interpreter.setGender(Gender.fromString(p.getGender()));
+            var personalData = dto.getPersonalData();
+            interpreter.setName(personalData.getName());
+            interpreter.setEmail(personalData.getEmail());
+            interpreter.setPhone(personalData.getPhone());
+            interpreter.setPicture(personalData.getPicture());
+            interpreter.setBirthday(personalData.getBirthday());
+            interpreter.setCpf(personalData.getCpf());
+            interpreter.setGender(Gender.fromString(personalData.getGender()));
 
-            if (p.getPassword() != null) {
-                interpreter.setPassword(passwordEncoder.encode(p.getPassword()));
+            if (personalData.getPassword() != null) {
+                interpreter.setPassword(passwordEncoder.encode(personalData.getPassword()));
             }
         }
 
         if (dto.getProfessionalData() != null) {
-            var prof = dto.getProfessionalData();
-            interpreter.setCnpj(prof.getCnpj());
-            interpreter.setMinValue(prof.getMinValue());
-            interpreter.setMaxValue(prof.getMaxValue());
-            interpreter.setImageRights(prof.getImageRights());
-            interpreter.setModality(InterpreterMapper.toInterpreterModality(prof.getModality()));
-            interpreter.setDescription(prof.getDescription());
+            var professionalData = dto.getProfessionalData();
+            interpreter.setCnpj(professionalData.getCnpj());
+            interpreter.setMinValue(professionalData.getMinValue());
+            interpreter.setMaxValue(professionalData.getMaxValue());
+            interpreter.setImageRights(professionalData.getImageRights());
+            interpreter.setModality(InterpreterMapper.toInterpreterModality(professionalData.getModality()));
+            interpreter.setDescription(professionalData.getDescription());
         }
 
         updateLocation(dto.getLocation(), interpreter);
 
-        Interpreter updated = repository.save(interpreter);
-        return responseMapper.toResponseDTO(updated);
+        Interpreter updatedInterpreter = repository.save(interpreter);
+        return responseMapper.toResponseDTO(updatedInterpreter);
     }
 
     public InterpreterResponseDTO updatePartial(UUID id, InterpreterPatchRequestDTO dto) {
@@ -127,66 +126,70 @@ public class InterpreterRegisterService {
         updateProfessionalPatchRequest(dto.getProfessionalData(), interpreter);
         updateLocation(dto.getLocation(), interpreter);
 
-        Interpreter updated = repository.save(interpreter);
-        return responseMapper.toResponseDTO(updated);
+        Interpreter updatedInterpreter = repository.save(interpreter);
+        return responseMapper.toResponseDTO(updatedInterpreter);
     }
 
     private void updatePersonalPatchRequest(PersonalPatchRequestDTO personal, Interpreter interpreter) {
-        if (personal != null) {
-            if (personal.getName() != null) {
-                interpreter.setName(personal.getName());
-            }
-            if (personal.getEmail() != null) {
-                interpreter.setEmail(personal.getEmail());
-            }
-            if (personal.getPhone() != null) {
-                interpreter.setPhone(personal.getPhone());
-            }
-            if (personal.getBirthday() != null) {
-                interpreter.setBirthday(personal.getBirthday());
-            }
-            if (personal.getCpf() != null) {
-                interpreter.setCpf(personal.getCpf());
-            }
-            if (personal.getGender() != null) {
-                interpreter.setGender(Gender.fromString(personal.getGender()));
-            }
+        if (personal == null) {
+            return;
+        }
+        if (personal.getName() != null) {
+            interpreter.setName(personal.getName());
+        }
+        if (personal.getEmail() != null) {
+            interpreter.setEmail(personal.getEmail());
+        }
+        if (personal.getPhone() != null) {
+            interpreter.setPhone(personal.getPhone());
+        }
+        if (personal.getBirthday() != null) {
+            interpreter.setBirthday(personal.getBirthday());
+        }
+        if (personal.getCpf() != null) {
+            interpreter.setCpf(personal.getCpf());
+        }
+        if (personal.getGender() != null) {
+            interpreter.setGender(Gender.fromString(personal.getGender()));
         }
     }
 
-    private void updateProfessionalPatchRequest(ProfessionalPatchRequestDTO prof, Interpreter interpreter) {
-        if (prof != null) {
-            if (prof.getCnpj() != null) {
-                interpreter.setCnpj(prof.getCnpj());
-            }
-            if (prof.getMinValue() != null) {
-                interpreter.setMinValue(prof.getMinValue());
-            }
-            if (prof.getMaxValue() != null) {
-                interpreter.setMaxValue(prof.getMaxValue());
-            }
-            if (prof.getImageRights() != null) {
-                interpreter.setImageRights(prof.getImageRights());
-            }
-            if (prof.getModality() != null) {
-                interpreter.setModality(InterpreterMapper.toInterpreterModality(prof.getModality()));
-            }
-            if (prof.getDescription() != null) {
-                interpreter.setDescription(prof.getDescription());
-            }
+    private void updateProfessionalPatchRequest(ProfessionalPatchRequestDTO dto, Interpreter interpreter) {
+        if (dto == null) {
+            return;
+        }
+        if (dto.getCnpj() != null) {
+            interpreter.setCnpj(dto.getCnpj());
+        }
+        if (dto.getMinValue() != null) {
+            interpreter.setMinValue(dto.getMinValue());
+        }
+        if (dto.getMaxValue() != null) {
+            interpreter.setMaxValue(dto.getMaxValue());
+        }
+        if (dto.getImageRights() != null) {
+            interpreter.setImageRights(dto.getImageRights());
+        }
+        if (dto.getModality() != null) {
+            interpreter.setModality(InterpreterMapper.toInterpreterModality(dto.getModality()));
+        }
+        if (dto.getDescription() != null) {
+            interpreter.setDescription(dto.getDescription());
         }
     }
 
     private void updateLocation(LocationDTO locationDTO, Interpreter interpreter) {
-        if (locationDTO != null) {
-            Location location = interpreter.getLocation();
-            if (location == null) {
-                location = Location.builder().user(interpreter).build();
-            }
-            location.setUf(locationDTO.getUf());
-            location.setCity(locationDTO.getCity());
-            interpreter.setLocation(location);
+        if (locationDTO == null) {
+            return;
         }
+
+        Location location = interpreter.getLocation();
+        if (location == null) {
+            location = Location.builder().user(interpreter).build();
+        }
+        location.setUf(locationDTO.getUf());
+        location.setCity(locationDTO.getCity());
+        interpreter.setLocation(location);
     }
 
     private Interpreter findInterpreterById(UUID id) {

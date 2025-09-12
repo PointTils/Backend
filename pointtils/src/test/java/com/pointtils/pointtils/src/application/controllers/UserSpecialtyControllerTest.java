@@ -8,6 +8,8 @@ import com.pointtils.pointtils.src.core.domain.entities.Specialty;
 import com.pointtils.pointtils.src.core.domain.entities.User;
 import com.pointtils.pointtils.src.core.domain.entities.UserSpecialty;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
+import com.pointtils.pointtils.src.infrastructure.configs.GlobalExceptionHandler;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -82,7 +84,9 @@ class UserSpecialtyControllerTest {
         );
 
         // Setup MockMvc
-        mockMvc = MockMvcBuilders.standaloneSetup(userSpecialtyController).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(userSpecialtyController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
     }
 
     @Test
@@ -104,7 +108,7 @@ class UserSpecialtyControllerTest {
     void getUserSpecialties_WhenUserNotExists_ShouldReturnNotFound() throws Exception {
         // Arrange
         when(userSpecialtyService.getUserSpecialties(userId))
-                .thenThrow(new RuntimeException("User not found"));
+                .thenThrow(new EntityNotFoundException("User not found"));
 
         // Act & Assert
         mockMvc.perform(get("/v1/users/{userId}/specialties", userId))
@@ -145,7 +149,7 @@ class UserSpecialtyControllerTest {
         );
 
         when(userSpecialtyService.addUserSpecialties(userId, List.of(specialtyId), false))
-                .thenThrow(new RuntimeException("Invalid specialty IDs"));
+                .thenThrow(new IllegalArgumentException("Invalid specialty IDs"));
 
         // Act & Assert
         mockMvc.perform(post("/v1/users/{userId}/specialties", userId)
@@ -190,7 +194,7 @@ class UserSpecialtyControllerTest {
     @Test
     void removeUserSpecialty_WhenNotExists_ShouldReturnNotFound() throws Exception {
         // Arrange
-        doThrow(new RuntimeException("User specialty not found"))
+        doThrow(new EntityNotFoundException("User specialty not found"))
                 .when(userSpecialtyService).removeUserSpecialty(userId, specialtyId);
 
         // Act & Assert

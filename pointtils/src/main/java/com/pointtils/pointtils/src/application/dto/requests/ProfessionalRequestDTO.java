@@ -19,27 +19,27 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ProfessionalRequestDTO {
     
-    @NotBlank(message = "CNPJ is required")
-    @Pattern(regexp = "\\d{14}", message = "CNPJ must have 14 digits")
+    @NotBlank(message = "CNPJ deve ser preenchido")
+    @Pattern(regexp = "^\\d{14}$", message = "CNPJ precisa ter 14 dígitos")
     private String cnpj;
     
-    @NotNull(message = "Minimum value is required")
-    @DecimalMin(value = "0.0", message = "Minimum value must be positive")
+    @NotNull(message = "Valor mínimo deve ser preenchido")
+    @DecimalMin(value = "0.0", message = "Valor mínimo precisa ser positivo")
     @JsonProperty("min_value")  // Mapeia snake_case para camelCase
     private BigDecimal minValue;
     
-    @NotNull(message = "Maximum value is required")
-    @DecimalMin(value = "0.0", message = "Maximum value must be positive")
+    @NotNull(message = "Valor máximo deve ser preenchido")
+    @DecimalMin(value = "0.0", message = "Valor máximo precisa ser positivo")
     @JsonProperty("max_value")
     private BigDecimal maxValue;
     
-    @NotBlank(message = "Modality is required")
-    @Pattern(regexp = "^(presencial|online|ambos)$", message = "Modality must be 'presencial', 'online' or 'ambos'")
+    @NotBlank(message = "Modalidade de atendimento deve ser preenchida")
+    @Pattern(regexp = "^(presencial|online|ambos)$", message = "Modalidade precisa ser 'presencial', 'online' or 'ambos'")
     private String modality;
     
     private String description;
     
-    @NotNull(message = "Image rights agreement is required")
+    @NotNull(message = "Usuário deve informar se autoriza o direito de uso de imagem")
     @JsonProperty("image_rights")
     private Boolean imageRights;
 }

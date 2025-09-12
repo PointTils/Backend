@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/v1/states")
 @SecurityRequirement(name = "bearerAuth")
-@Tag(name = "State Controller", description = "Endpoints para gerenciar dados de UFs brasileiras")
+@Tag(name = "State Controller", description = "Endpoints para busca de dados de UFs brasileiras")
 public class StateController {
 
     private final StateService stateService;

@@ -5,7 +5,9 @@ import com.pointtils.pointtils.src.application.dto.requests.EnterpriseRequestDTO
 import com.pointtils.pointtils.src.application.dto.responses.ApiResponse;
 import com.pointtils.pointtils.src.application.dto.responses.EnterpriseResponseDTO;
 import com.pointtils.pointtils.src.application.services.EnterpriseService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -25,10 +27,12 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/v1/enterprise-users")
 @AllArgsConstructor
+@Tag(name = "Enterprise Controller", description = "Endpoints para gerenciamento de usuários empresa")
 public class EnterpriseController {
     private final EnterpriseService service;
 
     @PostMapping("/register")
+    @Operation(summary = "Cadastra um usuário empresa")
     public ResponseEntity<ApiResponse<EnterpriseResponseDTO>> createUser(@Valid @RequestBody EnterpriseRequestDTO dto) {
         EnterpriseResponseDTO created = service.registerEnterprise(dto);
         ApiResponse<EnterpriseResponseDTO> response = new ApiResponse<>(true, "Empresa cadastrada com sucesso", created);
@@ -37,16 +41,15 @@ public class EnterpriseController {
 
     @GetMapping()
     @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Busca todos os usuários empresa")
     public ResponseEntity<ApiResponse<List<EnterpriseResponseDTO>>> findAll() {
         List<EnterpriseResponseDTO> enterpriseList = service.findAll();
-
-        if (enterpriseList.isEmpty()) return ResponseEntity.noContent().build();
-
         return ResponseEntity.ok(ApiResponse.success("Empresas encontradas com sucesso", enterpriseList));
     }
 
     @GetMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Busca um usuário empresa por ID")
     public ResponseEntity<ApiResponse<EnterpriseResponseDTO>> findById(@PathVariable UUID id) {
         EnterpriseResponseDTO enterprise = service.findById(id);
         return ResponseEntity.ok(ApiResponse.success("Empresa encontrada com sucesso", enterprise));
@@ -54,6 +57,7 @@ public class EnterpriseController {
 
     @PatchMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Atualiza um usuário empresa por ID")
     public ResponseEntity<EnterpriseResponseDTO> updateUser(@PathVariable UUID id,
                                                             @RequestBody @Valid EnterprisePatchRequestDTO dto) {
         EnterpriseResponseDTO updated = service.patchEnterprise(id, dto);
@@ -62,6 +66,7 @@ public class EnterpriseController {
 
     @DeleteMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Deleta um usuário empresa por ID")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         service.delete(id);
         return ResponseEntity.noContent().build();

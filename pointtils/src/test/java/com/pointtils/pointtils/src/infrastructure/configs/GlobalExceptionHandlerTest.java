@@ -53,7 +53,7 @@ class GlobalExceptionHandlerTest {
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), response.getBody().getStatus());
-        assertEquals("An unexpected error occurred", response.getBody().getMessage());
+        assertEquals("Ocorreu um erro inesperado. Tente novamente mais tarde.", response.getBody().getMessage());
         assertTrue(response.getBody().getTimestamp() > 0);
     }
 

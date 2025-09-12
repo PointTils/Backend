@@ -18,14 +18,15 @@ public class EnterprisePatchRequestDTO {
 	@JsonProperty("corporate_reason")
 	private String corporateReason;
 
-	@Pattern(regexp = "^\\d{14}$", message = "Invalid CNPJ")
+	@Pattern(regexp = "^\\d{14}$", message = "CNPJ precisa ter 14 dígitos")
 	private String cnpj;
 	
-	@Email(message = "Invalid Email")
+	@Email(message = "Email inválido")
 	private String email;
 
 	private String password;
 
+	@Pattern(regexp = "^\\d+$", message = "Número de telefone inválido")
 	private String phone;
 
 	private String picture;

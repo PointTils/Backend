@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pointtils.pointtils.src.application.dto.UpdateSpecialtyRequestDTO;
 import com.pointtils.pointtils.src.application.services.SpecialtyService;
 import com.pointtils.pointtils.src.core.domain.entities.Specialty;
+import com.pointtils.pointtils.src.infrastructure.configs.GlobalExceptionHandler;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,7 +53,9 @@ class SpecialtyControllerTest {
         specialty = new Specialty("Test Specialty");
         specialty.setId(specialtyId);
 
-        mockMvc = MockMvcBuilders.standaloneSetup(specialtyController).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(specialtyController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
     }
 
     @Test
@@ -86,7 +90,7 @@ class SpecialtyControllerTest {
     void getSpecialtyById_WhenNotExists_ShouldReturnNotFound() throws Exception {
         // Arrange
         when(specialtyService.getSpecialtyById(specialtyId))
-                .thenThrow(new RuntimeException("Specialty not found"));
+                .thenThrow(new EntityNotFoundException("Specialty not found"));
 
         // Act & Assert
         mockMvc.perform(get("/v1/specialties/{id}", specialtyId))
@@ -180,7 +184,7 @@ class SpecialtyControllerTest {
         request.setName("Updated Name");
 
         when(specialtyService.partialUpdateSpecialty(specialtyId, "Updated Name"))
-                .thenThrow(new RuntimeException("Invalid request"));
+                .thenThrow(new IllegalArgumentException("Invalid request"));
 
         // Act & Assert
         mockMvc.perform(patch("/v1/specialties/{id}", specialtyId)
@@ -206,7 +210,7 @@ class SpecialtyControllerTest {
     @Test
     void deleteSpecialty_WhenNotExists_ShouldReturnNotFound() throws Exception {
         // Arrange
-        doThrow(new RuntimeException("Specialty not found"))
+        doThrow(new EntityNotFoundException("Specialty not found"))
                 .when(specialtyService).deleteSpecialty(specialtyId);
 
         // Act & Assert
