@@ -29,6 +29,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -218,5 +219,22 @@ class UserSpecialtyControllerTest {
                 .andExpect(jsonPath("$.message").value("Especialidades removidas com sucesso"));
 
         verify(userSpecialtyService).removeUserSpecialties(userId, List.of(specialtyId));
+    }
+
+    @Test
+    void updateUserSpecialty_ShouldUpdateSpecialtyById() throws Exception {
+        UUID newSpecialtyId = UUID.randomUUID();
+        when(userSpecialtyService.updateUserSpecialty(specialtyId, userId, newSpecialtyId))
+                .thenReturn(userSpecialty);
+
+        mockMvc.perform(patch("/v1/users/{userId}/specialties/{userSpecialtyId}", userId, specialtyId)
+                        .param("newSpecialtyId", newSpecialtyId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(userSpecialty.getId().toString()))
+                .andExpect(jsonPath("$.userId").value(userSpecialty.getUser().getId().toString()))
+                .andExpect(jsonPath("$.specialtyId").value(userSpecialty.getSpecialty().getId().toString()))
+                .andExpect(jsonPath("$.specialtyName").value("Test Specialty"));
+
+        verify(userSpecialtyService).updateUserSpecialty(specialtyId, userId, newSpecialtyId);
     }
 }

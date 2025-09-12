@@ -340,7 +340,7 @@ class EnterpriseControllerTest {
     }
 
     @Test
-    @DisplayName("Deve retornar 201 quando atualizar empresa parcialmente com dados válidos")
+    @DisplayName("Deve retornar 200 quando atualizar empresa parcialmente com dados válidos")
     void shouldUpdateEnterprisePartiallyWithValidData() throws Exception {
         mockMvc.perform(post("/v1/enterprise-users/register")
                         .with(user("testuser").roles("USER"))
