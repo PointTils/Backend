@@ -12,12 +12,6 @@ Este guia explica como obter o arquivo JSON com os endpoints da API PointTils e 
 
 ### 1. Obter o Arquivo JSON da Documentação
 
-O arquivo de documentação da API está disponível no seguinte caminho:
-
-```
-/workspaces/Backend/pointtils-api-docs.json
-```
-
 **Métodos para obter o arquivo:**
 
 #### Opção A: Download Direto (se o servidor estiver rodando)
