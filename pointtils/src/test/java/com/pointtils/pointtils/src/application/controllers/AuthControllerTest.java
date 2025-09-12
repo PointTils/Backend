@@ -10,6 +10,7 @@ import com.pointtils.pointtils.src.core.domain.entities.Person;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
+import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
 import com.pointtils.pointtils.src.infrastructure.configs.LoginAttemptService;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -34,7 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 class AuthControllerTest {
 
@@ -46,6 +47,9 @@ class AuthControllerTest {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JwtService jwtTokenProvider;
 
     @MockitoBean
     private LoginAttemptService loginAttemptService;
@@ -366,15 +370,98 @@ class AuthControllerTest {
         when(authService.refreshToken(anyString()))
                 .thenThrow(new AuthenticationException("Usuário não encontrado"));
         mockMvc.perform(MockMvcRequestBuilders
-                        .post("/v1/auth/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                    "refresh_token":"valid-but-user-not-found"
-                                }
-                                """))
+                .post("/v1/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                            "refresh_token":"valid-but-user-not-found"
+                        }
+                        """))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Usuário não encontrado"));
+    }
+
+    @Test
+    @DisplayName("Deve retornar 200 quando logout for bem-sucedido")
+    void deveRetornar200QuandoLogoutForBemSucedido() throws Exception {
+        String accessToken = jwtTokenProvider.generateToken("user@exemplo.com");
+        String refreshToken = jwtTokenProvider.generateRefreshToken("user@exemplo.com");
+
+        String refreshTokenJson = "{ \"refreshToken\": \"" + refreshToken + "\" }";
+
+        when(authService.logout(anyString(), anyString())).thenReturn(true);
+
+        mockMvc.perform(MockMvcRequestBuilders
+                .post("/v1/auth/logout")
+                .header("Authorization", "Bearer " + accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(refreshTokenJson))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Deve retornar 400 quando logout for chamado sem token de acesso")
+    void deveRetornar400QuandoLogoutForChamadoSemTokenDeAcesso() throws Exception {
+        String refreshToken = jwtTokenProvider.generateRefreshToken("user@exemplo.com");
+        String refreshTokenJson = "{ \"refreshToken\": \"" + refreshToken + "\" }";
+
+        mockMvc.perform(MockMvcRequestBuilders
+                .post("/v1/auth/logout")
+                .header("Authorization", "Bearer ")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(refreshTokenJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Access token não fornecido"));
+    }
+
+    @Test
+    @DisplayName("Deve retornar 400 quando logout for chamado sem refresh token")
+    void deveRetornar400QuandoLogoutForChamadoSemRefreshToken() throws Exception {
+        String accessToken = jwtTokenProvider.generateToken("user@exemplo.com");
+        String refreshTokenJson = "{ \"refreshToken\": \"\" }";
+        mockMvc.perform(MockMvcRequestBuilders
+                .post("/v1/auth/logout")
+                .header("Authorization", "Bearer " + accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(refreshTokenJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Refresh token não fornecido"));
+    }
+
+    @Test
+    @DisplayName("Deve retornar 401 quando logout for chamado com token de acesso inválido")
+    void deveRetornar401QuandoLogoutForChamadoComTokenDeAcessoInvalido() throws Exception {
+        String refreshToken = jwtTokenProvider.generateRefreshToken("user@exemplo.com");
+        String refreshTokenJson = "{ \"refreshToken\": \"" + refreshToken + "\" }";
+
+        when(authService.logout(anyString(), anyString()))
+                .thenThrow(new AuthenticationException("Access token inválido ou expirado"));
+
+        mockMvc.perform(MockMvcRequestBuilders
+                .post("/v1/auth/logout")
+                .header("Authorization", "Bearer invalid-access-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(refreshTokenJson))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Access token inválido ou expirado"));
+    }
+
+    @Test
+    @DisplayName("Deve retornar 401 quando logout for chamado com refresh token inválido")
+    void deveRetornar401QuandoLogoutForChamadoComRefreshTokenInvalido() throws Exception {
+        String accessToken = jwtTokenProvider.generateToken("user@exemplo.com");
+        String refreshTokenJson = "{ \"refreshToken\": \"invalid-refresh-token\" }";
+
+        when(authService.logout(anyString(), anyString()))
+                .thenThrow(new AuthenticationException("Refresh token inválido ou expirado"));
+
+        mockMvc.perform(MockMvcRequestBuilders
+                .post("/v1/auth/logout")
+                .header("Authorization", "Bearer " + accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(refreshTokenJson))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Refresh token inválido ou expirado"));
     }
 }

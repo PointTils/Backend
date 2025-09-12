@@ -96,6 +96,16 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @ExceptionHandler(InternalError.class)
+    public ResponseEntity<ErrorResponse> handleInternalError(InternalError ex) {
+        String message = ex.getMessage();
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                message,
+                System.currentTimeMillis());
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorResponse> handleAuthentication(AuthenticationException ex) {
         String message = ex.getMessage();
@@ -142,14 +152,14 @@ public class GlobalExceptionHandler {
                     System.currentTimeMillis());
             return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
         }
-        if ("Refresh token não fornecido".equals(message)) {
+        if ("Refresh token não fornecido".equals(message) || "Access token não fornecido".equals(message)) {
             ErrorResponse errorResponse = new ErrorResponse(
                     HttpStatus.BAD_REQUEST.value(),
                     message,
                     System.currentTimeMillis());
             return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
         }
-        if ("Refresh token inválido ou expirado".equals(message)) {
+        if ("Refresh token inválido ou expirado".equals(message) || "Access token inválido ou expirado".equals(message)) {
             ErrorResponse errorResponse = new ErrorResponse(
                     HttpStatus.UNAUTHORIZED.value(),
                     message,
