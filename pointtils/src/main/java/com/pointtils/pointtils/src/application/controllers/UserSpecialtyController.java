@@ -1,10 +1,14 @@
 package com.pointtils.pointtils.src.application.controllers;
 
+import java.util.List;
+import java.util.UUID;
+
 import com.pointtils.pointtils.src.application.dto.AddUserSpecialtiesRequestDTO;
 import com.pointtils.pointtils.src.application.dto.UserSpecialtiesResponseDTO;
 import com.pointtils.pointtils.src.application.dto.UserSpecialtyResponseDTO;
 import com.pointtils.pointtils.src.application.services.UserSpecialtyService;
 import com.pointtils.pointtils.src.core.domain.entities.UserSpecialty;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -21,9 +25,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
-import java.util.UUID;
 
 @RestController
 @SecurityRequirement(name = "bearerAuth")

@@ -1,0 +1,49 @@
+name: Destroy AWS Infrastructure
+
+on:
+  workflow_dispatch:  # Permite execução manual da pipeline
+  
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  destroy-infrastructure:
+    name: Destroy AWS Infrastructure
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: '1.5.0'
+        cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+    - name: Create terraform.tfvars file
+      run: |
+        cat > terraform/terraform.tfvars << EOF
+        aws_region     = "${{ secrets.AWS_REGION }}"
+        db_username    = "${{ secrets.DB_USERNAME }}"
+        db_password    = "${{ secrets.DB_PASSWORD }}"
+        ssh_public_key = "${{ secrets.SSH_PUBLIC_KEY }}"
+        EOF
+
+    - name: Terraform Init
+      working-directory: terraform
+      run: terraform init
+
+    - name: Terraform Destroy
+      working-directory: terraform
+      run: terraform destroy -auto-approve
+
+    - name: Cleanup Summary
+      run: echo "AWS infrastructure has been successfully destroyed."

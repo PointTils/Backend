@@ -1,5 +1,5 @@
 provider "aws" {
-  region = var.aws_region
+  region = var.aws_region  # Agora usando us-east-2 (Ohio)
 }
 
 # Criando uma VPC
@@ -32,24 +32,7 @@ resource "aws_subnet" "public_subnet_2" {
   }
 }
 
-# Criando subnets privadas para o banco de dados
-resource "aws_subnet" "private_subnet_1" {
-  vpc_id            = aws_vpc.pointtils_vpc.id
-  cidr_block        = "10.0.3.0/24"
-  availability_zone = "${var.aws_region}a"
-  tags = {
-    Name = "pointtils-private-subnet-1"
-  }
-}
-
-resource "aws_subnet" "private_subnet_2" {
-  vpc_id            = aws_vpc.pointtils_vpc.id
-  cidr_block        = "10.0.4.0/24"
-  availability_zone = "${var.aws_region}b"
-  tags = {
-    Name = "pointtils-private-subnet-2"
-  }
-}
+# Não precisamos mais de subnets privadas já que não temos RDS
 
 # Internet Gateway
 resource "aws_internet_gateway" "pointtils_igw" {
@@ -97,6 +80,15 @@ resource "aws_security_group" "app_sg" {
     description = "Allow HTTP traffic to the application"
   }
 
+  # Permitir PostgreSQL
+  ingress {
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow PostgreSQL"
+  }
+
   # Permitir SSH
   ingress {
     from_port   = 22
@@ -120,66 +112,10 @@ resource "aws_security_group" "app_sg" {
   }
 }
 
-# Grupo de segurança para o banco de dados
-resource "aws_security_group" "db_sg" {
-  name        = "pointtils-db-sg"
-  description = "Security group for Pointtils database"
-  vpc_id      = aws_vpc.pointtils_vpc.id
+# Removido grupo de segurança para o banco de dados e subnet group para o RDS
 
-  # Permitir tráfego de entrada na porta do PostgreSQL apenas da subnet da aplicação
-  ingress {
-    from_port       = 5432
-    to_port         = 5432
-    protocol        = "tcp"
-    security_groups = [aws_security_group.app_sg.id]
-    description     = "Allow PostgreSQL traffic from application servers"
-  }
-
-  # Permitir todo o tráfego de saída
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow all outbound traffic"
-  }
-
-  tags = {
-    Name = "pointtils-db-sg"
-  }
-}
-
-# Subnet group para o RDS
-resource "aws_db_subnet_group" "pointtils_db_subnet_group" {
-  name       = "pointtils-db-subnet-group"
-  subnet_ids = [aws_subnet.private_subnet_1.id, aws_subnet.private_subnet_2.id]
-
-  tags = {
-    Name = "Pointtils DB Subnet Group"
-  }
-}
-
-# Instância RDS PostgreSQL
-resource "aws_db_instance" "pointtils_db" {
-  identifier             = "pointtils-db"
-  engine                 = "postgres"
-  engine_version         = "14"
-  instance_class         = "db.t3.micro"
-  allocated_storage      = 20
-  storage_type           = "gp2"
-  db_name                = "pointtilsdb"
-  username               = var.db_username
-  password               = var.db_password
-  parameter_group_name   = "default.postgres14"
-  db_subnet_group_name   = aws_db_subnet_group.pointtils_db_subnet_group.name
-  vpc_security_group_ids = [aws_security_group.db_sg.id]
-  skip_final_snapshot    = true
-  publicly_accessible    = false
-
-  tags = {
-    Name = "pointtils-db"
-  }
-}
+# Nota: Removido RDS PostgreSQL pois não consta no orçamento
+# A aplicação usará um banco de dados local no EC2 ou externo gerenciado separadamente
 
 # IAM role para a instância EC2
 resource "aws_iam_role" "ec2_role" {
@@ -233,14 +169,15 @@ resource "aws_iam_instance_profile" "ec2_profile" {
 
 # Chave SSH para acesso às instâncias EC2
 resource "aws_key_pair" "pointtils_key" {
-  key_name   = "pointtils-key"
-  public_key = var.ssh_public_key
+  key_name   = "pointtils_key"
+  public_key = file("${path.module}/pointtils_key.pub")
 }
 
 # Script de inicialização para a instância EC2
 data "template_file" "user_data" {
   template = <<-EOF
               #!/bin/bash
+              set -e  # Exit on any error
               echo "=== Iniciando configuração do servidor ==="
               
               # Atualizar pacotes
@@ -252,7 +189,7 @@ data "template_file" "user_data" {
               curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
               echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
               sudo apt-get update -y
-              sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+              sudo apt-get install -y docker-ce docker-ce-cli containerd.io awscli
               sudo systemctl enable docker
               sudo systemctl start docker
               sudo usermod -aG docker ubuntu
@@ -261,21 +198,79 @@ data "template_file" "user_data" {
               sudo curl -L "https://github.com/docker/compose/releases/download/v2.15.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
               sudo chmod +x /usr/local/bin/docker-compose
               
+              # Clonar o repositório da aplicação
+              cd /home/ubuntu
+              if [ ! -d "Backend" ]; then
+                git clone https://github.com/PointTils/Backend.git
+              else
+                cd Backend
+                git pull origin main
+              fi
+              
               # Criar arquivo .env para variáveis de ambiente
-              cat > /home/ubuntu/.env << ENVFILE
-              SPRING_DATASOURCE_URL=jdbc:postgresql://${aws_db_instance.pointtils_db.endpoint}/pointtilsdb
+              cat > /home/ubuntu/Backend/.env << ENVFILE
+              # Database Container Configuration
+              POSTGRES_USER=postgres
+              POSTGRES_PASSWORD=postgres
+              POSTGRES_DB=pointtils
+              
+              # Spring Application Configuration
+              SPRING_APPLICATION_NAME=pointtils-api
+              SERVER_PORT=8080
+              
+              # Spring DataSource Configuration
+              SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-db:5432/pointtils
               SPRING_DATASOURCE_USERNAME=${var.db_username}
               SPRING_DATASOURCE_PASSWORD=${var.db_password}
+              
+              # JPA/Hibernate Configuration
+              SPRING_JPA_HIBERNATE_DDL_AUTO=validate
+              SPRING_JPA_SHOW_SQL=true
+              
+              # JWT Configuration
+              JWT_SECRET=testandoUmaNovaSenhaMasterComMaisDeTrintaEdoisCaracteres
+              JWT_ISSUER=pointtils-api
+              JWT_EXPIRATION_TIME=900000
+              JWT_REFRESH_EXPIRATION_TIME=604800000
+              
+              # Flyway Configuration
+              SPRING_FLYWAY_ENABLED=true
+              SPRING_FLYWAY_LOCATIONS=classpath:db/migration
+              SPRING_FLYWAY_BASELINE_ON_MIGRATE=true
+              SPRING_FLYWAY_VALIDATE_ON_MIGRATE=true
+              
+              # Swagger/OpenAPI Configuration
+              SPRINGDOC_API_DOCS_ENABLED=true
+              SPRINGDOC_SWAGGER_UI_ENABLED=true
+              SPRINGDOC_SWAGGER_UI_PATH=/swagger-ui.html
               ENVFILE
               
+              # Iniciar a aplicação com Docker Compose de produção
+              cd /home/ubuntu/Backend
+              sudo docker-compose -f docker-compose.prod.yaml build
+              sudo docker-compose -f docker-compose.prod.yaml up -d
+              
+              # Aguardar a aplicação iniciar e verificar status
+              echo "Aguardando aplicação iniciar..."
+              sleep 30
+              
+              # Verificar se os containers estão rodando
+              echo "Verificando status dos containers:"
+              sudo docker-compose -f docker-compose.prod.yaml ps
+              
+              # Verificar logs para debugging
+              echo "Verificando logs da aplicação:"
+              sudo docker-compose -f docker-compose.prod.yaml logs --tail=20 pointtils
+              
               echo "=== Configuração do servidor concluída ==="
+              echo "=== Aplicação iniciada com Docker Compose de produção ==="
               EOF
 }
 
-# Instância EC2 para a aplicação Pointtils
+# Instância EC2 para a aplicação Pointtils (Conforme orçamento: t2.medium em Ohio)
 resource "aws_instance" "pointtils_app" {
-  ami                    = var.ec2_ami
-  instance_type          = "t2.micro"
+  ami                    = "ami-0a59f0e26c55590e9" # Ubuntu 22.04 LTS para us-east-2 (Ohio)
+  instance_type          = "t2.medium"
   key_name               = aws_key_pair.pointtils_key.key_name
   vpc_security_group_ids = [aws_security_group.app_sg.id]
   subnet_id              = aws_subnet.public_subnet_1.id
@@ -285,8 +280,6 @@ resource "aws_instance" "pointtils_app" {
   tags = {
     Name = "pointtils-app"
   }
-
-  depends_on = [aws_db_instance.pointtils_db]
 }
 
 # Elastic IP para a instância EC2
@@ -296,4 +289,79 @@ resource "aws_eip" "pointtils_eip" {
   tags = {
     Name = "pointtils-eip"
   }
+}
+
+# Amazon S3 Bucket para armazenamento de APIs para teste (conforme orçamento)
+resource "aws_s3_bucket" "pointtils_api_tests" {
+  bucket = "pointtils-api-tests-${random_id.bucket_suffix.hex}"
+
+  tags = {
+    Name = "pointtils-api-tests"
+  }
+}
+
+resource "random_id" "bucket_suffix" {
+  byte_length = 4
+}
+
+# Configuração de acesso ao bucket S3
+resource "aws_s3_bucket_public_access_block" "pointtils_api_tests" {
+  bucket = aws_s3_bucket.pointtils_api_tests.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+# Amazon ECR Repository (conforme orçamento)
+# Verificar se o ECR já existe antes de tentar criar
+data "aws_ecr_repository" "existing_repo" {
+  count = var.create_ecr ? 0 : 1
+  name  = "pointtils"
+}
+
+resource "aws_ecr_repository" "pointtils" {
+  # Só criar se a variável create_ecr for verdadeira
+  count                = var.create_ecr ? 1 : 0
+  name                 = "pointtils"
+  image_tag_mutability = "MUTABLE"
+  
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+  
+  tags = {
+    Name = "pointtils-ecr"
+  }
+  
+  # Ignorar erros se o repositório já existir
+  lifecycle {
+    ignore_changes = all
+    prevent_destroy = false
+  }
+}
+
+# Lifecycle Policy para o ECR (limitar o armazenamento a 20GB conforme orçamento)
+resource "aws_ecr_lifecycle_policy" "pointtils" {
+  # Só criar se o repositório ECR também foi criado
+  count      = var.create_ecr ? 1 : 0
+  repository = aws_ecr_repository.pointtils[0].name
+
+  policy = jsonencode({
+    rules = [
+      {
+        rulePriority = 1
+        description  = "Keep only the latest 10 images"
+        selection = {
+          tagStatus     = "any"
+          countType     = "imageCountMoreThan"
+          countNumber   = 10
+        }
+        action = {
+          type = "expire"
+        }
+      }
+    ]
+  })
 }

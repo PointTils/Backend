@@ -1,13 +1,13 @@
 variable "aws_region" {
   description = "Região da AWS onde a infraestrutura será criada"
   type        = string
-  default     = "us-east-1"
+  default     = "us-east-2"  # Ohio, conforme orçamento
 }
 
 variable "ec2_ami" {
   description = "ID da AMI para a instância EC2"
   type        = string
-  default     = "ami-0c7217cdde317cfec" # Ubuntu 22.04 LTS para us-east-1
+  default     = "ami-0a59f0e26c55590e9" # Ubuntu 22.04 LTS para us-east-2 (Ohio)
 }
 
 variable "db_username" {
@@ -22,7 +22,10 @@ variable "db_password" {
   sensitive   = true
 }
 
-variable "ssh_public_key" {
-  description = "Chave pública SSH para acesso às instâncias EC2"
-  type        = string
+variable "create_ecr" {
+  description = "Indica se o repositório ECR deve ser criado (false se já existir)"
+  type        = bool
+  default     = false
 }
+
+
