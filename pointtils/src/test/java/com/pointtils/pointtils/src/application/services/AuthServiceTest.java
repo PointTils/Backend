@@ -137,6 +137,54 @@ class AuthServiceTest {
     }
 
     @Test
+    @DisplayName("Deve falhar quando email tiver formato inválido")
+    void deveFalharQuandoEmailFormatoInvalido() {
+        // Para emails inválidos, a validação ocorre antes da busca no repositório
+        // então não precisamos configurar mocks
+        AuthenticationException ex1 = assertThrows(
+                AuthenticationException.class,
+                () -> loginService.login("emailinvalido", "senha123")
+        );
+        assertEquals("Formato de e-mail inválido", ex1.getMessage());
+        
+        AuthenticationException ex2 = assertThrows(
+                AuthenticationException.class,
+                () -> loginService.login("email@", "senha123")
+        );
+        assertEquals("Formato de e-mail inválido", ex2.getMessage());
+        
+        AuthenticationException ex3 = assertThrows(
+                AuthenticationException.class,
+                () -> loginService.login("@dominio.com", "senha123")
+        );
+        assertEquals("Formato de e-mail inválido", ex3.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve falhar quando senha tiver formato inválido")
+    void deveFalharQuandoSenhaFormatoInvalido() {
+        // Para senhas inválidas, a validação ocorre antes da busca no repositório
+        // então não precisamos configurar mocks
+        AuthenticationException ex1 = assertThrows(
+                AuthenticationException.class,
+                () -> loginService.login("test@email.com", "123")
+        );
+        assertEquals("Formato de senha inválida", ex1.getMessage());
+        
+        AuthenticationException ex2 = assertThrows(
+                AuthenticationException.class,
+                () -> loginService.login("test@email.com", "senha{com}chaves")
+        );
+        assertEquals("Formato de senha inválida", ex2.getMessage());
+        
+        AuthenticationException ex3 = assertThrows(
+                AuthenticationException.class,
+                () -> loginService.login("test@email.com", "senha com espaços")
+        );
+        assertEquals("Formato de senha inválida", ex3.getMessage());
+    }
+
+    @Test
     @DisplayName("Deve falhar quando senha for nula ou vazia")
     void deveFalharQuandoSenhaNulaOuVazia() {
         AuthenticationException ex1 = assertThrows(
