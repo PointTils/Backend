@@ -21,7 +21,7 @@ public class DeafRequestDTO {
     @Valid
     private PersonalRequestDTO personalRequestDTO;
 
-    @NotNull(message = "Location is required")
+    @NotNull(message = "Localização deve ser preenchida")
     @Valid
     private LocationDTO location;
     

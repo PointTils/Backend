@@ -108,7 +108,7 @@ class EnterpriseControllerTest {
                         .content(objectMapper.writeValueAsString(validPatchRequest)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Invalid UUID")));
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("UUID inválido")));
     }
 
     @Test
@@ -295,12 +295,13 @@ class EnterpriseControllerTest {
     }
 
     @Test
-    @DisplayName("Deve retornar 204 quando não existem empresas")
-    void shouldGetNoContentWhenNoEnterprisesExist() throws Exception {
+    @DisplayName("Deve retornar 200 e lista vazia quando não existem empresas")
+    void shouldGetOkWithEmptyArrayWhenNoEnterprisesExist() throws Exception {
         mockMvc.perform(get("/v1/enterprise-users")
                         .with(user("testuser").roles("USER"))
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").isArray());
     }
 
     @Test

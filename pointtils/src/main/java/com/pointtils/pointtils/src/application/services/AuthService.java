@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 public class AuthService {
 
     private final UserRepository userRepository;
-    private final JwtService jwtTokenPrivider;
+    private final JwtService jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
 
     public LoginResponseDTO login(String email, String password) {
@@ -53,8 +53,8 @@ public class AuthService {
             throw new AuthenticationException("Credenciais inválidas");
         }
 
-        String accessToken = jwtTokenPrivider.generateToken(user.getEmail());
-        String refreshToken = jwtTokenPrivider.generateRefreshToken(user.getEmail());
+        String accessToken = jwtTokenProvider.generateToken(user.getEmail());
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
 
         UserDTO userDTO = new UserDTO(
                 user.getId(),
@@ -68,8 +68,8 @@ public class AuthService {
                 accessToken,
                 refreshToken,
                 "Bearer",
-                jwtTokenPrivider.getExpirationTime(),
-                jwtTokenPrivider.getRefreshExpirationTime()
+                jwtTokenProvider.getExpirationTime(),
+                jwtTokenProvider.getRefreshExpirationTime()
         );
 
         return new LoginResponseDTO(
@@ -84,18 +84,18 @@ public class AuthService {
             throw new AuthenticationException("Refresh token não fornecido");
         }
 
-        if (jwtTokenPrivider.isTokenExpired(token) || !jwtTokenPrivider.validateToken(token)) {
+        if (jwtTokenProvider.isTokenExpired(token) || !jwtTokenProvider.validateToken(token)) {
             throw new AuthenticationException("Refresh token inválido ou expirado");
         }
 
-        String email = jwtTokenPrivider.getEmailFromToken(token);
+        String email = jwtTokenProvider.getEmailFromToken(token);
         User user = userRepository.findByEmail(email);
         if (user == null) {
             throw new AuthenticationException("Usuário não encontrado");
         }
 
-        String accessToken = jwtTokenPrivider.generateToken(user.getEmail());
-        String refreshToken = jwtTokenPrivider.generateRefreshToken(user.getEmail());
+        String accessToken = jwtTokenProvider.generateToken(user.getEmail());
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
 
         return new RefreshTokenResponseDTO(
                 true,
@@ -104,8 +104,8 @@ public class AuthService {
                         accessToken,
                         refreshToken,
                         "Bearer",
-                        jwtTokenPrivider.getExpirationTime(),
-                        jwtTokenPrivider.getRefreshExpirationTime()
+                        jwtTokenProvider.getExpirationTime(),
+                        jwtTokenProvider.getRefreshExpirationTime()
                 ))
         );
     }

@@ -17,28 +17,28 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class EnterpriseRequestDTO {
-	@NotBlank(message = "Corporate reason is required")
+	@NotBlank(message = "Razão social deve ser preenchida")
 	@JsonProperty("corporate_reason")
 	private String corporateReason;
 	
-	@NotBlank(message = "CNPJ is required")
-	@Pattern(regexp = "^\\d{14}$", message = "Invalid CNPJ")
+	@NotBlank(message = "CNPJ deve ser preenchido")
+	@Pattern(regexp = "^\\d{14}$", message = "CNPJ inválido")
 	private String cnpj;
 	
-	@NotBlank(message = "Email is required")
-	@Email(message = "Invalid Email")
+	@NotBlank(message = "Email deve ser preenchido")
+	@Email(message = "Email inválido")
 	private String email;
 	
-	@NotBlank(message = "Password is required")
+	@NotBlank(message = "Senha deve ser preenchida")
 	private String password;
 	
-	@NotBlank(message = "Phone is required")
-	@Pattern(regexp = "^\\d+$", message = "Invalid Phone")
+	@NotBlank(message = "Número de telefone deve ser preenchido")
+	@Pattern(regexp = "^\\d+$", message = "Número de telefone inválido")
 	private String phone;
 	
 	private String picture;
 	
-	@NotNull(message = "Location is required")
+	@NotNull(message = "Localização deve ser preenchida")
 	@Valid
 	private LocationDTO location;
 }

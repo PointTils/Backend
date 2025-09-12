@@ -22,10 +22,10 @@ public class LocationDTO {
 
     private UUID id;
 
-    @NotBlank(message = "UF is required")
+    @NotBlank(message = "UF deve ser preenchida")
     private String uf;
 
-    @NotBlank(message = "City is required")
+    @NotBlank(message = "Cidade deve ser preenchida")
     private String city;
 
     public LocationDTO(String uf, String city) {

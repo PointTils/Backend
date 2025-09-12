@@ -14,16 +14,16 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class InterpreterRequestDTO {
     
-    @NotNull(message = "Personal data is required")
+    @NotNull(message = "Dados pessoais devem ser preenchidos")
     @Valid
     @JsonProperty("personal_data")
     private PersonalRequestDTO personalData;
     
-    @NotNull(message = "Location is required")
+    @NotNull(message = "Localização deve ser preenchida")
     @Valid
     private LocationDTO location;
     
-    @NotNull(message = "Professional data is required")
+    @NotNull(message = "Dados profissionais devem ser preenchidos")
     @Valid
     @JsonProperty("professional_data")
     private ProfessionalRequestDTO professionalData;

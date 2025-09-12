@@ -20,8 +20,8 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -79,7 +79,7 @@ public class GlobalExceptionHandler {
 
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "An unexpected error occurred",
+                "Ocorreu um erro inesperado. Tente novamente mais tarde.",
                 System.currentTimeMillis());
 
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -90,7 +90,7 @@ public class GlobalExceptionHandler {
         log.error("Erro inesperado", ex);
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "An unexpected error occurred",
+                "Ocorreu um erro inesperado. Tente novamente mais tarde.",
                 System.currentTimeMillis());
 
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -189,9 +189,9 @@ public class GlobalExceptionHandler {
 		
 		String message;
 		if (requiredType != null && UUID.class.equals(requiredType)) {
-			message = "Invalid UUID";
+			message = "UUID inválido";
 		} else {
-			message = String.format("Invalid value for parameter '%s'", paramName);
+			message = String.format("Valor inválido para parâmetro '%s'", paramName);
 		}
 		
 		ErrorResponse errorResponse = new ErrorResponse(
@@ -212,7 +212,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
-		Map<String, String> errors = new HashMap<>();
+		List<String> errors = new ArrayList<>();
 		
 		boolean hasRequiredFieldErrors = ex.getBindingResult().getFieldErrors().stream()
 				.anyMatch(error -> "NotBlank".equals(error.getCode()) || "NotNull".equals(error.getCode()) || "NotEmpty".equals(error.getCode()));
@@ -220,11 +220,10 @@ public class GlobalExceptionHandler {
 		boolean hasFormatErrors = !hasRequiredFieldErrors && ex.getBindingResult().getFieldErrors().stream()
 				.anyMatch(error -> "Pattern".equals(error.getCode()) || "Email".equals(error.getCode()));
 		
-		ex.getBindingResult().getFieldErrors().forEach(error ->
-				errors.put(error.getField(), error.getDefaultMessage())
-		);
+		ex.getBindingResult().getFieldErrors()
+                .forEach(error -> errors.add(error.getDefaultMessage()));
 		
-		String message = "Invalid entry data: " + errors;
+		String message = "Dados inválidos: " + errors;
 
         HttpStatus fieldFormatErrorStatus = hasFormatErrors ? HttpStatus.UNPROCESSABLE_ENTITY : HttpStatus.BAD_REQUEST;
 		HttpStatus finalStatus = hasRequiredFieldErrors ? HttpStatus.BAD_REQUEST : fieldFormatErrorStatus;
@@ -238,10 +237,16 @@ public class GlobalExceptionHandler {
 	}
 
     @Data
-    @AllArgsConstructor
     public static class ErrorResponse {
+        private boolean success = false;
         private int status;
         private String message;
         private long timestamp;
+
+        public ErrorResponse(int status, String message, long timestamp) {
+            this.status = status;
+            this.message = message;
+            this.timestamp = timestamp;
+        }
     }
 }

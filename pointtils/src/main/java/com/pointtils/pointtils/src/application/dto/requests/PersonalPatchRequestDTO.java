@@ -17,18 +17,20 @@ public class PersonalPatchRequestDTO {
     
     private String name;
     
-    @Email(message = "Email must be valid")
+    @Email(message = "Email inválido")
     private String email;
     
     private String password;
-    
+
+    @Pattern(regexp = "^\\d+$", message = "Número de telefone inválido")
     private String phone;
     
-    @Pattern(regexp = "^[MFO]$", message = "Gender must be M,F or O")
+    @Pattern(regexp = "^[MFO]$", message = "Gênero deve ser M,F ou O")
     private String gender;
     
     private LocalDate birthday;
-    
+
+    @Pattern(regexp = "^\\d{11}$", message = "CPF inválido")
     private String cpf;
     
     private String picture;

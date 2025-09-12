@@ -16,19 +16,19 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProfessionalPatchRequestDTO {
-    
-    @Pattern(regexp = "\\d{14}", message = "CNPJ must have 14 digits")
+
+    @Pattern(regexp = "^\\d{14}$", message = "CNPJ precisa ter 14 dígitos")
     private String cnpj;
-    
-    @DecimalMin(value = "0.0", message = "Minimum value must be positive")
+
+    @DecimalMin(value = "0.0", message = "Valor mínimo precisa ser positivo")
     @JsonProperty("min_value")
     private BigDecimal minValue;
-    
-    @DecimalMin(value = "0.0", message = "Maximum value must be positive")
+
+    @DecimalMin(value = "0.0", message = "Valor máximo precisa ser positivo")
     @JsonProperty("max_value")
     private BigDecimal maxValue;
-    
-    @Pattern(regexp = "^(presencial|online|ambos)$", message = "Modality must be 'presencial', 'online' or 'ambos'")
+
+    @Pattern(regexp = "^(presencial|online|ambos)$", message = "Modalidade precisa ser 'presencial', 'online' or 'ambos'")
     private String modality;
     
     private String description;

@@ -5,7 +5,9 @@ import com.pointtils.pointtils.src.application.dto.requests.DeafRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ApiResponse;
 import com.pointtils.pointtils.src.application.dto.responses.DeafResponseDTO;
 import com.pointtils.pointtils.src.application.services.DeafRegisterService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,25 +28,21 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/v1/deaf-users")
 @AllArgsConstructor
+@Tag(name = "Deaf Controller", description = "Endpoints para gerenciamento de usuários surdos")
 public class DeafController {
     private final DeafRegisterService service;
 
     @PostMapping("/register")
+    @Operation(summary = "Cadastra um usuário surdo")
     public ResponseEntity<ApiResponse<DeafResponseDTO>> createUser(@Valid @RequestBody DeafRequestDTO dto) {
         DeafResponseDTO created = service.registerPerson(dto);
         ApiResponse<DeafResponseDTO> response = ApiResponse.success("Usuário surdo cadastrado com sucesso", created);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @GetMapping("/{id}")
-    @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<ApiResponse<DeafResponseDTO>> findById(@PathVariable UUID id) {
-        DeafResponseDTO deaf = service.findById(id);
-        return ResponseEntity.ok(ApiResponse.success("Usuário surdo encontrado com sucesso", deaf));
-    }
-
     @GetMapping
     @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Busca todos os usuários surdos")
     public ResponseEntity<ApiResponse<List<DeafResponseDTO>>> findAll() {
         List<DeafResponseDTO> deafUsers = service.findAll();
         ApiResponse<List<DeafResponseDTO>> response =
@@ -52,15 +50,17 @@ public class DeafController {
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/{id}")
+    @GetMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        service.delete(id);
-        return ResponseEntity.noContent().build();
+    @Operation(summary = "Busca um usuário surdo por ID")
+    public ResponseEntity<ApiResponse<DeafResponseDTO>> findById(@PathVariable UUID id) {
+        DeafResponseDTO deaf = service.findById(id);
+        return ResponseEntity.ok(ApiResponse.success("Usuário surdo encontrado com sucesso", deaf));
     }
 
     @PatchMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Atualiza parcialmente um usuário surdo por ID")
     public ResponseEntity<ApiResponse<DeafResponseDTO>> updateUser(@PathVariable UUID id,
                                                                    @RequestBody @Valid DeafPatchRequestDTO dto) {
         DeafResponseDTO updated = service.updatePartial(id, dto);
@@ -69,9 +69,18 @@ public class DeafController {
 
     @PutMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Atualiza um usuário surdo por ID")
     public ResponseEntity<ApiResponse<DeafResponseDTO>> updateComplete(@PathVariable UUID id,
                                                                        @RequestBody @Valid DeafRequestDTO dto) {
         DeafResponseDTO updated = service.updateComplete(id, dto);
         return ResponseEntity.ok(ApiResponse.success("Usuário surdo atualizado com sucesso", updated));
+    }
+
+    @DeleteMapping("/{id}")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Deleta um usuário surdo por ID")
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        service.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }

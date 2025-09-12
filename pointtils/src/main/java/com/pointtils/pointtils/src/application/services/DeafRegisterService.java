@@ -57,12 +57,10 @@ public class DeafRegisterService {
         return deafResponseMapper.toResponseDTO(savedPerson);
     }
 
-
     public DeafResponseDTO findById(UUID id) {
         Person person = findPersonById(id);
         return deafResponseMapper.toResponseDTO(person);
     }
-
 
     public void delete(UUID id) {
         Person person = findPersonById(id);

@@ -1,5 +1,7 @@
 package com.pointtils.pointtils.src.application.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/v1/auth")
 @RequiredArgsConstructor
+@Tag(name = "Auth Controller", description = "Endpoints para autenticação de usuários")
 public class AuthController {
 
     private final AuthService authService;
@@ -26,6 +29,7 @@ public class AuthController {
     private final LoginAttemptService loginAttemptService;
 
     @PostMapping("/login")
+    @Operation(summary = "Realiza login de usuário")
     public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequestDTO loginRequest, HttpServletRequest httpRequest) {
         String clientIp = getClientIP(httpRequest);
 
@@ -44,8 +48,9 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<RefreshTokenResponseDTO> postMethodName(@RequestBody String refresh_token) {
-        RefreshTokenResponseDTO response = authService.refreshToken(refresh_token);
+    @Operation(summary = "Renova sessão de usuário")
+    public ResponseEntity<RefreshTokenResponseDTO> refreshToken(@RequestBody String token) {
+        RefreshTokenResponseDTO response = authService.refreshToken(token);
         return ResponseEntity.ok(response);
     }
     
