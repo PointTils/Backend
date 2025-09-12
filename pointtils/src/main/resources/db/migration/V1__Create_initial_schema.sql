@@ -2,11 +2,11 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Tipos
-CREATE TYPE user_status_enum AS ENUM ('ACTIVE', 'INACTIVE', 'PENDENT');
+CREATE TYPE user_status_enum AS ENUM ('ACTIVE', 'INACTIVE', 'PENDING');
 CREATE TYPE user_type_enum AS ENUM ('CLIENT', 'ENTERPRISE', 'INTERPRETER');
 CREATE TYPE interpreter_modality_enum AS ENUM ('ONLINE', 'PERSONALLY', 'ALL');
 CREATE TYPE appointment_modality_enum AS ENUM ('ONLINE', 'PERSONALLY');
-CREATE TYPE appointment_status_enum AS ENUM ('PENDENT', 'ACCEPTED', 'CANCELED', 'COMPLETED');
+CREATE TYPE appointment_status_enum AS ENUM ('PENDING', 'ACCEPTED', 'CANCELED', 'COMPLETED');
 CREATE TYPE schedule_day_enum AS ENUM ('MON', 'TUE', 'WEN', 'THU', 'FRI', 'SAT', 'SUN');
 CREATE TYPE person_gender_enum AS ENUM ('MALE', 'FEMALE', 'OTHERS');
 

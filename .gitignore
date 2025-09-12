@@ -35,3 +35,6 @@ build/
 
 ### MACos ###
 **/.DS_Store
+
+### local ###
+application-local.properties

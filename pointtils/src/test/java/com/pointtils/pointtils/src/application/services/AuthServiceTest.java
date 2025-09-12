@@ -1,29 +1,29 @@
 package com.pointtils.pointtils.src.application.services;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-import java.util.UUID;
-
+import com.pointtils.pointtils.src.application.dto.LoginRequestDTO;
+import com.pointtils.pointtils.src.application.dto.LoginResponseDTO;
+import com.pointtils.pointtils.src.application.dto.RefreshTokenResponseDTO;
+import com.pointtils.pointtils.src.core.domain.entities.Person;
+import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
+import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
+import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
+import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
+import com.pointtils.pointtils.src.infrastructure.configs.RedisBlacklistService;
+import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.pointtils.pointtils.src.application.dto.LoginRequestDTO;
-import com.pointtils.pointtils.src.application.dto.LoginResponseDTO;
-import com.pointtils.pointtils.src.application.dto.RefreshTokenResponseDTO;
-import com.pointtils.pointtils.src.core.domain.entities.Person;
-import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
-import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
-import com.pointtils.pointtils.src.infrastructure.configs.LoginAttemptService;
-import com.pointtils.pointtils.src.infrastructure.configs.RedisBlacklistService;
-import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
@@ -37,10 +37,6 @@ class AuthServiceTest {
     @Mock
     private JwtService jwtTokenProvider;
 
-    @Mock
-    @SuppressWarnings("unused")
-    private LoginAttemptService loginAttemptService;
-    
     @InjectMocks
     private AuthService loginService;
 
@@ -57,7 +53,8 @@ class AuthServiceTest {
         person.setName("Test User");
         person.setPhone("51999999999");
         person.setPicture("picture_url");
-        person.setStatus("active");
+        person.setStatus(UserStatus.ACTIVE);
+        person.setType(UserTypeE.CLIENT);
 
         when(userRepository.findByEmail("test@email.com")).thenReturn(person);
         when(passwordEncoder.matches("password123", "password123")).thenReturn(true);
@@ -93,16 +90,16 @@ class AuthServiceTest {
         Person person = new Person();
         person.setEmail("usuario@exemplo.com");
         person.setPassword("123");
-        person.setStatus("blocked");
+        person.setStatus(UserStatus.INACTIVE);
 
         when(userRepository.findByEmail("usuario@exemplo.com")).thenReturn(person);
-        
+
         AuthenticationException ex = assertThrows(
                 AuthenticationException.class,
                 () -> loginService.login("usuario@exemplo.com", "senha123")
         );
 
-        assertEquals("Usuário bloqueado", ex.getMessage());
+        assertEquals("Usuário inativo", ex.getMessage());
     }
 
     @Test
@@ -111,7 +108,7 @@ class AuthServiceTest {
         Person person = new Person();
         person.setEmail("test@email.com");
         person.setPassword("wrongpassword");
-        person.setStatus("active");
+        person.setStatus(UserStatus.ACTIVE);
 
         when(userRepository.findByEmail("test@email.com")).thenReturn(person);
         when(passwordEncoder.matches("correctpassword", "wrongpassword")).thenReturn(false);
@@ -159,7 +156,7 @@ class AuthServiceTest {
     void deveRenovarTokenComRefreshTokenValido() {
         Person person = new Person();
         person.setEmail("exemplo@user.com");
-        person.setStatus("active");
+        person.setStatus(UserStatus.ACTIVE);
 
         when(jwtTokenProvider.isTokenExpired("valid_refresh_token")).thenReturn(false);
         when(jwtTokenProvider.validateToken("valid_refresh_token")).thenReturn(true);

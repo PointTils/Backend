@@ -1,5 +1,7 @@
 package com.pointtils.pointtils.src.application.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/v1/auth")
 @RequiredArgsConstructor
+@Tag(name = "Auth Controller", description = "Endpoints para autenticação de usuários")
 public class AuthController {
 
     private final AuthService authService;
@@ -27,8 +30,8 @@ public class AuthController {
     private final LoginAttemptService loginAttemptService;
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequestDTO loginRequest,
-            HttpServletRequest httpRequest) {
+    @Operation(summary = "Realiza login de usuário")
+    public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequestDTO loginRequest, HttpServletRequest httpRequest) {
         String clientIp = getClientIP(httpRequest);
 
         if (loginAttemptService.isBlocked(clientIp)) {
@@ -46,24 +49,26 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<RefreshTokenResponseDTO> postMethodName(@RequestBody String refresh_token) {
-        RefreshTokenResponseDTO response = authService.refreshToken(refresh_token);
+    @Operation(summary = "Renova sessão de usuário")
+    public ResponseEntity<RefreshTokenResponseDTO> refreshToken(@RequestBody String token) {
+        RefreshTokenResponseDTO response = authService.refreshToken(token);
         return ResponseEntity.ok(response);
     }
 
     @SuppressWarnings("rawtypes")
     @PostMapping("/logout")
-    public ResponseEntity logout(@RequestBody RefreshTokenRequestDTO refresh_token, HttpServletRequest httpRequest) {
+    @Operation(summary = "Realiza logout de usuário")
+    public ResponseEntity logout(@RequestBody RefreshTokenRequestDTO refreshToken, HttpServletRequest httpRequest) {
         String header = httpRequest.getHeader("Authorization");
         if (header == null || !header.startsWith("Bearer ") || header.length() <= 7) {
             throw new AuthenticationException("Access token não fornecido");
         }
-        if (refresh_token.getRefreshToken() == null || refresh_token.getRefreshToken().isBlank()) {
+        if (refreshToken.getRefreshToken() == null || refreshToken.getRefreshToken().isBlank()) {
             throw new AuthenticationException("Refresh token não fornecido");
         }
 
         String accessToken = header.substring(7);
-        boolean success = authService.logout(accessToken, refresh_token.getRefreshToken());
+        boolean success = authService.logout(accessToken, refreshToken.getRefreshToken());
 
         if (!success) {
             throw new InternalError("Erro ao fazer logout");

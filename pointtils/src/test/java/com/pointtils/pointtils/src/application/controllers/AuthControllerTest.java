@@ -1,25 +1,5 @@
 package com.pointtils.pointtils.src.application.controllers;
 
-import java.util.UUID;
-
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.pointtils.pointtils.src.application.dto.LoginResponseDTO;
 import com.pointtils.pointtils.src.application.dto.RefreshTokenResponseDTO;
 import com.pointtils.pointtils.src.application.dto.TokensDTO;
@@ -27,10 +7,32 @@ import com.pointtils.pointtils.src.application.dto.UserDTO;
 import com.pointtils.pointtils.src.application.services.AuthService;
 import com.pointtils.pointtils.src.core.domain.entities.Enterprise;
 import com.pointtils.pointtils.src.core.domain.entities.Person;
+import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
+import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
 import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
 import com.pointtils.pointtils.src.infrastructure.configs.LoginAttemptService;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+
+import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
@@ -49,12 +51,10 @@ class AuthControllerTest {
     @Autowired
     private JwtService jwtTokenProvider;
 
-    @SuppressWarnings("removal")
-    @MockBean
+    @MockitoBean
     private LoginAttemptService loginAttemptService;
 
-    @SuppressWarnings("removal")
-    @MockBean
+    @MockitoBean
     private AuthService authService;
 
     @BeforeEach
@@ -66,7 +66,8 @@ class AuthControllerTest {
         person.setName("João Silva");
         person.setPhone("51999999999");
         person.setPicture("picture_url");
-        person.setStatus("active");
+        person.setStatus(UserStatus.ACTIVE);
+        person.setType(UserTypeE.CLIENT);
 
         userRepository.save(person);
 
@@ -76,7 +77,8 @@ class AuthControllerTest {
         enterprise.setCorporateReason("Empresa Exemplo");
         enterprise.setPhone("51888888888");
         enterprise.setPicture("enterprise_picture_url");
-        enterprise.setStatus("active");
+        enterprise.setStatus(UserStatus.ACTIVE);
+        enterprise.setType(UserTypeE.ENTERPRISE);
 
         userRepository.save(enterprise);
     }
@@ -103,14 +105,14 @@ class AuthControllerTest {
         when(authService.login(anyString(), anyString())).thenReturn(mockLoginResponse);
 
         mockMvc.perform(MockMvcRequestBuilders
-                .post("/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .content("""
-                        {
-                            "email":"usuario@exemplo.com",
-                            "password":"minhasenha123"}
-                        """))
+                        .post("/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "email":"usuario@exemplo.com",
+                                    "password":"minhasenha123"}
+                                """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.user.email").value("usuario@exemplo.com"))
@@ -135,14 +137,14 @@ class AuthControllerTest {
         when(authService.login(anyString(), anyString())).thenReturn(mockLoginResponse);
 
         mockMvc.perform(MockMvcRequestBuilders
-                .post("/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .content("""
-                        {
-                            "email":"enterprise@exemplo.com",
-                            "password":"enterprise123"}
-                        """))
+                        .post("/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "email":"enterprise@exemplo.com",
+                                    "password":"enterprise123"}
+                                """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.user.email").value("enterprise@exemplo.com"))
@@ -158,9 +160,9 @@ class AuthControllerTest {
                 .thenThrow(new AuthenticationException("Credenciais inválidas"));
 
         mockMvc.perform(MockMvcRequestBuilders
-                .post("/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\"teste@email.com\",\"password\":\"123456\"}"))
+                        .post("/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"teste@email.com\",\"password\":\"123456\"}"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").value("Credenciais inválidas"));
     }
@@ -172,9 +174,9 @@ class AuthControllerTest {
                 .thenThrow(new AuthenticationException("Usuário bloqueado"));
 
         mockMvc.perform(MockMvcRequestBuilders
-                .post("/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\"teste@email.com\",\"password\":\"minhasenha123\"}"))
+                        .post("/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"teste@email.com\",\"password\":\"minhasenha123\"}"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("Usuário bloqueado"));
     }
@@ -186,13 +188,13 @@ class AuthControllerTest {
         when(loginAttemptService.isBlocked(clientIp)).thenReturn(true);
 
         mockMvc.perform(MockMvcRequestBuilders
-                .post("/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\"usuario@exemplo.com\",\"password\":\"minhasenha123\"}")
-                .with(request -> {
-                    request.setRemoteAddr(clientIp);
-                    return request;
-                }))
+                        .post("/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"usuario@exemplo.com\",\"password\":\"minhasenha123\"}")
+                        .with(request -> {
+                            request.setRemoteAddr(clientIp);
+                            return request;
+                        }))
                 .andExpect(status().isTooManyRequests())
                 .andExpect(jsonPath("$.message").value("Muitas tentativas de login"));
     }
@@ -204,9 +206,9 @@ class AuthControllerTest {
                 .thenThrow(new AuthenticationException("O campo email é obrigatório"));
 
         mockMvc.perform(MockMvcRequestBuilders
-                .post("/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\"\",\"password\":\"senha123\"}"))
+                        .post("/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"\",\"password\":\"senha123\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("O campo email é obrigatório"));
     }
@@ -218,9 +220,9 @@ class AuthControllerTest {
                 .thenThrow(new AuthenticationException("O campo senha é obrigatório"));
 
         mockMvc.perform(MockMvcRequestBuilders
-                .post("/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\"usuario@test.com\",\"password\":\"\"}"))
+                        .post("/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"usuario@test.com\",\"password\":\"\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("O campo senha é obrigatório"));
     }
@@ -232,9 +234,9 @@ class AuthControllerTest {
                 .thenThrow(new AuthenticationException("Formato de e-mail inválido"));
 
         mockMvc.perform(MockMvcRequestBuilders
-                .post("/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\"usuario123\",\"password\":\"senha123\"}"))
+                        .post("/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"usuario123\",\"password\":\"senha123\"}"))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.message").value("Formato de e-mail inválido"));
     }
@@ -246,9 +248,9 @@ class AuthControllerTest {
                 .thenThrow(new AuthenticationException("Formato de senha inválida"));
 
         mockMvc.perform(MockMvcRequestBuilders
-                .post("/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\"usuario@test.com\",\"password\":\"    \"}"))
+                        .post("/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"usuario@test.com\",\"password\":\"    \"}"))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.message").value("Formato de senha inválida"));
     }
@@ -260,9 +262,9 @@ class AuthControllerTest {
                 .thenThrow(new AuthenticationException("Usuário não encontrado"));
 
         mockMvc.perform(MockMvcRequestBuilders
-                .post("/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\" \",\"password\":\"senha123\"}"))
+                        .post("/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\" \",\"password\":\"senha123\"}"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Usuário não encontrado"));
     }
@@ -284,18 +286,18 @@ class AuthControllerTest {
         when(authService.login(anyString(), anyString())).thenReturn(mockLoginResponse);
 
         mockMvc.perform(MockMvcRequestBuilders
-                .post("/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .content("""
-                        {
-                            "email":"usuario@exemplo.com",
-                            "password":"minhasenha123"}
-                        """)
-                .with(request -> {
-                    request.setRemoteAddr(clientIp);
-                    return request;
-                }))
+                        .post("/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "email":"usuario@exemplo.com",
+                                    "password":"minhasenha123"}
+                                """)
+                        .with(request -> {
+                            request.setRemoteAddr(clientIp);
+                            return request;
+                        }))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.user.email").value("usuario@exemplo.com"))
@@ -313,14 +315,14 @@ class AuthControllerTest {
                                 3600, 604800)));
         when(authService.refreshToken(anyString())).thenReturn(mockResponse);
         mockMvc.perform(MockMvcRequestBuilders
-                .post("/v1/auth/refresh")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .content("""
-                        {
-                            "refresh_token":"valid-refresh-token"
-                        }
-                        """))
+                        .post("/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "refresh_token":"valid-refresh-token"
+                                }
+                                """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.tokens.accessToken").value("new-access-token"))
                 .andExpect(jsonPath("$.data.tokens.refreshToken").value("new-refresh-token"));
@@ -332,14 +334,14 @@ class AuthControllerTest {
         when(authService.refreshToken(anyString()))
                 .thenThrow(new AuthenticationException("Refresh token inválido ou expirado"));
         mockMvc.perform(MockMvcRequestBuilders
-                .post("/v1/auth/refresh")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .content("""
-                        {
-                            "refresh_token":"invalid-refresh-token"
-                        }
-                        """))
+                        .post("/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "refresh_token":"invalid-refresh-token"
+                                }
+                                """))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").value("Refresh token inválido ou expirado"));
     }
@@ -350,14 +352,14 @@ class AuthControllerTest {
         when(authService.refreshToken(anyString()))
                 .thenThrow(new AuthenticationException("Refresh token não fornecido"));
         mockMvc.perform(MockMvcRequestBuilders
-                .post("/v1/auth/refresh")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .content("""
-                        {
-                            "refresh_token":""
-                        }
-                        """))
+                        .post("/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "refresh_token":""
+                                }
+                                """))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Refresh token não fornecido"));
     }

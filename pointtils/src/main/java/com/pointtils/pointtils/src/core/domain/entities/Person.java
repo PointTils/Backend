@@ -1,28 +1,45 @@
 package com.pointtils.pointtils.src.core.domain.entities;
 
+import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.PrimaryKeyJoinColumn;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
-@Entity
+import java.time.LocalDate;
+
 @Table(name = "person")
+@Entity
+@PrimaryKeyJoinColumn(name = "id")
 @Data
-@EqualsAndHashCode(callSuper = true)
+@SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class Person extends User {
+    
     private String name;
+
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Enumerated(EnumType.STRING)
+    private Gender gender;
+
+    private LocalDate birthday;
+
+    @Column(unique = true, length = 11)
+    private String cpf;
 
     @Override
     public String getDisplayName() {
         return name;
-    }
-
-    @Override
-    public String getType() {
-        return "person";
     }
 }
