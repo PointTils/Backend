@@ -38,10 +38,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
-        if (memoryBlacklistService.isBlacklisted(authHeader.substring(7))) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Token inválido");
-            return;
+        // Verificar se o token está na blacklist apenas se não for uma requisição de logout
+        String requestURI = request.getRequestURI();
+        if (!requestURI.equals("/v1/auth/logout")) {
+            String token = authHeader.substring(7);
+            if (memoryBlacklistService.isBlacklisted(token)) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write("Token inválido");
+                return;
+            }
         }
 
         try {
