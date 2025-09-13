@@ -39,10 +39,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
         
+        // Extrair token do header uma vez para evitar duplicação
+        final String token = authHeader.substring(7);
+        
         // Verificar se o token está na blacklist apenas se não for uma requisição de logout
         String requestURI = request.getRequestURI();
         if (!isLogoutEndpoint(requestURI)) {
-            String token = authHeader.substring(7);
             if (memoryBlacklistService.isBlacklisted(token)) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.getWriter().write("Token inválido");
@@ -51,7 +53,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         try {
-            final String jwt = authHeader.substring(7);
+            final String jwt = token;
 
             if (jwtService.isTokenExpired(jwt)) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

@@ -58,7 +58,7 @@ public class JwtController {
             throw new com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException("Refresh token não fornecido");
         }
         
-        if (!jwtService.validateToken(request.getRefreshToken()) || jwtService.isTokenExpired(request.getRefreshToken())) {
+        if (!jwtService.isTokenValid(request.getRefreshToken())) {
             throw new com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException("Refresh token inválido ou expirado");
         }
         
