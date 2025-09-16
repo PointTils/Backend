@@ -75,13 +75,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     /**
      * Verifica se a URI da requisição é um endpoint de logout
      * Usa uma abordagem mais robusta para evitar vulnerabilidades de comparação hardcoded
+     * e previne ataques de ReDoS (Regular Expression Denial of Service)
      */
     private boolean isLogoutEndpoint(String requestURI) {
         // Lista de endpoints de logout que devem permitir tokens blacklisted
+        // Substitui a regex vulnerável por uma verificação mais segura
         return requestURI != null && (
             requestURI.equals("/v1/auth/logout") ||
             requestURI.startsWith("/v1/auth/logout/") ||
-            requestURI.matches(".*/logout.*")
+            requestURI.contains("/logout")
         );
     }
 }

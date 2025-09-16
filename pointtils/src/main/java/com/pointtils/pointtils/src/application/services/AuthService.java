@@ -121,6 +121,7 @@ public class AuthService {
         }
 
         memoryBlacklistService.addToBlacklist(accessToken);
+        memoryBlacklistService.addToBlacklist(refreshToken);
 
         return true;
     }

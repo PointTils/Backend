@@ -23,6 +23,8 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -289,13 +291,15 @@ class AuthServiceTest {
         when(jwtTokenProvider.isTokenValid(accessToken)).thenReturn(true);
         when(jwtTokenProvider.isTokenValid(refreshToken)).thenReturn(true);
 
-        loginService.logout(accessToken, refreshToken);
+        Boolean result = loginService.logout(accessToken, refreshToken);
 
-        // Verificar que o memoryBlacklistService foi injetado corretamente
-        assertNotNull(memoryBlacklistService);
+        // Verificar que o logout foi bem-sucedido
+        assertNotNull(result);
+        assertTrue(result);
         
-        // O método logout deve chamar addToBlacklist internamente
-        // Podemos verificar isso através del comportamento esperado
+        // Verificar que os tokens foram adicionados à blacklist
+        verify(memoryBlacklistService).addToBlacklist(accessToken);
+        verify(memoryBlacklistService).addToBlacklist(refreshToken);
     }
 
     @Test
