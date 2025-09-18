@@ -43,7 +43,7 @@ public class InterpreterResponseMapper {
                 .rating(interpreter.getRating() != null ? interpreter.getRating() : BigDecimal.ZERO)
                 .minValue(interpreter.getMinValue())
                 .maxValue(interpreter.getMaxValue())
-                .modality(interpreter.getModality().name())
+                .modality(interpreter.getModality() != null ? interpreter.getModality().name() : null)
                 .description(interpreter.getDescription())
                 .imageRights(interpreter.getImageRights())
                 .build();
