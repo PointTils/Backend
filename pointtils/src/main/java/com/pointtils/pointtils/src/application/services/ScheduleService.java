@@ -42,9 +42,10 @@ public class ScheduleService {
                 .endTime(savedSchedule.getEndTime())
                 .build();
     }
+
     public ScheduleResponseDTO findById(UUID scheduleId) {
         Schedule schedule = scheduleRepository.findById(scheduleId)
-                .orElseThrow(() -> new EntityNotFoundException("Schedule not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Horário não encontrado"));
         return ScheduleResponseDTO.builder()
                 .id(schedule.getId())
                 .interpreterId(schedule.getInterpreterId())
@@ -52,5 +53,13 @@ public class ScheduleService {
                 .startTime(schedule.getStartTime())
                 .endTime(schedule.getEndTime())
                 .build();
+    }
+
+    public void deleteById(UUID scheduleId) {
+        if (!scheduleRepository.existsById(scheduleId)) {
+            throw new EntityNotFoundException("Horário não encontrado");
+        }
+        
+        scheduleRepository.deleteById(scheduleId);
     }
 }

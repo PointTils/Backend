@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import java.util.UUID;
 
 @RestController
@@ -38,6 +39,14 @@ public class ScheduleController {
     public ResponseEntity<ApiResponse<ScheduleResponseDTO>> getScheduleById(@PathVariable UUID scheduleId) {
         ScheduleResponseDTO schedule = service.findById(scheduleId);
         ApiResponse<ScheduleResponseDTO> response = new ApiResponse<>(true, "Detalhes do horário obtidos com sucesso", schedule);
+        return ResponseEntity.ok(response);
+    }
+    
+    @DeleteMapping("/{scheduleId}")
+    @Operation(summary = "Exclui um horário de disponibilidade")
+    public ResponseEntity<ApiResponse<Void>> deleteSchedule(@PathVariable UUID scheduleId) {
+        service.deleteById(scheduleId);
+        ApiResponse<Void> response = new ApiResponse<>(true, "Horário excluído com sucesso", null);
         return ResponseEntity.ok(response);
     }
 }
