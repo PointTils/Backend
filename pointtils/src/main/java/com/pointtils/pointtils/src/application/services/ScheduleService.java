@@ -1,3 +1,4 @@
+    // Removido método duplicado fora da classe
 package com.pointtils.pointtils.src.application.services;
 
 import com.pointtils.pointtils.src.application.dto.requests.ScheduleRequestDTO;
@@ -9,6 +10,8 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -37,6 +40,17 @@ public class ScheduleService {
                 .day(savedSchedule.getDay())
                 .startTime(savedSchedule.getStartTime())
                 .endTime(savedSchedule.getEndTime())
+                .build();
+    }
+    public ScheduleResponseDTO findById(UUID scheduleId) {
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new EntityNotFoundException("Schedule not found"));
+        return ScheduleResponseDTO.builder()
+                .id(schedule.getId())
+                .interpreterId(schedule.getInterpreterId())
+                .day(schedule.getDay())
+                .startTime(schedule.getStartTime())
+                .endTime(schedule.getEndTime())
                 .build();
     }
 }
