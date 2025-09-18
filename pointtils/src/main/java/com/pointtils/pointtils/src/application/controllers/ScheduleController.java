@@ -1,6 +1,7 @@
 package com.pointtils.pointtils.src.application.controllers;
 
 import com.pointtils.pointtils.src.application.dto.requests.ScheduleRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.SchedulePatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ApiResponse;
 import com.pointtils.pointtils.src.application.dto.responses.ScheduleResponseDTO;
 import com.pointtils.pointtils.src.application.services.ScheduleService;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import java.util.UUID;
 
 @RestController
@@ -41,7 +43,15 @@ public class ScheduleController {
         ApiResponse<ScheduleResponseDTO> response = new ApiResponse<>(true, "Detalhes do horário obtidos com sucesso", schedule);
         return ResponseEntity.ok(response);
     }
-    
+
+    @PatchMapping("/{scheduleId}")
+    @Operation(summary = "Atualiza dados de um horário de disponibilidade")
+    public ResponseEntity<ApiResponse<ScheduleResponseDTO>> updateSchedule(@PathVariable UUID scheduleId, @Valid @RequestBody SchedulePatchRequestDTO dto) {
+        ScheduleResponseDTO updated = service.updateSchedule(scheduleId, dto);
+        ApiResponse<ScheduleResponseDTO> response = new ApiResponse<>(true, "Horário atualizado com sucesso", updated);
+        return ResponseEntity.ok(response);
+    }
+
     @DeleteMapping("/{scheduleId}")
     @Operation(summary = "Exclui um horário de disponibilidade")
     public ResponseEntity<ApiResponse<Void>> deleteSchedule(@PathVariable UUID scheduleId) {
