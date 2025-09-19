@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -53,6 +54,19 @@ public class ScheduleService {
                 .startTime(schedule.getStartTime())
                 .endTime(schedule.getEndTime())
                 .build();
+    }
+
+    public List<ScheduleResponseDTO> findAll() {
+        List<Schedule> schedules = scheduleRepository.findAll();
+        return schedules.stream()
+            .map(s -> ScheduleResponseDTO.builder()
+                .id(s.getId())
+                .interpreterId(s.getInterpreterId())
+                .day(s.getDay())
+                .startTime(s.getStartTime())
+                .endTime(s.getEndTime())
+                .build())
+            .toList();
     }
 
     public ScheduleResponseDTO updateSchedule(UUID scheduleId, SchedulePatchRequestDTO dto) {

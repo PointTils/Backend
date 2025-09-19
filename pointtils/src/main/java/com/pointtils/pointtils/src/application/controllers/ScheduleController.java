@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -41,6 +42,14 @@ public class ScheduleController {
     public ResponseEntity<ApiResponse<ScheduleResponseDTO>> getScheduleById(@PathVariable UUID scheduleId) {
         ScheduleResponseDTO schedule = service.findById(scheduleId);
         ApiResponse<ScheduleResponseDTO> response = new ApiResponse<>(true, "Detalhes do horário obtidos com sucesso", schedule);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping()
+    @Operation(summary = "Lista todos os horários cadastrados")
+    public ResponseEntity<ApiResponse<List<ScheduleResponseDTO>>> listSchedules() {
+        List<ScheduleResponseDTO> schedules = service.findAll();
+        ApiResponse<List<ScheduleResponseDTO>> response = new ApiResponse<>(true, "Horários obtidos com sucesso", schedules);
         return ResponseEntity.ok(response);
     }
 
