@@ -1,5 +1,14 @@
 package com.pointtils.pointtils.src.application.services;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.pointtils.pointtils.src.application.dto.LocationDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterRequestDTO;
@@ -11,18 +20,13 @@ import com.pointtils.pointtils.src.application.mapper.InterpreterResponseMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
 import com.pointtils.pointtils.src.core.domain.entities.Location;
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
+import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
+
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.UUID;
 
 @Service
 @Transactional
@@ -79,8 +83,22 @@ public class InterpreterRegisterService {
         repository.save(interpreter);
     }
 
-    public List<InterpreterResponseDTO> findAll() {
-        List<Interpreter> interpreters = repository.findAll();
+    public List<InterpreterResponseDTO> findAll(
+        InterpreterModality modality,
+        Gender gender,
+        String city,
+        String neighborhood,
+        String specialty,
+        LocalDateTime dateTime
+    ) {
+        List<Interpreter> interpreters = repository.findAll(
+            modality,
+            gender,
+            city,
+            neighborhood,
+            specialty,
+            dateTime
+        );
         return interpreters.stream()
                 .map(responseMapper::toResponseDTO)
                 .toList();
