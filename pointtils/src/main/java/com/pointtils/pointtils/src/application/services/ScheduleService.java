@@ -96,6 +96,10 @@ public class ScheduleService {
             schedule.setEndTime(dto.getEndTime());
         }
 
+        if (!dto.getInterpreterId().equals(schedule.getInterpreterId())) {
+            throw new IllegalArgumentException("Não é possível alterar o horário de outro intérprete");
+        }
+
         boolean hasConflict = scheduleRepository.existsConflictForUpdate(
             schedule.getId(),
             schedule.getInterpreterId(),
@@ -103,9 +107,9 @@ public class ScheduleService {
             schedule.getStartTime(),
             schedule.getEndTime()
         );
-        
+
         if (hasConflict) {
-            throw new IllegalArgumentException("Já existe um horário conflitante para este intérprete neste dia da semana.");
+            throw new IllegalArgumentException("Já existe um horário conflitante para este intérprete neste dia da semana");
         }
         
 
