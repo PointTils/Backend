@@ -26,6 +26,17 @@ public class ScheduleService {
             throw new EntityNotFoundException("Interpreter not found");
         }
 
+        boolean hasConflict = scheduleRepository.existsByInterpreterIdAndDayAndStartTimeLessThanAndEndTimeGreaterThan(
+            dto.getInterpreterId(),
+            dto.getDay(),
+            dto.getEndTime(),
+            dto.getStartTime()
+        );
+
+        if (hasConflict) {
+            throw new IllegalArgumentException("Já existe um horário conflitante para este intérprete neste dia da semana.");
+        }
+
         Schedule schedule = Schedule.builder()
                 .interpreterId(dto.getInterpreterId())
                 .day(dto.getDay())
@@ -84,6 +95,19 @@ public class ScheduleService {
         if (dto.getEndTime() != null) {
             schedule.setEndTime(dto.getEndTime());
         }
+
+        boolean hasConflict = scheduleRepository.existsConflictForUpdate(
+            schedule.getId(),
+            schedule.getInterpreterId(),
+            schedule.getDay(),
+            schedule.getStartTime(),
+            schedule.getEndTime()
+        );
+        
+        if (hasConflict) {
+            throw new IllegalArgumentException("Já existe um horário conflitante para este intérprete neste dia da semana.");
+        }
+        
 
         Schedule saved = scheduleRepository.save(schedule);
 
