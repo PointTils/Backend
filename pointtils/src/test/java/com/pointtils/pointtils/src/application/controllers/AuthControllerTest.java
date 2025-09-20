@@ -136,7 +136,7 @@ class AuthControllerTest {
                                                         UUID.randomUUID(), "enterprise@exemplo.com",
                                                         null,
                                                         null,
-                                                        UserTypeE.PERSON,
+                                                        UserTypeE.ENTERPRISE,
                                                         UserStatus.ACTIVE),
                         new TokensDTO("access-token", "refresh-token", "Bearer", 3600,
                                 604800)));
