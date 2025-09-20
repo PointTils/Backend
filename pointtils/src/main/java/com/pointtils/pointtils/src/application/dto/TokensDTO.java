@@ -17,6 +17,7 @@ public class TokensDTO {
     private String refreshToken;
     @JsonProperty("token_type")
     private String tokenType;
+    @JsonProperty("expires_in")
     private long expiresIn;
     @JsonProperty("refresh_expires_in")
     private long refreshExpiresIn;
