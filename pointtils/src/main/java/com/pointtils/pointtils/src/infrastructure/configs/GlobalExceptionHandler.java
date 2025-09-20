@@ -4,6 +4,7 @@ package com.pointtils.pointtils.src.infrastructure.configs;
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
 import com.pointtils.pointtils.src.core.domain.exceptions.ClientTimeoutException;
 import com.pointtils.pointtils.src.core.domain.exceptions.DuplicateResourceException;
+import com.pointtils.pointtils.src.core.domain.exceptions.InvalidFilterException;
 import com.pointtils.pointtils.src.core.domain.exceptions.UserSpecialtyException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolation;
@@ -185,6 +186,15 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserSpecialtyException.class)
     public ResponseEntity<ErrorResponse> handleUserSpecialty(UserSpecialtyException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                System.currentTimeMillis());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(InvalidFilterException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidFilter(InvalidFilterException ex) {
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 ex.getMessage(),
