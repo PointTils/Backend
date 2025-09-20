@@ -155,7 +155,7 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.user.email").value("enterprise@exemplo.com"))
-                .andExpect(jsonPath("$.data.user.type").value("enterprise"))
+                .andExpect(jsonPath("$.data.user.type").value("ENTERPRISE"))
                 .andExpect(jsonPath("$.data.tokens.accessToken").exists())
                 .andExpect(jsonPath("$.data.tokens.refreshToken").exists());
     }
