@@ -111,7 +111,6 @@ public class ScheduleService {
         if (hasConflict) {
             throw new IllegalArgumentException("Já existe um horário conflitante para este intérprete neste dia da semana");
         }
-        
 
         Schedule saved = scheduleRepository.save(schedule);
 
