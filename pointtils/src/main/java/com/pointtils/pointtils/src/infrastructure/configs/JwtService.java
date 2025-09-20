@@ -94,4 +94,26 @@ public class JwtService {
             return false;
         }
     }
+
+    /**
+     * Validates a token and checks if it's expired in a single operation.
+     * This avoids redundant token parsing that occurs when calling validateToken() and isTokenExpired() separately.
+     *
+     * @param token the JWT token to validate
+     * @return true if the token is valid and not expired, false otherwise
+     */
+    public boolean isTokenValid(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(getSignInKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+            
+            // Check if token is expired
+            return !claims.getExpiration().before(new Date());
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }
