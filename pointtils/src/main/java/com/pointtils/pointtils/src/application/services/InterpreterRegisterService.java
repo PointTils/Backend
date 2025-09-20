@@ -23,7 +23,6 @@ import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
-import com.pointtils.pointtils.src.core.domain.exceptions.InvalidFilterException;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -84,7 +83,6 @@ public class InterpreterRegisterService {
         repository.save(interpreter);
     }
 
-    @SuppressWarnings("null")
     public List<InterpreterResponseDTO> findAll(
             InterpreterModality modality,
             Gender gender,
