@@ -2,7 +2,6 @@ package com.pointtils.pointtils.src.application.controllers;
 
 import java.util.List;
 import java.util.UUID;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
@@ -17,14 +16,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.pointtils.pointtils.src.application.dto.UpdateSpecialtyRequestDTO;
 import com.pointtils.pointtils.src.application.services.SpecialtyService;
 import com.pointtils.pointtils.src.core.domain.entities.Specialty;
-
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 @RestController

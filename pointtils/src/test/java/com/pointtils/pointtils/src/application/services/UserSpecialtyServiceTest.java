@@ -63,7 +63,7 @@ class UserSpecialtyServiceTest {
 
             @Override
             public UserTypeE getType() {
-                return UserTypeE.CLIENT;
+                return UserTypeE.PERSON;
             }
         };
         user.setId(userId);

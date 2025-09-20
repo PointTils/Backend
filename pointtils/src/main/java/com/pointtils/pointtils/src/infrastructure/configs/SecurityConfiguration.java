@@ -38,7 +38,7 @@ public class SecurityConfiguration {
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.POST, "/v1/deaf-users/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/v1/person/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/v1/interpreters/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/v1/enterprise-users/**").permitAll()
                         .requestMatchers("/v1/specialties/**").permitAll()

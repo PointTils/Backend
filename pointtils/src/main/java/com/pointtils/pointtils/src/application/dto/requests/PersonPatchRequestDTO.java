@@ -13,7 +13,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class DeafPatchRequestDTO {
+public class PersonPatchRequestDTO {
     
     @JsonUnwrapped
     @Valid

@@ -67,7 +67,7 @@ class AuthControllerTest {
         person.setPhone("51999999999");
         person.setPicture("picture_url");
         person.setStatus(UserStatus.ACTIVE);
-        person.setType(UserTypeE.CLIENT);
+        person.setType(UserTypeE.PERSON);
 
         userRepository.save(person);
 
@@ -97,8 +97,12 @@ class AuthControllerTest {
                 true,
                 "Autenticação realizada com sucesso",
                 new LoginResponseDTO.Data(
-                        new UserDTO(UUID.randomUUID(), "usuario@exemplo.com", "João Silva", "person",
-                                "active"),
+                                 new UserDTO(
+                                                        "usuario@exemplo.com",
+                                                        null,
+                                                        null,
+                                                        UserTypeE.PERSON,
+                                                        UserStatus.ACTIVE),
                         new TokensDTO("access-token", "refresh-token", "Bearer", 3600,
                                 604800)));
 
@@ -129,8 +133,12 @@ class AuthControllerTest {
                 true,
                 "Autenticação realizada com sucesso",
                 new LoginResponseDTO.Data(
-                        new UserDTO(UUID.randomUUID(), "enterprise@exemplo.com", "Empresa Exemplo",
-                                "enterprise", "active"),
+                                        new UserDTO(
+                                                        "usuario@exemplo.com",
+                                                        null,
+                                                        null,
+                                                        UserTypeE.PERSON,
+                                                        UserStatus.ACTIVE),
                         new TokensDTO("access-token", "refresh-token", "Bearer", 3600,
                                 604800)));
 
@@ -278,8 +286,12 @@ class AuthControllerTest {
                 true,
                 "Autenticação realizada com sucesso",
                 new LoginResponseDTO.Data(
-                        new UserDTO(UUID.randomUUID(), "usuario@exemplo.com", "João Silva", "person",
-                                "active"),
+                                 new UserDTO(
+                                                        "usuario@exemplo.com",
+                                                        null,
+                                                        null,
+                                                        UserTypeE.PERSON,
+                                                        UserStatus.ACTIVE),
                         new TokensDTO("access-token", "refresh-token", "Bearer", 3600,
                                 604800)));
 

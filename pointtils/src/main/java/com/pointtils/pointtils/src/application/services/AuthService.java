@@ -1,9 +1,7 @@
 package com.pointtils.pointtils.src.application.services;
-
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import com.pointtils.pointtils.src.application.dto.LoginResponseDTO;
 import com.pointtils.pointtils.src.application.dto.RefreshTokenResponseDTO;
 import com.pointtils.pointtils.src.application.dto.TokensDTO;
@@ -59,12 +57,12 @@ public class AuthService {
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
 
         UserDTO userDTO = new UserDTO(
-                user.getId(),
-                user.getEmail(),
-                user.getDisplayName(),
-                user.getType().name(),
-                user.getStatus().name()
-        );
+        user.getEmail(),
+        user.getPhone(),
+        user.getPicture(),
+        user.getType(),
+        user.getStatus()
+);
 
         TokensDTO tokensDTO = new TokensDTO(
                 accessToken,
@@ -124,4 +122,6 @@ public class AuthService {
 
         return true;
     }
+
+
 }

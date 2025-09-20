@@ -1,6 +1,5 @@
 package com.pointtils.pointtils.src.application.services;
 
-import com.pointtils.pointtils.src.application.dto.LocationDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.PersonalPatchRequestDTO;
@@ -58,10 +57,8 @@ public class InterpreterRegisterService {
             Location location = Location.builder()
                     .uf(request.getLocation().getUf())
                     .city(request.getLocation().getCity())
-                    .user(interpreter)
+                    .interpreter(interpreter)
                     .build();
-
-            interpreter.setLocation(location);
         }
 
         Interpreter savedInterpreter = repository.save(interpreter);
@@ -114,7 +111,7 @@ public class InterpreterRegisterService {
             interpreter.setDescription(professionalData.getDescription());
         }
 
-        updateLocation(dto.getLocation(), interpreter);
+        // updateLocation(dto.getLocation(), interpreter);
 
         Interpreter updatedInterpreter = repository.save(interpreter);
         return responseMapper.toResponseDTO(updatedInterpreter);
@@ -124,7 +121,7 @@ public class InterpreterRegisterService {
         Interpreter interpreter = findInterpreterById(id);
         updatePersonalPatchRequest(dto.getPersonalData(), interpreter);
         updateProfessionalPatchRequest(dto.getProfessionalData(), interpreter);
-        updateLocation(dto.getLocation(), interpreter);
+        // updateLocation(dto.getLocation(), interpreter);
 
         Interpreter updatedInterpreter = repository.save(interpreter);
         return responseMapper.toResponseDTO(updatedInterpreter);
@@ -178,19 +175,19 @@ public class InterpreterRegisterService {
         }
     }
 
-    private void updateLocation(LocationDTO locationDTO, Interpreter interpreter) {
-        if (locationDTO == null) {
-            return;
-        }
+    // private void updateLocation(LocationDTO locationDTO, Interpreter interpreter) {
+    //     if (locationDTO == null) {
+    //         return;
+    //     }
 
-        Location location = interpreter.getLocation();
-        if (location == null) {
-            location = Location.builder().user(interpreter).build();
-        }
-        location.setUf(locationDTO.getUf());
-        location.setCity(locationDTO.getCity());
-        interpreter.setLocation(location);
-    }
+    //     Location location = interpreter.getLocation();
+    //     if (location == null) {
+    //         location = Location.builder().user(interpreter).build();
+    //     }
+    //     location.setUf(locationDTO.getUf());
+    //     location.setCity(locationDTO.getCity());
+    //     interpreter.setLocation(location);
+    // }
 
     private Interpreter findInterpreterById(UUID id) {
         return repository.findById(id)
