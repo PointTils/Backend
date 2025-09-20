@@ -50,8 +50,11 @@ public class AuthController {
 
     @PostMapping("/refresh")
     @Operation(summary = "Renova sessão de usuário")
-    public ResponseEntity<RefreshTokenResponseDTO> refreshToken(@RequestBody String token) {
-        RefreshTokenResponseDTO response = authService.refreshToken(token);
+    public ResponseEntity<RefreshTokenResponseDTO> refreshToken(@RequestBody RefreshTokenRequestDTO request) {
+        if (request.getRefreshToken() == null || request.getRefreshToken().isBlank()) {
+            throw new AuthenticationException("Refresh token não fornecido");
+        }
+        RefreshTokenResponseDTO response = authService.refreshToken(request.getRefreshToken());
         return ResponseEntity.ok(response);
     }
 

@@ -26,12 +26,13 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+
+import java.util.UUID;
+
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.util.UUID;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
@@ -120,8 +121,8 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.user.email").value("usuario@exemplo.com"))
                 .andExpect(jsonPath("$.data.user.type").value("PERSON"))
-                .andExpect(jsonPath("$.data.tokens.accessToken").exists())
-                .andExpect(jsonPath("$.data.tokens.refreshToken").exists());
+                .andExpect(jsonPath("$.data.tokens.access_token").exists())
+                .andExpect(jsonPath("$.data.tokens.refresh_token").exists());
     }
 
     @Test
@@ -156,8 +157,8 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.user.email").value("enterprise@exemplo.com"))
                 .andExpect(jsonPath("$.data.user.type").value("ENTERPRISE"))
-                .andExpect(jsonPath("$.data.tokens.accessToken").exists())
-                .andExpect(jsonPath("$.data.tokens.refreshToken").exists());
+                .andExpect(jsonPath("$.data.tokens.access_token").exists())
+                .andExpect(jsonPath("$.data.tokens.refresh_token").exists());
     }
 
     @Test
@@ -312,7 +313,7 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.user.email").value("usuario@exemplo.com"))
-                .andExpect(jsonPath("$.data.tokens.accessToken").exists());
+                .andExpect(jsonPath("$.data.tokens.access_token").exists());
     }
 
     @Test
@@ -335,8 +336,8 @@ class AuthControllerTest {
                                 }
                                 """))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.tokens.accessToken").value("new-access-token"))
-                .andExpect(jsonPath("$.data.tokens.refreshToken").value("new-refresh-token"));
+                .andExpect(jsonPath("$.data.tokens.access_token").value("new-access-token"))
+                .andExpect(jsonPath("$.data.tokens.refresh_token").value("new-refresh-token"));
     }
 
     @Test
@@ -399,7 +400,7 @@ class AuthControllerTest {
         String accessToken = jwtTokenProvider.generateToken("user@exemplo.com");
         String refreshToken = jwtTokenProvider.generateRefreshToken("user@exemplo.com");
 
-        String refreshTokenJson = "{ \"refreshToken\": \"" + refreshToken + "\" }";
+        String refreshTokenJson = "{ \"refresh_token\": \"" + refreshToken + "\" }";
 
         when(authService.logout(anyString(), anyString())).thenReturn(true);
 
@@ -415,7 +416,7 @@ class AuthControllerTest {
     @DisplayName("Deve retornar 400 quando logout for chamado sem token de acesso")
     void deveRetornar400QuandoLogoutForChamadoSemTokenDeAcesso() throws Exception {
         String refreshToken = jwtTokenProvider.generateRefreshToken("user@exemplo.com");
-        String refreshTokenJson = "{ \"refreshToken\": \"" + refreshToken + "\" }";
+        String refreshTokenJson = "{ \"refresh_token\": \"" + refreshToken + "\" }";
 
         mockMvc.perform(MockMvcRequestBuilders
                 .post("/v1/auth/logout")
@@ -430,7 +431,7 @@ class AuthControllerTest {
     @DisplayName("Deve retornar 400 quando logout for chamado sem refresh token")
     void deveRetornar400QuandoLogoutForChamadoSemRefreshToken() throws Exception {
         String accessToken = jwtTokenProvider.generateToken("user@exemplo.com");
-        String refreshTokenJson = "{ \"refreshToken\": \"\" }";
+        String refreshTokenJson = "{ \"refresh_token\": \"\" }";
         mockMvc.perform(MockMvcRequestBuilders
                 .post("/v1/auth/logout")
                 .header("Authorization", "Bearer " + accessToken)
@@ -444,7 +445,7 @@ class AuthControllerTest {
     @DisplayName("Deve retornar 401 quando logout for chamado com token de acesso inválido")
     void deveRetornar401QuandoLogoutForChamadoComTokenDeAcessoInvalido() throws Exception {
         String refreshToken = jwtTokenProvider.generateRefreshToken("user@exemplo.com");
-        String refreshTokenJson = "{ \"refreshToken\": \"" + refreshToken + "\" }";
+        String refreshTokenJson = "{ \"refresh_token\": \"" + refreshToken + "\" }";
 
         when(authService.logout(anyString(), anyString()))
                 .thenThrow(new AuthenticationException("Access token inválido ou expirado"));
@@ -462,7 +463,7 @@ class AuthControllerTest {
     @DisplayName("Deve retornar 401 quando logout for chamado com refresh token inválido")
     void deveRetornar401QuandoLogoutForChamadoComRefreshTokenInvalido() throws Exception {
         String accessToken = jwtTokenProvider.generateToken("user@exemplo.com");
-        String refreshTokenJson = "{ \"refreshToken\": \"invalid-refresh-token\" }";
+        String refreshTokenJson = "{ \"refresh_token\": \"invalid-refresh-token\" }";
 
         when(authService.logout(anyString(), anyString()))
                 .thenThrow(new AuthenticationException("Refresh token inválido ou expirado"));

@@ -1,6 +1,9 @@
 package com.pointtils.pointtils.src.application.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class RefreshTokenRequestDTO {
+    @JsonProperty("refresh_token")
     private String refreshToken;
 
     public RefreshTokenRequestDTO() {

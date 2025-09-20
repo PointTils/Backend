@@ -85,7 +85,7 @@ public class AuthService {
             throw new AuthenticationException("Refresh token não fornecido");
         }
 
-        if (jwtTokenProvider.isTokenExpired(token) || !jwtTokenProvider.validateToken(token)) {
+        if (!jwtTokenProvider.isTokenValid(token)) {
             throw new AuthenticationException("Refresh token inválido ou expirado");
         }
 
@@ -112,14 +112,15 @@ public class AuthService {
     }
 
     public Boolean logout(String accessToken, String refreshToken) {
-        if (!jwtTokenProvider.validateToken(accessToken) || jwtTokenProvider.isTokenExpired(accessToken)) {
+        if (!jwtTokenProvider.isTokenValid(accessToken)) {
             throw new AuthenticationException("Access token inválido ou expirado");
         }
-        if (!jwtTokenProvider.validateToken(refreshToken) || jwtTokenProvider.isTokenExpired(refreshToken)) {
+        if (!jwtTokenProvider.isTokenValid(refreshToken)) {
             throw new AuthenticationException("Refresh token inválido ou expirado");
         }
 
         memoryBlacklistService.addToBlacklist(accessToken);
+        memoryBlacklistService.addToBlacklist(refreshToken);
 
         return true;
     }
