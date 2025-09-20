@@ -1,7 +1,14 @@
 package com.pointtils.pointtils.src.core.domain.entities;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.UUID;
+
+import org.hibernate.annotations.UuidGenerator;
+
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentModality;
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentStatus;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -12,17 +19,14 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.UuidGenerator;
-
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.UUID;
 
 @Entity
 @Table(name = "appointment")
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -68,4 +72,18 @@ public class Appointment {
 
     @Column(name = "end_time", nullable = false)
     private LocalTime endTime;
+
+
+    public Appointment(String uf, String city, AppointmentModality modality, LocalDate date, String description, AppointmentStatus status, Interpreter interpreter_id, User user_id, LocalTime starTime, LocalTime endTime){
+        this.uf = uf;
+        this.city = city;
+        this.modality = modality;
+        this.date = date;
+        this.description = description;
+        this.status = status;
+        this.interpreter = interpreter_id;
+        this.user = user_id;
+        this.startTime = starTime;
+        this.endTime = endTime;
+    }
 }
