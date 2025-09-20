@@ -93,11 +93,6 @@ public class InterpreterRegisterService {
             String specialty,
             LocalDateTime dateTime) {
 
-        if (!(modality instanceof InterpreterModality) | !(gender instanceof Gender) | city.equals("")
-                | neighborhood.equals("") | specialty.equals("")) {
-            throw new InvalidFilterException("Filtros inválidos");
-        }
-
         List<Interpreter> interpreters = repository.findAll(
                 modality,
                 gender,
