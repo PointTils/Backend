@@ -119,7 +119,7 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.user.email").value("usuario@exemplo.com"))
-                .andExpect(jsonPath("$.data.user.type").value("person"))
+                .andExpect(jsonPath("$.data.user.type").value("PERSON"))
                 .andExpect(jsonPath("$.data.tokens.accessToken").exists())
                 .andExpect(jsonPath("$.data.tokens.refreshToken").exists());
     }
@@ -133,7 +133,7 @@ class AuthControllerTest {
                 "Autenticação realizada com sucesso",
                 new LoginResponseDTO.Data(
                                         new UserDTO(
-                                                        UUID.randomUUID(), "usuario@exemplo.com",
+                                                        UUID.randomUUID(), "enterprise@exemplo.com",
                                                         null,
                                                         null,
                                                         UserTypeE.PERSON,
