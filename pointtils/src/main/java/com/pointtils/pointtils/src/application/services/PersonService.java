@@ -24,8 +24,8 @@ public class PersonService {
     private final PersonRepository personRepository;
     private final PersonResponseMapper PersonResponseMapper;
 
-    Person person = new Person();
     public PersonDTO registerPerson(PersonCreationDTO dto) {
+        Person person = new Person();
         
         person.setId(person.getId());
         person.setEmail(dto.getEmail());

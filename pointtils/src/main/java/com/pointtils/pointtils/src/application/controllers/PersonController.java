@@ -43,9 +43,9 @@ public class PersonController {
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Busca todos os usuários surdos")
     public ResponseEntity<ApiResponse<List<PersonDTO>>> findAll() {
-        List<PersonDTO> PersonUsers = service.findAll();
+        List<PersonDTO> personUsers = service.findAll();
         ApiResponse<List<PersonDTO>> response =
-                ApiResponse.success("Usuários surdos encontrados com sucesso", PersonUsers);
+                ApiResponse.success("Usuários surdos encontrados com sucesso", personUsers);
         return ResponseEntity.ok(response);
     }
 

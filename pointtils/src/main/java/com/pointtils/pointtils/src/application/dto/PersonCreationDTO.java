@@ -2,7 +2,6 @@ package com.pointtils.pointtils.src.application.dto;
 
 import java.time.LocalDate;
 import java.util.List;
-
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -20,30 +19,30 @@ import lombok.Setter;
 @Getter
 @Setter
 public class PersonCreationDTO {
-    @Email(message = "Invalid email format")
-    @NotBlank(message = "Email is required")
+    @Email(message = "Formato de e-mail inválido")
+    @NotBlank(message = "O e-mail é obrigatório")
     private String email;
 
-    @NotBlank(message = "Password is required")
-    @Size(min = 8, message = "Password must be at least 8 characters")
+    @NotBlank(message = "A senha é obrigatório")
+    @Size(min = 8, message = "A senha deve ter pelo menos 8 caracteres")
     private String password;
 
-    @Size(max = 11, message = "Phone must be up to 11 digits")
+    @Size(max = 11, message = "O telefone deve ter no máximo 11 dígitos")
     private String phone;
 
     private String picture;
 
-    @NotBlank(message = "Name is required")
+    @NotBlank(message = "O nome é obrigatório")
     private String name;
 
-    @NotNull(message = "Gender is required")
+    @NotNull(message = "O gênero é obrigatório")
     private Gender gender;
 
-    @NotNull(message = "Birthday is required")
+    @NotNull(message = "A data de nascimento é obrigatório")
     private LocalDate birthday;
 
-    @NotBlank(message = "CPF is required")
-    @Size(min = 11, max = 11, message = "CPF must be 11 digits")
+    @NotBlank(message = "CPF é obrigatório")
+    @Size(min = 11, max = 11, message = "CPF deve ter exatamente 11 digitos")
     private String cpf;
 
     private List<UserSpecialtyDTO> specialties;

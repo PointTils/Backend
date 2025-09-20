@@ -2,12 +2,10 @@ package com.pointtils.pointtils.src.application.dto.responses;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.pointtils.pointtils.src.application.dto.LocationDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Enterprise;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
 import lombok.Getter;
 import lombok.Setter;
-
 import java.util.UUID;
 
 @Getter
@@ -33,7 +31,6 @@ public class EnterpriseResponseDTO {
 	private String status;
 	private String phone;
 	private String picture;
-	private LocationDTO location;
 
 	public EnterpriseResponseDTO(Enterprise enterprise) {
 		this.id = enterprise.getId();
