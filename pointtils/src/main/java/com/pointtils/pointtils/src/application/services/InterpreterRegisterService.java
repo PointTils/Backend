@@ -23,6 +23,7 @@ import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
+import com.pointtils.pointtils.src.core.domain.exceptions.InvalidFilterException;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -90,6 +91,20 @@ public class InterpreterRegisterService {
             String neighborhood,
             String specialty,
             LocalDateTime dateTime) {
+
+        if (city != null && city.isBlank()) {
+            throw new InvalidFilterException("Filtros inválidos");
+        }
+        if (neighborhood != null && neighborhood.isBlank()) {
+            throw new InvalidFilterException("Filtros inválidos");
+        }
+        if (specialty != null && specialty.isBlank()) {
+            throw new InvalidFilterException("Filtros inválidos");
+        }
+
+        if (dateTime != null && dateTime.isBefore(LocalDateTime.now())) {
+            throw new InvalidFilterException("Filtros inválidos");
+        }
 
         List<Interpreter> interpreters = repository.findAll(
                 modality,

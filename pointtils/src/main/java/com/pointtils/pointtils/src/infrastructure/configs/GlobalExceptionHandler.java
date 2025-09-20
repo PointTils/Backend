@@ -1,6 +1,8 @@
 
 package com.pointtils.pointtils.src.infrastructure.configs;
 
+import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
+import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
 import com.pointtils.pointtils.src.core.domain.exceptions.ClientTimeoutException;
 import com.pointtils.pointtils.src.core.domain.exceptions.DuplicateResourceException;
@@ -210,11 +212,18 @@ public class GlobalExceptionHandler {
 		String message;
 		if (requiredType != null && UUID.class.equals(requiredType)) {
 			message = "UUID inválido";
-		} else {
-			message = String.format("Valor inválido para parâmetro '%s'", paramName);
-		}
-		
-		ErrorResponse errorResponse = new ErrorResponse(
+        }
+        else if (requiredType != null && InterpreterModality.class.equals(requiredType)) {
+            message = "Filtros inválidos";
+        }
+        else if (requiredType != null && Gender.class.equals(requiredType)) {
+            message = "Filtros inválidos";
+        }
+         else {
+            message = String.format("Valor inválido para parâmetro '%s'", paramName);
+        }
+            
+            ErrorResponse errorResponse = new ErrorResponse(
 				HttpStatus.BAD_REQUEST.value(),
 				message,
 				System.currentTimeMillis());
