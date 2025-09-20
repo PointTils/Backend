@@ -10,6 +10,7 @@ public class PersonResponseMapper {
 
     public PersonDTO toResponseDTO(Person person) {
         PersonDTO dto = new PersonDTO();
+        dto.setId(person.getId());
         dto.setName(person.getName());
         dto.setGender(person.getGender());
         dto.setBirthday(person.getBirthday());

@@ -1,6 +1,8 @@
 package com.pointtils.pointtils.src.application.services;
-import com.pointtils.pointtils.src.application.dto.PersonDTO;
+
 import com.pointtils.pointtils.src.application.dto.PersonCreationDTO;
+import com.pointtils.pointtils.src.application.dto.PersonDTO;
+import com.pointtils.pointtils.src.application.dto.requests.PersonPatchRequestDTO;
 import com.pointtils.pointtils.src.application.mapper.PersonResponseMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Person;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
@@ -22,11 +24,11 @@ import java.util.UUID;
 public class PersonService {
 
     private final PersonRepository personRepository;
-    private final PersonResponseMapper PersonResponseMapper;
+    private final PersonResponseMapper personResponseMapper;
 
     public PersonDTO registerPerson(PersonCreationDTO dto) {
         Person person = new Person();
-        
+
         person.setId(person.getId());
         person.setEmail(dto.getEmail());
         person.setPassword(dto.getPassword());
@@ -35,17 +37,17 @@ public class PersonService {
         person.setStatus(UserStatus.ACTIVE);
         person.setType(UserTypeE.PERSON);
         person.setName(dto.getName());
-        person.setGender(dto.getGender());;
+        person.setGender(dto.getGender());
         person.setBirthday(dto.getBirthday());
         person.setCpf(dto.getCpf());
 
         Person savedPerson = personRepository.save(person);
-        return PersonResponseMapper.toResponseDTO(savedPerson);
+        return personResponseMapper.toResponseDTO(savedPerson);
     }
 
     public PersonDTO findById(UUID id) {
         Person person = findPersonById(id);
-        return PersonResponseMapper.toResponseDTO(person);
+        return personResponseMapper.toResponseDTO(person);
     }
 
     public void delete(UUID id) {
@@ -57,53 +59,50 @@ public class PersonService {
     public List<PersonDTO> findAll() {
         List<Person> persons = personRepository.findAllByType(UserTypeE.PERSON);
         return persons.stream()
-                .map(PersonResponseMapper::toResponseDTO)
+                .map(personResponseMapper::toResponseDTO)
                 .toList();
     }
 
     public PersonDTO updateComplete(UUID id, PersonDTO dto) {
         Person person = findPersonById(id);
-         
-            person.setName(dto.getName());
-            person.setEmail(dto.getEmail());
-            person.setPhone(dto.getPhone());
-            person.setPicture(dto.getPicture());
-            person.setBirthday(dto.getBirthday());
-            person.setCpf(dto.getCpf());
-            person.setGender(dto.getGender());
+
+        person.setName(dto.getName());
+        person.setEmail(dto.getEmail());
+        person.setPhone(dto.getPhone());
+        person.setPicture(dto.getPicture());
+        person.setBirthday(dto.getBirthday());
+        person.setCpf(dto.getCpf());
+        person.setGender(dto.getGender());
 
         Person updated = personRepository.save(person);
-        return PersonResponseMapper.toResponseDTO(updated);
+        return personResponseMapper.toResponseDTO(updated);
     }
 
-    public PersonDTO updatePartial(UUID id, PersonDTO dto) {
-    Person person = findPersonById(id);
+    public PersonDTO updatePartial(UUID id, PersonPatchRequestDTO dto) {
+        Person person = findPersonById(id);
 
-    if (dto.getName() != null) {
-        person.setName(dto.getName());
-    }
-    if (dto.getEmail() != null) {
-        person.setEmail(dto.getEmail());
-    }
-    if (dto.getPhone() != null) {
-        person.setPhone(dto.getPhone());
-    }
-    if (dto.getPicture() != null) {
-        person.setPicture(dto.getPicture());
-    }
-    if (dto.getBirthday() != null) {
-        person.setBirthday(dto.getBirthday());
-    }
-    if (dto.getCpf() != null) {
-        person.setCpf(dto.getCpf());
-    }
-    if (dto.getGender() != null) {
-        person.setGender(dto.getGender());
-    }
+        if (dto.getName() != null) {
+            person.setName(dto.getName());
+        }
+        if (dto.getEmail() != null) {
+            person.setEmail(dto.getEmail());
+        }
+        if (dto.getPhone() != null) {
+            person.setPhone(dto.getPhone());
+        }
+        if (dto.getPicture() != null) {
+            person.setPicture(dto.getPicture());
+        }
+        if (dto.getBirthday() != null) {
+            person.setBirthday(dto.getBirthday());
+        }
+        if (dto.getGender() != null) {
+            person.setGender(dto.getGender());
+        }
 
-    Person updated = personRepository.save(person);
-    return PersonResponseMapper.toResponseDTO(updated);
-}
+        Person updated = personRepository.save(person);
+        return personResponseMapper.toResponseDTO(updated);
+    }
 
     public Person findPersonById(UUID id) {
         return personRepository.findById(id)

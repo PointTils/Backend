@@ -2,6 +2,7 @@ package com.pointtils.pointtils.src.application.controllers;
 
 import com.pointtils.pointtils.src.application.dto.PersonCreationDTO;
 import com.pointtils.pointtils.src.application.dto.PersonDTO;
+import com.pointtils.pointtils.src.application.dto.requests.PersonPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ApiResponse;
 import com.pointtils.pointtils.src.application.services.PersonService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -53,15 +54,15 @@ public class PersonController {
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Busca um usuário surdo por ID")
     public ResponseEntity<ApiResponse<PersonDTO>> findById(@PathVariable UUID id) {
-        PersonDTO Person = service.findById(id);
-        return ResponseEntity.ok(ApiResponse.success("Usuário surdo encontrado com sucesso", Person));
+        PersonDTO person = service.findById(id);
+        return ResponseEntity.ok(ApiResponse.success("Usuário surdo encontrado com sucesso", person));
     }
 
     @PatchMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Atualiza parcialmente um usuário surdo por ID")
     public ResponseEntity<ApiResponse<PersonDTO>> updateUser(@PathVariable UUID id,
-                                                                   @RequestBody @Valid PersonDTO dto) {
+                                                             @RequestBody @Valid PersonPatchRequestDTO dto) {
         PersonDTO updated = service.updatePartial(id, dto);
         return ResponseEntity.ok(ApiResponse.success("Usuário surdo atualizado com sucesso", updated));
     }
@@ -70,7 +71,7 @@ public class PersonController {
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Atualiza um usuário surdo por ID")
     public ResponseEntity<ApiResponse<PersonDTO>> updateComplete(@PathVariable UUID id,
-                                                                       @RequestBody @Valid PersonDTO dto) {
+                                                                 @RequestBody @Valid PersonDTO dto) {
         PersonDTO updated = service.updateComplete(id, dto);
         return ResponseEntity.ok(ApiResponse.success("Usuário surdo atualizado com sucesso", updated));
     }
