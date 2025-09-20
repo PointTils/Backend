@@ -57,12 +57,13 @@ public class AuthService {
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
 
         UserDTO userDTO = new UserDTO(
+        user.getId(), 
         user.getEmail(),
         user.getPhone(),
         user.getPicture(),
         user.getType(),
         user.getStatus()
-);
+        );
 
         TokensDTO tokensDTO = new TokensDTO(
                 accessToken,

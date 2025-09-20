@@ -31,6 +31,8 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.UUID;
+
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
@@ -95,7 +97,7 @@ class AuthControllerTest {
                 "Autenticação realizada com sucesso",
                 new LoginResponseDTO.Data(
                                  new UserDTO(
-                                                        "usuario@exemplo.com",
+                                                        UUID.randomUUID(), "usuario@exemplo.com",
                                                         null,
                                                         null,
                                                         UserTypeE.PERSON,
@@ -131,7 +133,7 @@ class AuthControllerTest {
                 "Autenticação realizada com sucesso",
                 new LoginResponseDTO.Data(
                                         new UserDTO(
-                                                        "usuario@exemplo.com",
+                                                        UUID.randomUUID(), "usuario@exemplo.com",
                                                         null,
                                                         null,
                                                         UserTypeE.PERSON,
@@ -284,7 +286,7 @@ class AuthControllerTest {
                 "Autenticação realizada com sucesso",
                 new LoginResponseDTO.Data(
                                  new UserDTO(
-                                                        "usuario@exemplo.com",
+                                                        UUID.randomUUID(), "usuario@exemplo.com",
                                                         null,
                                                         null,
                                                         UserTypeE.PERSON,
