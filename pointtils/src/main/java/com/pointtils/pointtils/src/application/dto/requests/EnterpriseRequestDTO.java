@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class EnterpriseRequestDTO {
+
 	@NotBlank(message = "Razão social deve ser preenchida")
 	@JsonProperty("corporate_reason")
 	private String corporateReason;

@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class EnterprisePatchRequestDTO {
+
     @JsonProperty("corporate_reason")
     private String corporateReason;
 
@@ -22,14 +23,8 @@ public class EnterprisePatchRequestDTO {
     @Email(message = "Email inválido")
     private String email;
 
-    private String password;
-
     @Pattern(regexp = "^\\d+$", message = "Número de telefone inválido")
     private String phone;
 
     private String picture;
-
-    private String status;
-
-    private String type;
 }

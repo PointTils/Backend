@@ -67,7 +67,6 @@ public class InterpreterController {
         return ResponseEntity.ok(ApiResponse.success("Intérprete atualizado com sucesso", updated));
     }
 
-
     @DeleteMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Deleta um usuário intérprete por ID")
