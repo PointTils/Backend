@@ -1,7 +1,7 @@
 package com.pointtils.pointtils.src.application.controllers;
 
+import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.InterpreterRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ApiResponse;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
 import com.pointtils.pointtils.src.application.services.InterpreterRegisterService;
@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,8 +35,8 @@ public class InterpreterController {
     @PostMapping("/register")
     @Operation(summary = "Cadastra um usuário intérprete")
     public ResponseEntity<ApiResponse<InterpreterResponseDTO>> createInterpreter(
-            @Valid @RequestBody InterpreterRequestDTO dto) {
-        var interpreter = service.register(dto);
+            @Valid @RequestBody InterpreterBasicRequestDTO dto) {
+        var interpreter = service.registerBasic(dto);
         ApiResponse<InterpreterResponseDTO> response =
                 ApiResponse.success("Intérprete cadastrado com sucesso", interpreter);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -68,14 +67,6 @@ public class InterpreterController {
         return ResponseEntity.ok(ApiResponse.success("Intérprete atualizado com sucesso", updated));
     }
 
-    @PutMapping("/{id}")
-    @SecurityRequirement(name = "bearerAuth")
-    @Operation(summary = "Atualiza um usuário intérprete por ID")
-    public ResponseEntity<ApiResponse<InterpreterResponseDTO>> updateComplete(@PathVariable UUID id,
-                                                                              @RequestBody @Valid InterpreterRequestDTO dto) {
-        InterpreterResponseDTO updated = service.updateComplete(id, dto);
-        return ResponseEntity.ok(ApiResponse.success("Intérprete atualizado com sucesso", updated));
-    }
 
     @DeleteMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")

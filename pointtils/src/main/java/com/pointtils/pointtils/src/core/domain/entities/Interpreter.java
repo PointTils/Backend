@@ -50,7 +50,7 @@ public class Interpreter extends Person {
     private InterpreterModality modality;
 
     @OneToOne(mappedBy = "interpreter")
-private Location location;
+    private Location location;
 
     @Column(columnDefinition = "TEXT")
     private String description;

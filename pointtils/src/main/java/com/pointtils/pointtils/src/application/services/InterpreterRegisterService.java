@@ -1,5 +1,6 @@
 package com.pointtils.pointtils.src.application.services;
 
+import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.PersonalPatchRequestDTO;
@@ -10,6 +11,7 @@ import com.pointtils.pointtils.src.application.mapper.InterpreterResponseMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
 import com.pointtils.pointtils.src.core.domain.entities.Location;
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
+import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
@@ -32,7 +34,8 @@ public class InterpreterRegisterService {
     private final PasswordEncoder passwordEncoder;
     private final InterpreterResponseMapper responseMapper;
 
-    public InterpreterResponseDTO register(InterpreterRequestDTO request) {
+
+    public InterpreterResponseDTO registerBasic(InterpreterBasicRequestDTO request) {
         Interpreter interpreter = Interpreter.builder()
                 .email(request.getPersonalData().getEmail())
                 .password(passwordEncoder.encode(request.getPersonalData().getPassword()))
@@ -44,13 +47,13 @@ public class InterpreterRegisterService {
                 .gender(Gender.fromString(request.getPersonalData().getGender()))
                 .birthday(request.getPersonalData().getBirthday())
                 .cpf(request.getPersonalData().getCpf())
-                .cnpj(request.getProfessionalData().getCnpj())
+                .cnpj(null)
                 .rating(BigDecimal.ZERO)
-                .minValue(request.getProfessionalData().getMinValue())
-                .maxValue(request.getProfessionalData().getMaxValue())
-                .imageRights(request.getProfessionalData().getImageRights())
-                .modality(InterpreterMapper.toInterpreterModality(request.getProfessionalData().getModality()))
-                .description(request.getProfessionalData().getDescription())
+                .minValue(BigDecimal.ZERO)
+                .maxValue(BigDecimal.ZERO)
+                .imageRights(false)
+                .modality(InterpreterModality.ALL)
+                .description("")
                 .build();
 
         if (request.getLocation() != null) {
