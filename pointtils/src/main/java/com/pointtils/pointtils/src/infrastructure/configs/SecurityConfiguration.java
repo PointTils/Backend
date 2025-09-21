@@ -37,7 +37,7 @@ public class SecurityConfiguration {
                 .headers(headers -> headers
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.POST, "/v1/deaf-users/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/v1/person/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/v1/interpreters/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/v1/enterprise-users/**").permitAll()
                         .requestMatchers("/v1/specialties/**").permitAll()

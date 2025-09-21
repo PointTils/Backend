@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserSpecialtyResponseDTO {
+public class UserSpecialtyDTO {
     private UUID id;
     private UUID userId;
     private UUID specialtyId;

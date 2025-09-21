@@ -56,7 +56,7 @@ class AuthServiceTest {
         person.setPhone("51999999999");
         person.setPicture("picture_url");
         person.setStatus(UserStatus.ACTIVE);
-        person.setType(UserTypeE.CLIENT);
+        person.setType(UserTypeE.PERSON);
 
         when(userRepository.findByEmail("test@email.com")).thenReturn(person);
         when(passwordEncoder.matches("password123", "password123")).thenReturn(true);

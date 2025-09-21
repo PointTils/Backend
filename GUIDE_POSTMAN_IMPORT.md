@@ -104,7 +104,7 @@ A maioria dos endpoints requer autenticação JWT. Siga estes passos:
 - `POST /v1/auth/login` - Login de usuário
 - `POST /v1/auth/register` - Registro de usuário
 - `POST /v1/interpreters/register` - Registro de intérprete
-- `POST /v1/deaf-users/register` - Registro de usuário surdo
+- `POST /v1/person/register` - Registro de usuário surdo
 - `POST /v1/enterprise-users/register` - Registro de empresa
 - `GET /v1/states` - Lista de estados brasileiros
 - `GET /v1/states/{stateId}/cities` - Cidades por estado
@@ -136,7 +136,7 @@ Authorization: Bearer {{authToken}}
 
 ### 7. Dicas e Melhores Práticas
 
-1. **Organize por Tags**: A API está organizada por controllers (Auth, Specialty, Deaf, etc.)
+1. **Organize por Tags**: A API está organizada por controllers (Auth, Specialty, Person, etc.)
 2. **Use Environments**: Diferentes ambientes (dev, staging, prod)
 3. **Documentação**: Cada endpoint tem summary e description
 4. **Test Scripts**: Adicione scripts para testes automatizados
@@ -162,7 +162,7 @@ A API PointTils inclui os seguintes módulos:
 
 - **Auth Controller**: Autenticação e gerenciamento de sessão
 - **Specialty Controller**: Gerenciamento de especialidades
-- **Deaf Controller**: Gerenciamento de usuários surdos  
+- **Person Controller**: Gerenciamento de usuários surdos  
 - **Interpreter Controller**: Gerenciamento de intérpretes
 - **Enterprise Controller**: Gerenciamento de empresas
 - **User Specialty Controller**: Associação de especialidades a usuários
