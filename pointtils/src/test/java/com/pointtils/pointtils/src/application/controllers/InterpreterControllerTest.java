@@ -112,7 +112,8 @@ class InterpreterControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnprocessableEntity())
-                .andExpect(jsonPath("$.message").value("Dados inválidos: [CPF inválido]"));
+                .andExpect(jsonPath("$.message")
+                        .value("Dados inválidos: [CPF inválido, CPF deve ter exatamente 11 digitos]"));
     }
 
     @Test

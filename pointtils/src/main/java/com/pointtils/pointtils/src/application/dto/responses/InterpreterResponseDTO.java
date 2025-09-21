@@ -18,17 +18,22 @@ import java.util.UUID;
 @AllArgsConstructor
 public class InterpreterResponseDTO {
 
+    // Dados do usuario
     private UUID id;
     private String email;
     private String type;
     private String status;
     private String phone;
     private String picture;
+
+    // Dados da pessoa
     private String name;
     private Gender gender;
     private LocalDate birthday;
     private String cpf;
+
     private List<LocationDTO> locations;
+
     private List<SpecialtyResponseDTO> specialties;
 
     @JsonProperty("professional_info")

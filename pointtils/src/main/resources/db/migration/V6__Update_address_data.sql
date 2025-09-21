@@ -43,7 +43,7 @@ ADD COLUMN address_details VARCHAR(255);
 
 -- 6. Atualiza registros de appointment existentes para nao preencher endereco, por ser online
 UPDATE appointment
-SET uf = NULL,
+SET UF = NULL,
     city = NULL
 WHERE UF = 'SP' AND modality = 'ONLINE';
 

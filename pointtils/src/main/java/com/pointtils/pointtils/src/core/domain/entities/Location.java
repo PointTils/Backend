@@ -47,15 +47,4 @@ public class Location {
     @JsonBackReference
     @JoinColumn(name = "user_id", nullable = false)
     private Interpreter interpreter;
-
-    public Location(String uf, String city, Interpreter interpreter) {
-        this.uf = uf;
-        this.city = city;
-        this.interpreter = interpreter;
-    }
-
-    public Location(String uf, String city) {
-        this.uf = uf;
-        this.city = city;
-    }
 }
