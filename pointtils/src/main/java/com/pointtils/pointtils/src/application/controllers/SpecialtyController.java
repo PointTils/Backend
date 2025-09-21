@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import com.pointtils.pointtils.src.application.dto.UpdateSpecialtyRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.UpdateSpecialtyRequestDTO;
 import com.pointtils.pointtils.src.application.services.SpecialtyService;
 import com.pointtils.pointtils.src.core.domain.entities.Specialty;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

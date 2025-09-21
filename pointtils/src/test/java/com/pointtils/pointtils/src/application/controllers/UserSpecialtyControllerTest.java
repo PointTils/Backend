@@ -1,7 +1,7 @@
 package com.pointtils.pointtils.src.application.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pointtils.pointtils.src.application.dto.AddUserSpecialtiesRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.AddUserSpecialtiesRequestDTO;
 import com.pointtils.pointtils.src.application.dto.UserSpecialtyDTO;
 import com.pointtils.pointtils.src.application.services.UserSpecialtyService;
 import com.pointtils.pointtils.src.core.domain.entities.Specialty;

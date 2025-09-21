@@ -46,3 +46,12 @@ UPDATE appointment
 SET uf = NULL,
     city = NULL
 WHERE UF = 'SP' AND modality = 'ONLINE';
+
+-- 7. Remove localizacoes vinculadas a usuarios que nao sao interpretes
+DELETE FROM location
+WHERE id IN (
+    SELECT l.id
+    FROM location l
+    LEFT JOIN user_account ua ON l.user_id = ua.id
+    WHERE ua.type != 'INTERPRETER'
+);

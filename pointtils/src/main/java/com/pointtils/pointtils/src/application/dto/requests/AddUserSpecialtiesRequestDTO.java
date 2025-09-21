@@ -1,4 +1,4 @@
-package com.pointtils.pointtils.src.application.dto;
+package com.pointtils.pointtils.src.application.dto.requests;
 
 import java.util.List;
 import java.util.UUID;

@@ -1,14 +1,12 @@
 package com.pointtils.pointtils.src.application.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pointtils.pointtils.src.application.dto.LocationDTO;
 import com.pointtils.pointtils.src.application.dto.requests.EnterprisePatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.EnterpriseRequestDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Enterprise;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
 import com.pointtils.pointtils.src.infrastructure.repositories.EnterpriseRepository;
-import com.pointtils.pointtils.src.infrastructure.repositories.LocationRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -48,9 +46,6 @@ class EnterpriseControllerTest {
     @Autowired
     private EnterpriseRepository enterpriseRepository;
 
-    @Autowired
-    private LocationRepository locationRepository;
-
     @MockitoBean
     private JwtService jwtService;
 
@@ -63,7 +58,6 @@ class EnterpriseControllerTest {
     private MockMvc mockMvc;
     private EnterpriseRequestDTO validEnterpriseRequest;
     private EnterprisePatchRequestDTO validPatchRequest;
-    private LocationDTO locationDTO;
 
     @BeforeEach
     void setUp() {
@@ -74,13 +68,6 @@ class EnterpriseControllerTest {
         when(jwtService.isTokenExpired(anyString())).thenReturn(Boolean.FALSE);
 
         enterpriseRepository.deleteAll();
-        locationRepository.deleteAll();
-
-        locationDTO = LocationDTO.builder()
-                .id(UUID.randomUUID())
-                .uf("SP")
-                .city("São Paulo")
-                .build();
 
         validEnterpriseRequest = EnterpriseRequestDTO.builder()
                 .corporateReason("Empresa Teste LTDA")
@@ -89,7 +76,6 @@ class EnterpriseControllerTest {
                 .password("senhaSegura123")
                 .phone("11999887766")
                 .picture("https://example.com/picture.jpg")
-                .location(locationDTO)
                 .build();
 
         validPatchRequest = EnterprisePatchRequestDTO.builder()
@@ -141,7 +127,6 @@ class EnterpriseControllerTest {
                 .email("empresa@teste.com")
                 .password("senhaSegura123")
                 .phone("11999887766")
-                .location(locationDTO)
                 .build();
 
         mockMvc.perform(post("/v1/enterprise-users/register")
@@ -163,7 +148,6 @@ class EnterpriseControllerTest {
                 .email("email-invalido.com")
                 .password("senhaSegura123")
                 .phone("11999887766")
-                .location(locationDTO)
                 .build();
 
         mockMvc.perform(post("/v1/enterprise-users/register")
@@ -185,7 +169,6 @@ class EnterpriseControllerTest {
                 .email("empresa@teste.com")
                 .password("senhaSegura123")
                 .phone("abc123def")
-                .location(locationDTO)
                 .build();
 
         mockMvc.perform(post("/v1/enterprise-users/register")
@@ -234,7 +217,6 @@ class EnterpriseControllerTest {
                 .email("novaempresa@teste.com")
                 .password("senhaSegura123")
                 .phone("11999887766")
-                .location(locationDTO)
                 .build();
 
         mockMvc.perform(post("/v1/enterprise-users/register")
@@ -262,7 +244,6 @@ class EnterpriseControllerTest {
                 .email("empresa@teste.com")
                 .password("senhaSegura123")
                 .phone("11999887766")
-                .location(locationDTO)
                 .build();
 
         mockMvc.perform(post("/v1/enterprise-users/register")

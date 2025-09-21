@@ -1,11 +1,8 @@
 package com.pointtils.pointtils.src.application.dto.requests;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.pointtils.pointtils.src.application.dto.LocationDTO;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -37,8 +34,4 @@ public class EnterpriseRequestDTO {
 	private String phone;
 	
 	private String picture;
-	
-	@NotNull(message = "Localização deve ser preenchida")
-	@Valid
-	private LocationDTO location;
 }

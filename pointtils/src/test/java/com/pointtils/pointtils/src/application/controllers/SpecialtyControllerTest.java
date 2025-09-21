@@ -1,7 +1,7 @@
 package com.pointtils.pointtils.src.application.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pointtils.pointtils.src.application.dto.UpdateSpecialtyRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.UpdateSpecialtyRequestDTO;
 import com.pointtils.pointtils.src.application.services.SpecialtyService;
 import com.pointtils.pointtils.src.core.domain.entities.Specialty;
 import com.pointtils.pointtils.src.infrastructure.configs.GlobalExceptionHandler;
