@@ -23,6 +23,8 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -54,7 +56,7 @@ class AuthServiceTest {
         person.setPhone("51999999999");
         person.setPicture("picture_url");
         person.setStatus(UserStatus.ACTIVE);
-        person.setType(UserTypeE.CLIENT);
+        person.setType(UserTypeE.PERSON);
 
         when(userRepository.findByEmail("test@email.com")).thenReturn(person);
         when(passwordEncoder.matches("password123", "password123")).thenReturn(true);
@@ -206,8 +208,7 @@ class AuthServiceTest {
         person.setEmail("exemplo@user.com");
         person.setStatus(UserStatus.ACTIVE);
 
-        when(jwtTokenProvider.isTokenExpired("valid_refresh_token")).thenReturn(false);
-        when(jwtTokenProvider.validateToken("valid_refresh_token")).thenReturn(true);
+        when(jwtTokenProvider.isTokenValid("valid_refresh_token")).thenReturn(true);
         when(jwtTokenProvider.getEmailFromToken("valid_refresh_token")).thenReturn("exemplo@user.com");
         when(userRepository.findByEmail("exemplo@user.com")).thenReturn(person);
         when(jwtTokenProvider.generateToken(person.getEmail())).thenReturn("new_access_token");
@@ -239,7 +240,7 @@ class AuthServiceTest {
     void deveFalharAoRenovarTokenComRefreshTokenInvalido() {
         String invalidRefreshToken = "invalid_refresh_token";
 
-        when(jwtTokenProvider.validateToken(invalidRefreshToken)).thenReturn(false);
+        when(jwtTokenProvider.isTokenValid(invalidRefreshToken)).thenReturn(false);
 
         AuthenticationException ex = assertThrows(
                 AuthenticationException.class,
@@ -254,7 +255,7 @@ class AuthServiceTest {
     void deveFalharAoRenovarTokenComRefreshTokenExpirado() {
         String expiredRefreshToken = "expired_refresh_token";
 
-        when(jwtTokenProvider.isTokenExpired(expiredRefreshToken)).thenReturn(true);
+        when(jwtTokenProvider.isTokenValid(expiredRefreshToken)).thenReturn(false);
 
         AuthenticationException ex = assertThrows(
                 AuthenticationException.class,
@@ -269,8 +270,7 @@ class AuthServiceTest {
     void deveFalharAoRenovarTokenQuandoUsuarioNaoForEncontrado() {
         String validRefreshToken = "valid_refresh_token";
 
-        when(jwtTokenProvider.isTokenExpired(validRefreshToken)).thenReturn(false);
-        when(jwtTokenProvider.validateToken(validRefreshToken)).thenReturn(true);
+        when(jwtTokenProvider.isTokenValid(validRefreshToken)).thenReturn(true);
         when(jwtTokenProvider.getEmailFromToken(validRefreshToken)).thenReturn("exemplo@user.com");
         when(userRepository.findByEmail("exemplo@user.com")).thenReturn(null);
 
@@ -288,18 +288,18 @@ class AuthServiceTest {
         String accessToken = "valid_access_token";
         String refreshToken = "valid_refresh_token";
 
-        when(jwtTokenProvider.validateToken(accessToken)).thenReturn(true);
-        when(jwtTokenProvider.isTokenExpired(accessToken)).thenReturn(false);
-        when(jwtTokenProvider.validateToken(refreshToken)).thenReturn(true);
-        when(jwtTokenProvider.isTokenExpired(refreshToken)).thenReturn(false);
+        when(jwtTokenProvider.isTokenValid(accessToken)).thenReturn(true);
+        when(jwtTokenProvider.isTokenValid(refreshToken)).thenReturn(true);
 
-        loginService.logout(accessToken, refreshToken);
+        Boolean result = loginService.logout(accessToken, refreshToken);
 
-        // Verificar que o memoryBlacklistService foi injetado corretamente
-        assertNotNull(memoryBlacklistService);
+        // Verificar que o logout foi bem-sucedido
+        assertNotNull(result);
+        assertTrue(result);
         
-        // O método logout deve chamar addToBlacklist internamente
-        // Podemos verificar isso através do comportamento esperado
+        // Verificar que os tokens foram adicionados à blacklist
+        verify(memoryBlacklistService).addToBlacklist(accessToken);
+        verify(memoryBlacklistService).addToBlacklist(refreshToken);
     }
 
     @Test
@@ -308,7 +308,7 @@ class AuthServiceTest {
         String invalidAccessToken = "invalid_access_token";
         String validRefreshToken = "valid_refresh_token";
 
-        when(jwtTokenProvider.validateToken(invalidAccessToken)).thenReturn(false);
+        when(jwtTokenProvider.isTokenValid(invalidAccessToken)).thenReturn(false);
 
         AuthenticationException ex = assertThrows(
                 AuthenticationException.class,
@@ -323,8 +323,8 @@ class AuthServiceTest {
         String validAccessToken = "valid_access_token";
         String invalidRefreshToken = "invalid_refresh_token";
 
-        when(jwtTokenProvider.validateToken(validAccessToken)).thenReturn(true);
-        when(jwtTokenProvider.validateToken(invalidRefreshToken)).thenReturn(false);
+        when(jwtTokenProvider.isTokenValid(validAccessToken)).thenReturn(true);
+        when(jwtTokenProvider.isTokenValid(invalidRefreshToken)).thenReturn(false);
 
         AuthenticationException ex = assertThrows(
                 AuthenticationException.class,
@@ -339,8 +339,7 @@ class AuthServiceTest {
         String expiredAccessToken = "expired_access_token";
         String validRefreshToken = "valid_refresh_token";
 
-        when(jwtTokenProvider.validateToken(expiredAccessToken)).thenReturn(true);
-        when(jwtTokenProvider.isTokenExpired(expiredAccessToken)).thenReturn(true);
+        when(jwtTokenProvider.isTokenValid(expiredAccessToken)).thenReturn(false);
 
         AuthenticationException ex = assertThrows(
                 AuthenticationException.class,
@@ -355,10 +354,8 @@ class AuthServiceTest {
         String validAccessToken = "valid_access_token";
         String expiredRefreshToken = "expired_refresh_token";
 
-        when(jwtTokenProvider.validateToken(validAccessToken)).thenReturn(true);
-        when(jwtTokenProvider.isTokenExpired(validAccessToken)).thenReturn(false);
-        when(jwtTokenProvider.validateToken(expiredRefreshToken)).thenReturn(true);
-        when(jwtTokenProvider.isTokenExpired(expiredRefreshToken)).thenReturn(true);
+        when(jwtTokenProvider.isTokenValid(validAccessToken)).thenReturn(true);
+        when(jwtTokenProvider.isTokenValid(expiredRefreshToken)).thenReturn(false);
 
         AuthenticationException ex = assertThrows(
                 AuthenticationException.class,

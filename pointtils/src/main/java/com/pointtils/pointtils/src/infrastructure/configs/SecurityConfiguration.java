@@ -36,9 +36,8 @@ public class SecurityConfiguration {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .headers(headers -> headers
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.POST, "/v1/deaf-users/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/v1/person/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/v1/interpreters/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/v1/enterprise-users/**").permitAll()
                         .requestMatchers("/v1/specialties/**").permitAll()
@@ -49,6 +48,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .anyRequest().authenticated()
                 )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 

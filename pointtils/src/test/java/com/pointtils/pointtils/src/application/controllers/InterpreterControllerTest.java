@@ -2,23 +2,24 @@ package com.pointtils.pointtils.src.application.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pointtils.pointtils.src.application.dto.LocationDTO;
+import com.pointtils.pointtils.src.application.dto.PersonDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.PersonalRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.ProfessionalPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
-import com.pointtils.pointtils.src.application.dto.responses.PersonResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ProfessionalInfoResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.UserResponseDTO;
 import com.pointtils.pointtils.src.application.services.InterpreterRegisterService;
+import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -43,7 +44,7 @@ class InterpreterControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private InterpreterRegisterService interpreterRegisterService;
 
     @Test
@@ -58,8 +59,8 @@ class InterpreterControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/v1/interpreters/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Intérprete cadastrado com sucesso"))
@@ -79,8 +80,8 @@ class InterpreterControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/v1/interpreters/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Dados inválidos: [Dados pessoais devem ser preenchidos]"));
     }
@@ -94,8 +95,8 @@ class InterpreterControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/v1/interpreters/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Dados inválidos: [Localização deve ser preenchida]"));
     }
@@ -106,15 +107,15 @@ class InterpreterControllerTest {
         // Arrange
         PersonalRequestDTO personalData = createValidPersonalData();
         personalData.setEmail("email-invalido");
-        
+
         InterpreterBasicRequestDTO request = new InterpreterBasicRequestDTO();
         request.setPersonalData(personalData);
         request.setLocation(new LocationDTO("RS", "Porto Alegre"));
 
         // Act & Assert
         mockMvc.perform(post("/v1/interpreters/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.message").value("Dados inválidos: [Email inválido]"));
     }
@@ -125,15 +126,15 @@ class InterpreterControllerTest {
         // Arrange
         PersonalRequestDTO personalData = createValidPersonalData();
         personalData.setCpf("123"); // CPF inválido
-        
+
         InterpreterBasicRequestDTO request = new InterpreterBasicRequestDTO();
         request.setPersonalData(personalData);
         request.setLocation(new LocationDTO("RS", "Porto Alegre"));
 
         // Act & Assert
         mockMvc.perform(post("/v1/interpreters/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.message").value("Dados inválidos: [CPF inválido]"));
     }
@@ -144,7 +145,7 @@ class InterpreterControllerTest {
         // Arrange
         UUID interpreterId = UUID.randomUUID();
         InterpreterPatchRequestDTO patchRequest = new InterpreterPatchRequestDTO();
-        
+
         ProfessionalPatchRequestDTO professionalData = ProfessionalPatchRequestDTO.builder()
                 .cnpj("12345678000195")
                 .minValue(new BigDecimal("100.00"))
@@ -153,7 +154,7 @@ class InterpreterControllerTest {
                 .modality("presencial")
                 .description("Intérprete experiente em LIBRAS")
                 .build();
-        
+
         patchRequest.setProfessionalData(professionalData);
 
         InterpreterResponseDTO mockResponse = createMockResponseWithProfessionalData();
@@ -163,8 +164,8 @@ class InterpreterControllerTest {
 
         // Act & Assert
         mockMvc.perform(patch("/v1/interpreters/{id}", interpreterId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(patchRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(patchRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Intérprete atualizado com sucesso"))
@@ -206,9 +207,9 @@ class InterpreterControllerTest {
                 .picture("picture_url")
                 .build();
 
-        PersonResponseDTO person = PersonResponseDTO.builder()
+        PersonDTO person = PersonDTO.builder()
                 .name("João Intérprete")
-                .gender("M")
+                .gender(Gender.MALE)
                 .birthday(LocalDate.of(1990, 1, 1))
                 .cpf("12345678901")
                 .build();
@@ -244,9 +245,9 @@ class InterpreterControllerTest {
                 .picture("picture_url")
                 .build();
 
-        PersonResponseDTO person = PersonResponseDTO.builder()
+        PersonDTO person = PersonDTO.builder()
                 .name("João Intérprete")
-                .gender("M")
+                .gender(Gender.MALE)
                 .birthday(LocalDate.of(1990, 1, 1))
                 .cpf("12345678901")
                 .build();

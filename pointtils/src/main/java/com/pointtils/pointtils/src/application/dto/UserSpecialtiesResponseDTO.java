@@ -18,7 +18,7 @@ public class UserSpecialtiesResponseDTO {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Data {
-        private List<UserSpecialtyResponseDTO> userSpecialties;
+        private List<UserSpecialtyDTO> userSpecialties;
         private Summary summary;
     }
     

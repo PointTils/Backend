@@ -2,6 +2,8 @@ package com.pointtils.pointtils.src.application.dto.responses;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.pointtils.pointtils.src.application.dto.LocationDTO;
+import com.pointtils.pointtils.src.application.dto.PersonDTO;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -19,7 +21,7 @@ public class InterpreterResponseDTO {
 
     private UserResponseDTO user;
 
-    private PersonResponseDTO person;
+    private PersonDTO person;
 
     @JsonProperty("professional_info")
     private ProfessionalInfoResponseDTO professionalInfo;
