@@ -1,6 +1,6 @@
 package com.pointtils.pointtils.src.application.services;
 
-import com.pointtils.pointtils.src.application.dto.PersonCreationDTO;
+import com.pointtils.pointtils.src.application.dto.requests.PersonCreationRequestDTO;
 import com.pointtils.pointtils.src.application.dto.PersonDTO;
 import com.pointtils.pointtils.src.application.dto.requests.PersonPatchRequestDTO;
 import com.pointtils.pointtils.src.application.mapper.PersonResponseMapper;
@@ -26,7 +26,7 @@ public class PersonService {
     private final PersonRepository personRepository;
     private final PersonResponseMapper personResponseMapper;
 
-    public PersonDTO registerPerson(PersonCreationDTO dto) {
+    public PersonDTO registerPerson(PersonCreationRequestDTO dto) {
         Person person = new Person();
 
         person.setId(person.getId());

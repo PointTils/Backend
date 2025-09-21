@@ -1,6 +1,6 @@
 package com.pointtils.pointtils.src.application.controllers;
 
-import com.pointtils.pointtils.src.application.dto.PersonCreationDTO;
+import com.pointtils.pointtils.src.application.dto.requests.PersonCreationRequestDTO;
 import com.pointtils.pointtils.src.application.dto.PersonDTO;
 import com.pointtils.pointtils.src.application.dto.requests.PersonPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ApiResponse;
@@ -34,7 +34,7 @@ public class PersonController {
 
     @PostMapping("/register")
     @Operation(summary = "Cadastra um usuário surdo")
-    public ResponseEntity<ApiResponse<PersonDTO>> createUser(@Valid @RequestBody PersonCreationDTO dto) {
+    public ResponseEntity<ApiResponse<PersonDTO>> createUser(@Valid @RequestBody PersonCreationRequestDTO dto) {
         PersonDTO created = service.registerPerson(dto);
         ApiResponse<PersonDTO> response = ApiResponse.success("Usuário surdo cadastrado com sucesso", created);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);

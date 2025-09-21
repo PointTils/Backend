@@ -1,7 +1,9 @@
-package com.pointtils.pointtils.src.application.dto;
+package com.pointtils.pointtils.src.application.dto.requests;
 
 import java.time.LocalDate;
 import java.util.List;
+
+import com.pointtils.pointtils.src.application.dto.UserSpecialtyDTO;
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -19,7 +21,7 @@ import lombok.Setter;
 @Builder
 @Getter
 @Setter
-public class PersonCreationDTO {
+public class PersonCreationRequestDTO {
     @Email(message = "Email inválido")
     @NotBlank(message = "O e-mail é obrigatório")
     private String email;
