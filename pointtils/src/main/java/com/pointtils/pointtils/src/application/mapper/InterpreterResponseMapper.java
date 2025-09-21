@@ -1,40 +1,32 @@
 package com.pointtils.pointtils.src.application.mapper;
-import com.pointtils.pointtils.src.application.dto.PersonDTO;
+
+import com.pointtils.pointtils.src.application.dto.LocationDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ProfessionalInfoResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.SpecialtyResponseDTO;
-import com.pointtils.pointtils.src.application.dto.responses.UserResponseDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 
 @Component
 public class InterpreterResponseMapper {
 
     public InterpreterResponseDTO toResponseDTO(Interpreter interpreter) {
-        InterpreterResponseDTO dto = new InterpreterResponseDTO();
-
-        dto.setIdInterpreter(interpreter.getId());
-
-        UserResponseDTO userDto = UserResponseDTO.builder()
+        InterpreterResponseDTO dto = InterpreterResponseDTO.builder()
                 .id(interpreter.getId())
                 .email(interpreter.getEmail())
                 .type(interpreter.getType().name())
                 .status(interpreter.getStatus().toString())
                 .phone(interpreter.getPhone())
                 .picture(interpreter.getPicture())
-                .build();
-        dto.setUser(userDto);
-
-        PersonDTO personDto = PersonDTO.builder()
                 .name(interpreter.getName())
                 .gender(interpreter.getGender())
                 .birthday(interpreter.getBirthday())
                 .cpf(maskCpf(interpreter.getCpf()))
                 .build();
-        dto.setPerson(personDto);
 
         ProfessionalInfoResponseDTO professionalDto = ProfessionalInfoResponseDTO.builder()
                 .cnpj(interpreter.getCnpj())
@@ -47,19 +39,20 @@ public class InterpreterResponseMapper {
                 .build();
         dto.setProfessionalInfo(professionalDto);
 
-        // if (interpreter.getLocation() != null) {
-        //     LocationDTO locationDto = LocationDTO.builder()
-        //             .id(interpreter.getLocation().getId())
-        //             .uf(interpreter.getLocation().getUf())
-        //             .city(interpreter.getLocation().getCity())
-        //             .build();
-        //     dto.setLocation(locationDto);
-        // }
+        if (interpreter.getLocations() != null) {
+            List<LocationDTO> locationList = interpreter.getLocations().stream()
+                    .map(LocationMapper::toDto)
+                    .toList();
+            dto.setLocations(locationList);
+        } else {
+            dto.setLocations(Collections.emptyList());
+        }
 
-
-        List<SpecialtyResponseDTO> specialtyDtos = interpreter.getSpecialties()
-                .stream()
-                .map(specialty -> SpecialtyResponseDTO.builder().id(specialty.getId()).name(specialty.getName()).build())
+        List<SpecialtyResponseDTO> specialtyDtos = interpreter.getSpecialties().stream()
+                .map(specialty -> SpecialtyResponseDTO.builder()
+                        .id(specialty.getId())
+                        .name(specialty.getName())
+                        .build())
                 .toList();
         dto.setSpecialties(specialtyDtos);
 

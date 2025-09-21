@@ -4,7 +4,7 @@ import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequ
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ApiResponse;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
-import com.pointtils.pointtils.src.application.services.InterpreterRegisterService;
+import com.pointtils.pointtils.src.application.services.InterpreterService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,7 +30,7 @@ import java.util.UUID;
 @Tag(name = "Interpreter Controller", description = "Endpoints para gerenciamento de usuários intérprete")
 public class InterpreterController {
 
-    private final InterpreterRegisterService service;
+    private final InterpreterService service;
 
     @PostMapping("/register")
     @Operation(summary = "Cadastra um usuário intérprete")

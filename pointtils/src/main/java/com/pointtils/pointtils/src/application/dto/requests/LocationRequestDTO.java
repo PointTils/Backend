@@ -1,26 +1,14 @@
-package com.pointtils.pointtils.src.application.dto;
+package com.pointtils.pointtils.src.application.dto.requests;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
-
-import java.util.UUID;
 
 @Data
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Getter
-@Setter
-@ToString
-public class LocationDTO {
-
-    private UUID id;
+public class LocationRequestDTO {
 
     @NotBlank(message = "UF deve ser preenchida")
     private String uf;
@@ -30,9 +18,4 @@ public class LocationDTO {
 
     @NotBlank(message = "Bairro deve ser preenchido")
     private String neighborhood;
-
-    public LocationDTO(String uf, String city) {
-        this.uf = uf;
-        this.city = city;
-    }
 }
