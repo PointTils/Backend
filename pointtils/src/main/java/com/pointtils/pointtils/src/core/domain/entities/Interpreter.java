@@ -58,6 +58,6 @@ public class Interpreter extends Person {
     private String description;
 
     @lombok.Builder.Default
-    @OneToMany(mappedBy = "interpreter_id", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "interpreter", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Schedule> schedules = new HashSet<>();
 }

@@ -1,7 +1,10 @@
 package com.pointtils.pointtils.src.application.services;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,6 +22,7 @@ import com.pointtils.pointtils.src.application.mapper.InterpreterMapper;
 import com.pointtils.pointtils.src.application.mapper.InterpreterResponseMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
 import com.pointtils.pointtils.src.core.domain.entities.Location;
+import com.pointtils.pointtils.src.core.domain.entities.enums.DaysOfWeek;
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
@@ -90,7 +94,24 @@ public class InterpreterRegisterService {
             String city,
             String neighborhood,
             String specialty,
-            LocalDateTime dateTime) {
+            String dateTimeStr) {
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        LocalDateTime dateTime = LocalDateTime.parse(dateTimeStr, formatter);
+
+        DayOfWeek javaDay = dateTime.getDayOfWeek();
+        DaysOfWeek requestedDay = switch (javaDay) {
+            case MONDAY -> DaysOfWeek.MON;
+            case TUESDAY -> DaysOfWeek.TUE;
+            case WEDNESDAY -> DaysOfWeek.WEN;
+            case THURSDAY -> DaysOfWeek.THU;
+            case FRIDAY -> DaysOfWeek.FRI;
+            case SATURDAY -> DaysOfWeek.SAT;
+            case SUNDAY -> DaysOfWeek.SUN;
+        };
+
+        LocalTime requestedStart = dateTime.toLocalTime();
+        LocalTime requestedEnd = requestedStart.plusHours(1);
 
         if (city != null && city.isBlank()) {
             throw new InvalidFilterException("Filtros inválidos");
@@ -102,17 +123,15 @@ public class InterpreterRegisterService {
             throw new InvalidFilterException("Filtros inválidos");
         }
 
-        if (dateTime != null && dateTime.isBefore(LocalDateTime.now())) {
-            throw new InvalidFilterException("Filtros inválidos");
-        }
-
         List<Interpreter> interpreters = repository.findAll(
                 modality,
                 gender,
                 city,
                 neighborhood,
                 specialty,
-                dateTime);
+                requestedDay,
+                requestedStart,
+                requestedEnd);
         return interpreters.stream()
                 .map(responseMapper::toResponseDTO)
                 .toList();

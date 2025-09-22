@@ -1,10 +1,8 @@
 package com.pointtils.pointtils.src.application.controllers;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -59,8 +57,7 @@ public class InterpreterController {
         @RequestParam(required = false) String city,
         @RequestParam(required = false) String neighborhood,
         @RequestParam(required = false) String specialty,
-        @RequestParam(required = false)
-        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dateTime
+        @RequestParam(required = false) String dateTime
     ) {
         List<InterpreterResponseDTO> interpreters = service.findAll(
             modality,
