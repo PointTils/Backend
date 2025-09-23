@@ -13,7 +13,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class UserService {
+public class UserPicturePatchService {
 
     private final UserRepository userRepository;
     private final S3Service s3Service;
