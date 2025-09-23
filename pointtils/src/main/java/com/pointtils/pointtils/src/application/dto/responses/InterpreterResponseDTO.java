@@ -36,6 +36,6 @@ public class InterpreterResponseDTO {
 
     private List<SpecialtyResponseDTO> specialties;
 
-    @JsonProperty("professional_info")
-    private ProfessionalInfoResponseDTO professionalInfo;
+    @JsonProperty("professional_data")
+    private ProfessionalDataResponseDTO professionalData;
 }

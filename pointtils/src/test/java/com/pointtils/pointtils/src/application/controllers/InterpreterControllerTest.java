@@ -6,7 +6,7 @@ import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequ
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.ProfessionalPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
-import com.pointtils.pointtils.src.application.dto.responses.ProfessionalInfoResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.ProfessionalDataResponseDTO;
 import com.pointtils.pointtils.src.application.services.InterpreterService;
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import org.junit.jupiter.api.DisplayName;
@@ -144,12 +144,12 @@ class InterpreterControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Intérprete atualizado com sucesso"))
-                .andExpect(jsonPath("$.data.professional_info.cnpj").value("12345678000195"))
-                .andExpect(jsonPath("$.data.professional_info.min_value").value(100.00))
-                .andExpect(jsonPath("$.data.professional_info.max_value").value(500.00))
-                .andExpect(jsonPath("$.data.professional_info.image_rights").value(true))
-                .andExpect(jsonPath("$.data.professional_info.modality").value("presencial"))
-                .andExpect(jsonPath("$.data.professional_info.description").value("Intérprete experiente em LIBRAS"));
+                .andExpect(jsonPath("$.data.professional_data.cnpj").value("12345678000195"))
+                .andExpect(jsonPath("$.data.professional_data.min_value").value(100.00))
+                .andExpect(jsonPath("$.data.professional_data.max_value").value(500.00))
+                .andExpect(jsonPath("$.data.professional_data.image_rights").value(true))
+                .andExpect(jsonPath("$.data.professional_data.modality").value("presencial"))
+                .andExpect(jsonPath("$.data.professional_data.description").value("Intérprete experiente em LIBRAS"));
     }
 
     private InterpreterBasicRequestDTO createValidBasicRequest() {
@@ -167,7 +167,7 @@ class InterpreterControllerTest {
     }
 
     private InterpreterResponseDTO createMockResponse() {
-        ProfessionalInfoResponseDTO professionalInfo = ProfessionalInfoResponseDTO.builder()
+        ProfessionalDataResponseDTO professionalInfo = ProfessionalDataResponseDTO.builder()
                 .cnpj(null)
                 .rating(new BigDecimal("0.0"))
                 .minValue(new BigDecimal("0.0"))
@@ -190,12 +190,12 @@ class InterpreterControllerTest {
                 .cpf("12345678901")
                 .locations(List.of(new LocationDTO(UUID.randomUUID(), "RS", "Porto Alegre", "São João")))
                 .specialties(Collections.emptyList())
-                .professionalInfo(professionalInfo)
+                .professionalData(professionalInfo)
                 .build();
     }
 
     private InterpreterResponseDTO createMockResponseWithProfessionalData() {
-        ProfessionalInfoResponseDTO professionalInfo = ProfessionalInfoResponseDTO.builder()
+        ProfessionalDataResponseDTO professionalInfo = ProfessionalDataResponseDTO.builder()
                 .cnpj("12345678000195")
                 .rating(new BigDecimal("0.0"))
                 .minValue(new BigDecimal("100.00"))
@@ -218,7 +218,7 @@ class InterpreterControllerTest {
                 .cpf("12345678901")
                 .locations(List.of(new LocationDTO(UUID.randomUUID(), "RS", "Porto Alegre", "São João")))
                 .specialties(Collections.emptyList())
-                .professionalInfo(professionalInfo)
+                .professionalData(professionalInfo)
                 .build();
     }
 }

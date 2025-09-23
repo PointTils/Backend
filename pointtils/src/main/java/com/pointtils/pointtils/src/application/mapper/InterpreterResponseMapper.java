@@ -2,7 +2,7 @@ package com.pointtils.pointtils.src.application.mapper;
 
 import com.pointtils.pointtils.src.application.dto.LocationDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
-import com.pointtils.pointtils.src.application.dto.responses.ProfessionalInfoResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.ProfessionalDataResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.SpecialtyResponseDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
 import org.springframework.stereotype.Component;
@@ -28,7 +28,7 @@ public class InterpreterResponseMapper {
                 .cpf(maskCpf(interpreter.getCpf()))
                 .build();
 
-        ProfessionalInfoResponseDTO professionalDto = ProfessionalInfoResponseDTO.builder()
+        ProfessionalDataResponseDTO professionalDto = ProfessionalDataResponseDTO.builder()
                 .cnpj(interpreter.getCnpj())
                 .rating(interpreter.getRating() != null ? interpreter.getRating() : BigDecimal.ZERO)
                 .minValue(interpreter.getMinValue())
@@ -37,7 +37,7 @@ public class InterpreterResponseMapper {
                 .description(interpreter.getDescription())
                 .imageRights(interpreter.getImageRights())
                 .build();
-        dto.setProfessionalInfo(professionalDto);
+        dto.setProfessionalData(professionalDto);
 
         if (interpreter.getLocations() != null) {
             List<LocationDTO> locationList = interpreter.getLocations().stream()
