@@ -201,7 +201,7 @@ class InterpreterServiceTest {
         request.setEmail("interpreter@exemplo.com");
         request.setPassword("senha123");
         request.setPhone("51999999999");
-        request.setGender("M");
+        request.setGender(Gender.MALE);
         request.setBirthday(LocalDate.of(1990, 1, 1));
         request.setCpf("12345678901");
         request.setPicture("picture_url");
@@ -213,7 +213,7 @@ class InterpreterServiceTest {
         InterpreterPatchRequestDTO requestDTO = createLocationPatchRequest();
         requestDTO.setName("Novo Nome");
         requestDTO.setEmail("novo.nome@email.com");
-        requestDTO.setGender("F");
+        requestDTO.setGender(Gender.FEMALE);
         requestDTO.setPicture("nova foto");
         requestDTO.setPhone("51988888888");
         requestDTO.setBirthday(LocalDate.of(2000, 5, 23));
@@ -234,7 +234,7 @@ class InterpreterServiceTest {
         professionalData.setImageRights(Boolean.FALSE);
         professionalData.setMinValue(BigDecimal.valueOf(250));
         professionalData.setMaxValue(BigDecimal.valueOf(500));
-        professionalData.setModality("ONLINE");
+        professionalData.setModality(InterpreterModality.ONLINE);
         return professionalData;
     }
 }

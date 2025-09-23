@@ -19,7 +19,6 @@ public class PersonPatchRequestDTO {
 
     private String name;
 
-    @Pattern(regexp = "^[MFO]$", message = "Gênero deve ser M,F ou O")
     private Gender gender;
 
     private LocalDate birthday;
