@@ -7,6 +7,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import java.time.LocalTime;
+// import com.pointtils.pointtils.src.core.domain.entities.enums.DayOfWeek;
+import java.util.UUID;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -21,4 +24,9 @@ public class ScheduleListRequestDTO {
     @NotNull(message = "Parametro size é obrigatório")
     @Min(value = 1, message = "Parametro size deve ser maior que 0")
     private Integer size;
+
+    private UUID interpreterId;
+    // private DayOfWeek day;
+    // private LocalTime dateFrom;
+    // private LocalTime dateTo;
 }

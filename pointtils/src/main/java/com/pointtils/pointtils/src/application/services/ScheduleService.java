@@ -1,6 +1,7 @@
 package com.pointtils.pointtils.src.application.services;
 
 import com.pointtils.pointtils.src.application.dto.requests.ScheduleRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.ScheduleListRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.SchedulePatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ScheduleResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.PaginatedScheduleResponseDTO;
@@ -12,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-
 import java.util.List;
 import java.util.UUID;
 
@@ -59,6 +59,7 @@ public class ScheduleService {
     public ScheduleResponseDTO findById(UUID scheduleId) {
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new EntityNotFoundException("Horário não encontrado"));
+
         return ScheduleResponseDTO.builder()
                 .id(schedule.getId())
                 .interpreterId(schedule.getInterpreterId())
@@ -68,8 +69,15 @@ public class ScheduleService {
                 .build();
     }
 
-    public PaginatedScheduleResponseDTO findAll(Pageable pageable) {
-        Page<Schedule> schedules = scheduleRepository.findAll(pageable);
+    public PaginatedScheduleResponseDTO findAll(ScheduleListRequestDTO query, Pageable pageable) {
+        Page<Schedule> schedules = scheduleRepository.findAllWithFilters(
+            pageable,
+            query.getInterpreterId()
+            // query.getDay(),
+            // query.getDateFrom(),
+            // query.getDateTo()
+        );
+        
         List<ScheduleResponseDTO> items = schedules.map(s -> ScheduleResponseDTO.builder()
             .id(s.getId())
             .interpreterId(s.getInterpreterId())
@@ -77,6 +85,7 @@ public class ScheduleService {
             .startTime(s.getStartTime())
             .endTime(s.getEndTime())
             .build()).toList();
+
         return PaginatedScheduleResponseDTO.builder()
             .page(schedules.getNumber())
             .size(schedules.getSize())

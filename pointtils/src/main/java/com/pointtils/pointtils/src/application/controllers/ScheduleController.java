@@ -53,7 +53,7 @@ public class ScheduleController {
     @Operation(summary = "Lista todos os horários cadastrados com paginação")
     public ResponseEntity<ApiResponse<PaginatedScheduleResponseDTO>> listSchedules(@Valid @ModelAttribute ScheduleListRequestDTO query) {
         Pageable pageable = PageRequest.of(query.getPage(), query.getSize());
-        PaginatedScheduleResponseDTO schedules = service.findAll(pageable);
+        PaginatedScheduleResponseDTO schedules = service.findAll(query, pageable);
         ApiResponse<PaginatedScheduleResponseDTO> response = new ApiResponse<>(true, "Horários obtidos com sucesso", schedules);
         return ResponseEntity.ok(response);
     }
