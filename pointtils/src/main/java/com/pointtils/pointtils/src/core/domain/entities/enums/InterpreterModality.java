@@ -12,7 +12,7 @@ public enum InterpreterModality {
             case "PERSONALLY" -> PERSONALLY;
             case "ONLINE" -> ONLINE;
             case "ALL" -> ALL;
-            default -> throw new IllegalArgumentException("Modalidade inválido");
+            default -> throw new IllegalArgumentException("Modalidade inválida");
         };
     }
 }
