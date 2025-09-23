@@ -3,8 +3,8 @@ package com.pointtils.pointtils.src.application.controllers;
 import java.util.List;
 import java.util.UUID;
 
-import com.pointtils.pointtils.src.application.dto.AddUserSpecialtiesRequestDTO;
-import com.pointtils.pointtils.src.application.dto.UserSpecialtiesResponseDTO;
+import com.pointtils.pointtils.src.application.dto.requests.AddUserSpecialtiesRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.UserSpecialtiesResponseDTO;
 import com.pointtils.pointtils.src.application.dto.UserSpecialtyDTO;
 import com.pointtils.pointtils.src.application.services.UserSpecialtyService;
 import com.pointtils.pointtils.src.core.domain.entities.UserSpecialty;

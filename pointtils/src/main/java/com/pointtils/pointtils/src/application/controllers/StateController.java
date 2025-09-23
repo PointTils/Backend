@@ -1,6 +1,6 @@
 package com.pointtils.pointtils.src.application.controllers;
 
-import com.pointtils.pointtils.src.application.dto.StateResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.StateResponseDTO;
 import com.pointtils.pointtils.src.application.services.StateService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

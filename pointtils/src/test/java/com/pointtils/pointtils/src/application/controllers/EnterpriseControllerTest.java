@@ -1,14 +1,12 @@
 package com.pointtils.pointtils.src.application.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pointtils.pointtils.src.application.dto.LocationDTO;
 import com.pointtils.pointtils.src.application.dto.requests.EnterprisePatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.EnterpriseRequestDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Enterprise;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
 import com.pointtils.pointtils.src.infrastructure.repositories.EnterpriseRepository;
-import com.pointtils.pointtils.src.infrastructure.repositories.LocationRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -48,9 +46,6 @@ class EnterpriseControllerTest {
     @Autowired
     private EnterpriseRepository enterpriseRepository;
 
-    @Autowired
-    private LocationRepository locationRepository;
-
     @MockitoBean
     private JwtService jwtService;
 
@@ -63,7 +58,6 @@ class EnterpriseControllerTest {
     private MockMvc mockMvc;
     private EnterpriseRequestDTO validEnterpriseRequest;
     private EnterprisePatchRequestDTO validPatchRequest;
-    private LocationDTO locationDTO;
 
     @BeforeEach
     void setUp() {
@@ -74,13 +68,6 @@ class EnterpriseControllerTest {
         when(jwtService.isTokenExpired(anyString())).thenReturn(Boolean.FALSE);
 
         enterpriseRepository.deleteAll();
-        locationRepository.deleteAll();
-
-        locationDTO = LocationDTO.builder()
-                .id(UUID.randomUUID())
-                .uf("SP")
-                .city("São Paulo")
-                .build();
 
         validEnterpriseRequest = EnterpriseRequestDTO.builder()
                 .corporateReason("Empresa Teste LTDA")
@@ -89,7 +76,6 @@ class EnterpriseControllerTest {
                 .password("senhaSegura123")
                 .phone("11999887766")
                 .picture("https://example.com/picture.jpg")
-                .location(locationDTO)
                 .build();
 
         validPatchRequest = EnterprisePatchRequestDTO.builder()
@@ -102,7 +88,7 @@ class EnterpriseControllerTest {
     @Test
     @DisplayName("Deve retornar 400 quando o ID não for um UUID válido no update (PATCH)")
     void shouldReturnBadRequestWhenIdIsNotValidUUIDOnPatch() throws Exception {
-        mockMvc.perform(patch("/v1/enterprise-users/{id}", "not-a-uuid")
+        mockMvc.perform(patch("/v1/enterprises/{id}", "not-a-uuid")
                         .with(user("testuser").roles("USER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validPatchRequest)))
@@ -114,7 +100,7 @@ class EnterpriseControllerTest {
     @Test
     @DisplayName("Deve retornar 201 quando criar empresa com sucesso")
     void shouldCreateEnterpriseSuccessfully() throws Exception {
-        mockMvc.perform(post("/v1/enterprise-users/register")
+        mockMvc.perform(post("/v1/enterprises/register")
                         .with(user("testuser").roles("USER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validEnterpriseRequest)))
@@ -141,10 +127,9 @@ class EnterpriseControllerTest {
                 .email("empresa@teste.com")
                 .password("senhaSegura123")
                 .phone("11999887766")
-                .location(locationDTO)
                 .build();
 
-        mockMvc.perform(post("/v1/enterprise-users/register")
+        mockMvc.perform(post("/v1/enterprises/register")
                         .with(user("testuser").roles("USER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidCNPJRequest)))
@@ -163,10 +148,9 @@ class EnterpriseControllerTest {
                 .email("email-invalido.com")
                 .password("senhaSegura123")
                 .phone("11999887766")
-                .location(locationDTO)
                 .build();
 
-        mockMvc.perform(post("/v1/enterprise-users/register")
+        mockMvc.perform(post("/v1/enterprises/register")
                         .with(user("testuser").roles("USER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidEmailRequest)))
@@ -185,10 +169,9 @@ class EnterpriseControllerTest {
                 .email("empresa@teste.com")
                 .password("senhaSegura123")
                 .phone("abc123def")
-                .location(locationDTO)
                 .build();
 
-        mockMvc.perform(post("/v1/enterprise-users/register")
+        mockMvc.perform(post("/v1/enterprises/register")
                         .with(user("testuser").roles("USER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidPhoneRequest)))
@@ -209,7 +192,7 @@ class EnterpriseControllerTest {
                 .phone("")
                 .build();
 
-        mockMvc.perform(post("/v1/enterprise-users/register")
+        mockMvc.perform(post("/v1/enterprises/register")
                         .with(user("testuser").roles("USER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(emptyFieldsRequest)))
@@ -222,7 +205,7 @@ class EnterpriseControllerTest {
     @Test
     @DisplayName("Deve retornar 409 quando criar empresa com CNPJ já existente")
     void shouldGetConflictWhenCreatingEnterpriseWithExistingCNPJ() throws Exception {
-        mockMvc.perform(post("/v1/enterprise-users/register")
+        mockMvc.perform(post("/v1/enterprises/register")
                         .with(user("testuser").roles("USER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validEnterpriseRequest)))
@@ -234,10 +217,9 @@ class EnterpriseControllerTest {
                 .email("novaempresa@teste.com")
                 .password("senhaSegura123")
                 .phone("11999887766")
-                .location(locationDTO)
                 .build();
 
-        mockMvc.perform(post("/v1/enterprise-users/register")
+        mockMvc.perform(post("/v1/enterprises/register")
                         .with(user("testuser").roles("USER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(duplicateCNPJRequest)))
@@ -250,7 +232,7 @@ class EnterpriseControllerTest {
     @Test
     @DisplayName("Deve retornar 409 quando criar empresa com email já existente")
     void shouldGetConflictWhenCreatingEnterpriseWithExistingEmail() throws Exception {
-        mockMvc.perform(post("/v1/enterprise-users/register")
+        mockMvc.perform(post("/v1/enterprises/register")
                         .with(user("testuser").roles("USER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validEnterpriseRequest)))
@@ -262,10 +244,9 @@ class EnterpriseControllerTest {
                 .email("empresa@teste.com")
                 .password("senhaSegura123")
                 .phone("11999887766")
-                .location(locationDTO)
                 .build();
 
-        mockMvc.perform(post("/v1/enterprise-users/register")
+        mockMvc.perform(post("/v1/enterprises/register")
                         .with(user("testuser").roles("USER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(duplicateEmailRequest)))
@@ -278,13 +259,13 @@ class EnterpriseControllerTest {
     @Test
     @DisplayName("Deve retornar 200 retornar todas as empresas com sucesso")
     void shouldReturnAllEnterprisesSuccessfully() throws Exception {
-        mockMvc.perform(post("/v1/enterprise-users/register")
+        mockMvc.perform(post("/v1/enterprises/register")
                         .with(user("testuser").roles("USER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validEnterpriseRequest)))
                 .andExpect(status().isCreated());
 
-        mockMvc.perform(get("/v1/enterprise-users")
+        mockMvc.perform(get("/v1/enterprises")
                         .with(user("testuser").roles("USER"))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -297,7 +278,7 @@ class EnterpriseControllerTest {
     @Test
     @DisplayName("Deve retornar 200 e lista vazia quando não existem empresas")
     void shouldGetOkWithEmptyArrayWhenNoEnterprisesExist() throws Exception {
-        mockMvc.perform(get("/v1/enterprise-users")
+        mockMvc.perform(get("/v1/enterprises")
                         .with(user("testuser").roles("USER"))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -307,7 +288,7 @@ class EnterpriseControllerTest {
     @Test
     @DisplayName("Deve retornar 200 quando encontrar empresa por ID com sucesso")
     void shouldFindEnterpriseByIdSuccessfully() throws Exception {
-        mockMvc.perform(post("/v1/enterprise-users/register")
+        mockMvc.perform(post("/v1/enterprises/register")
                         .with(user("testuser").roles("USER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validEnterpriseRequest)))
@@ -316,7 +297,7 @@ class EnterpriseControllerTest {
         List<Enterprise> enterprises = enterpriseRepository.findAll();
         UUID createdId = enterprises.get(0).getId();
 
-        mockMvc.perform(get("/v1/enterprise-users/{id}", createdId)
+        mockMvc.perform(get("/v1/enterprises/{id}", createdId)
                         .with(user("testuser").roles("USER"))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -333,7 +314,7 @@ class EnterpriseControllerTest {
     @DisplayName("Deve retornar 404 quando empresa não for encontrada por ID")
     void shouldGetNotFoundWhenEnterpriseNotFoundById() throws Exception {
         UUID nonExistentId = UUID.randomUUID();
-        mockMvc.perform(get("/v1/enterprise-users/{id}", nonExistentId)
+        mockMvc.perform(get("/v1/enterprises/{id}", nonExistentId)
                         .with(user("testuser").roles("USER"))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
@@ -342,7 +323,7 @@ class EnterpriseControllerTest {
     @Test
     @DisplayName("Deve retornar 201 quando atualizar empresa parcialmente com dados válidos")
     void shouldUpdateEnterprisePartiallyWithValidData() throws Exception {
-        mockMvc.perform(post("/v1/enterprise-users/register")
+        mockMvc.perform(post("/v1/enterprises/register")
                         .with(user("testuser").roles("USER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validEnterpriseRequest)))
@@ -351,15 +332,17 @@ class EnterpriseControllerTest {
         List<Enterprise> enterprises = enterpriseRepository.findAll();
         UUID createdId = enterprises.get(0).getId();
 
-        mockMvc.perform(patch("/v1/enterprise-users/{id}", createdId)
+        mockMvc.perform(patch("/v1/enterprises/{id}", createdId)
                         .with(user("testuser").roles("USER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validPatchRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(createdId.toString()))
-                .andExpect(jsonPath("$.corporate_reason").value("Empresa Atualizada LTDA"))
-                .andExpect(jsonPath("$.email").value("novoemail@teste.com"))
-                .andExpect(jsonPath("$.phone").value("11888777666"));
+                .andExpect(jsonPath("$.success").value(Boolean.TRUE))
+                .andExpect(jsonPath("$.message").value("Empresa atualizada com sucesso"))
+                .andExpect(jsonPath("$.data.id").value(createdId.toString()))
+                .andExpect(jsonPath("$.data.corporate_reason").value("Empresa Atualizada LTDA"))
+                .andExpect(jsonPath("$.data.email").value("novoemail@teste.com"))
+                .andExpect(jsonPath("$.data.phone").value("11888777666"));
 
         Optional<Enterprise> updatedEnterprise = enterpriseRepository.findById(createdId);
         assertThat(updatedEnterprise).isPresent();
@@ -372,7 +355,7 @@ class EnterpriseControllerTest {
     @DisplayName("Deve retornar 404 quando atualizar empresa inexistente")
     void shouldGetNotFoundWhenUpdatingNonExistentEnterprise() throws Exception {
         UUID nonExistentId = UUID.randomUUID();
-        mockMvc.perform(patch("/v1/enterprise-users/{id}", nonExistentId)
+        mockMvc.perform(patch("/v1/enterprises/{id}", nonExistentId)
                         .with(user("testuser").roles("USER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validPatchRequest)))
@@ -382,7 +365,7 @@ class EnterpriseControllerTest {
     @Test
     @DisplayName("Deve retornar 422 quando atualizar empresa com dados inválidos")
     void shouldGetUnprocessableEntityWhenUpdatingEnterpriseWithInvalidData() throws Exception {
-        mockMvc.perform(post("/v1/enterprise-users/register")
+        mockMvc.perform(post("/v1/enterprises/register")
                         .with(user("testuser").roles("USER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validEnterpriseRequest)))
@@ -396,7 +379,7 @@ class EnterpriseControllerTest {
                 .email("invalid-email")
                 .build();
 
-        mockMvc.perform(patch("/v1/enterprise-users/{id}", createdId)
+        mockMvc.perform(patch("/v1/enterprises/{id}", createdId)
                         .with(user("testuser").roles("USER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidPatchRequest)))
@@ -411,7 +394,7 @@ class EnterpriseControllerTest {
     @Test
     @DisplayName("Deve retornar 204 quando deletar empresa com sucesso")
     void shouldGetWhenDeleteEnterpriseSuccessfully() throws Exception {
-        mockMvc.perform(post("/v1/enterprise-users/register")
+        mockMvc.perform(post("/v1/enterprises/register")
                         .with(user("testuser").roles("USER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validEnterpriseRequest)))
@@ -420,7 +403,7 @@ class EnterpriseControllerTest {
         List<Enterprise> enterprises = enterpriseRepository.findAll();
         UUID createdId = enterprises.get(0).getId();
 
-        mockMvc.perform(delete("/v1/enterprise-users/{id}", createdId)
+        mockMvc.perform(delete("/v1/enterprises/{id}", createdId)
                         .with(user("testuser").roles("USER"))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
@@ -434,7 +417,7 @@ class EnterpriseControllerTest {
     @DisplayName("Deve retornar 404 ao tentar deletar uma empresa inexistente")
     void shouldGetNotFoundAfterTryingToRemoveUnexistingEnterprise() throws Exception {
         UUID randomUUID = UUID.randomUUID();
-        mockMvc.perform(delete("/v1/enterprise-users/{id}", randomUUID)
+        mockMvc.perform(delete("/v1/enterprises/{id}", randomUUID)
                         .with(user("testuser").roles("USER"))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());

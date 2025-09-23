@@ -1,5 +1,6 @@
-package com.pointtils.pointtils.src.application.dto;
+package com.pointtils.pointtils.src.application.dto.responses;
 
+import com.pointtils.pointtils.src.application.dto.TokensDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

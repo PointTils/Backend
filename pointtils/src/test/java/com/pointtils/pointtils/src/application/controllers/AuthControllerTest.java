@@ -1,7 +1,7 @@
 package com.pointtils.pointtils.src.application.controllers;
 
-import com.pointtils.pointtils.src.application.dto.LoginResponseDTO;
-import com.pointtils.pointtils.src.application.dto.RefreshTokenResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.LoginResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.RefreshTokenResponseDTO;
 import com.pointtils.pointtils.src.application.dto.TokensDTO;
 import com.pointtils.pointtils.src.application.dto.UserDTO;
 import com.pointtils.pointtils.src.application.services.AuthService;

@@ -1,11 +1,14 @@
-package com.pointtils.pointtils.src.application.dto;
+package com.pointtils.pointtils.src.application.dto.requests;
 
 import java.time.LocalDate;
 import java.util.List;
+
+import com.pointtils.pointtils.src.application.dto.UserSpecialtyDTO;
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,8 +21,8 @@ import lombok.Setter;
 @Builder
 @Getter
 @Setter
-public class PersonCreationDTO {
-    @Email(message = "Formato de e-mail inválido")
+public class PersonCreationRequestDTO {
+    @Email(message = "Email inválido")
     @NotBlank(message = "O e-mail é obrigatório")
     private String email;
 
@@ -28,6 +31,7 @@ public class PersonCreationDTO {
     private String password;
 
     @Size(max = 11, message = "O telefone deve ter no máximo 11 dígitos")
+    @Pattern(regexp = "^\\d+$", message = "Número de telefone inválido")
     private String phone;
 
     private String picture;

@@ -1,6 +1,12 @@
 package com.pointtils.pointtils.src.application.controllers;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import com.pointtils.pointtils.src.application.dto.TokensDTO;
+import com.pointtils.pointtils.src.application.dto.requests.RefreshTokenRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.RefreshTokenResponseDTO;
+import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -9,21 +15,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.pointtils.pointtils.src.application.dto.RefreshTokenRequestDTO;
-import com.pointtils.pointtils.src.application.dto.RefreshTokenResponseDTO;
-import com.pointtils.pointtils.src.application.dto.TokensDTO;
-import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/jwt")
 @Tag(name = "JWT Controller", description = "Endpoints para geração e teste de tokens JWT")
 public class JwtController {
-
-    @Autowired
-    private JwtService jwtService;
+    private final JwtService jwtService;
 
     @GetMapping("/public")
     @Operation(summary = "Gera um token de acesso público")
@@ -57,11 +54,11 @@ public class JwtController {
         if (request.getRefreshToken() == null || request.getRefreshToken().isBlank()) {
             throw new com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException("Refresh token não fornecido");
         }
-        
+
         if (!jwtService.isTokenValid(request.getRefreshToken())) {
             throw new com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException("Refresh token inválido ou expirado");
         }
-        
+
         String username = jwtService.getEmailFromToken(request.getRefreshToken());
         String newAccessToken = jwtService.generateToken(username);
         String newRefreshToken = jwtService.generateRefreshToken(username);

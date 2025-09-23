@@ -3,6 +3,7 @@ package com.pointtils.pointtils.src.infrastructure.configs;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import io.jsonwebtoken.Claims;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -44,24 +45,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         
         // Verificar se o token está na blacklist apenas se não for uma requisição de logout
         String requestURI = request.getRequestURI();
-        if (!isLogoutEndpoint(requestURI)) {
-            if (memoryBlacklistService.isBlacklisted(token)) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("Token inválido");
-                return;
-            }
+        if (!isLogoutEndpoint(requestURI) && memoryBlacklistService.isBlacklisted(token)) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Token inválido");
+            return;
         }
 
         try {
-            final String jwt = token;
-
-            if (jwtService.isTokenExpired(jwt)) {
+            if (jwtService.isTokenExpired(token)) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.getWriter().write("Unauthorized.");
                 return;
             }
 
-            String subject = jwtService.extractClaim(jwt, claims -> claims.getSubject());
+            String subject = jwtService.extractClaim(token, Claims::getSubject);
             UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(subject, null, new ArrayList<>());
             SecurityContextHolder.getContext().setAuthentication(authToken);
 

@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProfessionalInfoResponseDTO {
+public class ProfessionalDataResponseDTO {
     private String cnpj;
     private BigDecimal rating;
     
