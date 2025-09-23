@@ -10,6 +10,7 @@ import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponse
 import com.pointtils.pointtils.src.application.dto.responses.ProfessionalDataResponseDTO;
 import com.pointtils.pointtils.src.application.services.InterpreterService;
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
+import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -131,7 +132,7 @@ class InterpreterControllerTest {
                 .minValue(new BigDecimal("100.00"))
                 .maxValue(new BigDecimal("500.00"))
                 .imageRights(true)
-                .modality("presencial")
+                .modality(InterpreterModality.PERSONALLY)
                 .description("Intérprete experiente em LIBRAS")
                 .build();
 
@@ -214,7 +215,7 @@ class InterpreterControllerTest {
         request.setEmail("interpreter@exemplo.com");
         request.setPassword("senha123");
         request.setPhone("51999999999");
-        request.setGender("M");
+        request.setGender(Gender.MALE);
         request.setBirthday(LocalDate.of(1990, 1, 1));
         request.setCpf("12345678901");
         request.setPicture("picture_url");

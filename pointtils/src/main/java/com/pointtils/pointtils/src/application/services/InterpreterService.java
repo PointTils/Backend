@@ -8,7 +8,6 @@ import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponse
 import com.pointtils.pointtils.src.application.mapper.InterpreterResponseMapper;
 import com.pointtils.pointtils.src.application.mapper.LocationMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
-import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
@@ -42,7 +41,7 @@ public class InterpreterService {
                 .status(UserStatus.PENDING)
                 .type(UserTypeE.INTERPRETER)
                 .name(request.getName())
-                .gender(Gender.fromString(request.getGender()))
+                .gender(request.getGender())
                 .birthday(request.getBirthday())
                 .cpf(request.getCpf())
                 .cnpj(Objects.nonNull(request.getProfessionalData()) ? request.getProfessionalData().getCnpj() : null)
@@ -100,7 +99,7 @@ public class InterpreterService {
             interpreter.setBirthday(requestDto.getBirthday());
         }
         if (requestDto.getGender() != null) {
-            interpreter.setGender(Gender.fromString(requestDto.getGender()));
+            interpreter.setGender(requestDto.getGender());
         }
         // TODO - atualizar foto de perfil
     }
@@ -122,7 +121,7 @@ public class InterpreterService {
             interpreter.setImageRights(dto.getImageRights());
         }
         if (dto.getModality() != null) {
-            interpreter.setModality(InterpreterModality.fromString(dto.getModality()));
+            interpreter.setModality(dto.getModality());
         }
         if (dto.getDescription() != null) {
             interpreter.setDescription(dto.getDescription());

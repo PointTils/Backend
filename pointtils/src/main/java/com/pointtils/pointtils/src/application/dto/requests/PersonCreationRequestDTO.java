@@ -1,8 +1,5 @@
 package com.pointtils.pointtils.src.application.dto.requests;
 
-import java.time.LocalDate;
-import java.util.List;
-
 import com.pointtils.pointtils.src.application.dto.UserSpecialtyDTO;
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import jakarta.validation.constraints.Email;
@@ -16,6 +13,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
+import java.util.List;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -26,7 +26,7 @@ public class PersonCreationRequestDTO {
     @NotBlank(message = "O e-mail é obrigatório")
     private String email;
 
-    @NotBlank(message = "A senha é obrigatório")
+    @NotBlank(message = "Senha deve ser preenchida")
     @Size(min = 8, message = "A senha deve ter pelo menos 8 caracteres")
     private String password;
 
@@ -36,16 +36,16 @@ public class PersonCreationRequestDTO {
 
     private String picture;
 
-    @NotBlank(message = "O nome é obrigatório")
+    @NotBlank(message = "Nome deve ser preenchido")
     private String name;
 
-    @NotNull(message = "O gênero é obrigatório")
+    @NotNull(message = "Gênero deve ser preenchido")
     private Gender gender;
 
-    @NotNull(message = "A data de nascimento é obrigatório")
+    @NotNull(message = "Data de nascimento deve ser preenchida")
     private LocalDate birthday;
 
-    @NotBlank(message = "CPF é obrigatório")
+    @NotBlank(message = "CPF deve ser preenchido")
     @Size(min = 11, max = 11, message = "CPF deve ter exatamente 11 digitos")
     private String cpf;
 

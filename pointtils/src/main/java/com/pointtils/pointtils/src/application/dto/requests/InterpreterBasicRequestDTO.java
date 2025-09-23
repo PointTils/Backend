@@ -1,6 +1,7 @@
 package com.pointtils.pointtils.src.application.dto.requests;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -33,9 +34,8 @@ public class InterpreterBasicRequestDTO {
     @Pattern(regexp = "^\\d+$", message = "Número de telefone inválido")
     private String phone;
 
-    @NotBlank(message = "Gênero deve ser preenchido")
-    @Pattern(regexp = "^[MFO]$", message = "Gênero deve ser M,F ou O")
-    private String gender;
+    @NotNull(message = "Gênero deve ser preenchido")
+    private Gender gender;
 
     @NotNull(message = "Data de nascimento deve ser preenchida")
     private LocalDate birthday;

@@ -5,20 +5,25 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class InterpreterModalityTest {
 
     @Test
-    void shouldGetAllFromNullValue() {
-        assertEquals(InterpreterModality.ALL, InterpreterModality.fromString(null));
+    void shouldThrowIllegalArgumentExceptionFromNullValue() {
+        assertThrows(IllegalArgumentException.class, () -> InterpreterModality.fromString(null));
+    }
+
+    @Test
+    void shouldThrowIllegalArgumentExceptionFromInvalidValue() {
+        assertThrows(IllegalArgumentException.class, () -> InterpreterModality.fromString("PRESENCIAL"));
     }
 
     @ParameterizedTest
     @CsvSource({
-            "online, ONLINE",
-            "presencial, PERSONALLY",
-            "ambos, ALL",
-            "unknown, ALL"
+            "ONLINE, ONLINE",
+            "PERSONALLY, PERSONALLY",
+            "ALL, ALL"
     })
     void shouldGetModalityFromStringValue(String input, String expected) {
         assertEquals(InterpreterModality.valueOf(expected), InterpreterModality.fromString(input));
