@@ -8,6 +8,7 @@ import com.pointtils.pointtils.src.application.dto.responses.ScheduleResponseDTO
 import com.pointtils.pointtils.src.application.dto.responses.PaginatedScheduleResponseDTO;
 import com.pointtils.pointtils.src.application.services.ScheduleService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -27,8 +28,9 @@ import org.springframework.data.domain.Pageable;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/v1/schedules")
 @AllArgsConstructor
+@RequestMapping("/v1/schedules")
+@SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Schedule Controller", description = "Endpoints para gerenciamento de horários de intérpretes")
 public class ScheduleController {
     private final ScheduleService service;

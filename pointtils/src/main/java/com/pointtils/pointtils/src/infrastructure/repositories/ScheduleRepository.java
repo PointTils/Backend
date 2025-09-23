@@ -19,11 +19,12 @@ public interface ScheduleRepository extends JpaRepository<Schedule, UUID> {
     @Query("SELECT COUNT(s) > 0 FROM Schedule s WHERE s.interpreterId = :interpreterId AND s.day = :day AND s.id <> :id AND s.startTime < :endTime AND s.endTime > :startTime")
     boolean existsConflictForUpdate(@Param("id") UUID id, @Param("interpreterId") UUID interpreterId, @Param("day") DayOfWeek day, @Param("startTime") LocalTime startTime, @Param("endTime") LocalTime endTime);
 
-    @Query(value = "SELECT * FROM schedule WHERE (:interpreterId IS NULL OR interpreter_id = :interpreterId)", nativeQuery = true)
+    @Query(value = "SELECT * FROM schedule WHERE (:interpreterId IS NULL OR interpreter_id = :interpreterId) " +
+            "AND (:day IS NULL OR day = CAST(:day AS schedule_day_enum))", nativeQuery = true)
     Page<Schedule> findAllWithFilters(
         Pageable pageable,
-        @Param("interpreterId") UUID interpreterId
-        // @Param("day") DayOfWeek day,
+        @Param("interpreterId") UUID interpreterId,
+        @Param("day") String day
         // @Param("dateFrom") LocalTime dateFrom,
         // @Param("dateTo") LocalTime dateTo
     );

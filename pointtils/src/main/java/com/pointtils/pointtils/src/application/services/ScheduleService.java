@@ -72,8 +72,8 @@ public class ScheduleService {
     public PaginatedScheduleResponseDTO findAll(ScheduleListRequestDTO query, Pageable pageable) {
         Page<Schedule> schedules = scheduleRepository.findAllWithFilters(
             pageable,
-            query.getInterpreterId()
-            // query.getDay(),
+            query.getInterpreterId(),
+            query.getDay() != null ? query.getDay().name() : null
             // query.getDateFrom(),
             // query.getDateTo()
         );

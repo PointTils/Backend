@@ -7,8 +7,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
 import java.time.LocalTime;
-// import com.pointtils.pointtils.src.core.domain.entities.enums.DayOfWeek;
+import com.pointtils.pointtils.src.core.domain.entities.enums.DayOfWeek;
 import java.util.UUID;
 
 @AllArgsConstructor
@@ -26,7 +27,7 @@ public class ScheduleListRequestDTO {
     private Integer size;
 
     private UUID interpreterId;
-    // private DayOfWeek day;
+    private DayOfWeek day;
     // private LocalTime dateFrom;
     // private LocalTime dateTo;
 }
