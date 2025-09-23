@@ -189,6 +189,24 @@ class InterpreterControllerTest {
                 .andExpect(status().isNoContent());
     }
 
+    @Test
+    @DisplayName("Deve encontrar todos os intérpretes com sucesso")
+    void deveBuscarInterpretesComSucesso() throws Exception {
+        // Arrange
+        InterpreterResponseDTO mockResponse = createMockResponse();
+        when(interpreterService.findAll()).thenReturn(List.of(mockResponse));
+
+        // Act & Assert
+        mockMvc.perform(get("/v1/interpreters")
+                        .with(user("testuser").roles("USER"))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Intérpretes encontrados com sucesso"))
+                .andExpect(jsonPath("$.data[0].id").exists())
+                .andExpect(jsonPath("$.data[0].email").value("interpreter@exemplo.com"));
+    }
+
     private InterpreterBasicRequestDTO createValidBasicRequest() {
         InterpreterBasicRequestDTO request = new InterpreterBasicRequestDTO();
         request.setName("João Intérprete");

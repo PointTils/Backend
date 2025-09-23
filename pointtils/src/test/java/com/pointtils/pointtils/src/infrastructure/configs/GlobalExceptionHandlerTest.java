@@ -1,16 +1,23 @@
 package com.pointtils.pointtils.src.infrastructure.configs;
 
-import static org.junit.jupiter.api.Assertions.*;
-
+import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
+import com.pointtils.pointtils.src.core.domain.exceptions.ClientTimeoutException;
+import com.pointtils.pointtils.src.core.domain.exceptions.UserSpecialtyException;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
-import com.pointtils.pointtils.src.core.domain.exceptions.UserSpecialtyException;
+import java.util.Set;
 
-import jakarta.persistence.EntityNotFoundException;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class GlobalExceptionHandlerTest {
 
@@ -222,5 +229,67 @@ class GlobalExceptionHandlerTest {
         assertEquals(status, errorResponse.getStatus());
         assertEquals(message, errorResponse.getMessage());
         assertEquals(timestamp, errorResponse.getTimestamp());
+    }
+
+    @Test
+    void handleInternalErrorException_ShouldReturnInternalServerError() {
+        // Arrange
+        InternalError ex = new InternalError("Internal error");
+
+        // Act
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response =
+                globalExceptionHandler.handleInternalError(ex);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertEquals("Internal error", response.getBody().getMessage());
+    }
+
+    @Test
+    void handleClientTimeoutException_ShouldReturnGatewayTimeout() {
+        // Arrange
+        ClientTimeoutException ex = new ClientTimeoutException("Timeout");
+
+        // Act
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response =
+                globalExceptionHandler.handleClientTimeoutException(ex);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(HttpStatus.GATEWAY_TIMEOUT, response.getStatusCode());
+        assertEquals("Timeout", response.getBody().getMessage());
+    }
+
+    @Test
+    void handleConstraintViolationException_ShouldReturnBadRequest_WithoutConstraintViolationMessages() {
+        // Arrange
+        ConstraintViolationException ex = new ConstraintViolationException("Error", Set.of());
+
+        // Act
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response =
+                globalExceptionHandler.handleConstraintViolationException(ex);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Error", response.getBody().getMessage());
+    }
+
+    @Test
+    void handleConstraintViolationException_ShouldReturnBadRequest_WithConstraintViolationMessages() {
+        // Arrange
+        ConstraintViolation<?> mockViolation = mock(ConstraintViolation.class);
+        when(mockViolation.getMessage()).thenReturn("Violation message");
+        ConstraintViolationException ex = new ConstraintViolationException("Error", Set.of(mockViolation));
+
+        // Act
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response =
+                globalExceptionHandler.handleConstraintViolationException(ex);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Violation message", response.getBody().getMessage());
     }
 }

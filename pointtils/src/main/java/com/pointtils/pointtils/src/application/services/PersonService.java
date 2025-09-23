@@ -11,6 +11,7 @@ import com.pointtils.pointtils.src.infrastructure.repositories.PersonRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +25,7 @@ import java.util.UUID;
 public class PersonService {
 
     private final PersonRepository personRepository;
+    private final PasswordEncoder passwordEncoder;
     private final PersonResponseMapper personResponseMapper;
 
     public PersonDTO registerPerson(PersonCreationRequestDTO dto) {
@@ -31,7 +33,7 @@ public class PersonService {
 
         person.setId(person.getId());
         person.setEmail(dto.getEmail());
-        person.setPassword(dto.getPassword());
+        person.setPassword(passwordEncoder.encode(dto.getPassword()));
         person.setPhone(dto.getPhone());
         person.setPicture(dto.getPicture());
         person.setStatus(UserStatus.ACTIVE);
