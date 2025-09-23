@@ -28,6 +28,6 @@ public class ScheduleListRequestDTO {
 
     private UUID interpreterId;
     private DayOfWeek day;
-    // private LocalTime dateFrom;
-    // private LocalTime dateTo;
+    private LocalTime dateFrom;
+    private LocalTime dateTo;
 }
