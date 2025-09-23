@@ -26,7 +26,11 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -150,6 +154,39 @@ class InterpreterControllerTest {
                 .andExpect(jsonPath("$.data.professional_data.image_rights").value(true))
                 .andExpect(jsonPath("$.data.professional_data.modality").value("presencial"))
                 .andExpect(jsonPath("$.data.professional_data.description").value("Intérprete experiente em LIBRAS"));
+    }
+
+    @Test
+    @DisplayName("Deve encontrar intérprete por ID com sucesso")
+    void deveBuscarInterpreterPorIdComSucesso() throws Exception {
+        // Arrange
+        UUID interpreterId = UUID.randomUUID();
+        InterpreterResponseDTO mockResponse = createMockResponse();
+        when(interpreterService.findById(interpreterId)).thenReturn(mockResponse);
+
+        // Act & Assert
+        mockMvc.perform(get("/v1/interpreters/{interpreterId}", interpreterId)
+                        .with(user("testuser").roles("USER"))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Intérprete encontrado com sucesso"))
+                .andExpect(jsonPath("$.data.id").exists())
+                .andExpect(jsonPath("$.data.email").value("interpreter@exemplo.com"));
+    }
+
+    @Test
+    @DisplayName("Deve deletar intérprete por ID com sucesso")
+    void deveDeletarInterpreterPorIdComSucesso() throws Exception {
+        // Arrange
+        UUID interpreterId = UUID.randomUUID();
+        doNothing().when(interpreterService).delete(interpreterId);
+
+        // Act & Assert
+        mockMvc.perform(delete("/v1/interpreters/{interpreterId}", interpreterId)
+                        .with(user("testuser").roles("USER"))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
     }
 
     private InterpreterBasicRequestDTO createValidBasicRequest() {

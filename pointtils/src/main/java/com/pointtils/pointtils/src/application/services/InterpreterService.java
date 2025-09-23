@@ -101,6 +101,7 @@ public class InterpreterService {
         if (requestDto.getGender() != null) {
             interpreter.setGender(Gender.fromString(requestDto.getGender()));
         }
+        // TODO - atualizar foto de perfil
     }
 
     private void updateProfessionalPatchRequest(ProfessionalPatchRequestDTO dto, Interpreter interpreter) {
