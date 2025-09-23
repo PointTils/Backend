@@ -4,7 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pointtils.pointtils.src.application.dto.LocationDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.ProfessionalPatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataBasicRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ProfessionalDataResponseDTO;
 import com.pointtils.pointtils.src.application.services.InterpreterService;
@@ -125,7 +126,7 @@ class InterpreterControllerTest {
         UUID interpreterId = UUID.randomUUID();
         InterpreterPatchRequestDTO patchRequest = new InterpreterPatchRequestDTO();
 
-        ProfessionalPatchRequestDTO professionalData = ProfessionalPatchRequestDTO.builder()
+        ProfessionalDataPatchRequestDTO professionalData = ProfessionalDataPatchRequestDTO.builder()
                 .cnpj("12345678000195")
                 .minValue(new BigDecimal("100.00"))
                 .maxValue(new BigDecimal("500.00"))
@@ -217,7 +218,7 @@ class InterpreterControllerTest {
         request.setBirthday(LocalDate.of(1990, 1, 1));
         request.setCpf("12345678901");
         request.setPicture("picture_url");
-        request.setCnpj("12345678000195");
+        request.setProfessionalData(new ProfessionalDataBasicRequestDTO("12345678000195"));
         return request;
     }
 

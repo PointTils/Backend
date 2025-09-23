@@ -38,5 +38,5 @@ public class InterpreterPatchRequestDTO {
 
     @Valid
     @JsonProperty("professional_data")
-    private ProfessionalPatchRequestDTO professionalData;
+    private ProfessionalDataPatchRequestDTO professionalData;
 }

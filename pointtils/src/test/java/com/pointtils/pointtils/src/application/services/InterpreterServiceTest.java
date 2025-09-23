@@ -3,7 +3,8 @@ package com.pointtils.pointtils.src.application.services;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.LocationRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.ProfessionalPatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataBasicRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
 import com.pointtils.pointtils.src.application.mapper.InterpreterResponseMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
@@ -204,7 +205,7 @@ class InterpreterServiceTest {
         request.setBirthday(LocalDate.of(1990, 1, 1));
         request.setCpf("12345678901");
         request.setPicture("picture_url");
-        request.setCnpj("12345678000195");
+        request.setProfessionalData(new ProfessionalDataBasicRequestDTO("12345678000195"));
         return request;
     }
 
@@ -226,8 +227,8 @@ class InterpreterServiceTest {
         return requestDTO;
     }
 
-    private ProfessionalPatchRequestDTO createValidProfessionalDataPatchRequest() {
-        ProfessionalPatchRequestDTO professionalData = new ProfessionalPatchRequestDTO();
+    private ProfessionalDataPatchRequestDTO createValidProfessionalDataPatchRequest() {
+        ProfessionalDataPatchRequestDTO professionalData = new ProfessionalDataPatchRequestDTO();
         professionalData.setCnpj("98765432000196");
         professionalData.setDescription("Teste");
         professionalData.setImageRights(Boolean.FALSE);

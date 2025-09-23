@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,9 +16,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProfessionalPatchRequestDTO {
+public class ProfessionalDataPatchRequestDTO {
 
     @Pattern(regexp = "^\\d{14}$", message = "CNPJ precisa ter 14 dígitos")
+    @Size(min = 14, max = 14, message = "CNPJ deve ter exatamente 14 digitos")
     private String cnpj;
 
     @DecimalMin(value = "0.0", message = "Valor mínimo precisa ser positivo")

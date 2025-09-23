@@ -3,7 +3,7 @@ package com.pointtils.pointtils.src.application.services;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.LocationRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.ProfessionalPatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
 import com.pointtils.pointtils.src.application.mapper.InterpreterResponseMapper;
 import com.pointtils.pointtils.src.application.mapper.LocationMapper;
@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -44,7 +45,7 @@ public class InterpreterService {
                 .gender(Gender.fromString(request.getGender()))
                 .birthday(request.getBirthday())
                 .cpf(request.getCpf())
-                .cnpj(request.getCnpj())
+                .cnpj(Objects.nonNull(request.getProfessionalData()) ? request.getProfessionalData().getCnpj() : null)
                 .rating(BigDecimal.ZERO)
                 .minValue(BigDecimal.ZERO)
                 .maxValue(BigDecimal.ZERO)
@@ -104,7 +105,7 @@ public class InterpreterService {
         // TODO - atualizar foto de perfil
     }
 
-    private void updateProfessionalPatchRequest(ProfessionalPatchRequestDTO dto, Interpreter interpreter) {
+    private void updateProfessionalPatchRequest(ProfessionalDataPatchRequestDTO dto, Interpreter interpreter) {
         if (dto == null) {
             return;
         }

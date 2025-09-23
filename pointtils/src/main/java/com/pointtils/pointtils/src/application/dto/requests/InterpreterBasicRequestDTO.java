@@ -1,5 +1,7 @@
 package com.pointtils.pointtils.src.application.dto.requests;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -43,9 +45,9 @@ public class InterpreterBasicRequestDTO {
     @Size(min = 11, max = 11, message = "CPF deve ter exatamente 11 digitos")
     private String cpf;
 
-    @Pattern(regexp = "^\\d{14}$", message = "CNPJ precisa ter 14 dígitos")
-    @Size(min = 14, max = 14, message = "CNPJ deve ter exatamente 14 digitos")
-    private String cnpj;
-
     private String picture;
+
+    @Valid
+    @JsonProperty("professional_data")
+    private ProfessionalDataBasicRequestDTO professionalData;
 }
