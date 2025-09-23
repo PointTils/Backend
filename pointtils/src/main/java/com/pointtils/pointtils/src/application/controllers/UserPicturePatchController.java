@@ -6,17 +6,17 @@ import org.springframework.http.ResponseEntity;
 
 import com.pointtils.pointtils.src.application.dto.requests.UserPicturePatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.UserResponseDTO;
-import com.pointtils.pointtils.src.application.services.UserService;
+import com.pointtils.pointtils.src.application.services.UserPicturePatchService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.HttpStatus;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("v1/users")
 @RequiredArgsConstructor
 public class UserController {
 
-    private final UserService userService;
+    private final UserPicturePatchService userService;
 
     @PatchMapping(value = "/{id}/picture", consumes = "multipart/form-data")
     public ResponseEntity<?> uploadPicture(
