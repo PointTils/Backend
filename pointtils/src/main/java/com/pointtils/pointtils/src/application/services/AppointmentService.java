@@ -1,10 +1,19 @@
 package com.pointtils.pointtils.src.application.services;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Service;
 
+import com.pointtils.pointtils.src.application.dto.requests.AppointmentPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.AppointmentRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.AppointmentResponseDTO;
 import com.pointtils.pointtils.src.application.mapper.AppointmentMapper;
+import com.pointtils.pointtils.src.core.domain.entities.Appointment;
+import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentModality;
+import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentStatus;
 import com.pointtils.pointtils.src.infrastructure.repositories.AppointmentRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
@@ -26,10 +35,82 @@ public class AppointmentService {
         var user = userRepository.findById(dto.getUserId())
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + dto.getUserId()));
 
+        if (dto.getStatus() == null || dto.getStatus().isBlank()) {
+            dto.setStatus("pending");
+        }
         var appointment = AppointmentMapper.toDomain(dto, interpreter, user);
 
         var savedAppointment = appointmentRepository.save(appointment);
         
         return AppointmentMapper.toResponseDTO(savedAppointment);
+    }
+
+    public List<AppointmentResponseDTO> findAll() {
+        return appointmentRepository.findAll().stream()
+                .map(AppointmentMapper::toResponseDTO)
+                .toList();
+    }
+
+    public AppointmentResponseDTO findById(UUID id) {
+        Appointment appointment = appointmentRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Appointment not found with id: " + id));
+        return AppointmentMapper.toResponseDTO(appointment);
+    }
+
+    public AppointmentResponseDTO updatePartial(UUID id, AppointmentPatchRequestDTO dto) {
+        Appointment appointment = appointmentRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Appointment not found with id: " + id));
+
+        if (dto.getUf() != null) appointment.setUf(dto.getUf());
+        if (dto.getCity() != null) appointment.setCity(dto.getCity());
+    if (dto.getModality() != null) appointment.setModality(AppointmentModality.fromString(dto.getModality()));
+        if (dto.getDate() != null) appointment.setDate(dto.getDate());
+        if (dto.getDescription() != null) appointment.setDescription(dto.getDescription());
+        if (dto.getStatus() != null) appointment.setStatus(AppointmentStatus.fromString(dto.getStatus()));
+    if (dto.getNeighborhood() != null) appointment.setNeighborhood(dto.getNeighborhood());
+    if (dto.getStreet() != null) appointment.setStreet(dto.getStreet());
+    if (dto.getStreetNumber() != null) appointment.setStreetNumber(dto.getStreetNumber());
+    if (dto.getAddressDetails() != null) appointment.setAddressDetails(dto.getAddressDetails());
+        if (dto.getInterpreterId() != null) {
+            var interpreter = interpreterRepository.findById(dto.getInterpreterId())
+                    .orElseThrow(() -> new EntityNotFoundException("Interpreter not found with id: " + dto.getInterpreterId()));
+            appointment.setInterpreter(interpreter);
+        }
+        if (dto.getUserId() != null) {
+            var user = userRepository.findById(dto.getUserId())
+                    .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + dto.getUserId()));
+            appointment.setUser(user);
+        }
+        if (dto.getStartTime() != null) appointment.setStartTime(dto.getStartTime());
+        if (dto.getEndTime() != null) appointment.setEndTime(dto.getEndTime());
+
+        Appointment saved = appointmentRepository.save(appointment);
+        return AppointmentMapper.toResponseDTO(saved);
+    }
+
+    public void delete(UUID id) {
+        if (!appointmentRepository.existsById(id)) {
+            throw new EntityNotFoundException("Appointment not found with id: " + id);
+        }
+        appointmentRepository.deleteById(id);
+    }
+
+    /*Testar! */
+    public List<AppointmentResponseDTO> searchAppointments(UUID interpreterId, UUID userId, String status, String modality, LocalDateTime fromDateTime) {
+        List<Appointment> appointments = appointmentRepository.findAll();
+        
+        return appointments.stream()
+                .filter(appointment -> interpreterId == null || appointment.getInterpreter().getId().equals(interpreterId))
+                .filter(appointment -> userId == null || appointment.getUser().getId().equals(userId))
+                .filter(appointment -> status == null || appointment.getStatus().equals(AppointmentStatus.fromString(status)))
+                .filter(appointment -> modality == null || appointment.getModality().equals(AppointmentModality.fromString(modality)))
+                .filter(appointment -> fromDateTime == null || isAfterDateTime(appointment, fromDateTime))
+                .map(AppointmentMapper::toResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    private boolean isAfterDateTime(Appointment appointment, LocalDateTime fromDateTime) {
+        LocalDateTime appointmentDateTime = LocalDateTime.of(appointment.getDate(), appointment.getStartTime());
+        return appointmentDateTime.isAfter(fromDateTime);
     }
 }

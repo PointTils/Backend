@@ -45,6 +45,18 @@ public class Appointment {
     @Column(name = "city", length = 255, nullable = false)
     private String city;
 
+    @Column(name = "neighborhood")
+    private String neighborhood;
+
+    @Column(name = "street")
+    private String street;
+
+    @Column(name = "street_number")
+    private Integer streetNumber;
+
+    @Column(name = "address_details")
+    private String addressDetails;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "modality", nullable = false)
     private AppointmentModality modality;

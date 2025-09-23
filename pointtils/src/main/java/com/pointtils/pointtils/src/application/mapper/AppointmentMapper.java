@@ -14,6 +14,10 @@ public class AppointmentMapper {
         return AppointmentRequestDTO.builder()
                 .uf(appointament.getUf())
                 .city(appointament.getCity())
+                .neighborhood(appointament.getNeighborhood())
+                .street(appointament.getStreet())
+                .streetNumber(appointament.getStreetNumber())
+                .addressDetails(appointament.getAddressDetails())
                 .modality(appointament.getModality().name())
                 .date(appointament.getDate())
                 .description(appointament.getDescription())
@@ -26,13 +30,17 @@ public class AppointmentMapper {
     }
 
     public static Appointment toDomain(AppointmentRequestDTO dto, Interpreter interpreter, User user) {
-        return Appointment.builder()
+    return Appointment.builder()
                 .uf(dto.getUf())
                 .city(dto.getCity())
+        .neighborhood(dto.getNeighborhood())
+        .street(dto.getStreet())
+        .streetNumber(dto.getStreetNumber())
+        .addressDetails(dto.getAddressDetails())
                 .modality(AppointmentModality.fromString(dto.getModality()))
                 .date(dto.getDate())
                 .description(dto.getDescription())
-                .status(AppointmentStatus.fromString(dto.getStatus()))
+        .status(AppointmentStatus.fromString(dto.getStatus()))
                 .interpreter(interpreter)
                 .user(user)
                 .startTime(dto.getStartTime())
@@ -41,9 +49,14 @@ public class AppointmentMapper {
     }
 
     public static AppointmentResponseDTO toResponseDTO(Appointment appointment) {
-        return AppointmentResponseDTO.builder()
-                .uf(appointment.getUf())
+    return AppointmentResponseDTO.builder()
+        .id(appointment.getId())
+        .uf(appointment.getUf())
                 .city(appointment.getCity())
+        .neighborhood(appointment.getNeighborhood())
+        .street(appointment.getStreet())
+        .streetNumber(appointment.getStreetNumber())
+        .addressDetails(appointment.getAddressDetails())
                 .modality(appointment.getModality().name())
                 .date(appointment.getDate().toString())
                 .description(appointment.getDescription())
