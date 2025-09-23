@@ -1,10 +1,10 @@
 package com.pointtils.pointtils.src.application.controllers;
 
-import com.pointtils.pointtils.src.application.dto.requests.DeafPatchRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.DeafRequestDTO;
+import com.pointtils.pointtils.src.application.dto.PersonCreationDTO;
+import com.pointtils.pointtils.src.application.dto.PersonDTO;
+import com.pointtils.pointtils.src.application.dto.requests.PersonPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ApiResponse;
-import com.pointtils.pointtils.src.application.dto.responses.DeafResponseDTO;
-import com.pointtils.pointtils.src.application.services.DeafRegisterService;
+import com.pointtils.pointtils.src.application.services.PersonService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,53 +26,53 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/v1/deaf-users")
+@RequestMapping("/v1/person")
 @AllArgsConstructor
-@Tag(name = "Deaf Controller", description = "Endpoints para gerenciamento de usuários surdos")
-public class DeafController {
-    private final DeafRegisterService service;
+@Tag(name = "Person Controller", description = "Endpoints para gerenciamento de usuários surdos")
+public class PersonController {
+    private final PersonService service;
 
     @PostMapping("/register")
     @Operation(summary = "Cadastra um usuário surdo")
-    public ResponseEntity<ApiResponse<DeafResponseDTO>> createUser(@Valid @RequestBody DeafRequestDTO dto) {
-        DeafResponseDTO created = service.registerPerson(dto);
-        ApiResponse<DeafResponseDTO> response = ApiResponse.success("Usuário surdo cadastrado com sucesso", created);
+    public ResponseEntity<ApiResponse<PersonDTO>> createUser(@Valid @RequestBody PersonCreationDTO dto) {
+        PersonDTO created = service.registerPerson(dto);
+        ApiResponse<PersonDTO> response = ApiResponse.success("Usuário surdo cadastrado com sucesso", created);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Busca todos os usuários surdos")
-    public ResponseEntity<ApiResponse<List<DeafResponseDTO>>> findAll() {
-        List<DeafResponseDTO> deafUsers = service.findAll();
-        ApiResponse<List<DeafResponseDTO>> response =
-                ApiResponse.success("Usuários surdos encontrados com sucesso", deafUsers);
+    public ResponseEntity<ApiResponse<List<PersonDTO>>> findAll() {
+        List<PersonDTO> personUsers = service.findAll();
+        ApiResponse<List<PersonDTO>> response =
+                ApiResponse.success("Usuários surdos encontrados com sucesso", personUsers);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Busca um usuário surdo por ID")
-    public ResponseEntity<ApiResponse<DeafResponseDTO>> findById(@PathVariable UUID id) {
-        DeafResponseDTO deaf = service.findById(id);
-        return ResponseEntity.ok(ApiResponse.success("Usuário surdo encontrado com sucesso", deaf));
+    public ResponseEntity<ApiResponse<PersonDTO>> findById(@PathVariable UUID id) {
+        PersonDTO person = service.findById(id);
+        return ResponseEntity.ok(ApiResponse.success("Usuário surdo encontrado com sucesso", person));
     }
 
     @PatchMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Atualiza parcialmente um usuário surdo por ID")
-    public ResponseEntity<ApiResponse<DeafResponseDTO>> updateUser(@PathVariable UUID id,
-                                                                   @RequestBody @Valid DeafPatchRequestDTO dto) {
-        DeafResponseDTO updated = service.updatePartial(id, dto);
+    public ResponseEntity<ApiResponse<PersonDTO>> updateUser(@PathVariable UUID id,
+                                                             @RequestBody @Valid PersonPatchRequestDTO dto) {
+        PersonDTO updated = service.updatePartial(id, dto);
         return ResponseEntity.ok(ApiResponse.success("Usuário surdo atualizado com sucesso", updated));
     }
 
     @PutMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Atualiza um usuário surdo por ID")
-    public ResponseEntity<ApiResponse<DeafResponseDTO>> updateComplete(@PathVariable UUID id,
-                                                                       @RequestBody @Valid DeafRequestDTO dto) {
-        DeafResponseDTO updated = service.updateComplete(id, dto);
+    public ResponseEntity<ApiResponse<PersonDTO>> updateComplete(@PathVariable UUID id,
+                                                                 @RequestBody @Valid PersonDTO dto) {
+        PersonDTO updated = service.updateComplete(id, dto);
         return ResponseEntity.ok(ApiResponse.success("Usuário surdo atualizado com sucesso", updated));
     }
 

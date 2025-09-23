@@ -53,11 +53,16 @@ public class JwtController {
     @PostMapping("/refresh-token")
     @Operation(summary = "Gera um novo access token usando um refresh token válido")
     public ResponseEntity<RefreshTokenResponseDTO> refreshToken(@RequestBody RefreshTokenRequestDTO request) {
-        // Para simplificar, vamos assumir que qualquer refresh token válido pode gerar
-        // um novo access token
-        // Em uma implementação real, você validaria o refresh token e extrairia o
-        // subject dele
-        String username = "user"; // Em produção, extrair do refresh token
+        // Validar o refresh token e extrair o subject (username) dele
+        if (request.getRefreshToken() == null || request.getRefreshToken().isBlank()) {
+            throw new com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException("Refresh token não fornecido");
+        }
+        
+        if (!jwtService.isTokenValid(request.getRefreshToken())) {
+            throw new com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException("Refresh token inválido ou expirado");
+        }
+        
+        String username = jwtService.getEmailFromToken(request.getRefreshToken());
         String newAccessToken = jwtService.generateToken(username);
         String newRefreshToken = jwtService.generateRefreshToken(username);
 

@@ -38,14 +38,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
-        if (memoryBlacklistService.isBlacklisted(authHeader.substring(7))) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Token inválido");
-            return;
+        
+        // Extrair token do header uma vez para evitar duplicação
+        final String token = authHeader.substring(7);
+        
+        // Verificar se o token está na blacklist apenas se não for uma requisição de logout
+        String requestURI = request.getRequestURI();
+        if (!isLogoutEndpoint(requestURI)) {
+            if (memoryBlacklistService.isBlacklisted(token)) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write("Token inválido");
+                return;
+            }
         }
 
         try {
-            final String jwt = authHeader.substring(7);
+            final String jwt = token;
 
             if (jwtService.isTokenExpired(jwt)) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -62,5 +70,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("Unauthorized.");
         }
+    }
+
+    /**
+     * Verifica se a URI da requisição é um endpoint de logout
+     * Usa uma abordagem mais robusta para evitar vulnerabilidades de comparação hardcoded
+     * e previne ataques de ReDoS (Regular Expression Denial of Service)
+     */
+    private boolean isLogoutEndpoint(String requestURI) {
+        // Lista de endpoints de logout que devem permitir tokens blacklisted
+        // Substitui a regex vulnerável por uma verificação mais segura
+        return requestURI != null && (
+            requestURI.equals("/v1/auth/logout") ||
+            requestURI.startsWith("/v1/auth/logout/") ||
+            requestURI.contains("/logout")
+        );
     }
 }

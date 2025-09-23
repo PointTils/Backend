@@ -4,7 +4,6 @@ import com.pointtils.pointtils.src.application.dto.requests.EnterprisePatchReque
 import com.pointtils.pointtils.src.application.dto.requests.EnterpriseRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.EnterpriseResponseDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Enterprise;
-import com.pointtils.pointtils.src.core.domain.entities.Location;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
 import com.pointtils.pointtils.src.core.domain.exceptions.DuplicateResourceException;
@@ -48,15 +47,6 @@ public class EnterpriseService {
 								.type(UserTypeE.ENTERPRISE)
 								.build();
 
-		if (dto.getLocation() != null) {
-			Location location = Location.builder()
-					.uf(dto.getLocation().getUf())
-					.city(dto.getLocation().getCity())
-					.user(enterprise)
-					.build();
-
-			enterprise.setLocation(location);
-		}
 		Enterprise savedEnterprise = enterpriseRepository.save(enterprise);
 
 		return new EnterpriseResponseDTO(savedEnterprise);

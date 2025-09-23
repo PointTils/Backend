@@ -1,6 +1,6 @@
 package com.pointtils.pointtils.src.application.services;
 
-import com.pointtils.pointtils.src.application.dto.LocationDTO;
+import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.PersonalPatchRequestDTO;
@@ -11,6 +11,7 @@ import com.pointtils.pointtils.src.application.mapper.InterpreterResponseMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
 import com.pointtils.pointtils.src.core.domain.entities.Location;
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
+import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
@@ -33,7 +34,8 @@ public class InterpreterRegisterService {
     private final PasswordEncoder passwordEncoder;
     private final InterpreterResponseMapper responseMapper;
 
-    public InterpreterResponseDTO register(InterpreterRequestDTO request) {
+
+    public InterpreterResponseDTO registerBasic(InterpreterBasicRequestDTO request) {
         Interpreter interpreter = Interpreter.builder()
                 .email(request.getPersonalData().getEmail())
                 .password(passwordEncoder.encode(request.getPersonalData().getPassword()))
@@ -45,23 +47,21 @@ public class InterpreterRegisterService {
                 .gender(Gender.fromString(request.getPersonalData().getGender()))
                 .birthday(request.getPersonalData().getBirthday())
                 .cpf(request.getPersonalData().getCpf())
-                .cnpj(request.getProfessionalData().getCnpj())
+                .cnpj(null)
                 .rating(BigDecimal.ZERO)
-                .minValue(request.getProfessionalData().getMinValue())
-                .maxValue(request.getProfessionalData().getMaxValue())
-                .imageRights(request.getProfessionalData().getImageRights())
-                .modality(InterpreterMapper.toInterpreterModality(request.getProfessionalData().getModality()))
-                .description(request.getProfessionalData().getDescription())
+                .minValue(BigDecimal.ZERO)
+                .maxValue(BigDecimal.ZERO)
+                .imageRights(false)
+                .modality(InterpreterModality.ALL)
+                .description("")
                 .build();
 
         if (request.getLocation() != null) {
             Location location = Location.builder()
                     .uf(request.getLocation().getUf())
                     .city(request.getLocation().getCity())
-                    .user(interpreter)
+                    .interpreter(interpreter)
                     .build();
-
-            interpreter.setLocation(location);
         }
 
         Interpreter savedInterpreter = repository.save(interpreter);
@@ -114,7 +114,7 @@ public class InterpreterRegisterService {
             interpreter.setDescription(professionalData.getDescription());
         }
 
-        updateLocation(dto.getLocation(), interpreter);
+        // updateLocation(dto.getLocation(), interpreter);
 
         Interpreter updatedInterpreter = repository.save(interpreter);
         return responseMapper.toResponseDTO(updatedInterpreter);
@@ -124,7 +124,7 @@ public class InterpreterRegisterService {
         Interpreter interpreter = findInterpreterById(id);
         updatePersonalPatchRequest(dto.getPersonalData(), interpreter);
         updateProfessionalPatchRequest(dto.getProfessionalData(), interpreter);
-        updateLocation(dto.getLocation(), interpreter);
+        // updateLocation(dto.getLocation(), interpreter);
 
         Interpreter updatedInterpreter = repository.save(interpreter);
         return responseMapper.toResponseDTO(updatedInterpreter);
@@ -178,19 +178,19 @@ public class InterpreterRegisterService {
         }
     }
 
-    private void updateLocation(LocationDTO locationDTO, Interpreter interpreter) {
-        if (locationDTO == null) {
-            return;
-        }
+    // private void updateLocation(LocationDTO locationDTO, Interpreter interpreter) {
+    //     if (locationDTO == null) {
+    //         return;
+    //     }
 
-        Location location = interpreter.getLocation();
-        if (location == null) {
-            location = Location.builder().user(interpreter).build();
-        }
-        location.setUf(locationDTO.getUf());
-        location.setCity(locationDTO.getCity());
-        interpreter.setLocation(location);
-    }
+    //     Location location = interpreter.getLocation();
+    //     if (location == null) {
+    //         location = Location.builder().user(interpreter).build();
+    //     }
+    //     location.setUf(locationDTO.getUf());
+    //     location.setCity(locationDTO.getCity());
+    //     interpreter.setLocation(location);
+    // }
 
     private Interpreter findInterpreterById(UUID id) {
         return repository.findById(id)
