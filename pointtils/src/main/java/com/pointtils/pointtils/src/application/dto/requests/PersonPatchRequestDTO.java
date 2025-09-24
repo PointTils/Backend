@@ -2,6 +2,7 @@ package com.pointtils.pointtils.src.application.dto.requests;
 
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,10 +23,11 @@ public class PersonPatchRequestDTO {
 
     private LocalDate birthday;
 
-    @Email(message = "Formato de e-mail inválido")
+    @Email(message = "Email inválido")
     private String email;
 
     @Size(max = 11, message = "O telefone deve ter no máximo 11 dígitos")
+    @Pattern(regexp = "^\\d+$", message = "Número de telefone inválido")
     private String phone;
 
     private String picture;

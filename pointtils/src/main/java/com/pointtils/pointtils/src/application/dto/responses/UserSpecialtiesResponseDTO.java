@@ -1,7 +1,8 @@
-package com.pointtils.pointtils.src.application.dto;
+package com.pointtils.pointtils.src.application.dto.responses;
 
 import java.util.List;
 
+import com.pointtils.pointtils.src.application.dto.UserSpecialtyDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

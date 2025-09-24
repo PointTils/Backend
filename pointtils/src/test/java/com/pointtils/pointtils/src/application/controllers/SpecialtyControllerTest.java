@@ -1,7 +1,7 @@
 package com.pointtils.pointtils.src.application.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pointtils.pointtils.src.application.dto.UpdateSpecialtyRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.UpdateSpecialtyRequestDTO;
 import com.pointtils.pointtils.src.application.services.SpecialtyService;
 import com.pointtils.pointtils.src.core.domain.entities.Specialty;
 import com.pointtils.pointtils.src.infrastructure.configs.GlobalExceptionHandler;
@@ -66,8 +66,8 @@ class SpecialtyControllerTest {
         // Act & Assert
         mockMvc.perform(get("/v1/specialties"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(specialtyId.toString()))
-                .andExpect(jsonPath("$[0].name").value("Test Specialty"));
+                .andExpect(jsonPath("$.data[0].id").value(specialtyId.toString()))
+                .andExpect(jsonPath("$.data[0].name").value("Test Specialty"));
 
         verify(specialtyService).getAllSpecialties();
     }
@@ -80,8 +80,8 @@ class SpecialtyControllerTest {
         // Act & Assert
         mockMvc.perform(get("/v1/specialties/{id}", specialtyId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(specialtyId.toString()))
-                .andExpect(jsonPath("$.name").value("Test Specialty"));
+                .andExpect(jsonPath("$.data.id").value(specialtyId.toString()))
+                .andExpect(jsonPath("$.data.name").value("Test Specialty"));
 
         verify(specialtyService).getSpecialtyById(specialtyId);
     }
@@ -108,8 +108,8 @@ class SpecialtyControllerTest {
         mockMvc.perform(get("/v1/specialties/search")
                         .param("name", "test"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(specialtyId.toString()))
-                .andExpect(jsonPath("$[0].name").value("Test Specialty"));
+                .andExpect(jsonPath("$.data[0].id").value(specialtyId.toString()))
+                .andExpect(jsonPath("$.data[0].name").value("Test Specialty"));
 
         verify(specialtyService).searchSpecialtiesByName("test");
     }
@@ -137,8 +137,8 @@ class SpecialtyControllerTest {
         mockMvc.perform(post("/v1/specialties")
                         .param("name", "New Specialty"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(specialtyId.toString()))
-                .andExpect(jsonPath("$.name").value("Test Specialty"));
+                .andExpect(jsonPath("$.data.id").value(specialtyId.toString()))
+                .andExpect(jsonPath("$.data.name").value("Test Specialty"));
 
         verify(specialtyService).createSpecialty("New Specialty");
     }
@@ -152,8 +152,8 @@ class SpecialtyControllerTest {
         mockMvc.perform(put("/v1/specialties/{id}", specialtyId)
                         .param("name", "Updated Name"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(specialtyId.toString()))
-                .andExpect(jsonPath("$.name").value("Test Specialty"));
+                .andExpect(jsonPath("$.data.id").value(specialtyId.toString()))
+                .andExpect(jsonPath("$.data.name").value("Test Specialty"));
 
         verify(specialtyService).updateSpecialty(specialtyId, "Updated Name");
     }
@@ -171,8 +171,8 @@ class SpecialtyControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(specialtyId.toString()))
-                .andExpect(jsonPath("$.name").value("Test Specialty"));
+                .andExpect(jsonPath("$.data.id").value(specialtyId.toString()))
+                .andExpect(jsonPath("$.data.name").value("Test Specialty"));
 
         verify(specialtyService).partialUpdateSpecialty(specialtyId, "Updated Name");
     }

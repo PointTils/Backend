@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/v1/enterprise-users")
+@RequestMapping("/v1/enterprises")
 @AllArgsConstructor
 @Tag(name = "Enterprise Controller", description = "Endpoints para gerenciamento de usuários empresa")
 public class EnterpriseController {
@@ -58,10 +58,10 @@ public class EnterpriseController {
     @PatchMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Atualiza um usuário empresa por ID")
-    public ResponseEntity<EnterpriseResponseDTO> updateUser(@PathVariable UUID id,
-                                                            @RequestBody @Valid EnterprisePatchRequestDTO dto) {
+    public ResponseEntity<ApiResponse<EnterpriseResponseDTO>> updateUser(@PathVariable UUID id,
+                                                                         @RequestBody @Valid EnterprisePatchRequestDTO dto) {
         EnterpriseResponseDTO updated = service.patchEnterprise(id, dto);
-        return ResponseEntity.ok(updated);
+        return ResponseEntity.ok(ApiResponse.success("Empresa atualizada com sucesso", updated));
     }
 
     @DeleteMapping("/{id}")

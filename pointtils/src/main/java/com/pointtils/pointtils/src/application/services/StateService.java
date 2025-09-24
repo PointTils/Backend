@@ -1,7 +1,7 @@
 package com.pointtils.pointtils.src.application.services;
 
 import com.pointtils.pointtils.src.application.clients.IbgeClient;
-import com.pointtils.pointtils.src.application.dto.StateResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.StateResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

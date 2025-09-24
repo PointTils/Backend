@@ -1,4 +1,4 @@
-package com.pointtils.pointtils.src.application.dto;
+package com.pointtils.pointtils.src.application.dto.responses;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -10,9 +10,12 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CityIbgeResponseDTO {
+public class StateIbgeResponseDTO {
 
     private Long id;
+
+    @JsonProperty("sigla")
+    private String abbreviation;
 
     @JsonProperty("nome")
     private String name;
