@@ -1,7 +1,6 @@
 package com.pointtils.pointtils.src.application.services;
 
 import java.math.BigDecimal;
-import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -27,8 +26,8 @@ import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
-import com.pointtils.pointtils.src.core.domain.exceptions.InvalidFilterException;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
+import com.pointtils.pointtils.src.infrastructure.repositories.spec.InterpreterSpecification;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -89,50 +88,40 @@ public class InterpreterRegisterService {
     }
 
     public List<InterpreterResponseDTO> findAll(
-            InterpreterModality modality,
-            Gender gender,
+            String modality,
+            String gender,
             String city,
+            String uf,
             String neighborhood,
             String specialty,
-            String dateTimeStr) {
+            String availableDate) {
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-        LocalDateTime dateTime = LocalDateTime.parse(dateTimeStr, formatter);
-
-        DayOfWeek javaDay = dateTime.getDayOfWeek();
-        DaysOfWeek requestedDay = switch (javaDay) {
-            case MONDAY -> DaysOfWeek.MON;
-            case TUESDAY -> DaysOfWeek.TUE;
-            case WEDNESDAY -> DaysOfWeek.WEN;
-            case THURSDAY -> DaysOfWeek.THU;
-            case FRIDAY -> DaysOfWeek.FRI;
-            case SATURDAY -> DaysOfWeek.SAT;
-            case SUNDAY -> DaysOfWeek.SUN;
-        };
-
-        LocalTime requestedStart = dateTime.toLocalTime();
-        LocalTime requestedEnd = requestedStart.plusHours(1);
-
-        if (city != null && city.isBlank()) {
-            throw new InvalidFilterException("Filtros inválidos");
-        }
-        if (neighborhood != null && neighborhood.isBlank()) {
-            throw new InvalidFilterException("Filtros inválidos");
-        }
-        if (specialty != null && specialty.isBlank()) {
-            throw new InvalidFilterException("Filtros inválidos");
+        InterpreterModality modalityEnum = null;
+        if (modality != null) {
+            modalityEnum = InterpreterModality.valueOf(modality.toUpperCase());
         }
 
-        List<Interpreter> interpreters = repository.findAll(
-                modality,
-                gender,
-                city,
-                neighborhood,
-                specialty,
-                requestedDay,
-                requestedStart,
-                requestedEnd);
-        return interpreters.stream()
+        Gender genderEnum = null;
+        if (gender != null) {
+            genderEnum = Gender.valueOf(gender.toUpperCase());
+        }
+
+        DaysOfWeek dayOfWeek = null;
+        LocalTime requestedStart = null;
+        LocalTime requestedEnd = null;
+
+        if (availableDate != null) {
+            LocalDateTime dateTime = LocalDateTime.parse(availableDate,
+                    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+            dayOfWeek = DaysOfWeek.valueOf(dateTime.getDayOfWeek().name().substring(0, 3));
+            requestedStart = dateTime.toLocalTime();
+            requestedEnd = requestedStart.plusHours(1);
+        }
+
+        return repository.findAll(
+                InterpreterSpecification.filter(modalityEnum, uf, city, neighborhood, specialty, genderEnum, dayOfWeek,
+                        requestedStart, requestedEnd))
+                .stream()
                 .map(responseMapper::toResponseDTO)
                 .toList();
     }
