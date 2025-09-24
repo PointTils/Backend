@@ -8,10 +8,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.pointtils.pointtils.src.application.dto.LoginRequestDTO;
-import com.pointtils.pointtils.src.application.dto.LoginResponseDTO;
-import com.pointtils.pointtils.src.application.dto.RefreshTokenRequestDTO;
-import com.pointtils.pointtils.src.application.dto.RefreshTokenResponseDTO;
+import com.pointtils.pointtils.src.application.dto.requests.LoginRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.LoginResponseDTO;
+import com.pointtils.pointtils.src.application.dto.requests.RefreshTokenRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.RefreshTokenResponseDTO;
 import com.pointtils.pointtils.src.application.services.AuthService;
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
 import com.pointtils.pointtils.src.infrastructure.configs.LoginAttemptService;
@@ -50,8 +50,11 @@ public class AuthController {
 
     @PostMapping("/refresh")
     @Operation(summary = "Renova sessão de usuário")
-    public ResponseEntity<RefreshTokenResponseDTO> refreshToken(@RequestBody String token) {
-        RefreshTokenResponseDTO response = authService.refreshToken(token);
+    public ResponseEntity<RefreshTokenResponseDTO> refreshToken(@RequestBody RefreshTokenRequestDTO request) {
+        if (request.getRefreshToken() == null || request.getRefreshToken().isBlank()) {
+            throw new AuthenticationException("Refresh token não fornecido");
+        }
+        RefreshTokenResponseDTO response = authService.refreshToken(request.getRefreshToken());
         return ResponseEntity.ok(response);
     }
 

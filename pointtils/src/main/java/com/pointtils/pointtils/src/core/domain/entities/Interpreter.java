@@ -1,10 +1,12 @@
 package com.pointtils.pointtils.src.core.domain.entities;
 
 import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrimaryKeyJoinColumn;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -18,6 +20,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Entity
 @Table(name = "interpreter")
@@ -47,6 +50,9 @@ public class Interpreter extends Person {
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private InterpreterModality modality;
+
+    @OneToMany(mappedBy = "interpreter", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Location> locations;
 
     @Column(columnDefinition = "TEXT")
     private String description;

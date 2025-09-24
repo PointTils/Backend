@@ -39,10 +39,10 @@ public class Appointment {
     @Column(name = "id", updatable = false, nullable = false, columnDefinition = "uuid")
     private UUID id;
 
-    @Column(name = "UF", length = 2, nullable = false)
+    @Column(name = "UF", length = 2)
     private String uf;
 
-    @Column(name = "city", length = 255, nullable = false)
+    @Column(name = "city", length = 255)
     private String city;
 
     @Column(name = "neighborhood")

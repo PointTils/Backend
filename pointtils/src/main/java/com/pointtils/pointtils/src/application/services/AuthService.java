@@ -1,11 +1,9 @@
 package com.pointtils.pointtils.src.application.services;
-
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import com.pointtils.pointtils.src.application.dto.LoginResponseDTO;
-import com.pointtils.pointtils.src.application.dto.RefreshTokenResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.LoginResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.RefreshTokenResponseDTO;
 import com.pointtils.pointtils.src.application.dto.TokensDTO;
 import com.pointtils.pointtils.src.application.dto.UserDTO;
 import com.pointtils.pointtils.src.core.domain.entities.User;
@@ -59,11 +57,12 @@ public class AuthService {
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
 
         UserDTO userDTO = new UserDTO(
-                user.getId(),
-                user.getEmail(),
-                user.getDisplayName(),
-                user.getType().name(),
-                user.getStatus().name()
+        user.getId(), 
+        user.getEmail(),
+        user.getPhone(),
+        user.getPicture(),
+        user.getType(),
+        user.getStatus()
         );
 
         TokensDTO tokensDTO = new TokensDTO(
@@ -86,7 +85,7 @@ public class AuthService {
             throw new AuthenticationException("Refresh token não fornecido");
         }
 
-        if (jwtTokenProvider.isTokenExpired(token) || !jwtTokenProvider.validateToken(token)) {
+        if (!jwtTokenProvider.isTokenValid(token)) {
             throw new AuthenticationException("Refresh token inválido ou expirado");
         }
 
@@ -113,15 +112,18 @@ public class AuthService {
     }
 
     public Boolean logout(String accessToken, String refreshToken) {
-        if (!jwtTokenProvider.validateToken(accessToken) || jwtTokenProvider.isTokenExpired(accessToken)) {
+        if (!jwtTokenProvider.isTokenValid(accessToken)) {
             throw new AuthenticationException("Access token inválido ou expirado");
         }
-        if (!jwtTokenProvider.validateToken(refreshToken) || jwtTokenProvider.isTokenExpired(refreshToken)) {
+        if (!jwtTokenProvider.isTokenValid(refreshToken)) {
             throw new AuthenticationException("Refresh token inválido ou expirado");
         }
 
         memoryBlacklistService.addToBlacklist(accessToken);
+        memoryBlacklistService.addToBlacklist(refreshToken);
 
         return true;
     }
+
+
 }
