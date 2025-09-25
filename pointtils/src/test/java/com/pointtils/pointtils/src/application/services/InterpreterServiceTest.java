@@ -15,10 +15,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import static org.mockito.ArgumentMatchers.any;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
@@ -81,7 +83,7 @@ class InterpreterServiceTest {
         UUID id = UUID.randomUUID();
         Interpreter foundInterpreter = Interpreter.builder().id(id).build();
         InterpreterResponseDTO mappedResponse = InterpreterResponseDTO.builder().id(id).build();
-        when(repository.findAll()).thenReturn(List.of(foundInterpreter));
+        when(repository.findAll(any(Specification.class))).thenReturn(List.of(foundInterpreter));
         when(responseMapper.toResponseDTO(foundInterpreter)).thenReturn(mappedResponse);
 
         assertThat(service.findAll(
