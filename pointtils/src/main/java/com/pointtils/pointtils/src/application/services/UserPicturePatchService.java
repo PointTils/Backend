@@ -10,6 +10,7 @@ import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import java.io.IOException;
 import java.util.UUID;
+import jakarta.persistence.EntityNotFoundException;
 
 @Service
 @RequiredArgsConstructor
@@ -20,7 +21,7 @@ public class UserPicturePatchService {
 
     public UserResponseDTO updatePicture(UserPicturePatchRequestDTO request) throws IOException {
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
 
         String url = s3Service.uploadFile(request.getFile(), request.getUserId().toString());
         user.setPicture(url);

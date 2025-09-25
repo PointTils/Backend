@@ -17,7 +17,7 @@ import java.time.Instant;
 public class S3Service {
 
     private final S3Client s3Client;
-    private final String bucketName = "pointtils_api_tests"; //tem que trocar para o nosso bucket(não sei qual eh...)
+    private final String bucketName = "pointtils-api-tests-f28f947a";
 
     public String uploadFile(MultipartFile file, String userId) throws IOException {
         String key = "users/" + userId + "/" + Instant.now().toEpochMilli() + "-" + file.getOriginalFilename();
