@@ -1,10 +1,9 @@
 package com.pointtils.pointtils.src.application.dto.requests;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.pointtils.pointtils.src.application.dto.LocationDTO;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,26 +14,20 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class EnterprisePatchRequestDTO {
-	@JsonProperty("corporate_reason")
-	private String corporateReason;
 
-	@Pattern(regexp = "^\\d{14}$", message = "CNPJ precisa ter 14 dígitos")
-	private String cnpj;
-	
-	@Email(message = "Email inválido")
-	private String email;
+    @JsonProperty("corporate_reason")
+    private String corporateReason;
 
-	private String password;
+    @Pattern(regexp = "^\\d{14}$", message = "CNPJ precisa ter 14 dígitos")
+    @Size(min = 14, max = 14, message = "CNPJ deve ter exatamente 14 digitos")
+    private String cnpj;
 
-	@Pattern(regexp = "^\\d+$", message = "Número de telefone inválido")
-	private String phone;
+    @Email(message = "Email inválido")
+    private String email;
 
-	private String picture;
+    @Size(max = 11, message = "O telefone deve ter no máximo 11 dígitos")
+    @Pattern(regexp = "^\\d+$", message = "Número de telefone inválido")
+    private String phone;
 
-	private String status;
-
-	private String type;
-	
-	@Valid
-	private LocationDTO location;
+    private String picture;
 }

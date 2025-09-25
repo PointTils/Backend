@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 
 @Service
@@ -90,6 +89,29 @@ public class JwtService {
         try {
             Jwts.parserBuilder().setSigningKey(getSignInKey()).build().parseClaimsJws(token);
             return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Validates a token and checks if it's expired in a single operation.
+     * This avoids redundant token parsing that occurs when calling validateToken() and isTokenExpired() separately.
+     *
+     * @param token the JWT token to validate
+     * @return true if the token is valid and not expired, false otherwise
+     */
+    @SuppressWarnings("UseSpecificCatch")
+    public boolean isTokenValid(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(getSignInKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+            
+            // Check if token is expired
+            return !claims.getExpiration().before(new Date());
         } catch (Exception e) {
             return false;
         }

@@ -167,4 +167,95 @@ class JwtAuthenticationFilterTest {
         SecurityContextHolder.clearContext();
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
+
+    @Test
+    @DisplayName("Deve permitir token blacklisted em endpoint de logout exato")
+    void devePermitirTokenBlacklistedEmLogoutExato() throws ServletException, IOException {
+        // Arrange
+        String token = "blacklisted_token";
+        request.addHeader("Authorization", "Bearer " + token);
+        request.setRequestURI("/v1/auth/logout");
+        when(jwtService.isTokenExpired(token)).thenReturn(false);
+        when(jwtService.extractClaim(eq(token), any())).thenReturn("test@email.com");
+
+        // Act - Não deve verificar blacklist para endpoints de logout
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
+        // Assert - Deve processar normalmente mesmo com token blacklisted
+        verify(filterChain).doFilter(request, response);
+        assertEquals(200, response.getStatus());
+        assertNotNull(SecurityContextHolder.getContext().getAuthentication());
+    }
+
+    @Test
+    @DisplayName("Deve permitir token blacklisted em endpoint de logout com path adicional")
+    void devePermitirTokenBlacklistedEmLogoutComPath() throws ServletException, IOException {
+        // Arrange
+        String token = "blacklisted_token";
+        request.addHeader("Authorization", "Bearer " + token);
+        request.setRequestURI("/v1/auth/logout/123");
+        when(jwtService.isTokenExpired(token)).thenReturn(false);
+        when(jwtService.extractClaim(eq(token), any())).thenReturn("test@email.com");
+
+        // Act
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
+        // Assert
+        verify(filterChain).doFilter(request, response);
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    @DisplayName("Deve permitir token blacklisted em endpoint de logout com substring")
+    void devePermitirTokenBlacklistedEmLogoutComSubstring() throws ServletException, IOException {
+        // Arrange
+        String token = "blacklisted_token";
+        request.addHeader("Authorization", "Bearer " + token);
+        request.setRequestURI("/api/v1/auth/logout");
+        when(jwtService.isTokenExpired(token)).thenReturn(false);
+        when(jwtService.extractClaim(eq(token), any())).thenReturn("test@email.com");
+
+        // Act
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
+        // Assert
+        verify(filterChain).doFilter(request, response);
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    @DisplayName("Não deve permitir token blacklisted em endpoints que não são de logout")
+    void naoDevePermitirTokenBlacklistedEmEndpointsNaoLogout() throws ServletException, IOException {
+        // Arrange
+        String token = "blacklisted_token";
+        request.addHeader("Authorization", "Bearer " + token);
+        request.setRequestURI("/v1/auth/login");
+        when(memoryBlacklistService.isBlacklisted(token)).thenReturn(true);
+
+        // Act
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
+        // Assert - Deve bloquear token blacklisted em endpoints não-logout
+        verify(filterChain, never()).doFilter(any(), any());
+        assertEquals(401, response.getStatus());
+    }
+
+    @Test
+    @DisplayName("Deve processar normalmente endpoint de refresh token")
+    void deveProcessarNormalmenteEndpointRefresh() throws ServletException, IOException {
+        // Arrange
+        String token = "valid_token";
+        request.addHeader("Authorization", "Bearer " + token);
+        request.setRequestURI("/v1/auth/refresh");
+        when(memoryBlacklistService.isBlacklisted(token)).thenReturn(false);
+        when(jwtService.isTokenExpired(token)).thenReturn(false);
+        when(jwtService.extractClaim(eq(token), any())).thenReturn("test@email.com");
+
+        // Act
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
+        // Assert - Deve processar normalmente endpoint de refresh
+        verify(filterChain).doFilter(request, response);
+        assertEquals(200, response.getStatus());
+    }
 }

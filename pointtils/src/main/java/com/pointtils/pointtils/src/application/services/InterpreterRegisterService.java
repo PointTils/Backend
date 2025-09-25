@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -11,13 +12,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.pointtils.pointtils.src.application.dto.LocationDTO;
+import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.InterpreterRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.PersonalPatchRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.ProfessionalPatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.LocationRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.PersonPatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
-import com.pointtils.pointtils.src.application.mapper.InterpreterMapper;
 import com.pointtils.pointtils.src.application.mapper.InterpreterResponseMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
 import com.pointtils.pointtils.src.core.domain.entities.Location;
@@ -41,36 +41,26 @@ public class InterpreterRegisterService {
     private final PasswordEncoder passwordEncoder;
     private final InterpreterResponseMapper responseMapper;
 
-    public InterpreterResponseDTO register(InterpreterRequestDTO request) {
+    public InterpreterResponseDTO register(InterpreterBasicRequestDTO request) {
         Interpreter interpreter = Interpreter.builder()
-                .email(request.getPersonalData().getEmail())
-                .password(passwordEncoder.encode(request.getPersonalData().getPassword()))
-                .phone(request.getPersonalData().getPhone())
-                .picture(request.getPersonalData().getPicture())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .phone(request.getPhone())
+                .picture(request.getPicture())
                 .status(UserStatus.PENDING)
                 .type(UserTypeE.INTERPRETER)
-                .name(request.getPersonalData().getName())
-                .gender(Gender.fromString(request.getPersonalData().getGender()))
-                .birthday(request.getPersonalData().getBirthday())
-                .cpf(request.getPersonalData().getCpf())
+                .name(request.getName())
+                .gender(request.getGender())
+                .birthday(request.getBirthday())
+                .cpf(request.getCpf())
                 .cnpj(request.getProfessionalData().getCnpj())
                 .rating(BigDecimal.ZERO)
                 .minValue(request.getProfessionalData().getMinValue())
                 .maxValue(request.getProfessionalData().getMaxValue())
                 .imageRights(request.getProfessionalData().getImageRights())
-                .modality(InterpreterMapper.toInterpreterModality(request.getProfessionalData().getModality()))
+                .modality(request.getProfessionalData().getModality())
                 .description(request.getProfessionalData().getDescription())
                 .build();
-
-        if (request.getLocation() != null) {
-            Location location = Location.builder()
-                    .uf(request.getLocation().getUf())
-                    .city(request.getLocation().getCity())
-                    .user(interpreter)
-                    .build();
-
-            interpreter.setLocation(location);
-        }
 
         Interpreter savedInterpreter = repository.save(interpreter);
         return responseMapper.toResponseDTO(savedInterpreter);
@@ -126,35 +116,36 @@ public class InterpreterRegisterService {
                 .toList();
     }
 
-    public InterpreterResponseDTO updateComplete(UUID id, InterpreterRequestDTO dto) {
+    public InterpreterResponseDTO updateComplete(UUID id, InterpreterBasicRequestDTO dto) {
         Interpreter interpreter = findInterpreterById(id);
 
-        if (dto.getPersonalData() != null) {
-            var personalData = dto.getPersonalData();
-            interpreter.setName(personalData.getName());
-            interpreter.setEmail(personalData.getEmail());
-            interpreter.setPhone(personalData.getPhone());
-            interpreter.setPicture(personalData.getPicture());
-            interpreter.setBirthday(personalData.getBirthday());
-            interpreter.setCpf(personalData.getCpf());
-            interpreter.setGender(Gender.fromString(personalData.getGender()));
+        if (dto != null) {
+            interpreter.setName(dto.getName());
+            interpreter.setEmail(dto.getEmail());
+            interpreter.setPhone(dto.getPhone());
+            interpreter.setPicture(dto.getPicture());
+            interpreter.setBirthday(dto.getBirthday());
+            interpreter.setCpf(dto.getCpf());
+            interpreter.setGender(dto.getGender());
 
-            if (personalData.getPassword() != null) {
-                interpreter.setPassword(passwordEncoder.encode(personalData.getPassword()));
+            if (dto.getPassword() != null) {
+                interpreter.setPassword(passwordEncoder.encode(dto.getPassword()));
             }
         }
 
-        if (dto.getProfessionalData() != null) {
+        if (dto != null && dto.getProfessionalData() != null) {
             var professionalData = dto.getProfessionalData();
             interpreter.setCnpj(professionalData.getCnpj());
             interpreter.setMinValue(professionalData.getMinValue());
             interpreter.setMaxValue(professionalData.getMaxValue());
             interpreter.setImageRights(professionalData.getImageRights());
-            interpreter.setModality(InterpreterMapper.toInterpreterModality(professionalData.getModality()));
+            interpreter.setModality(professionalData.getModality());
             interpreter.setDescription(professionalData.getDescription());
         }
 
-        updateLocation(dto.getLocation(), interpreter);
+        if (dto != null) {
+            updateLocation(dto.getLocations(), interpreter);
+        }
 
         Interpreter updatedInterpreter = repository.save(interpreter);
         return responseMapper.toResponseDTO(updatedInterpreter);
@@ -162,15 +153,22 @@ public class InterpreterRegisterService {
 
     public InterpreterResponseDTO updatePartial(UUID id, InterpreterPatchRequestDTO dto) {
         Interpreter interpreter = findInterpreterById(id);
-        updatePersonalPatchRequest(dto.getPersonalData(), interpreter);
+        PersonPatchRequestDTO personalData = new PersonPatchRequestDTO();
+        personalData.setName(dto.getName());
+        personalData.setEmail(dto.getEmail());
+        personalData.setPhone(dto.getPhone());
+        personalData.setGender(dto.getGender());
+        personalData.setBirthday(dto.getBirthday());
+        personalData.setPicture(dto.getPicture());
+        updatePersonalPatchRequest(personalData, interpreter);
         updateProfessionalPatchRequest(dto.getProfessionalData(), interpreter);
-        updateLocation(dto.getLocation(), interpreter);
+        updateLocation(dto.getLocations(), interpreter);
 
         Interpreter updatedInterpreter = repository.save(interpreter);
         return responseMapper.toResponseDTO(updatedInterpreter);
     }
 
-    private void updatePersonalPatchRequest(PersonalPatchRequestDTO personal, Interpreter interpreter) {
+    private void updatePersonalPatchRequest(PersonPatchRequestDTO personal, Interpreter interpreter) {
         if (personal == null) {
             return;
         }
@@ -186,15 +184,12 @@ public class InterpreterRegisterService {
         if (personal.getBirthday() != null) {
             interpreter.setBirthday(personal.getBirthday());
         }
-        if (personal.getCpf() != null) {
-            interpreter.setCpf(personal.getCpf());
-        }
         if (personal.getGender() != null) {
-            interpreter.setGender(Gender.fromString(personal.getGender()));
+            interpreter.setGender(personal.getGender());
         }
     }
 
-    private void updateProfessionalPatchRequest(ProfessionalPatchRequestDTO dto, Interpreter interpreter) {
+    private void updateProfessionalPatchRequest(ProfessionalDataPatchRequestDTO dto, Interpreter interpreter) {
         if (dto == null) {
             return;
         }
@@ -211,25 +206,32 @@ public class InterpreterRegisterService {
             interpreter.setImageRights(dto.getImageRights());
         }
         if (dto.getModality() != null) {
-            interpreter.setModality(InterpreterMapper.toInterpreterModality(dto.getModality()));
+            interpreter.setModality(dto.getModality());
         }
         if (dto.getDescription() != null) {
             interpreter.setDescription(dto.getDescription());
         }
     }
 
-    private void updateLocation(LocationDTO locationDTO, Interpreter interpreter) {
-        if (locationDTO == null) {
+    private void updateLocation(List<LocationRequestDTO> locationDTOs, Interpreter interpreter) {
+        if (locationDTOs == null || locationDTOs.isEmpty()) {
+            interpreter.setLocations(List.of());
             return;
         }
 
-        Location location = interpreter.getLocation();
-        if (location == null) {
-            location = Location.builder().user(interpreter).build();
+        List<Location> locations = new ArrayList<>();
+        for (LocationRequestDTO dto : locationDTOs) {
+            Location location = Location.builder()
+                    .uf(dto.getUf())
+                    .city(dto.getCity())
+                    .neighborhood(dto.getNeighborhood())
+                    .interpreter(interpreter)
+                    .build();
+            locations.add(location);
         }
-        location.setUf(locationDTO.getUf());
-        location.setCity(locationDTO.getCity());
-        interpreter.setLocation(location);
+
+
+        interpreter.setLocations(locations);
     }
 
     private Interpreter findInterpreterById(UUID id) {

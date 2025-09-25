@@ -1,5 +1,6 @@
 package com.pointtils.pointtils.src.application.dto;
 
+import com.pointtils.pointtils.src.application.dto.requests.RefreshTokenRequestDTO;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

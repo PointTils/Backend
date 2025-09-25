@@ -11,7 +11,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -36,30 +36,18 @@ public class Location {
     @Column(name = "id", updatable = false, nullable = false, columnDefinition = "uuid")
     private UUID id;
 
-    @Column(name = "UF", length = 2)
+    @Column(name = "UF", length = 2, nullable = false)
     private String uf;
 
-    @Column(name = "city", length = 255)
+    @Column(name = "city", length = 255, nullable = false)
     private String city;
 
-    @Column(name = "neighborhood")
+    @Column(name = "neighborhood", length = 255, nullable = false)
     private String neighborhood;
 
-    @OneToOne
+    @ManyToOne
     @JsonBackReference
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private Interpreter interpreter;
 
-    public Location(String uf, String city, String neighborhood, User user) {
-        this.uf = uf;
-        this.city = city;
-        this.user = user;
-        this.neighborhood = neighborhood;
-    }
-
-    public Location(String uf, String city, String neighborhood) {
-        this.uf = uf;
-        this.city = city;
-        this.neighborhood = neighborhood;
-    }
 }
