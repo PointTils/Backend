@@ -1,18 +1,18 @@
 package com.pointtils.pointtils.src.application.services;
-import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
+
+import com.pointtils.pointtils.src.application.dto.TokensDTO;
 import com.pointtils.pointtils.src.application.dto.responses.LoginResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.RefreshTokenResponseDTO;
-import com.pointtils.pointtils.src.application.dto.TokensDTO;
-import com.pointtils.pointtils.src.application.dto.UserDTO;
+import com.pointtils.pointtils.src.application.dto.responses.UserLoginResponseDTO;
 import com.pointtils.pointtils.src.core.domain.entities.User;
+import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
 import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
 import com.pointtils.pointtils.src.infrastructure.configs.MemoryBlacklistService;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -56,13 +56,14 @@ public class AuthService {
         String accessToken = jwtTokenProvider.generateToken(user.getEmail());
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
 
-        UserDTO userDTO = new UserDTO(
-        user.getId(), 
-        user.getEmail(),
-        user.getPhone(),
-        user.getPicture(),
-        user.getType(),
-        user.getStatus()
+        UserLoginResponseDTO userDTO = new UserLoginResponseDTO(
+                user.getId(),
+                user.getDisplayName(),
+                user.getEmail(),
+                user.getPhone(),
+                user.getPicture(),
+                user.getType(),
+                user.getStatus()
         );
 
         TokensDTO tokensDTO = new TokensDTO(
