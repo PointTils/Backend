@@ -73,9 +73,9 @@ public class ScheduleService {
         Page<Schedule> schedules = scheduleRepository.findAllWithFilters(
             pageable,
             query.getInterpreterId(),
-            query.getDay() != null ? query.getDay().name() : null,
-            query.getDateFrom() != null ? query.getDateFrom().toString() : null,
-            query.getDateTo() != null ? query.getDateTo().toString() : null
+            query.getDay(),
+            query.getDateFrom(),
+            query.getDateTo()
         );
         
         List<ScheduleResponseDTO> items = schedules.map(s -> ScheduleResponseDTO.builder()
