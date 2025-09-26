@@ -32,7 +32,7 @@ public class InterpreterSpecification {
     ) {
         return (root, query, cb) -> {
             query.distinct(true);
-            Join<Interpreter, Location> location = root.join("location", JoinType.LEFT);
+            Join<Interpreter, Location> location = root.join("locations", JoinType.LEFT);
             Join<Interpreter, Specialty> spec = root.join("specialties", JoinType.LEFT);
             Join<Interpreter, Schedule> schedule = root.join("schedules", JoinType.LEFT);
 
