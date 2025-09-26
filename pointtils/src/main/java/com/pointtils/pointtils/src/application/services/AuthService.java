@@ -1,26 +1,27 @@
 package com.pointtils.pointtils.src.application.services;
 
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-
-import com.pointtils.pointtils.src.application.dto.LoginResponseDTO;
-import com.pointtils.pointtils.src.application.dto.RefreshTokenResponseDTO;
 import com.pointtils.pointtils.src.application.dto.TokensDTO;
-import com.pointtils.pointtils.src.application.dto.UserDTO;
+import com.pointtils.pointtils.src.application.dto.responses.LoginResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.RefreshTokenResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.UserLoginResponseDTO;
 import com.pointtils.pointtils.src.core.domain.entities.User;
+import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
 import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
+import com.pointtils.pointtils.src.infrastructure.configs.MemoryBlacklistService;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
     private final UserRepository userRepository;
-    private final JwtService jwtTokenPrivider;
+    private final JwtService jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
+    private final MemoryBlacklistService memoryBlacklistService;
 
     public LoginResponseDTO login(String email, String password) {
 
@@ -44,21 +45,23 @@ public class AuthService {
             throw new AuthenticationException("Usuário não encontrado");
         }
 
-        if ("blocked".equals(user.getStatus())) {
-            throw new AuthenticationException("Usuário bloqueado");
+        if (UserStatus.INACTIVE.equals(user.getStatus())) {
+            throw new AuthenticationException("Usuário inativo");
         }
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new AuthenticationException("Credenciais inválidas");
         }
 
-        String accessToken = jwtTokenPrivider.generateToken(user.getEmail());
-        String refreshToken = jwtTokenPrivider.generateRefreshToken(user.getEmail());
+        String accessToken = jwtTokenProvider.generateToken(user.getEmail());
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
 
-        UserDTO userDTO = new UserDTO(
+        UserLoginResponseDTO userDTO = new UserLoginResponseDTO(
                 user.getId(),
-                user.getEmail(),
                 user.getDisplayName(),
+                user.getEmail(),
+                user.getPhone(),
+                user.getPicture(),
                 user.getType(),
                 user.getStatus()
         );
@@ -67,8 +70,8 @@ public class AuthService {
                 accessToken,
                 refreshToken,
                 "Bearer",
-                jwtTokenPrivider.getExpirationTime(),
-                jwtTokenPrivider.getRefreshExpirationTime()
+                jwtTokenProvider.getExpirationTime(),
+                jwtTokenProvider.getRefreshExpirationTime()
         );
 
         return new LoginResponseDTO(
@@ -83,18 +86,18 @@ public class AuthService {
             throw new AuthenticationException("Refresh token não fornecido");
         }
 
-        if (jwtTokenPrivider.isTokenExpired(token) || !jwtTokenPrivider.validateToken(token)) {
+        if (!jwtTokenProvider.isTokenValid(token)) {
             throw new AuthenticationException("Refresh token inválido ou expirado");
         }
 
-        String email = jwtTokenPrivider.getEmailFromToken(token);
+        String email = jwtTokenProvider.getEmailFromToken(token);
         User user = userRepository.findByEmail(email);
         if (user == null) {
             throw new AuthenticationException("Usuário não encontrado");
         }
 
-        String accessToken = jwtTokenPrivider.generateToken(user.getEmail());
-        String refreshToken = jwtTokenPrivider.generateRefreshToken(user.getEmail());
+        String accessToken = jwtTokenProvider.generateToken(user.getEmail());
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
 
         return new RefreshTokenResponseDTO(
                 true,
@@ -103,9 +106,25 @@ public class AuthService {
                         accessToken,
                         refreshToken,
                         "Bearer",
-                        jwtTokenPrivider.getExpirationTime(),
-                        jwtTokenPrivider.getRefreshExpirationTime()
+                        jwtTokenProvider.getExpirationTime(),
+                        jwtTokenProvider.getRefreshExpirationTime()
                 ))
         );
     }
+
+    public Boolean logout(String accessToken, String refreshToken) {
+        if (!jwtTokenProvider.isTokenValid(accessToken)) {
+            throw new AuthenticationException("Access token inválido ou expirado");
+        }
+        if (!jwtTokenProvider.isTokenValid(refreshToken)) {
+            throw new AuthenticationException("Refresh token inválido ou expirado");
+        }
+
+        memoryBlacklistService.addToBlacklist(accessToken);
+        memoryBlacklistService.addToBlacklist(refreshToken);
+
+        return true;
+    }
+
+
 }

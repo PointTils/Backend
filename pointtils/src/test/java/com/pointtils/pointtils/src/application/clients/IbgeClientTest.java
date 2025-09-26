@@ -1,7 +1,7 @@
 package com.pointtils.pointtils.src.application.clients;
 
-import com.pointtils.pointtils.src.application.dto.CityIbgeResponseDTO;
-import com.pointtils.pointtils.src.application.dto.StateIbgeResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.CityIbgeResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.StateIbgeResponseDTO;
 import com.pointtils.pointtils.src.core.domain.exceptions.ClientTimeoutException;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;

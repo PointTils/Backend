@@ -13,17 +13,17 @@ import com.pointtils.pointtils.src.core.domain.entities.Specialty;
 
 @Repository
 public interface SpecialtyRepository extends JpaRepository<Specialty, UUID> {
-    
+
     Optional<Specialty> findByName(String name);
-    
+
     List<Specialty> findByNameContainingIgnoreCase(String name);
-    
+
     @Query("SELECT s FROM Specialty s WHERE s.id IN :ids")
     List<Specialty> findByIds(@Param("ids") List<UUID> ids);
-    
+
     @Query("SELECT COUNT(s) > 0 FROM Specialty s WHERE s.id = :id")
     boolean existsById(@Param("id") UUID id);
-    
+
     @Query("SELECT COUNT(s) > 0 FROM Specialty s WHERE s.name = :name")
     boolean existsByName(@Param("name") String name);
 }

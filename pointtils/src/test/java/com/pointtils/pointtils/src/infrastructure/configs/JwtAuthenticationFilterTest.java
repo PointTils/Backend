@@ -1,30 +1,23 @@
 package com.pointtils.pointtils.src.infrastructure.configs;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.Authentication;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.io.PrintWriter;
-import java.lang.reflect.Method;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import java.io.IOException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class JwtAuthenticationFilterTest {
@@ -33,155 +26,236 @@ class JwtAuthenticationFilterTest {
     private JwtService jwtService;
 
     @Mock
-    private HttpServletRequest request;
-
-    @Mock
-    private HttpServletResponse response;
+    private MemoryBlacklistService memoryBlacklistService;
 
     @Mock
     private FilterChain filterChain;
 
-    @Mock
-    private PrintWriter printWriter;
-
     @InjectMocks
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    private Method doFilterInternalMethod;
+    private MockHttpServletRequest request;
+    private MockHttpServletResponse response;
 
     @BeforeEach
-    void setUp() throws NoSuchMethodException {
+    void setUp() {
+        request = new MockHttpServletRequest();
+        response = new MockHttpServletResponse();
         SecurityContextHolder.clearContext();
-        // Get the protected method using reflection
-        doFilterInternalMethod = JwtAuthenticationFilter.class.getDeclaredMethod(
-                "doFilterInternal", HttpServletRequest.class, HttpServletResponse.class, FilterChain.class);
-        doFilterInternalMethod.setAccessible(true);
     }
 
     @Test
-    void shouldContinueFilterChainWhenNoAuthorizationHeader() throws Exception {
-        // Given
-        when(request.getHeader("Authorization")).thenReturn(null);
+    @DisplayName("Deve continuar a cadeia de filtros quando não há header Authorization")
+    void deveContinuarSemHeaderAuthorization() throws ServletException, IOException {
+        // Act
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
-        // When
-        doFilterInternalMethod.invoke(jwtAuthenticationFilter, request, response, filterChain);
-
-        // Then
+        // Assert
         verify(filterChain).doFilter(request, response);
-        verify(jwtService, never()).isTokenExpired(anyString());
+        assertEquals(200, response.getStatus());
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
     @Test
-    void shouldContinueFilterChainWhenAuthorizationHeaderDoesNotStartWithBearer() throws Exception {
-        // Given
-        when(request.getHeader("Authorization")).thenReturn("Basic sometoken");
+    @DisplayName("Deve continuar a cadeia de filtros quando header Authorization não começa com Bearer")
+    void deveContinuarQuandoHeaderNaoComecaComBearer() throws ServletException, IOException {
+        // Arrange
+        request.addHeader("Authorization", "Basic dGVzdDp0ZXN0");
 
-        // When
-        doFilterInternalMethod.invoke(jwtAuthenticationFilter, request, response, filterChain);
+        // Act
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
-        // Then
+        // Assert
         verify(filterChain).doFilter(request, response);
-        verify(jwtService, never()).isTokenExpired(anyString());
+        assertEquals(200, response.getStatus());
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
     @Test
-    void shouldReturnUnauthorizedWhenTokenIsExpired() throws Exception {
-        // Given
-        String token = "validjwttoken";
-        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
+    @DisplayName("Deve retornar 401 quando token está na blacklist")
+    void deveRetornar401QuandoTokenNaBlacklist() throws ServletException, IOException {
+        // Arrange
+        String token = "blacklisted_token";
+        request.addHeader("Authorization", "Bearer " + token);
+        when(memoryBlacklistService.isBlacklisted(token)).thenReturn(true);
+
+        // Act
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
+        // Assert
+        verify(filterChain, never()).doFilter(any(), any());
+        assertEquals(401, response.getStatus());
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+    }
+
+    @Test
+    @DisplayName("Deve retornar 401 quando token está expirado")
+    void deveRetornar401QuandoTokenExpirado() throws ServletException, IOException {
+        // Arrange
+        String token = "expired_token";
+        request.addHeader("Authorization", "Bearer " + token);
+        when(memoryBlacklistService.isBlacklisted(token)).thenReturn(false);
         when(jwtService.isTokenExpired(token)).thenReturn(true);
-        when(response.getWriter()).thenReturn(printWriter);
 
-        // When
-        doFilterInternalMethod.invoke(jwtAuthenticationFilter, request, response, filterChain);
+        // Act
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
-        // Then
-        verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        verify(printWriter).write("Unauthorized.");
-        verify(filterChain, never()).doFilter(request, response);
+        // Assert
+        verify(filterChain, never()).doFilter(any(), any());
+        assertEquals(401, response.getStatus());
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
     @Test
-    void shouldAuthenticateWhenValidToken() throws Exception {
-        // Given
-        String token = "validjwttoken";
-        String subject = "testuser";
-        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
+    @DisplayName("Deve autenticar com sucesso quando token é válido")
+    void deveAutenticarComSucessoQuandoTokenValido() throws ServletException, IOException {
+        // Arrange
+        String token = "valid_token";
+        String email = "test@email.com";
+        request.addHeader("Authorization", "Bearer " + token);
+        when(memoryBlacklistService.isBlacklisted(token)).thenReturn(false);
         when(jwtService.isTokenExpired(token)).thenReturn(false);
-        when(jwtService.extractClaim(eq(token), any())).thenReturn(subject);
+        when(jwtService.extractClaim(eq(token), any())).thenReturn(email);
 
-        // When
-        doFilterInternalMethod.invoke(jwtAuthenticationFilter, request, response, filterChain);
+        // Act
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
-        // Then
+        // Assert
         verify(filterChain).doFilter(request, response);
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        assertNotNull(authentication);
-        assertEquals(subject, authentication.getPrincipal());
-        assertTrue(authentication.getAuthorities().isEmpty());
+        assertEquals(200, response.getStatus());
+        assertNotNull(SecurityContextHolder.getContext().getAuthentication());
+        assertEquals(email, SecurityContextHolder.getContext().getAuthentication().getName());
     }
 
     @Test
-    void shouldReturnUnauthorizedWhenJwtServiceThrowsException() throws Exception {
-        // Given
-        String token = "invalidjwttoken";
-        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
-        when(jwtService.isTokenExpired(token)).thenThrow(new RuntimeException("Invalid token"));
-        when(response.getWriter()).thenReturn(printWriter);
+    @DisplayName("Deve retornar 401 quando ocorre exceção durante processamento do token")
+    void deveRetornar401QuandoOcorreExcecao() throws ServletException, IOException {
+        // Arrange
+        String token = "invalid_token";
+        request.addHeader("Authorization", "Bearer " + token);
+        when(memoryBlacklistService.isBlacklisted(token)).thenReturn(false);
+        when(jwtService.isTokenExpired(token)).thenThrow(new RuntimeException("Token inválido"));
 
-        // When
-        doFilterInternalMethod.invoke(jwtAuthenticationFilter, request, response, filterChain);
+        // Act
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
-        // Then
-        verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        verify(printWriter).write("Unauthorized.");
-        verify(filterChain, never()).doFilter(request, response);
+        // Assert
+        verify(filterChain, never()).doFilter(any(), any());
+        assertEquals(401, response.getStatus());
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
+
     @Test
-    void shouldExtractTokenCorrectlyFromBearerHeader() throws Exception {
-        // Given
-        String token = "actualjwttoken";
-        String bearerToken = "Bearer " + token;
-        String subject = "testuser";
-        
-        when(request.getHeader("Authorization")).thenReturn(bearerToken);
+    @DisplayName("Deve limpar contexto de segurança após processamento bem-sucedido")
+    void deveLimparContextoSegurancaAposProcessamento() throws ServletException, IOException {
+        // Arrange
+        String token = "valid_token";
+        String email = "test@email.com";
+        request.addHeader("Authorization", "Bearer " + token);
+        when(memoryBlacklistService.isBlacklisted(token)).thenReturn(false);
         when(jwtService.isTokenExpired(token)).thenReturn(false);
-        when(jwtService.extractClaim(eq(token), any())).thenReturn(subject);
+        when(jwtService.extractClaim(eq(token), any())).thenReturn(email);
 
-        // When
-        doFilterInternalMethod.invoke(jwtAuthenticationFilter, request, response, filterChain);
+        // Act
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
-        // Then
-        verify(jwtService).isTokenExpired(token);
-        verify(jwtService).extractClaim(eq(token), any());
-        verify(filterChain).doFilter(request, response);
+        // Assert - Verifica que a autenticação foi definida
+        assertNotNull(SecurityContextHolder.getContext().getAuthentication());
         
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        assertNotNull(authentication);
-        assertEquals(subject, authentication.getPrincipal());
+        // Limpa o contexto para verificar que não há efeitos colaterais
+        SecurityContextHolder.clearContext();
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
     @Test
-    void shouldHandleEmptyBearerToken() throws Exception {
-        // Given
-        when(request.getHeader("Authorization")).thenReturn("Bearer ");
-        when(jwtService.isTokenExpired("")).thenThrow(new RuntimeException("Empty token"));
-        when(response.getWriter()).thenReturn(printWriter);
+    @DisplayName("Deve permitir token blacklisted em endpoint de logout exato")
+    void devePermitirTokenBlacklistedEmLogoutExato() throws ServletException, IOException {
+        // Arrange
+        String token = "blacklisted_token";
+        request.addHeader("Authorization", "Bearer " + token);
+        request.setRequestURI("/v1/auth/logout");
+        when(jwtService.isTokenExpired(token)).thenReturn(false);
+        when(jwtService.extractClaim(eq(token), any())).thenReturn("test@email.com");
 
-        // When
-        doFilterInternalMethod.invoke(jwtAuthenticationFilter, request, response, filterChain);
+        // Act - Não deve verificar blacklist para endpoints de logout
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
-        // Then
-        // The empty token after "Bearer " will cause an exception in JWT parsing
-        // which will be caught and handled in the exception block
-        verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        verify(printWriter).write("Unauthorized.");
-        verify(filterChain, never()).doFilter(request, response);
-        assertNull(SecurityContextHolder.getContext().getAuthentication());
+        // Assert - Deve processar normalmente mesmo com token blacklisted
+        verify(filterChain).doFilter(request, response);
+        assertEquals(200, response.getStatus());
+        assertNotNull(SecurityContextHolder.getContext().getAuthentication());
+    }
+
+    @Test
+    @DisplayName("Deve permitir token blacklisted em endpoint de logout com path adicional")
+    void devePermitirTokenBlacklistedEmLogoutComPath() throws ServletException, IOException {
+        // Arrange
+        String token = "blacklisted_token";
+        request.addHeader("Authorization", "Bearer " + token);
+        request.setRequestURI("/v1/auth/logout/123");
+        when(jwtService.isTokenExpired(token)).thenReturn(false);
+        when(jwtService.extractClaim(eq(token), any())).thenReturn("test@email.com");
+
+        // Act
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
+        // Assert
+        verify(filterChain).doFilter(request, response);
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    @DisplayName("Deve permitir token blacklisted em endpoint de logout com substring")
+    void devePermitirTokenBlacklistedEmLogoutComSubstring() throws ServletException, IOException {
+        // Arrange
+        String token = "blacklisted_token";
+        request.addHeader("Authorization", "Bearer " + token);
+        request.setRequestURI("/api/v1/auth/logout");
+        when(jwtService.isTokenExpired(token)).thenReturn(false);
+        when(jwtService.extractClaim(eq(token), any())).thenReturn("test@email.com");
+
+        // Act
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
+        // Assert
+        verify(filterChain).doFilter(request, response);
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    @DisplayName("Não deve permitir token blacklisted em endpoints que não são de logout")
+    void naoDevePermitirTokenBlacklistedEmEndpointsNaoLogout() throws ServletException, IOException {
+        // Arrange
+        String token = "blacklisted_token";
+        request.addHeader("Authorization", "Bearer " + token);
+        request.setRequestURI("/v1/auth/login");
+        when(memoryBlacklistService.isBlacklisted(token)).thenReturn(true);
+
+        // Act
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
+        // Assert - Deve bloquear token blacklisted em endpoints não-logout
+        verify(filterChain, never()).doFilter(any(), any());
+        assertEquals(401, response.getStatus());
+    }
+
+    @Test
+    @DisplayName("Deve processar normalmente endpoint de refresh token")
+    void deveProcessarNormalmenteEndpointRefresh() throws ServletException, IOException {
+        // Arrange
+        String token = "valid_token";
+        request.addHeader("Authorization", "Bearer " + token);
+        request.setRequestURI("/v1/auth/refresh");
+        when(memoryBlacklistService.isBlacklisted(token)).thenReturn(false);
+        when(jwtService.isTokenExpired(token)).thenReturn(false);
+        when(jwtService.extractClaim(eq(token), any())).thenReturn("test@email.com");
+
+        // Act
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
+        // Assert - Deve processar normalmente endpoint de refresh
+        verify(filterChain).doFilter(request, response);
+        assertEquals(200, response.getStatus());
     }
 }

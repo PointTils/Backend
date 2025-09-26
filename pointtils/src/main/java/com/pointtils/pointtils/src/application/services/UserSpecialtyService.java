@@ -2,8 +2,8 @@ package com.pointtils.pointtils.src.application.services;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +30,7 @@ public class UserSpecialtyService {
     
     public UserSpecialty getUserSpecialty(UUID userId, UUID specialtyId) {
         return userSpecialtyRepository.findByUserIdAndSpecialtyId(userId, specialtyId)
-                .orElseThrow(() -> new RuntimeException("User specialty not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Especialidade do usuário não encontrada"));
     }
     
     public boolean userHasSpecialty(UUID userId, UUID specialtyId) {
@@ -44,12 +44,12 @@ public class UserSpecialtyService {
     @Transactional
     public List<UserSpecialty> addUserSpecialties(UUID userId, List<UUID> specialtyIds, boolean replaceExisting) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
         
         List<Specialty> specialties = specialtyRepository.findByIds(specialtyIds);
         
         if (specialties.size() != specialtyIds.size()) {
-            throw new RuntimeException("One or more specialty IDs are invalid");
+            throw new IllegalArgumentException("Um ou mais IDs de especialidades são inválidos");
         }
         
         if (replaceExisting) {
@@ -59,7 +59,7 @@ public class UserSpecialtyService {
         List<UserSpecialty> userSpecialties = specialties.stream()
                 .filter(specialty -> !userSpecialtyRepository.existsByUserIdAndSpecialtyId(userId, specialty.getId()))
                 .map(specialty -> new UserSpecialty(specialty, user))
-                .collect(Collectors.toList());
+                .toList();
         
         return userSpecialtyRepository.saveAll(userSpecialties);
     }
@@ -72,7 +72,7 @@ public class UserSpecialtyService {
     @Transactional
     public void removeUserSpecialty(UUID userId, UUID specialtyId) {
         if (!userSpecialtyRepository.existsByUserIdAndSpecialtyId(userId, specialtyId)) {
-            throw new RuntimeException("User does not have this specialty");
+            throw new EntityNotFoundException("Usuário não possui esta especialidade");
         }
         
         userSpecialtyRepository.deleteByUserIdAndSpecialtyId(userId, specialtyId);
@@ -83,7 +83,7 @@ public class UserSpecialtyService {
         List<UserSpecialty> existingSpecialties = userSpecialtyRepository.findByUserIdAndSpecialtyIds(userId, specialtyIds);
         
         if (existingSpecialties.size() != specialtyIds.size()) {
-            throw new RuntimeException("One or more specialties not found for this user");
+            throw new IllegalArgumentException("Uma ou mais especialidades não foram encontradas para este usuário");
         }
         
         userSpecialtyRepository.deleteByUserIdAndSpecialtyIds(userId, specialtyIds);
@@ -93,20 +93,20 @@ public class UserSpecialtyService {
     public UserSpecialty updateUserSpecialty(UUID userSpecialtyId, UUID userId, UUID newSpecialtyId) {
         // Find the existing user specialty
         UserSpecialty userSpecialty = userSpecialtyRepository.findById(userSpecialtyId)
-                .orElseThrow(() -> new RuntimeException("User specialty not found with id: " + userSpecialtyId));
-        
+                .orElseThrow(() -> new EntityNotFoundException("Especialidade do usuário com id " + userSpecialtyId + " não encontrada"));
+
         // Verify the user specialty belongs to the specified user
         if (!userSpecialty.getUser().getId().equals(userId)) {
-            throw new RuntimeException("User specialty does not belong to the specified user");
+            throw new IllegalArgumentException("A especialidade informada não pertence a este usuário");
         }
         
         // Check if the new specialty exists
         Specialty newSpecialty = specialtyRepository.findById(newSpecialtyId)
-                .orElseThrow(() -> new RuntimeException("Specialty not found with id: " + newSpecialtyId));
-        
+                .orElseThrow(() -> new EntityNotFoundException("Especialidade com id " + newSpecialtyId + " não encontrada"));
+
         // Check if the user already has this new specialty
         if (userSpecialtyRepository.existsByUserIdAndSpecialtyId(userId, newSpecialtyId)) {
-            throw new RuntimeException("User already has this specialty");
+            throw new IllegalArgumentException("Usuário já possui esta especialidade");
         }
         
         // Update the specialty

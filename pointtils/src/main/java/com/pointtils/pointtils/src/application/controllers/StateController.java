@@ -1,6 +1,6 @@
 package com.pointtils.pointtils.src.application.controllers;
 
-import com.pointtils.pointtils.src.application.dto.StateResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.StateResponseDTO;
 import com.pointtils.pointtils.src.application.services.StateService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/v1/states")
 @SecurityRequirement(name = "bearerAuth")
-@Tag(name = "State Controller", description = "Endpoints para gerenciar dados de UFs brasileiras")
+@Tag(name = "State Controller", description = "Endpoints para busca de dados de UFs brasileiras")
 public class StateController {
 
     private final StateService stateService;
