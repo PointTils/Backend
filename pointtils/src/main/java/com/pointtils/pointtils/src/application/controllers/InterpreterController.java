@@ -77,7 +77,7 @@ public class InterpreterController {
     @PatchMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Atualiza parcialmente um usuário intérprete por ID")
-    public ResponseEntity<ApiResponse<InterpreterResponseDTO>> updateUser(@PathVariable UUID id,
+    public ResponseEntity<ApiResponse<InterpreterResponseDTO>> patchInterpreter(@PathVariable UUID id,
             @RequestBody @Valid InterpreterPatchRequestDTO dto) {
         InterpreterResponseDTO updated = service.updatePartial(id, dto);
         return ResponseEntity.ok(ApiResponse.success("Intérprete atualizado com sucesso", updated));
@@ -86,7 +86,7 @@ public class InterpreterController {
     @PutMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Atualiza um usuário intérprete por ID")
-    public ResponseEntity<ApiResponse<InterpreterResponseDTO>> updateComplete(@PathVariable UUID id,
+    public ResponseEntity<ApiResponse<InterpreterResponseDTO>> putInterpreter(@PathVariable UUID id,
             @RequestBody @Valid InterpreterBasicRequestDTO dto) {
         InterpreterResponseDTO updated = service.updateComplete(id, dto);
         return ResponseEntity.ok(ApiResponse.success("Intérprete atualizado com sucesso", updated));
