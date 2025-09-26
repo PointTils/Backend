@@ -1,9 +1,9 @@
 package com.pointtils.pointtils.src.application.controllers;
 
+import com.pointtils.pointtils.src.application.dto.TokensDTO;
 import com.pointtils.pointtils.src.application.dto.responses.LoginResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.RefreshTokenResponseDTO;
-import com.pointtils.pointtils.src.application.dto.TokensDTO;
-import com.pointtils.pointtils.src.application.dto.UserDTO;
+import com.pointtils.pointtils.src.application.dto.responses.UserLoginResponseDTO;
 import com.pointtils.pointtils.src.application.services.AuthService;
 import com.pointtils.pointtils.src.core.domain.entities.Enterprise;
 import com.pointtils.pointtils.src.core.domain.entities.Person;
@@ -104,12 +104,14 @@ class AuthControllerTest {
                 true,
                 "Autenticação realizada com sucesso",
                 new LoginResponseDTO.Data(
-                                 new UserDTO(
-                                                        UUID.randomUUID(), "usuario@exemplo.com",
-                                                        null,
-                                                        null,
-                                                        UserTypeE.PERSON,
-                                                        UserStatus.ACTIVE),
+                        new UserLoginResponseDTO(
+                                UUID.randomUUID(),
+                                "João Silva",
+                                "usuario@exemplo.com",
+                                null,
+                                null,
+                                UserTypeE.PERSON,
+                                UserStatus.ACTIVE),
                         new TokensDTO("access-token", "refresh-token", "Bearer", 3600,
                                 604800)));
 
@@ -140,12 +142,14 @@ class AuthControllerTest {
                 true,
                 "Autenticação realizada com sucesso",
                 new LoginResponseDTO.Data(
-                                        new UserDTO(
-                                                        UUID.randomUUID(), "enterprise@exemplo.com",
-                                                        null,
-                                                        null,
-                                                        UserTypeE.ENTERPRISE,
-                                                        UserStatus.ACTIVE),
+                        new UserLoginResponseDTO(
+                                UUID.randomUUID(),
+                                "Empresa Exemplo",
+                                "enterprise@exemplo.com",
+                                null,
+                                null,
+                                UserTypeE.ENTERPRISE,
+                                UserStatus.ACTIVE),
                         new TokensDTO("access-token", "refresh-token", "Bearer", 3600,
                                 604800)));
 
@@ -293,12 +297,14 @@ class AuthControllerTest {
                 true,
                 "Autenticação realizada com sucesso",
                 new LoginResponseDTO.Data(
-                                 new UserDTO(
-                                                        UUID.randomUUID(), "usuario@exemplo.com",
-                                                        null,
-                                                        null,
-                                                        UserTypeE.PERSON,
-                                                        UserStatus.ACTIVE),
+                        new UserLoginResponseDTO(
+                                UUID.randomUUID(),
+                                "João Silva",
+                                "usuario@exemplo.com",
+                                null,
+                                null,
+                                UserTypeE.PERSON,
+                                UserStatus.ACTIVE),
                         new TokensDTO("access-token", "refresh-token", "Bearer", 3600,
                                 604800)));
 
@@ -389,14 +395,14 @@ class AuthControllerTest {
         when(authService.refreshToken(anyString()))
                 .thenThrow(new AuthenticationException("Usuário não encontrado"));
         mockMvc.perform(MockMvcRequestBuilders
-                .post("/v1/auth/refresh")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .content("""
-                        {
-                            "refresh_token":"valid-but-user-not-found"
-                        }
-                        """))
+                        .post("/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "refresh_token":"valid-but-user-not-found"
+                                }
+                                """))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Usuário não encontrado"));
     }
@@ -412,10 +418,10 @@ class AuthControllerTest {
         when(authService.logout(anyString(), anyString())).thenReturn(true);
 
         mockMvc.perform(MockMvcRequestBuilders
-                .post("/v1/auth/logout")
-                .header("Authorization", "Bearer " + accessToken)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(refreshTokenJson))
+                        .post("/v1/auth/logout")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(refreshTokenJson))
                 .andExpect(status().isOk());
     }
 
@@ -426,10 +432,10 @@ class AuthControllerTest {
         String refreshTokenJson = "{ \"refresh_token\": \"" + refreshToken + "\" }";
 
         mockMvc.perform(MockMvcRequestBuilders
-                .post("/v1/auth/logout")
-                .header("Authorization", "Bearer ")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(refreshTokenJson))
+                        .post("/v1/auth/logout")
+                        .header("Authorization", "Bearer ")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(refreshTokenJson))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Access token não fornecido"));
     }
@@ -440,10 +446,10 @@ class AuthControllerTest {
         String accessToken = jwtTokenProvider.generateToken("user@exemplo.com");
         String refreshTokenJson = "{ \"refresh_token\": \"\" }";
         mockMvc.perform(MockMvcRequestBuilders
-                .post("/v1/auth/logout")
-                .header("Authorization", "Bearer " + accessToken)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(refreshTokenJson))
+                        .post("/v1/auth/logout")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(refreshTokenJson))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Refresh token não fornecido"));
     }
@@ -458,10 +464,10 @@ class AuthControllerTest {
                 .thenThrow(new AuthenticationException("Access token inválido ou expirado"));
 
         mockMvc.perform(MockMvcRequestBuilders
-                .post("/v1/auth/logout")
-                .header("Authorization", "Bearer invalid-access-token")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(refreshTokenJson))
+                        .post("/v1/auth/logout")
+                        .header("Authorization", "Bearer invalid-access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(refreshTokenJson))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").value("Access token inválido ou expirado"));
     }
@@ -476,10 +482,10 @@ class AuthControllerTest {
                 .thenThrow(new AuthenticationException("Refresh token inválido ou expirado"));
 
         mockMvc.perform(MockMvcRequestBuilders
-                .post("/v1/auth/logout")
-                .header("Authorization", "Bearer " + accessToken)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(refreshTokenJson))
+                        .post("/v1/auth/logout")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(refreshTokenJson))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").value("Refresh token inválido ou expirado"));
     }
