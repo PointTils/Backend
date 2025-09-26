@@ -1,24 +1,39 @@
 package com.pointtils.pointtils.src.application.controllers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pointtils.pointtils.src.application.dto.LocationDTO;
+import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataBasicRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataPatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.ProfessionalDataResponseDTO;
+import com.pointtils.pointtils.src.application.services.InterpreterService;
+import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
+import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
+import io.awspring.cloud.autoconfigure.s3.S3AutoConfiguration;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+import software.amazon.awssdk.services.s3.S3Client;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -26,20 +41,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pointtils.pointtils.src.application.dto.LocationDTO;
-import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataBasicRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResponseDTO;
-import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
-import com.pointtils.pointtils.src.application.dto.responses.ProfessionalDataResponseDTO;
-import com.pointtils.pointtils.src.application.services.InterpreterService;
-import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
-import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
 
 @SpringBootTest
+@EnableAutoConfiguration(exclude = S3AutoConfiguration.class)
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 class InterpreterControllerTest {
@@ -52,6 +57,9 @@ class InterpreterControllerTest {
 
     @MockitoBean
     private InterpreterService interpreterService;
+
+    @MockitoBean
+    private S3Client s3Client;
 
     @Test
     @DisplayName("Deve cadastrar intérprete com sucesso usando dados básicos")

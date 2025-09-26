@@ -31,7 +31,6 @@ public class Enterprise extends User {
 
     @Override
     public UserTypeE getType() {
-
         return UserTypeE.ENTERPRISE;
     }
 }
