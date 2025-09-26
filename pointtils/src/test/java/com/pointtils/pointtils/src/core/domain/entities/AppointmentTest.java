@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentModality;
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentStatus;
 
-@DisplayName("Appointment Entity Tests")
+@DisplayName("Testes da Entidade Appointment")
 class AppointmentTest {
 
     private Appointment appointment;
@@ -22,7 +22,6 @@ class AppointmentTest {
 
     @BeforeEach
     void setUp() {
-        // Criando mocks simples para as entidades relacionadas
         mockUser = new Person() {
             @Override
             public String getDisplayName() {
@@ -39,7 +38,6 @@ class AppointmentTest {
     @Test
     @DisplayName("Deve criar appointment com construtor completo")
     void shouldCreateAppointmentWithFullConstructor() {
-        // Given
         String uf = "SP";
         String city = "São Paulo";
         AppointmentModality modality = AppointmentModality.ONLINE;
@@ -49,11 +47,9 @@ class AppointmentTest {
         LocalTime startTime = LocalTime.of(14, 0);
         LocalTime endTime = LocalTime.of(15, 0);
 
-        // When
         appointment = new Appointment(uf, city, modality, date, description, status, 
                                     mockInterpreter, mockUser, startTime, endTime);
 
-        // Then
         assertNotNull(appointment);
         assertEquals(uf, appointment.getUf());
         assertEquals(city, appointment.getCity());
@@ -70,7 +66,6 @@ class AppointmentTest {
     @Test
     @DisplayName("Deve criar appointment com builder pattern")
     void shouldCreateAppointmentWithBuilder() {
-        // Given & When
         appointment = Appointment.builder()
                 .uf("RJ")
                 .city("Rio de Janeiro")
@@ -88,7 +83,6 @@ class AppointmentTest {
                 .endTime(LocalTime.of(10, 30))
                 .build();
 
-        // Then
         assertNotNull(appointment);
         assertEquals("RJ", appointment.getUf());
         assertEquals("Rio de Janeiro", appointment.getCity());
@@ -105,20 +99,17 @@ class AppointmentTest {
     @Test
     @DisplayName("Deve permitir modificação de campos via setters")
     void shouldAllowFieldModificationViaSetters() {
-        // Given
         appointment = Appointment.builder()
                 .modality(AppointmentModality.ONLINE)
                 .status(AppointmentStatus.PENDING)
                 .build();
 
-        // When
         appointment.setModality(AppointmentModality.PERSONALLY);
         appointment.setStatus(AppointmentStatus.COMPLETED);
         appointment.setDescription("Descrição atualizada");
         appointment.setUf("MG");
         appointment.setCity("Belo Horizonte");
 
-        // Then
         assertEquals(AppointmentModality.PERSONALLY, appointment.getModality());
         assertEquals(AppointmentStatus.COMPLETED, appointment.getStatus());
         assertEquals("Descrição atualizada", appointment.getDescription());
@@ -129,7 +120,6 @@ class AppointmentTest {
     @Test
     @DisplayName("Deve permitir appointment sem endereço completo para modalidade online")
     void shouldAllowAppointmentWithoutFullAddressForOnlineModality() {
-        // Given & When
         appointment = Appointment.builder()
                 .modality(AppointmentModality.ONLINE)
                 .date(LocalDate.now().plusDays(1))
@@ -141,7 +131,6 @@ class AppointmentTest {
                 .endTime(LocalTime.of(11, 0))
                 .build();
 
-        // Then
         assertNotNull(appointment);
         assertEquals(AppointmentModality.ONLINE, appointment.getModality());
         assertNull(appointment.getStreet());
@@ -152,7 +141,6 @@ class AppointmentTest {
     @Test
     @DisplayName("Deve validar que appointment tem interpretador e usuário")
     void shouldValidateAppointmentHasInterpreterAndUser() {
-        // Given
         appointment = Appointment.builder()
                 .modality(AppointmentModality.ONLINE)
                 .date(LocalDate.now().plusDays(1))
@@ -164,7 +152,6 @@ class AppointmentTest {
                 .endTime(LocalTime.of(15, 0))
                 .build();
 
-        // Then
         assertNotNull(appointment.getInterpreter());
         assertNotNull(appointment.getUser());
         assertEquals(mockInterpreter.getId(), appointment.getInterpreter().getId());
@@ -174,11 +161,9 @@ class AppointmentTest {
     @Test
     @DisplayName("Deve permitir horários de início e fim diferentes")
     void shouldAllowDifferentStartAndEndTimes() {
-        // Given
         LocalTime startTime = LocalTime.of(9, 30);
         LocalTime endTime = LocalTime.of(11, 45);
 
-        // When
         appointment = Appointment.builder()
                 .startTime(startTime)
                 .endTime(endTime)
@@ -190,7 +175,6 @@ class AppointmentTest {
                 .user(mockUser)
                 .build();
 
-        // Then
         assertEquals(startTime, appointment.getStartTime());
         assertEquals(endTime, appointment.getEndTime());
         assertTrue(appointment.getStartTime().isBefore(appointment.getEndTime()));
@@ -199,10 +183,8 @@ class AppointmentTest {
     @Test
     @DisplayName("Deve permitir criar appointment no construtor padrão")
     void shouldCreateAppointmentWithDefaultConstructor() {
-        // When
         appointment = new Appointment();
 
-        // Then
         assertNotNull(appointment);
         assertNull(appointment.getId());
         assertNull(appointment.getModality());

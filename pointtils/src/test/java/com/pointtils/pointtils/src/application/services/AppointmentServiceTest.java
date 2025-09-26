@@ -36,7 +36,7 @@ import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("AppointmentService Tests")
+@DisplayName("Testes do AppointmentService")
 class AppointmentServiceTest {
 
     @Mock
@@ -297,27 +297,255 @@ class AppointmentServiceTest {
     }
 
     @Test
-    @DisplayName("Deve validar data/hora no filtro de busca")
-    void shouldValidateDateTimeInSearchFilter() {
-        Appointment futureAppointment = Appointment.builder()
+    @DisplayName("Deve atualizar appointment parcialmente com todos os campos")
+    void shouldUpdateAppointmentPartiallyWithAllFields() {
+        UUID newInterpreterId = UUID.randomUUID();
+        UUID newUserId = UUID.randomUUID();
+        
+        Interpreter newInterpreter = Interpreter.builder().id(newInterpreterId).build();
+        User newUser = new Person() {
+            @Override
+            public String getDisplayName() {
+                return "New User";
+            }
+        };
+        newUser.setId(newUserId);
+
+        AppointmentPatchRequestDTO fullPatchDTO = AppointmentPatchRequestDTO.builder()
+                .uf("MG")
+                .city("Belo Horizonte")
+                .neighborhood("Savassi")
+                .street("Rua Nova")
+                .streetNumber(456)
+                .addressDetails("Casa 2")
+                .modality(AppointmentModality.PERSONALLY)
+                .date(LocalDate.now().plusDays(3))
+                .description("Nova descrição")
+                .status(AppointmentStatus.COMPLETED)
+                .interpreterId(newInterpreterId)
+                .userId(newUserId)
+                .startTime(LocalTime.of(16, 0))
+                .endTime(LocalTime.of(17, 30))
+                .build();
+
+        when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(mockAppointment));
+        when(interpreterRepository.findById(newInterpreterId)).thenReturn(Optional.of(newInterpreter));
+        when(userRepository.findById(newUserId)).thenReturn(Optional.of(newUser));
+        when(appointmentRepository.save(any(Appointment.class))).thenReturn(mockAppointment);
+
+        AppointmentResponseDTO result = appointmentService.updatePartial(appointmentId, fullPatchDTO);
+
+        assertNotNull(result);
+        verify(appointmentRepository).findById(appointmentId);
+        verify(interpreterRepository).findById(newInterpreterId);
+        verify(userRepository).findById(newUserId);
+        verify(appointmentRepository).save(any(Appointment.class));
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção quando intérprete não encontrado no update")
+    void shouldThrowExceptionWhenInterpreterNotFoundInUpdate() {
+        UUID newInterpreterId = UUID.randomUUID();
+        AppointmentPatchRequestDTO patchDTO = AppointmentPatchRequestDTO.builder()
+                .interpreterId(newInterpreterId)
+                .build();
+
+        when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(mockAppointment));
+        when(interpreterRepository.findById(newInterpreterId)).thenReturn(Optional.empty());
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> appointmentService.updatePartial(appointmentId, patchDTO));
+
+        assertEquals("Interpreter não encontrado com o id: " + newInterpreterId, exception.getMessage());
+        verify(appointmentRepository).findById(appointmentId);
+        verify(interpreterRepository).findById(newInterpreterId);
+        verify(appointmentRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção quando usuário não encontrado no update")
+    void shouldThrowExceptionWhenUserNotFoundInUpdate() {
+        UUID newUserId = UUID.randomUUID();
+        AppointmentPatchRequestDTO patchDTO = AppointmentPatchRequestDTO.builder()
+                .userId(newUserId)
+                .build();
+
+        when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(mockAppointment));
+        when(userRepository.findById(newUserId)).thenReturn(Optional.empty());
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> appointmentService.updatePartial(appointmentId, patchDTO));
+
+        assertEquals("User não encontrado com o id: " + newUserId, exception.getMessage());
+        verify(appointmentRepository).findById(appointmentId);
+        verify(userRepository).findById(newUserId);
+        verify(appointmentRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção quando appointment não encontrado no update")
+    void shouldThrowExceptionWhenAppointmentNotFoundInUpdate() {
+        AppointmentPatchRequestDTO patchDTO = AppointmentPatchRequestDTO.builder()
+                .uf("RJ")
+                .build();
+
+        when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.empty());
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> appointmentService.updatePartial(appointmentId, patchDTO));
+
+        assertEquals("Solicitação não encontrada com o id: " + appointmentId, exception.getMessage());
+        verify(appointmentRepository).findById(appointmentId);
+        verify(appointmentRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Deve filtrar appointments por interpreterId")
+    void shouldFilterAppointmentsByInterpreterId() {
+        UUID otherInterpreterId = UUID.randomUUID();
+        Interpreter otherInterpreter = Interpreter.builder().id(otherInterpreterId).build();
+        
+        Appointment otherAppointment = Appointment.builder()
                 .id(UUID.randomUUID())
-                .date(LocalDate.now().plusDays(2))
+                .interpreter(otherInterpreter)
+                .user(mockUser)
+                .status(AppointmentStatus.PENDING)
+                .modality(AppointmentModality.ONLINE)
+                .date(LocalDate.now())
                 .startTime(LocalTime.of(10, 0))
+                .build();
+
+        List<Appointment> appointments = Arrays.asList(mockAppointment, otherAppointment);
+        when(appointmentRepository.findAll()).thenReturn(appointments);
+
+        List<AppointmentResponseDTO> result = appointmentService.searchAppointments(
+                interpreterId, null, null, null, null);
+
+        assertNotNull(result);
+        assertEquals(1, result.size()); // Só deve retornar o mockAppointment
+        verify(appointmentRepository).findAll();
+    }
+
+    @Test
+    @DisplayName("Deve filtrar appointments por userId")
+    void shouldFilterAppointmentsByUserId() {
+        User otherUser = new Person() {
+            @Override
+            public String getDisplayName() {
+                return "Other User";
+            }
+        };
+        UUID otherUserId = UUID.randomUUID();
+        otherUser.setId(otherUserId);
+        
+        Appointment otherAppointment = Appointment.builder()
+                .id(UUID.randomUUID())
+                .interpreter(mockInterpreter)
+                .user(otherUser)
+                .status(AppointmentStatus.PENDING)
+                .modality(AppointmentModality.ONLINE)
+                .date(LocalDate.now())
+                .startTime(LocalTime.of(10, 0))
+                .build();
+
+        List<Appointment> appointments = Arrays.asList(mockAppointment, otherAppointment);
+        when(appointmentRepository.findAll()).thenReturn(appointments);
+
+        List<AppointmentResponseDTO> result = appointmentService.searchAppointments(
+                null, userId, null, null, null);
+
+        assertNotNull(result);
+        assertEquals(1, result.size()); // Só deve retornar o mockAppointment
+        verify(appointmentRepository).findAll();
+    }
+
+    @Test
+    @DisplayName("Deve filtrar appointments por status")
+    void shouldFilterAppointmentsByStatus() {
+        Appointment acceptedAppointment = Appointment.builder()
+                .id(UUID.randomUUID())
+                .interpreter(mockInterpreter)
+                .user(mockUser)
+                .status(AppointmentStatus.ACCEPTED)
+                .modality(AppointmentModality.ONLINE)
+                .date(LocalDate.now())
+                .startTime(LocalTime.of(10, 0))
+                .build();
+
+        List<Appointment> appointments = Arrays.asList(mockAppointment, acceptedAppointment);
+        when(appointmentRepository.findAll()).thenReturn(appointments);
+
+        List<AppointmentResponseDTO> result = appointmentService.searchAppointments(
+                null, null, AppointmentStatus.PENDING, null, null);
+
+        assertNotNull(result);
+        assertEquals(1, result.size()); // Só deve retornar o mockAppointment (PENDING)
+        verify(appointmentRepository).findAll();
+    }
+
+    @Test
+    @DisplayName("Deve filtrar appointments por modality")
+    void shouldFilterAppointmentsByModality() {
+        Appointment personallyAppointment = Appointment.builder()
+                .id(UUID.randomUUID())
+                .interpreter(mockInterpreter)
+                .user(mockUser)
+                .status(AppointmentStatus.PENDING)
+                .modality(AppointmentModality.PERSONALLY)
+                .date(LocalDate.now())
+                .startTime(LocalTime.of(10, 0))
+                .build();
+
+        List<Appointment> appointments = Arrays.asList(mockAppointment, personallyAppointment);
+        when(appointmentRepository.findAll()).thenReturn(appointments);
+
+        List<AppointmentResponseDTO> result = appointmentService.searchAppointments(
+                null, null, null, AppointmentModality.ONLINE, null);
+
+        assertNotNull(result);
+        assertEquals(1, result.size()); // Só deve retornar o mockAppointment (ONLINE)
+        verify(appointmentRepository).findAll();
+    }
+
+    @Test
+    @DisplayName("Deve filtrar appointments por data posterior")
+    void shouldFilterAppointmentsByFromDateTime() {
+        // Appointment no passado
+        Appointment pastAppointment = Appointment.builder()
+                .id(UUID.randomUUID())
                 .interpreter(mockInterpreter)
                 .user(mockUser)
                 .status(AppointmentStatus.PENDING)
                 .modality(AppointmentModality.ONLINE)
+                .date(LocalDate.now().minusDays(1))
+                .startTime(LocalTime.of(10, 0))
                 .build();
 
-        List<Appointment> appointments = Arrays.asList(futureAppointment);
+        List<Appointment> appointments = Arrays.asList(mockAppointment, pastAppointment);
         when(appointmentRepository.findAll()).thenReturn(appointments);
-        
-        LocalDateTime fromDateTime = LocalDateTime.now().plusDays(1);
+
+        LocalDateTime fromDateTime = LocalDateTime.now(); // Filtro para appointments após agora
 
         List<AppointmentResponseDTO> result = appointmentService.searchAppointments(
-            null, null, null, null, fromDateTime);
+                null, null, null, null, fromDateTime);
 
         assertNotNull(result);
+        assertEquals(1, result.size()); // Só deve retornar o mockAppointment (futuro)
+        verify(appointmentRepository).findAll();
+    }
+
+    @Test
+    @DisplayName("Deve retornar lista vazia quando filtros não encontram nada")
+    void shouldReturnEmptyListWhenFiltersMatchNothing() {
+        List<Appointment> appointments = Arrays.asList(mockAppointment);
+        when(appointmentRepository.findAll()).thenReturn(appointments);
+
+        UUID nonExistentId = UUID.randomUUID();
+        List<AppointmentResponseDTO> result = appointmentService.searchAppointments(
+                nonExistentId, null, null, null, null);
+
+        assertNotNull(result);
+        assertEquals(0, result.size());
         verify(appointmentRepository).findAll();
     }
 }

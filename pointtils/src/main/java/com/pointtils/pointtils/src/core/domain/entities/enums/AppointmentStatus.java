@@ -6,11 +6,15 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum AppointmentStatus {
     PENDING, ACCEPTED, CANCELED, COMPLETED;
 
-    // Mantém comportamento: null => PENDING. Valores inválidos => 400 (IllegalArgumentException)
     @JsonCreator
     public static AppointmentStatus fromJson(String value) {
-        if (value == null) return PENDING;
+        if (value == null) {
+            throw new IllegalArgumentException("Valor null não é aceito para AppointmentStatus");
+        }
         String v = value.trim().toLowerCase();
+        if (v.isEmpty()) {
+            throw new IllegalArgumentException("Valor vazio não é aceito para AppointmentStatus");
+        }
         return switch (v) {
             case "pending", "pendente" -> PENDING;
             case "accepted", "aceito" -> ACCEPTED;
@@ -18,11 +22,6 @@ public enum AppointmentStatus {
             case "completed", "completado" -> COMPLETED;
             default -> throw new IllegalArgumentException("Valor inválido para AppointmentStatus: '" + value + "'. Aceitos: pending, accepted, canceled, completed");
         };
-    }
-
-    @Deprecated
-    public static AppointmentStatus fromString(String value) {
-        return fromJson(value);
     }
 
     @JsonValue

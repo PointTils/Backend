@@ -6,22 +6,20 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum AppointmentModality { 
     ONLINE, PERSONALLY;
 
-    // Mantém compatibilidade com o comportamento antigo: null => ONLINE
     @JsonCreator
     public static AppointmentModality fromJson(String value) {
-        if (value == null) return ONLINE;
+        if (value == null) {
+            throw new IllegalArgumentException("Valor null não é aceito para AppointmentModality");
+        }
         String v = value.trim().toLowerCase();
+        if (v.isEmpty()) {
+            throw new IllegalArgumentException("Valor vazio não é aceito para AppointmentModality");
+        }
         return switch (v) {
             case "presencial", "personally", "p" -> PERSONALLY;
             case "online", "remoto", "r" -> ONLINE;
             default -> throw new IllegalArgumentException("Valor inválido para AppointmentModality: '" + value + "'. Aceitos: online, remoto, presencial, personally");
         };
-    }
-
-    // Para manter testes antigos funcionais e evitar quebras abruptas
-    @Deprecated
-    public static AppointmentModality fromString(String value) {
-        return fromJson(value);
     }
 
     @JsonValue

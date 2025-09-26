@@ -12,22 +12,52 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.pointtils.pointtils.src.core.domain.entities.Appointment;
+import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
+import com.pointtils.pointtils.src.core.domain.entities.Person;
+import com.pointtils.pointtils.src.core.domain.entities.User;
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentModality;
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentStatus;
 
 @DataJpaTest
 @ActiveProfiles("test")
-@DisplayName("AppointmentRepository Simple Integration Tests")
+@DisplayName("Testes de Integração AppointmentRepository")
 class AppointmentRepositorySimpleTest {
 
     @Autowired
     private AppointmentRepository appointmentRepository;
+    
+    @Autowired
+    private TestEntityManager entityManager;
+    
+    private User mockUser;
+    private Interpreter mockInterpreter;
 
     @BeforeEach
-    void setUp() {}
+    void setUp() {
+        Person testPerson = Person.builder()
+                .email("test@test.com")
+                .password("password")
+                .phone("11999999999")
+                .status(com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus.ACTIVE)
+                .type(com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE.PERSON)
+                .name("Test User")
+                .build();
+        mockUser = entityManager.persistAndFlush(testPerson);
+        
+        mockInterpreter = Interpreter.builder()
+                .email("interpreter@test.com")
+                .password("password")
+                .phone("11888888888")
+                .status(com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus.ACTIVE)
+                .type(com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE.INTERPRETER)
+                .name("Test Interpreter")
+                .build();
+        mockInterpreter = entityManager.persistAndFlush(mockInterpreter);
+    }
 
     @Test
     @DisplayName("Deve retornar lista vazia quando não há appointments")
@@ -102,6 +132,8 @@ class AppointmentRepositorySimpleTest {
                 .status(AppointmentStatus.ACCEPTED)
                 .startTime(LocalTime.of(9, 0))
                 .endTime(LocalTime.of(10, 0))
+                .interpreter(mockInterpreter)
+                .user(mockUser)
                 .build();
 
         assertNotNull(appointment);
@@ -138,10 +170,10 @@ class AppointmentRepositorySimpleTest {
         assertNotNull(AppointmentStatus.CANCELED);
         assertNotNull(AppointmentStatus.COMPLETED);
         
-        assertEquals(AppointmentStatus.PENDING, AppointmentStatus.fromString("pending"));
-        assertEquals(AppointmentStatus.ACCEPTED, AppointmentStatus.fromString("accepted"));
-        assertEquals(AppointmentStatus.CANCELED, AppointmentStatus.fromString("canceled"));
-        assertEquals(AppointmentStatus.COMPLETED, AppointmentStatus.fromString("completed"));
+        assertEquals(AppointmentStatus.PENDING, AppointmentStatus.fromJson("pending"));
+        assertEquals(AppointmentStatus.ACCEPTED, AppointmentStatus.fromJson("accepted"));
+        assertEquals(AppointmentStatus.CANCELED, AppointmentStatus.fromJson("canceled"));
+        assertEquals(AppointmentStatus.COMPLETED, AppointmentStatus.fromJson("completed"));
     }
 
     @Test
@@ -150,8 +182,135 @@ class AppointmentRepositorySimpleTest {
         assertNotNull(AppointmentModality.ONLINE);
         assertNotNull(AppointmentModality.PERSONALLY);
         
-        assertEquals(AppointmentModality.ONLINE, AppointmentModality.fromString("online"));
-        assertEquals(AppointmentModality.PERSONALLY, AppointmentModality.fromString("personally"));
-        assertEquals(AppointmentModality.PERSONALLY, AppointmentModality.fromString("presencial"));
+        assertEquals(AppointmentModality.ONLINE, AppointmentModality.fromJson("online"));
+        assertEquals(AppointmentModality.PERSONALLY, AppointmentModality.fromJson("personally"));
+        assertEquals(AppointmentModality.PERSONALLY, AppointmentModality.fromJson("presencial"));
+    }
+
+    @Test
+    @DisplayName("Deve validar que appointment pode ser salvo e recuperado")
+    void shouldSaveAndRetrieveAppointment() {
+        Appointment appointment = Appointment.builder()
+                .uf("SP")
+                .city("São Paulo")
+                .modality(AppointmentModality.ONLINE)
+                .date(LocalDate.now().plusDays(1))
+                .description("Teste de persistência")
+                .status(AppointmentStatus.PENDING)
+                .startTime(LocalTime.of(10, 0))
+                .endTime(LocalTime.of(11, 0))
+                .interpreter(mockInterpreter)
+                .user(mockUser)
+                .build();
+
+        Appointment saved = appointmentRepository.save(appointment);
+        
+        assertNotNull(saved);
+        assertNotNull(saved.getId());
+        assertEquals("SP", saved.getUf());
+        assertEquals("São Paulo", saved.getCity());
+        assertEquals(AppointmentModality.ONLINE, saved.getModality());
+        assertEquals(AppointmentStatus.PENDING, saved.getStatus());
+    }
+
+    @Test
+    @DisplayName("Deve contar appointments salvos corretamente")
+    void shouldCountSavedAppointments() {
+        assertEquals(0, appointmentRepository.count());
+
+        Appointment appointment1 = Appointment.builder()
+                .uf("SP")
+                .city("São Paulo")
+                .modality(AppointmentModality.ONLINE)
+                .date(LocalDate.now().plusDays(1))
+                .status(AppointmentStatus.PENDING)
+                .startTime(LocalTime.of(9, 0))
+                .endTime(LocalTime.of(10, 0))
+                .description("Appointment 1")
+                .interpreter(mockInterpreter)
+                .user(mockUser)
+                .build();
+
+        Appointment appointment2 = Appointment.builder()
+                .uf("RJ")
+                .city("Rio de Janeiro")
+                .modality(AppointmentModality.PERSONALLY)
+                .date(LocalDate.now().plusDays(2))
+                .status(AppointmentStatus.ACCEPTED)
+                .startTime(LocalTime.of(14, 0))
+                .endTime(LocalTime.of(15, 0))
+                .description("Appointment 2")
+                .interpreter(mockInterpreter)
+                .user(mockUser)
+                .build();
+
+        appointmentRepository.save(appointment1);
+        appointmentRepository.save(appointment2);
+
+        assertEquals(2, appointmentRepository.count());
+    }
+
+    @Test
+    @DisplayName("Deve validar todos os campos obrigatórios")
+    void shouldValidateRequiredFields() {
+        Appointment appointment = new Appointment();
+        appointment.setUf("MG");
+        appointment.setCity("Belo Horizonte");
+        appointment.setModality(AppointmentModality.PERSONALLY);
+        appointment.setDate(LocalDate.now().plusDays(3));
+        appointment.setStatus(AppointmentStatus.COMPLETED);
+        appointment.setStartTime(LocalTime.of(16, 0));
+        appointment.setEndTime(LocalTime.of(17, 30));
+        appointment.setDescription("Appointment completo");
+        appointment.setInterpreter(mockInterpreter);
+        appointment.setUser(mockUser);
+
+        Appointment saved = appointmentRepository.save(appointment);
+
+        assertNotNull(saved);
+        assertEquals("MG", saved.getUf());
+        assertEquals("Belo Horizonte", saved.getCity());
+        assertEquals(AppointmentModality.PERSONALLY, saved.getModality());
+        assertEquals(AppointmentStatus.COMPLETED, saved.getStatus());
+        assertEquals("Appointment completo", saved.getDescription());
+    }
+
+    @Test
+    @DisplayName("Deve permitir busca por múltiplos status")
+    void shouldAllowSearchByMultipleStatuses() {
+        Appointment pending = Appointment.builder()
+                .uf("SP").city("São Paulo")
+                .modality(AppointmentModality.ONLINE)
+                .date(LocalDate.now().plusDays(1))
+                .status(AppointmentStatus.PENDING)
+                .startTime(LocalTime.of(9, 0))
+                .endTime(LocalTime.of(10, 0))
+                .description("Pending appointment")
+                .interpreter(mockInterpreter)
+                .user(mockUser)
+                .build();
+
+        Appointment accepted = Appointment.builder()
+                .uf("RJ").city("Rio de Janeiro")
+                .modality(AppointmentModality.PERSONALLY)
+                .date(LocalDate.now().plusDays(2))
+                .status(AppointmentStatus.ACCEPTED)
+                .startTime(LocalTime.of(14, 0))
+                .endTime(LocalTime.of(15, 0))
+                .description("Accepted appointment")
+                .interpreter(mockInterpreter)
+                .user(mockUser)
+                .build();
+
+        appointmentRepository.save(pending);
+        appointmentRepository.save(accepted);
+
+        List<Appointment> pendingAppointments = appointmentRepository.findByStatus(AppointmentStatus.PENDING);
+        List<Appointment> acceptedAppointments = appointmentRepository.findByStatus(AppointmentStatus.ACCEPTED);
+
+        assertEquals(1, pendingAppointments.size());
+        assertEquals(1, acceptedAppointments.size());
+        assertEquals(AppointmentStatus.PENDING, pendingAppointments.get(0).getStatus());
+        assertEquals(AppointmentStatus.ACCEPTED, acceptedAppointments.get(0).getStatus());
     }
 }
