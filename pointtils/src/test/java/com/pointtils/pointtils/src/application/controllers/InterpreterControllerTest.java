@@ -11,15 +11,18 @@ import com.pointtils.pointtils.src.application.dto.responses.ProfessionalDataRes
 import com.pointtils.pointtils.src.application.services.InterpreterService;
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
+import io.awspring.cloud.autoconfigure.s3.S3AutoConfiguration;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import software.amazon.awssdk.services.s3.S3Client;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -39,6 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
+@EnableAutoConfiguration(exclude = S3AutoConfiguration.class)
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 class InterpreterControllerTest {
@@ -51,6 +55,9 @@ class InterpreterControllerTest {
 
     @MockitoBean
     private InterpreterService interpreterService;
+
+    @MockitoBean
+    private S3Client s3Client;
 
     @Test
     @DisplayName("Deve cadastrar intérprete com sucesso usando dados básicos")
