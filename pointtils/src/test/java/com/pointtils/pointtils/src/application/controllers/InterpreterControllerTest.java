@@ -32,6 +32,7 @@ import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequ
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataBasicRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataPatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ProfessionalDataResponseDTO;
 import com.pointtils.pointtils.src.application.services.InterpreterService;
@@ -196,7 +197,7 @@ class InterpreterControllerTest {
     @DisplayName("Deve encontrar todos os intérpretes com sucesso")
     void deveBuscarInterpretesComSucesso() throws Exception {
         // Arrange
-        InterpreterResponseDTO mockResponse = createMockResponse();
+        InterpreterListResponseDTO mockResponse = createMockListResponse();
         when(interpreterService.findAll(
                 null, null, null, null, null, null, null)).thenReturn(List.of(mockResponse));
 
@@ -256,6 +257,20 @@ class InterpreterControllerTest {
                         new LocationDTO(UUID.randomUUID(), "RS", "Porto Alegre", "São João")))
                 .specialties(Collections.emptyList())
                 .professionalData(professionalInfo)
+                .build();
+    }
+
+    private InterpreterListResponseDTO createMockListResponse() {
+        return InterpreterListResponseDTO.builder()
+                .id(UUID.randomUUID())
+                .name("João Intérprete")
+                .rating(0f)
+                .minValue(0f)
+                .maxValue(0f)
+                .modality(InterpreterModality.ALL)
+                .locations(List.of(
+                        new LocationDTO(UUID.randomUUID(), "RS", "Porto Alegre", "São João")))
+                .profilePicture("picture_url")
                 .build();
     }
 

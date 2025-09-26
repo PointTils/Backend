@@ -16,6 +16,7 @@ import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequ
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.LocationRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataPatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
 import com.pointtils.pointtils.src.application.mapper.InterpreterResponseMapper;
 import com.pointtils.pointtils.src.application.mapper.LocationMapper;
@@ -76,7 +77,7 @@ public class InterpreterService {
         repository.save(interpreter);
     }
 
-    public List<InterpreterResponseDTO> findAll(
+    public List<InterpreterListResponseDTO> findAll(
             String modality,
             String gender,
             String city,
@@ -111,7 +112,7 @@ public class InterpreterService {
                 InterpreterSpecification.filter(modalityEnum, uf, city, neighborhood, specialty, genderEnum, dayOfWeek,
                         requestedStart, requestedEnd))
                 .stream()
-                .map(responseMapper::toResponseDTO)
+                .map(responseMapper::toListResponseDTO)
                 .toList();
     }
 

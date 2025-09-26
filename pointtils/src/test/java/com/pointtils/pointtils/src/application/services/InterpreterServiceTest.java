@@ -28,6 +28,7 @@ import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequ
 import com.pointtils.pointtils.src.application.dto.requests.LocationRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataBasicRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataPatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
 import com.pointtils.pointtils.src.application.mapper.InterpreterResponseMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
@@ -82,9 +83,9 @@ class InterpreterServiceTest {
     void shouldFindAll() {
         UUID id = UUID.randomUUID();
         Interpreter foundInterpreter = Interpreter.builder().id(id).build();
-        InterpreterResponseDTO mappedResponse = InterpreterResponseDTO.builder().id(id).build();
+        InterpreterListResponseDTO mappedResponse = InterpreterListResponseDTO.builder().id(id).build();
         when(repository.findAll(any(Specification.class))).thenReturn(List.of(foundInterpreter));
-        when(responseMapper.toResponseDTO(foundInterpreter)).thenReturn(mappedResponse);
+        when(responseMapper.toListResponseDTO(foundInterpreter)).thenReturn(mappedResponse);
 
         assertThat(service.findAll(
                 null,

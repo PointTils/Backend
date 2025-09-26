@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ApiResponse;
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
 import com.pointtils.pointtils.src.application.services.InterpreterService;
 
@@ -52,7 +53,7 @@ public class InterpreterController {
     @GetMapping
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Busca todos os usuários intérprete")
-    public ResponseEntity<ApiResponse<List<InterpreterResponseDTO>>> findAll(
+    public ResponseEntity<ApiResponse<List<InterpreterListResponseDTO>>> findAll(
             @RequestParam(required = false) String modality,
             @RequestParam(required = false) String gender,
             @RequestParam(required = false) String city,
@@ -60,7 +61,7 @@ public class InterpreterController {
             @RequestParam(required = false) String neighborhood,
             @RequestParam(required = false) String specialty,
             @RequestParam(required = false, name = "available_date") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm") String availableDate) {
-        List<InterpreterResponseDTO> interpreters = service.findAll(
+        List<InterpreterListResponseDTO> interpreters = service.findAll(
                 modality, gender, city, uf, neighborhood, specialty,
                 availableDate);
         return ResponseEntity.ok(ApiResponse.success("Intérpretes encontrados com sucesso", interpreters));
