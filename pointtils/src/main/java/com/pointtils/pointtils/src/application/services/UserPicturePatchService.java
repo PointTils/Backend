@@ -1,19 +1,19 @@
 package com.pointtils.pointtils.src.application.services;
 
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
 import com.pointtils.pointtils.src.application.dto.requests.UserPicturePatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.UserResponseDTO;
 import com.pointtils.pointtils.src.core.domain.entities.User;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
-import lombok.RequiredArgsConstructor;
-import java.io.IOException;
-import java.util.UUID;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Service;
+
+import java.io.IOException;
 
 @Service
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "spring.cloud.aws.s3.enabled", havingValue = "true")
 public class UserPicturePatchService {
 
     private final UserRepository userRepository;
