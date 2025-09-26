@@ -5,9 +5,9 @@ import java.time.LocalTime;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentModality;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -22,11 +22,9 @@ import lombok.Setter;
 @Getter
 @Setter
 public class AppointmentRequestDTO {
-    @NotBlank(message = "UF é obrigatório")
     @Size(min = 2, max = 2, message = "UF deve ter exatamente 2 caracteres")
     private String uf;
     
-    @NotBlank(message = "Cidade é obrigatória")
     private String city;
     
     private String neighborhood;
@@ -38,9 +36,9 @@ public class AppointmentRequestDTO {
     private String addressDetails;
     
     @Schema(description = "Modalidade do atendimento",
-        allowableValues = {"online", "presencial"},
-        example = "online")
-    private String modality;
+        allowableValues = {"ONLINE", "PERSONALLY"},
+        example = "ONLINE")
+    private AppointmentModality modality;
     
     @NotNull(message = "Data é obrigatória")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
@@ -49,11 +47,6 @@ public class AppointmentRequestDTO {
     private LocalDate date;
 
     private String description;
-    
-    @Schema(description = "Status do agendamento",
-        allowableValues = {"pending", "accepted", "canceled", "completed"},
-        example = "pending")
-    private String status;
     
     @NotNull(message = "ID do intérprete é obrigatório")
     private UUID interpreterId;

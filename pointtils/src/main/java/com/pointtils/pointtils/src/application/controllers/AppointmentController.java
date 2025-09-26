@@ -19,6 +19,8 @@ import com.pointtils.pointtils.src.application.dto.requests.AppointmentRequestDT
 import com.pointtils.pointtils.src.application.dto.responses.ApiResponse;
 import com.pointtils.pointtils.src.application.dto.responses.AppointmentResponseDTO;
 import com.pointtils.pointtils.src.application.services.AppointmentService;
+import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentModality;
+import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentStatus;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -29,12 +31,12 @@ import lombok.AllArgsConstructor;
 @RestController
 @RequestMapping("/v1/appointments")
 @AllArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
 public class AppointmentController {
     
     private final AppointmentService appointmentService;
 
     @PostMapping
-    @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Cria um novo agendamento")
     public ResponseEntity<ApiResponse<AppointmentResponseDTO>> createAppointment(@Valid @RequestBody AppointmentRequestDTO dto) {
 
@@ -45,7 +47,6 @@ public class AppointmentController {
     }
     
     @GetMapping
-    @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Lista todos os agendamentos")
     public ResponseEntity<ApiResponse<List<AppointmentResponseDTO>>> findAll() {
         List<AppointmentResponseDTO> list = appointmentService.findAll();
@@ -53,7 +54,6 @@ public class AppointmentController {
     }
 
     @GetMapping("/{id}")
-    @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Busca agendamento por ID")
     public ResponseEntity<ApiResponse<AppointmentResponseDTO>> findById(@PathVariable UUID id) {
         AppointmentResponseDTO item = appointmentService.findById(id);
@@ -61,7 +61,6 @@ public class AppointmentController {
     }
 
     @PatchMapping("/{id}")
-    @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Atualiza parcialmente um agendamento por ID")
     public ResponseEntity<ApiResponse<AppointmentResponseDTO>> updatePartial(@PathVariable UUID id,
                                                                             @RequestBody @Valid AppointmentPatchRequestDTO dto) {
@@ -70,7 +69,6 @@ public class AppointmentController {
     }
 
     @DeleteMapping("/{id}")
-    @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Deleta um agendamento por ID")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         appointmentService.delete(id);
@@ -79,14 +77,14 @@ public class AppointmentController {
 
     /*Testar! */
     @GetMapping("/filter")
-    @SecurityRequirement(name = "bearerAuth")
+    
     @Operation(summary = "Busca agendamentos com filtros opcionais")
     public ResponseEntity<ApiResponse<List<AppointmentResponseDTO>>> searchAppointments(
-            @RequestParam(required = false) UUID interpreterId,
-            @RequestParam(required = false) UUID userId,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String modality,
-            @RequestParam(required = false) String fromDateTime) {
+        @RequestParam(required = false) UUID interpreterId,
+        @RequestParam(required = false) UUID userId,
+        @RequestParam(required = false) AppointmentStatus status,
+        @RequestParam(required = false) AppointmentModality modality,
+        @RequestParam(required = false) String fromDateTime) {
         
         java.time.LocalDateTime from = null;
         if (fromDateTime != null && !fromDateTime.trim().isEmpty()) {

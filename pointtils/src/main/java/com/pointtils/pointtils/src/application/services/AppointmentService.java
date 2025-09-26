@@ -31,13 +31,10 @@ public class AppointmentService {
 
     public AppointmentResponseDTO createAppointment(AppointmentRequestDTO dto) {
         var interpreter = interpreterRepository.findById(dto.getInterpreterId())
-                .orElseThrow(() -> new EntityNotFoundException("Interpreter not found with id: " + dto.getInterpreterId()));
+                .orElseThrow(() -> new EntityNotFoundException("Interpreter não encontrado com o id: " + dto.getInterpreterId()));
         var user = userRepository.findById(dto.getUserId())
-                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + dto.getUserId()));
+                .orElseThrow(() -> new EntityNotFoundException("User não encontrado com o id: " + dto.getUserId()));
 
-        if (dto.getStatus() == null || dto.getStatus().isBlank()) {
-            dto.setStatus("pending");
-        }
         var appointment = AppointmentMapper.toDomain(dto, interpreter, user);
 
         var savedAppointment = appointmentRepository.save(appointment);
@@ -53,32 +50,32 @@ public class AppointmentService {
 
     public AppointmentResponseDTO findById(UUID id) {
         Appointment appointment = appointmentRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Appointment not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Solicitação não encontrada com o id: " + id));
         return AppointmentMapper.toResponseDTO(appointment);
     }
 
     public AppointmentResponseDTO updatePartial(UUID id, AppointmentPatchRequestDTO dto) {
         Appointment appointment = appointmentRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Appointment not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Solicitação não encontrada com o id: " + id));
 
         if (dto.getUf() != null) appointment.setUf(dto.getUf());
         if (dto.getCity() != null) appointment.setCity(dto.getCity());
-    if (dto.getModality() != null) appointment.setModality(AppointmentModality.fromString(dto.getModality()));
+    if (dto.getModality() != null) appointment.setModality(dto.getModality());
         if (dto.getDate() != null) appointment.setDate(dto.getDate());
         if (dto.getDescription() != null) appointment.setDescription(dto.getDescription());
-        if (dto.getStatus() != null) appointment.setStatus(AppointmentStatus.fromString(dto.getStatus()));
+        if (dto.getStatus() != null) appointment.setStatus(dto.getStatus());
     if (dto.getNeighborhood() != null) appointment.setNeighborhood(dto.getNeighborhood());
     if (dto.getStreet() != null) appointment.setStreet(dto.getStreet());
     if (dto.getStreetNumber() != null) appointment.setStreetNumber(dto.getStreetNumber());
     if (dto.getAddressDetails() != null) appointment.setAddressDetails(dto.getAddressDetails());
         if (dto.getInterpreterId() != null) {
             var interpreter = interpreterRepository.findById(dto.getInterpreterId())
-                    .orElseThrow(() -> new EntityNotFoundException("Interpreter not found with id: " + dto.getInterpreterId()));
+                    .orElseThrow(() -> new EntityNotFoundException("Interpreter não encontrado com o id: " + dto.getInterpreterId()));
             appointment.setInterpreter(interpreter);
         }
         if (dto.getUserId() != null) {
             var user = userRepository.findById(dto.getUserId())
-                    .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + dto.getUserId()));
+                    .orElseThrow(() -> new EntityNotFoundException("User não encontrado com o id: " + dto.getUserId()));
             appointment.setUser(user);
         }
         if (dto.getStartTime() != null) appointment.setStartTime(dto.getStartTime());
@@ -90,20 +87,20 @@ public class AppointmentService {
 
     public void delete(UUID id) {
         if (!appointmentRepository.existsById(id)) {
-            throw new EntityNotFoundException("Appointment not found with id: " + id);
+            throw new EntityNotFoundException("Solicitação não encontrada com o id: " + id);
         }
         appointmentRepository.deleteById(id);
     }
 
     /*Testar! */
-    public List<AppointmentResponseDTO> searchAppointments(UUID interpreterId, UUID userId, String status, String modality, LocalDateTime fromDateTime) {
+    public List<AppointmentResponseDTO> searchAppointments(UUID interpreterId, UUID userId, AppointmentStatus status, AppointmentModality modality, LocalDateTime fromDateTime) {
         List<Appointment> appointments = appointmentRepository.findAll();
         
         return appointments.stream()
                 .filter(appointment -> interpreterId == null || appointment.getInterpreter().getId().equals(interpreterId))
                 .filter(appointment -> userId == null || appointment.getUser().getId().equals(userId))
-                .filter(appointment -> status == null || appointment.getStatus().equals(AppointmentStatus.fromString(status)))
-                .filter(appointment -> modality == null || appointment.getModality().equals(AppointmentModality.fromString(modality)))
+                .filter(appointment -> status == null || appointment.getStatus().equals(status))
+                .filter(appointment -> modality == null || appointment.getModality().equals(modality))
                 .filter(appointment -> fromDateTime == null || isAfterDateTime(appointment, fromDateTime))
                 .map(AppointmentMapper::toResponseDTO)
                 .collect(Collectors.toList());

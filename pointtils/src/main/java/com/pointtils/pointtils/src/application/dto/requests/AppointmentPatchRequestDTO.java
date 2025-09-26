@@ -5,6 +5,8 @@ import java.time.LocalTime;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentModality;
+import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentStatus;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,11 +24,11 @@ public class AppointmentPatchRequestDTO {
     private String street;
     private Integer streetNumber;
     private String addressDetails;
-    private String modality;
+    private AppointmentModality modality;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate date;
     private String description;
-    private String status;
+    private AppointmentStatus status;
     private UUID interpreterId;
     private UUID userId;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm:ss")
