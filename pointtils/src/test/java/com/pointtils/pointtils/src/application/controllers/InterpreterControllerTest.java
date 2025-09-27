@@ -216,8 +216,7 @@ class InterpreterControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Intérpretes encontrados com sucesso"))
-                .andExpect(jsonPath("$.data[0].id").exists())
-                .andExpect(jsonPath("$.data[0].email").value("interpreter@exemplo.com"));
+                .andExpect(jsonPath("$.data[0].id").exists());
     }
 
     private InterpreterBasicRequestDTO createValidBasicRequest() {

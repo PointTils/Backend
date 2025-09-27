@@ -60,7 +60,7 @@ class InterpreterSpecificationTest {
         Path cityPath = mock(Path.class);
         Expression<String> lowerCityExpression = mock(Expression.class);
 
-        when(root.join("location", JoinType.LEFT)).thenReturn((Join) locationJoin);
+        when(root.join("locations", JoinType.LEFT)).thenReturn((Join) locationJoin);
         when(locationJoin.get("city")).thenReturn(cityPath);
         when(cb.lower(cityPath)).thenReturn(lowerCityExpression);
         when(cb.like(lowerCityExpression, "%são paulo%")).thenReturn(cityPredicate);
