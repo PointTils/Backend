@@ -1,8 +1,8 @@
 package com.pointtils.pointtils.src.application.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pointtils.pointtils.src.application.dto.PersonDTO;
 import com.pointtils.pointtils.src.application.dto.requests.PersonCreationRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.PersonResponseDTO;
 import com.pointtils.pointtils.src.application.services.PersonService;
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
@@ -57,7 +57,7 @@ class PersonControllerTest {
     void deveCadastrarPessoaComSucesso() throws Exception {
         // Arrange
         PersonCreationRequestDTO request = createValidRequest();
-        PersonDTO mockResponse = createMockResponse();
+        PersonResponseDTO mockResponse = createMockResponse();
 
         when(personService.registerPerson(any(PersonCreationRequestDTO.class))).thenReturn(mockResponse);
 
@@ -84,7 +84,7 @@ class PersonControllerTest {
     @DisplayName("Deve buscar todas as pessoas com sucesso")
     void deveBuscarPessoasComSucesso() throws Exception {
         // Arrange
-        PersonDTO mockResponse = createMockResponse();
+        PersonResponseDTO mockResponse = createMockResponse();
         when(personService.findAll()).thenReturn(List.of(mockResponse));
 
         // Act & Assert
@@ -111,7 +111,7 @@ class PersonControllerTest {
     void deveBuscarPessoaPorIdComSucesso() throws Exception {
         // Arrange
         UUID personId = UUID.randomUUID();
-        PersonDTO mockResponse = createMockResponse();
+        PersonResponseDTO mockResponse = createMockResponse();
         when(personService.findById(personId)).thenReturn(mockResponse);
 
         // Act & Assert
@@ -160,13 +160,13 @@ class PersonControllerTest {
         return request;
     }
 
-    private PersonDTO createMockResponse() {
-        PersonDTO response = new PersonDTO();
+    private PersonResponseDTO createMockResponse() {
+        PersonResponseDTO response = new PersonResponseDTO();
         response.setId(UUID.randomUUID());
         response.setEmail("pessoa@exemplo.com");
         response.setName("João Pessoa");
-        response.setType(UserTypeE.PERSON);
-        response.setStatus(UserStatus.ACTIVE);
+        response.setType(UserTypeE.PERSON.name());
+        response.setStatus(UserStatus.ACTIVE.name());
         response.setPhone("51999999999");
         response.setPicture("picture_url");
         response.setGender(Gender.MALE);

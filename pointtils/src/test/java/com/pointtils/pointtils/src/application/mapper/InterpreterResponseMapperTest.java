@@ -1,17 +1,19 @@
 package com.pointtils.pointtils.src.application.mapper;
 
-import com.pointtils.pointtils.src.application.dto.LocationDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
-import com.pointtils.pointtils.src.application.dto.responses.ProfessionalDataResponseDTO;
-import com.pointtils.pointtils.src.application.dto.responses.SpecialtyResponseDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
 import com.pointtils.pointtils.src.core.domain.entities.Location;
 import com.pointtils.pointtils.src.core.domain.entities.Specialty;
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
-
+import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
+import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -22,12 +24,15 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
-import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
-
+@ExtendWith(MockitoExtension.class)
 class InterpreterResponseMapperTest {
 
-    private final InterpreterResponseMapper mapper = new InterpreterResponseMapper();
+    @Spy
+    private LocationMapper locationMapper = new LocationMapper();
+    @Spy
+    private UserSpecialtyMapper userSpecialtyMapper = new UserSpecialtyMapper();
+    @InjectMocks
+    private InterpreterResponseMapper mapper;
 
     @Test
     void shouldMapToResponseDTO() {
@@ -108,11 +113,11 @@ class InterpreterResponseMapperTest {
         // Assert
         assertThat(listResponseDTO.getId()).isEqualTo(id);
         assertThat(listResponseDTO.getName()).isEqualTo("John Doe");
-        assertThat(listResponseDTO.getRating()).isEqualTo(4.5f);
-        assertThat(listResponseDTO.getMinValue()).isEqualTo(100f);
-        assertThat(listResponseDTO.getMaxValue()).isEqualTo(200f);
+        assertThat(listResponseDTO.getRating()).isEqualTo(BigDecimal.valueOf(4.5));
+        assertThat(listResponseDTO.getMinValue()).isEqualTo(BigDecimal.valueOf(100));
+        assertThat(listResponseDTO.getMaxValue()).isEqualTo(BigDecimal.valueOf(200));
         assertThat(listResponseDTO.getModality()).isEqualTo(InterpreterModality.ONLINE);
-        assertThat(listResponseDTO.getProfilePicture()).isEqualTo("profile.jpg");
+        assertThat(listResponseDTO.getPicture()).isEqualTo("profile.jpg");
         assertThat(listResponseDTO.getLocations()).hasSize(1);
     }
 }

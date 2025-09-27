@@ -6,6 +6,7 @@ import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequ
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataBasicRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataPatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ProfessionalDataResponseDTO;
 import com.pointtils.pointtils.src.application.services.InterpreterService;
@@ -31,6 +32,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -38,10 +40,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResponseDTO;
 
 @SpringBootTest
 @EnableAutoConfiguration(exclude = S3AutoConfiguration.class)
@@ -73,8 +74,8 @@ class InterpreterControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/v1/interpreters/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Intérprete cadastrado com sucesso"))
@@ -94,8 +95,8 @@ class InterpreterControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/v1/interpreters/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Dados inválidos: [Nome deve ser preenchido]"));
     }
@@ -109,8 +110,8 @@ class InterpreterControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/v1/interpreters/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.message").value("Dados inválidos: [Email inválido]"));
     }
@@ -124,8 +125,8 @@ class InterpreterControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/v1/interpreters/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnprocessableEntity());
     }
 
@@ -154,8 +155,8 @@ class InterpreterControllerTest {
 
         // Act & Assert
         mockMvc.perform(patch("/v1/interpreters/{id}", interpreterId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(patchRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(patchRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Intérprete atualizado com sucesso"))
@@ -178,8 +179,8 @@ class InterpreterControllerTest {
 
         // Act & Assert
         mockMvc.perform(get("/v1/interpreters/{interpreterId}", interpreterId)
-                .with(user("testuser").roles("USER"))
-                .contentType(MediaType.APPLICATION_JSON))
+                        .with(user("testuser").roles("USER"))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Intérprete encontrado com sucesso"))
@@ -196,8 +197,8 @@ class InterpreterControllerTest {
 
         // Act & Assert
         mockMvc.perform(delete("/v1/interpreters/{interpreterId}", interpreterId)
-                .with(user("testuser").roles("USER"))
-                .contentType(MediaType.APPLICATION_JSON))
+                        .with(user("testuser").roles("USER"))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
     }
 
@@ -211,12 +212,37 @@ class InterpreterControllerTest {
 
         // Act & Assert
         mockMvc.perform(get("/v1/interpreters")
-                .with(user("testuser").roles("USER"))
-                .contentType(MediaType.APPLICATION_JSON))
+                        .with(user("testuser").roles("USER"))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Intérpretes encontrados com sucesso"))
                 .andExpect(jsonPath("$.data[0].id").exists());
+    }
+
+    @Test
+    @DisplayName("Deve atualizar todos os dados do intérprete intérprete com sucesso")
+    void deveRealizarAtualizacaoCompletaDoInterpreterComSucesso() throws Exception {
+        // Arrange
+        UUID interpreterId = UUID.randomUUID();
+        InterpreterBasicRequestDTO request = createValidBasicRequest();
+        InterpreterResponseDTO mockResponse = createMockResponse();
+
+        when(interpreterService.updateComplete(eq(interpreterId), any(InterpreterBasicRequestDTO.class)))
+                .thenReturn(mockResponse);
+
+        // Act & Assert
+        mockMvc.perform(put("/v1/interpreters/{id}", interpreterId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Intérprete atualizado com sucesso"))
+                .andExpect(jsonPath("$.data.id").exists())
+                .andExpect(jsonPath("$.data.email").value("interpreter@exemplo.com"))
+                .andExpect(jsonPath("$.data.name").value("João Intérprete"))
+                .andExpect(jsonPath("$.data.type").value("interpreter"))
+                .andExpect(jsonPath("$.data.status").value("pending"));
     }
 
     private InterpreterBasicRequestDTO createValidBasicRequest() {
@@ -271,13 +297,13 @@ class InterpreterControllerTest {
         return InterpreterListResponseDTO.builder()
                 .id(UUID.randomUUID())
                 .name("João Intérprete")
-                .rating(0f)
-                .minValue(0f)
-                .maxValue(0f)
+                .rating(BigDecimal.ZERO)
+                .minValue(BigDecimal.ZERO)
+                .maxValue(BigDecimal.ZERO)
                 .modality(InterpreterModality.ALL)
                 .locations(List.of(
                         new LocationDTO(UUID.randomUUID(), "RS", "Porto Alegre", "São João")))
-                .profilePicture("picture_url")
+                .picture("picture_url")
                 .build();
     }
 

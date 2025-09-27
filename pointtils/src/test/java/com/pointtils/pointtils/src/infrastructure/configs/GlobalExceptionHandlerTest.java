@@ -1,19 +1,23 @@
 package com.pointtils.pointtils.src.infrastructure.configs;
 
 import com.fasterxml.jackson.databind.exc.ValueInstantiationException;
+import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
+import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
 import com.pointtils.pointtils.src.core.domain.exceptions.ClientTimeoutException;
 import com.pointtils.pointtils.src.core.domain.exceptions.UserSpecialtyException;
-
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.Set;
 
@@ -22,10 +26,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-
-import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
-import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
 
 class GlobalExceptionHandlerTest {
 
@@ -333,7 +333,7 @@ class GlobalExceptionHandlerTest {
         Class<?> requiredType = InterpreterModality.class;
         MethodArgumentTypeMismatchException ex = new MethodArgumentTypeMismatchException("value", requiredType,
                 paramName, null, null);
-                
+
         ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler
                 .handleMethodArgumentTypeMismatch(ex);
 
@@ -355,5 +355,32 @@ class GlobalExceptionHandlerTest {
         assertNotNull(response);
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertEquals("Gênero inválido", response.getBody().getMessage());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"user_account", "person", "enterprise"})
+    void handleDataIntegrityViolation_ShouldReturnConflict_WithDuplicateKey(String table) {
+        String exceptionMessage = "duplicate key for key 'email' in '" + table + "'";
+        DataIntegrityViolationException ex = new DataIntegrityViolationException(exceptionMessage);
+
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler
+                .handleDataIntegrityViolationException(ex);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertEquals("Já existe um usuário cadastrado com estes dados", response.getBody().getMessage());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"duplicate key", "error"})
+    void handleDataIntegrityViolation_ShouldReturnInternalServerError_WithUnknownMessage(String exMessage) {
+        DataIntegrityViolationException ex = new DataIntegrityViolationException(exMessage);
+
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler
+                .handleDataIntegrityViolationException(ex);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertEquals("Ocorreu um erro inesperado. Tente novamente mais tarde.", response.getBody().getMessage());
     }
 }

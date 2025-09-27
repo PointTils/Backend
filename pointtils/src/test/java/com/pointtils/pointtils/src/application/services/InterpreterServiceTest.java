@@ -1,5 +1,34 @@
 package com.pointtils.pointtils.src.application.services;
 
+import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.LocationRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataBasicRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataPatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
+import com.pointtils.pointtils.src.application.mapper.InterpreterResponseMapper;
+import com.pointtils.pointtils.src.application.mapper.LocationMapper;
+import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
+import com.pointtils.pointtils.src.core.domain.entities.Location;
+import com.pointtils.pointtils.src.core.domain.entities.Schedule;
+import com.pointtils.pointtils.src.core.domain.entities.Specialty;
+import com.pointtils.pointtils.src.core.domain.entities.enums.DaysOfWeek;
+import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
+import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
+import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
+import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
+import jakarta.persistence.EntityNotFoundException;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -15,36 +44,8 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import static org.mockito.ArgumentMatchers.any;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import static org.mockito.Mockito.when;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
-import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.LocationRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataBasicRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataPatchRequestDTO;
-import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResponseDTO;
-import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
-import com.pointtils.pointtils.src.application.mapper.InterpreterResponseMapper;
-import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
-import com.pointtils.pointtils.src.core.domain.entities.Location;
-import com.pointtils.pointtils.src.core.domain.entities.Schedule;
-import com.pointtils.pointtils.src.core.domain.entities.Specialty;
-import com.pointtils.pointtils.src.core.domain.entities.enums.DaysOfWeek;
-import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
-import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
-import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
-import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
-
-import jakarta.persistence.EntityNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 class InterpreterServiceTest {
@@ -55,6 +56,8 @@ class InterpreterServiceTest {
     private PasswordEncoder passwordEncoder;
     @Mock
     private InterpreterResponseMapper responseMapper;
+    @Spy
+    private LocationMapper locationMapper = new LocationMapper();
     @InjectMocks
     private InterpreterService service;
 
@@ -106,63 +109,63 @@ class InterpreterServiceTest {
     }
 
     @Test
-void shouldFindAllWithFilters() {
-    // Arrange
-    UUID id = UUID.randomUUID();
-    Location location = Location.builder()
-        .id(UUID.randomUUID())
-        .uf("SP")
-        .city("São Paulo")
-        .neighborhood("Higienópolis")
-        .build();
+    void shouldFindAllWithFilters() {
+        // Arrange
+        UUID id = UUID.randomUUID();
+        Location location = Location.builder()
+                .id(UUID.randomUUID())
+                .uf("SP")
+                .city("São Paulo")
+                .neighborhood("Higienópolis")
+                .build();
 
-    List<Location> locations = new ArrayList<>();
-    locations.add(location);
+        List<Location> locations = new ArrayList<>();
+        locations.add(location);
 
-    Specialty specialty = new Specialty("Libras");
-    Set<Specialty> specialties = new HashSet<>();
-    specialties.add(specialty);
+        Specialty specialty = new Specialty("Libras");
+        Set<Specialty> specialties = new HashSet<>();
+        specialties.add(specialty);
 
-    Schedule schedule = new Schedule();
-    schedule.setDay(DaysOfWeek.WED);
-    schedule.setStartTime(LocalTime.of(9, 0));
-    schedule.setEndTime(LocalTime.of(18, 0));
-    Set<Schedule> schedules = new HashSet<>();
-    schedules.add(schedule);
+        Schedule schedule = new Schedule();
+        schedule.setDay(DaysOfWeek.WED);
+        schedule.setStartTime(LocalTime.of(9, 0));
+        schedule.setEndTime(LocalTime.of(18, 0));
+        Set<Schedule> schedules = new HashSet<>();
+        schedules.add(schedule);
 
-    Interpreter foundInterpreter = Interpreter.builder()
-        .id(id)
-        .name("interpreter")
-        .gender(Gender.FEMALE)
-        .modality(InterpreterModality.ONLINE)
-        .locations(locations)
-        .specialties(specialties)
-        .schedules(schedules)
-        .build();
+        Interpreter foundInterpreter = Interpreter.builder()
+                .id(id)
+                .name("interpreter")
+                .gender(Gender.FEMALE)
+                .modality(InterpreterModality.ONLINE)
+                .locations(locations)
+                .specialties(specialties)
+                .schedules(schedules)
+                .build();
 
-    InterpreterListResponseDTO mappedResponse = InterpreterListResponseDTO.builder()
-        .id(id)
-        .build();
+        InterpreterListResponseDTO mappedResponse = InterpreterListResponseDTO.builder()
+                .id(id)
+                .build();
 
-    when(repository.findAll(any(Specification.class))).thenReturn(List.of(foundInterpreter));
-    when(responseMapper.toListResponseDTO(foundInterpreter)).thenReturn(mappedResponse);
+        when(repository.findAll(any(Specification.class))).thenReturn(List.of(foundInterpreter));
+        when(responseMapper.toListResponseDTO(foundInterpreter)).thenReturn(mappedResponse);
 
-    // Act
-    List<InterpreterListResponseDTO> result = service.findAll(
-        "ONLINE",
-        "FEMALE",
-        "São Paulo",
-        "SP",
-        "Higienópolis",
-        "Libras",
-        "2025-12-31 10:00"
-    );
+        // Act
+        List<InterpreterListResponseDTO> result = service.findAll(
+                "ONLINE",
+                "FEMALE",
+                "São Paulo",
+                "SP",
+                "Higienópolis",
+                "Libras",
+                "2025-12-31 10:00"
+        );
 
-    // Assert
-    assertThat(result)
-        .hasSize(1)
-        .contains(mappedResponse);
-}
+        // Assert
+        assertThat(result)
+                .hasSize(1)
+                .contains(mappedResponse);
+    }
 
 
     @Test

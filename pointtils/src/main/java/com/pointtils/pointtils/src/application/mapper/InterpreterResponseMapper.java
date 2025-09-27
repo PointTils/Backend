@@ -1,20 +1,24 @@
 package com.pointtils.pointtils.src.application.mapper;
 
-import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.List;
-
-import org.springframework.stereotype.Component;
-
 import com.pointtils.pointtils.src.application.dto.LocationDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ProfessionalDataResponseDTO;
-import com.pointtils.pointtils.src.application.dto.responses.SpecialtyResponseDTO;
+import com.pointtils.pointtils.src.application.util.MaskUtil;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class InterpreterResponseMapper {
+
+    private final UserSpecialtyMapper userSpecialtyMapper;
+    private final LocationMapper locationMapper;
 
     public InterpreterResponseDTO toResponseDTO(Interpreter interpreter) {
         InterpreterResponseDTO dto = InterpreterResponseDTO.builder()
@@ -27,10 +31,41 @@ public class InterpreterResponseMapper {
                 .name(interpreter.getName())
                 .gender(interpreter.getGender())
                 .birthday(interpreter.getBirthday())
-                .cpf(maskCpf(interpreter.getCpf()))
+                .cpf(MaskUtil.maskCpf(interpreter.getCpf()))
+                .professionalData(toProfessionalDataResponseDTO(interpreter))
+                .specialties(userSpecialtyMapper.toDtoList(interpreter.getSpecialties()))
                 .build();
 
-        ProfessionalDataResponseDTO professionalDto = ProfessionalDataResponseDTO.builder()
+        if (interpreter.getLocations() != null) {
+            List<LocationDTO> locationList = interpreter.getLocations().stream()
+                    .map(locationMapper::toDto)
+                    .toList();
+            dto.setLocations(locationList);
+        } else {
+            dto.setLocations(Collections.emptyList());
+        }
+        return dto;
+    }
+
+    public InterpreterListResponseDTO toListResponseDTO(Interpreter interpreter) {
+        return InterpreterListResponseDTO.builder()
+                .id(interpreter.getId())
+                .name(interpreter.getName())
+                .rating(interpreter.getRating() != null ? interpreter.getRating() : BigDecimal.ZERO)
+                .minValue(interpreter.getMinValue() != null ? interpreter.getMinValue() : BigDecimal.ZERO)
+                .maxValue(interpreter.getMaxValue() != null ? interpreter.getMaxValue() : BigDecimal.ZERO)
+                .modality(interpreter.getModality())
+                .locations(interpreter.getLocations() != null
+                        ? interpreter.getLocations().stream()
+                        .map(locationMapper::toDto)
+                        .toList()
+                        : Collections.emptyList())
+                .picture(interpreter.getPicture())
+                .build();
+    }
+
+    private ProfessionalDataResponseDTO toProfessionalDataResponseDTO(Interpreter interpreter) {
+        return ProfessionalDataResponseDTO.builder()
                 .cnpj(interpreter.getCnpj())
                 .rating(interpreter.getRating() != null ? interpreter.getRating() : BigDecimal.ZERO)
                 .minValue(interpreter.getMinValue())
@@ -39,49 +74,5 @@ public class InterpreterResponseMapper {
                 .description(interpreter.getDescription())
                 .imageRights(interpreter.getImageRights())
                 .build();
-        dto.setProfessionalData(professionalDto);
-
-        if (interpreter.getLocations() != null) {
-            List<LocationDTO> locationList = interpreter.getLocations().stream()
-                    .map(LocationMapper::toDto)
-                    .toList();
-            dto.setLocations(locationList);
-        } else {
-            dto.setLocations(Collections.emptyList());
-        }
-
-        List<SpecialtyResponseDTO> specialtyDtos = interpreter.getSpecialties().stream()
-                .map(specialty -> SpecialtyResponseDTO.builder()
-                        .id(specialty.getId())
-                        .name(specialty.getName())
-                        .build())
-                .toList();
-        dto.setSpecialties(specialtyDtos);
-
-        return dto;
-    }
-
-    public InterpreterListResponseDTO toListResponseDTO(Interpreter interpreter) {
-        return InterpreterListResponseDTO.builder()
-                .id(interpreter.getId())
-                .name(interpreter.getName())
-                .rating(interpreter.getRating() != null ? interpreter.getRating().floatValue() : 0f)
-                .minValue(interpreter.getMinValue() != null ? interpreter.getMinValue().floatValue() : 0f)
-                .maxValue(interpreter.getMaxValue() != null ? interpreter.getMaxValue().floatValue() : 0f)
-                .modality(interpreter.getModality())
-                .locations(interpreter.getLocations() != null
-                        ? interpreter.getLocations().stream()
-                                .map(LocationMapper::toDto)
-                                .toList()
-                        : Collections.emptyList())
-                .profilePicture(interpreter.getPicture())
-                .build();
-    }
-
-    private String maskCpf(String cpf) {
-        if (cpf == null || cpf.length() != 11) {
-            return cpf;
-        }
-        return cpf.substring(0, 3) + ".***.***-" + cpf.substring(9);
     }
 }

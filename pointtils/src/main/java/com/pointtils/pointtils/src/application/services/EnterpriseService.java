@@ -3,6 +3,7 @@ package com.pointtils.pointtils.src.application.services;
 import com.pointtils.pointtils.src.application.dto.requests.EnterprisePatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.EnterpriseRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.EnterpriseResponseDTO;
+import com.pointtils.pointtils.src.application.mapper.EnterpriseResponseMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Enterprise;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
@@ -26,6 +27,7 @@ public class EnterpriseService {
     private final EnterpriseRepository enterpriseRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EnterpriseResponseMapper enterpriseResponseMapper;
 
     public EnterpriseResponseDTO registerEnterprise(EnterpriseRequestDTO dto) {
         if (enterpriseRepository.existsByCnpj(dto.getCnpj())) {
@@ -49,20 +51,20 @@ public class EnterpriseService {
 
         Enterprise savedEnterprise = enterpriseRepository.save(enterprise);
 
-        return new EnterpriseResponseDTO(savedEnterprise);
+        return enterpriseResponseMapper.toResponseDTO(savedEnterprise);
     }
 
     public List<EnterpriseResponseDTO> findAll() {
         List<Enterprise> enterpriseList = enterpriseRepository.findAllByStatus(UserStatus.ACTIVE);
         return enterpriseList.stream()
-                .map(EnterpriseResponseDTO::new)
+                .map(enterpriseResponseMapper::toResponseDTO)
                 .toList();
     }
 
     public EnterpriseResponseDTO findById(UUID id) {
         Enterprise enterprise = enterpriseRepository.findByIdAndStatus(id, UserStatus.ACTIVE)
                 .orElseThrow(() -> new EntityNotFoundException(ENTERPRISE_NOT_FOUND_MSG));
-        return new EnterpriseResponseDTO(enterprise);
+        return enterpriseResponseMapper.toResponseDTO(enterprise);
     }
 
     public EnterpriseResponseDTO patchEnterprise(UUID id, EnterprisePatchRequestDTO dto) {
@@ -76,7 +78,7 @@ public class EnterpriseService {
         if (dto.getPicture() != null) enterprise.setPicture(dto.getPicture());
 
         Enterprise patchedEnterprise = enterpriseRepository.save(enterprise);
-        return new EnterpriseResponseDTO(patchedEnterprise);
+        return enterpriseResponseMapper.toResponseDTO(patchedEnterprise);
     }
 
     public void delete(UUID id) {
