@@ -123,6 +123,7 @@ class InterpreterServiceTest {
         locations.add(location);
 
         Specialty specialty = new Specialty("Libras");
+        specialty.setId(UUID.randomUUID());
         Set<Specialty> specialties = new HashSet<>();
         specialties.add(specialty);
 
@@ -157,7 +158,7 @@ class InterpreterServiceTest {
                 "São Paulo",
                 "SP",
                 "Higienópolis",
-                "Libras",
+                specialty.getId().toString(),
                 "2025-12-31 10:00"
         );
 

@@ -26,6 +26,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -107,8 +108,15 @@ public class InterpreterService {
             requestedEnd = requestedStart.plusHours(1);
         }
 
+        List<UUID> specialtyList = null;
+        if (specialty != null) {
+            specialtyList = Arrays.stream(specialty.split(","))
+                    .map(UUID::fromString)
+                    .toList();
+        }
+
         return repository.findAll(
-                        InterpreterSpecification.filter(modalityEnum, uf, city, neighborhood, specialty, genderEnum, dayOfWeek,
+                        InterpreterSpecification.filter(modalityEnum, uf, city, neighborhood, specialtyList, genderEnum, dayOfWeek,
                                 requestedStart, requestedEnd))
                 .stream()
                 .map(responseMapper::toListResponseDTO)
