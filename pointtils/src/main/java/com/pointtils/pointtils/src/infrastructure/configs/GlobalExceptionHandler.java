@@ -22,7 +22,6 @@ import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModalit
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
 import com.pointtils.pointtils.src.core.domain.exceptions.ClientTimeoutException;
 import com.pointtils.pointtils.src.core.domain.exceptions.DuplicateResourceException;
-import com.pointtils.pointtils.src.core.domain.exceptions.InvalidFilterException;
 import com.pointtils.pointtils.src.core.domain.exceptions.UserSpecialtyException;
 
 import jakarta.persistence.EntityNotFoundException;

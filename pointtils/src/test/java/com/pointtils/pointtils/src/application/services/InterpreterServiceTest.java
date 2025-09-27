@@ -2,9 +2,12 @@ package com.pointtils.pointtils.src.application.services;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,6 +36,9 @@ import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponse
 import com.pointtils.pointtils.src.application.mapper.InterpreterResponseMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
 import com.pointtils.pointtils.src.core.domain.entities.Location;
+import com.pointtils.pointtils.src.core.domain.entities.Schedule;
+import com.pointtils.pointtils.src.core.domain.entities.Specialty;
+import com.pointtils.pointtils.src.core.domain.entities.enums.DaysOfWeek;
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
@@ -98,6 +104,66 @@ class InterpreterServiceTest {
                 .hasSize(1)
                 .contains(mappedResponse);
     }
+
+    @Test
+void shouldFindAllWithFilters() {
+    // Arrange
+    UUID id = UUID.randomUUID();
+    Location location = Location.builder()
+        .id(UUID.randomUUID())
+        .uf("SP")
+        .city("São Paulo")
+        .neighborhood("Higienópolis")
+        .build();
+
+    List<Location> locations = new ArrayList<>();
+    locations.add(location);
+
+    Specialty specialty = new Specialty("Libras");
+    Set<Specialty> specialties = new HashSet<>();
+    specialties.add(specialty);
+
+    Schedule schedule = new Schedule();
+    schedule.setDay(DaysOfWeek.WED);
+    schedule.setStartTime(LocalTime.of(9, 0));
+    schedule.setEndTime(LocalTime.of(18, 0));
+    Set<Schedule> schedules = new HashSet<>();
+    schedules.add(schedule);
+
+    Interpreter foundInterpreter = Interpreter.builder()
+        .id(id)
+        .name("interpreter")
+        .gender(Gender.FEMALE)
+        .modality(InterpreterModality.ONLINE)
+        .locations(locations)
+        .specialties(specialties)
+        .schedules(schedules)
+        .build();
+
+    InterpreterListResponseDTO mappedResponse = InterpreterListResponseDTO.builder()
+        .id(id)
+        .build();
+
+    when(repository.findAll(any(Specification.class))).thenReturn(List.of(foundInterpreter));
+    when(responseMapper.toListResponseDTO(foundInterpreter)).thenReturn(mappedResponse);
+
+    // Act
+    List<InterpreterListResponseDTO> result = service.findAll(
+        "ONLINE",
+        "FEMALE",
+        "São Paulo",
+        "SP",
+        "Higienópolis",
+        "Libras",
+        "2025-12-31 10:00"
+    );
+
+    // Assert
+    assertThat(result)
+        .hasSize(1)
+        .contains(mappedResponse);
+}
+
 
     @Test
     void shouldFindById() {

@@ -3,7 +3,7 @@ package com.pointtils.pointtils.src.core.domain.entities.enums;
 public enum DaysOfWeek {
     MON,
     TUE,
-    WEN,
+    WED,
     THU,
     FRI,
     SAT,
