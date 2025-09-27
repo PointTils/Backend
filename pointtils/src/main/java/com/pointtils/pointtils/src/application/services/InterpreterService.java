@@ -1,27 +1,36 @@
 package com.pointtils.pointtils.src.application.services;
 
-import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.LocationRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataPatchRequestDTO;
-import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
-import com.pointtils.pointtils.src.application.mapper.InterpreterResponseMapper;
-import com.pointtils.pointtils.src.application.mapper.LocationMapper;
-import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
-import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
-import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
-import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
-import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
-import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.LocationRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataPatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
+import com.pointtils.pointtils.src.application.mapper.InterpreterResponseMapper;
+import com.pointtils.pointtils.src.application.mapper.LocationMapper;
+import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
+import com.pointtils.pointtils.src.core.domain.entities.enums.DaysOfWeek;
+import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
+import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
+import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
+import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
+import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
+import com.pointtils.pointtils.src.infrastructure.repositories.spec.InterpreterSpecification;
+
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @Transactional
@@ -68,11 +77,78 @@ public class InterpreterService {
         repository.save(interpreter);
     }
 
-    public List<InterpreterResponseDTO> findAll() {
-        List<Interpreter> interpreters = repository.findAll();
-        return interpreters.stream()
-                .map(responseMapper::toResponseDTO)
+    public List<InterpreterListResponseDTO> findAll(
+            String modality,
+            String gender,
+            String city,
+            String uf,
+            String neighborhood,
+            String specialty,
+            String availableDate) {
+
+        InterpreterModality modalityEnum = null;
+        if (modality != null) {
+            modalityEnum = InterpreterModality.valueOf(modality.toUpperCase());
+        }
+
+        Gender genderEnum = null;
+        if (gender != null) {
+            genderEnum = Gender.valueOf(gender.toUpperCase());
+        }
+
+        DaysOfWeek dayOfWeek = null;
+        LocalTime requestedStart = null;
+        LocalTime requestedEnd = null;
+
+        if (availableDate != null) {
+            LocalDateTime dateTime = LocalDateTime.parse(availableDate,
+                    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+            dayOfWeek = DaysOfWeek.valueOf(dateTime.getDayOfWeek().name().substring(0, 3));
+            requestedStart = dateTime.toLocalTime();
+            requestedEnd = requestedStart.plusHours(1);
+        }
+
+        return repository.findAll(
+                InterpreterSpecification.filter(modalityEnum, uf, city, neighborhood, specialty, genderEnum, dayOfWeek,
+                        requestedStart, requestedEnd))
+                .stream()
+                .map(responseMapper::toListResponseDTO)
                 .toList();
+    }
+
+    public InterpreterResponseDTO updateComplete(UUID id, InterpreterBasicRequestDTO dto) {
+        Interpreter interpreter = findInterpreterById(id);
+
+        if (dto != null) {
+            interpreter.setName(dto.getName());
+            interpreter.setEmail(dto.getEmail());
+            interpreter.setPhone(dto.getPhone());
+            interpreter.setPicture(dto.getPicture());
+            interpreter.setBirthday(dto.getBirthday());
+            interpreter.setCpf(dto.getCpf());
+            interpreter.setGender(dto.getGender());
+
+            if (dto.getPassword() != null) {
+                interpreter.setPassword(passwordEncoder.encode(dto.getPassword()));
+            }
+        }
+
+        if (dto != null && dto.getProfessionalData() != null) {
+            var professionalData = dto.getProfessionalData();
+            interpreter.setCnpj(professionalData.getCnpj());
+            interpreter.setMinValue(professionalData.getMinValue());
+            interpreter.setMaxValue(professionalData.getMaxValue());
+            interpreter.setImageRights(professionalData.getImageRights());
+            interpreter.setModality(professionalData.getModality());
+            interpreter.setDescription(professionalData.getDescription());
+        }
+
+        if (dto != null) {
+            updateLocation(dto.getLocations(), interpreter);
+        }
+
+        Interpreter updatedInterpreter = repository.save(interpreter);
+        return responseMapper.toResponseDTO(updatedInterpreter);
     }
 
     public InterpreterResponseDTO updatePartial(UUID id, InterpreterPatchRequestDTO dto) {

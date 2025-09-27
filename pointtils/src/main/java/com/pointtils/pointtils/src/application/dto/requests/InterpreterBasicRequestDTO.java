@@ -1,7 +1,11 @@
 package com.pointtils.pointtils.src.application.dto.requests;
 
+import java.time.LocalDate;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -11,8 +15,6 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
@@ -50,4 +52,7 @@ public class InterpreterBasicRequestDTO {
     @Valid
     @JsonProperty("professional_data")
     private ProfessionalDataBasicRequestDTO professionalData;
+
+    @Valid
+    private List<LocationRequestDTO> locations;
 }

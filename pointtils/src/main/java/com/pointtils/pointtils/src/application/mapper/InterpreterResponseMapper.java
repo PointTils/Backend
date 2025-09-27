@@ -1,15 +1,17 @@
 package com.pointtils.pointtils.src.application.mapper;
 
+import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.List;
+
+import org.springframework.stereotype.Component;
+
 import com.pointtils.pointtils.src.application.dto.LocationDTO;
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ProfessionalDataResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.SpecialtyResponseDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
-import org.springframework.stereotype.Component;
-
-import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.List;
 
 @Component
 public class InterpreterResponseMapper {
@@ -57,6 +59,23 @@ public class InterpreterResponseMapper {
         dto.setSpecialties(specialtyDtos);
 
         return dto;
+    }
+
+    public InterpreterListResponseDTO toListResponseDTO(Interpreter interpreter) {
+        return InterpreterListResponseDTO.builder()
+                .id(interpreter.getId())
+                .name(interpreter.getName())
+                .rating(interpreter.getRating() != null ? interpreter.getRating().floatValue() : 0f)
+                .minValue(interpreter.getMinValue() != null ? interpreter.getMinValue().floatValue() : 0f)
+                .maxValue(interpreter.getMaxValue() != null ? interpreter.getMaxValue().floatValue() : 0f)
+                .modality(interpreter.getModality())
+                .locations(interpreter.getLocations() != null
+                        ? interpreter.getLocations().stream()
+                                .map(LocationMapper::toDto)
+                                .toList()
+                        : Collections.emptyList())
+                .profilePicture(interpreter.getPicture())
+                .build();
     }
 
     private String maskCpf(String cpf) {

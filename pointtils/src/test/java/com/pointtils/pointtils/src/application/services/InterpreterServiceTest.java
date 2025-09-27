@@ -1,32 +1,13 @@
 package com.pointtils.pointtils.src.application.services;
 
-import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.LocationRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataBasicRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataPatchRequestDTO;
-import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
-import com.pointtils.pointtils.src.application.mapper.InterpreterResponseMapper;
-import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
-import com.pointtils.pointtils.src.core.domain.entities.Location;
-import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
-import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
-import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
-import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
-import jakarta.persistence.EntityNotFoundException;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,7 +15,36 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import static org.mockito.ArgumentMatchers.any;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.LocationRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataBasicRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataPatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
+import com.pointtils.pointtils.src.application.mapper.InterpreterResponseMapper;
+import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
+import com.pointtils.pointtils.src.core.domain.entities.Location;
+import com.pointtils.pointtils.src.core.domain.entities.Schedule;
+import com.pointtils.pointtils.src.core.domain.entities.Specialty;
+import com.pointtils.pointtils.src.core.domain.entities.enums.DaysOfWeek;
+import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
+import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
+import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
+import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
+
+import jakarta.persistence.EntityNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 class InterpreterServiceTest {
@@ -79,14 +89,81 @@ class InterpreterServiceTest {
     void shouldFindAll() {
         UUID id = UUID.randomUUID();
         Interpreter foundInterpreter = Interpreter.builder().id(id).build();
-        InterpreterResponseDTO mappedResponse = InterpreterResponseDTO.builder().id(id).build();
-        when(repository.findAll()).thenReturn(List.of(foundInterpreter));
-        when(responseMapper.toResponseDTO(foundInterpreter)).thenReturn(mappedResponse);
+        InterpreterListResponseDTO mappedResponse = InterpreterListResponseDTO.builder().id(id).build();
+        when(repository.findAll(any(Specification.class))).thenReturn(List.of(foundInterpreter));
+        when(responseMapper.toListResponseDTO(foundInterpreter)).thenReturn(mappedResponse);
 
-        assertThat(service.findAll())
+        assertThat(service.findAll(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null))
                 .hasSize(1)
                 .contains(mappedResponse);
     }
+
+    @Test
+void shouldFindAllWithFilters() {
+    // Arrange
+    UUID id = UUID.randomUUID();
+    Location location = Location.builder()
+        .id(UUID.randomUUID())
+        .uf("SP")
+        .city("São Paulo")
+        .neighborhood("Higienópolis")
+        .build();
+
+    List<Location> locations = new ArrayList<>();
+    locations.add(location);
+
+    Specialty specialty = new Specialty("Libras");
+    Set<Specialty> specialties = new HashSet<>();
+    specialties.add(specialty);
+
+    Schedule schedule = new Schedule();
+    schedule.setDay(DaysOfWeek.WED);
+    schedule.setStartTime(LocalTime.of(9, 0));
+    schedule.setEndTime(LocalTime.of(18, 0));
+    Set<Schedule> schedules = new HashSet<>();
+    schedules.add(schedule);
+
+    Interpreter foundInterpreter = Interpreter.builder()
+        .id(id)
+        .name("interpreter")
+        .gender(Gender.FEMALE)
+        .modality(InterpreterModality.ONLINE)
+        .locations(locations)
+        .specialties(specialties)
+        .schedules(schedules)
+        .build();
+
+    InterpreterListResponseDTO mappedResponse = InterpreterListResponseDTO.builder()
+        .id(id)
+        .build();
+
+    when(repository.findAll(any(Specification.class))).thenReturn(List.of(foundInterpreter));
+    when(responseMapper.toListResponseDTO(foundInterpreter)).thenReturn(mappedResponse);
+
+    // Act
+    List<InterpreterListResponseDTO> result = service.findAll(
+        "ONLINE",
+        "FEMALE",
+        "São Paulo",
+        "SP",
+        "Higienópolis",
+        "Libras",
+        "2025-12-31 10:00"
+    );
+
+    // Assert
+    assertThat(result)
+        .hasSize(1)
+        .contains(mappedResponse);
+}
+
 
     @Test
     void shouldFindById() {
@@ -162,8 +239,7 @@ class InterpreterServiceTest {
                 .anyMatch(loc -> loc.getUf().equals("SP") &&
                         loc.getCity().equals("São Paulo") &&
                         loc.getNeighborhood().equals("Higienópolis") &&
-                        loc.getInterpreter().getId().equals(interpreterId)
-                );
+                        loc.getInterpreter().getId().equals(interpreterId));
     }
 
     @Test
@@ -191,8 +267,7 @@ class InterpreterServiceTest {
                 .anyMatch(loc -> loc.getUf().equals("SP") &&
                         loc.getCity().equals("São Paulo") &&
                         loc.getNeighborhood().equals("Higienópolis") &&
-                        loc.getInterpreter().getId().equals(interpreterId)
-                );
+                        loc.getInterpreter().getId().equals(interpreterId));
     }
 
     private InterpreterBasicRequestDTO createValidBasicRequest() {
@@ -205,7 +280,12 @@ class InterpreterServiceTest {
         request.setBirthday(LocalDate.of(1990, 1, 1));
         request.setCpf("12345678901");
         request.setPicture("picture_url");
-        request.setProfessionalData(new ProfessionalDataBasicRequestDTO("12345678000195"));
+        request.setProfessionalData(new ProfessionalDataBasicRequestDTO("12345678000195",
+                new BigDecimal("100.00"),
+                new BigDecimal("500.00"),
+                true,
+                InterpreterModality.PERSONALLY,
+                "Intérprete experiente em LIBRAS"));
         return request;
     }
 
