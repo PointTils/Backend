@@ -198,17 +198,6 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(InvalidFilterException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidFilter(InvalidFilterException ex) {
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                ex.getMessage(),
-                System.currentTimeMillis()
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-    }
-
-
 	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
 	public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
 		String paramName = ex.getName();
@@ -219,10 +208,10 @@ public class GlobalExceptionHandler {
 			message = "UUID inválido";
         }
         else if (requiredType != null && InterpreterModality.class.equals(requiredType)) {
-            message = "Filtros inválidos";
+            message = "Modalidade inválida";
         }
         else if (requiredType != null && Gender.class.equals(requiredType)) {
-            message = "Filtros inválidos";
+            message = "Gênero inválido";
         }
          else {
             message = String.format("Valor inválido para parâmetro '%s'", paramName);
