@@ -5,6 +5,7 @@ import com.pointtils.pointtils.src.application.dto.requests.ScheduleListRequestD
 import com.pointtils.pointtils.src.application.dto.requests.SchedulePatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ScheduleResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.PaginatedScheduleResponseDTO;
+import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
 import com.pointtils.pointtils.src.core.domain.entities.Schedule;
 import com.pointtils.pointtils.src.infrastructure.repositories.ScheduleRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -23,8 +25,9 @@ public class ScheduleService {
     private final InterpreterRepository interpreterRepository;
 
     public ScheduleResponseDTO registerSchedule(ScheduleRequestDTO dto) {
-        if (!interpreterRepository.existsById(dto.getInterpreterId())) {
-            throw new EntityNotFoundException("Interpreter not found");
+        Optional<Interpreter> foundInterpreter = interpreterRepository.findById(dto.getInterpreterId());
+        if (foundInterpreter.isEmpty()) {
+            throw new EntityNotFoundException("Intérprete não encontrado");
         }
 
         boolean hasConflict = scheduleRepository.existsByInterpreterIdAndDayAndStartTimeLessThanAndEndTimeGreaterThan(
@@ -39,7 +42,7 @@ public class ScheduleService {
         }
 
         Schedule schedule = Schedule.builder()
-                .interpreterId(dto.getInterpreterId())
+                .interpreter(foundInterpreter.get())
                 .day(dto.getDay())
                 .startTime(dto.getStartTime())
                 .endTime(dto.getEndTime())
@@ -49,7 +52,7 @@ public class ScheduleService {
 
         return ScheduleResponseDTO.builder()
                 .id(savedSchedule.getId())
-                .interpreterId(savedSchedule.getInterpreterId())
+                .interpreterId(savedSchedule.getInterpreter().getId())
                 .day(savedSchedule.getDay())
                 .startTime(savedSchedule.getStartTime())
                 .endTime(savedSchedule.getEndTime())
@@ -62,7 +65,7 @@ public class ScheduleService {
 
         return ScheduleResponseDTO.builder()
                 .id(schedule.getId())
-                .interpreterId(schedule.getInterpreterId())
+                .interpreterId(schedule.getInterpreter().getId())
                 .day(schedule.getDay())
                 .startTime(schedule.getStartTime())
                 .endTime(schedule.getEndTime())
@@ -80,7 +83,7 @@ public class ScheduleService {
         
         List<ScheduleResponseDTO> items = schedules.map(s -> ScheduleResponseDTO.builder()
             .id(s.getId())
-            .interpreterId(s.getInterpreterId())
+            .interpreterId(s.getInterpreter().getId())
             .day(s.getDay())
             .startTime(s.getStartTime())
             .endTime(s.getEndTime())
@@ -110,13 +113,13 @@ public class ScheduleService {
             schedule.setEndTime(dto.getEndTime());
         }
 
-        if (!dto.getInterpreterId().equals(schedule.getInterpreterId())) {
+        if (!dto.getInterpreterId().equals(schedule.getInterpreter().getId())) {
             throw new IllegalArgumentException("Não é possível alterar o horário de outro intérprete");
         }
 
         boolean hasConflict = scheduleRepository.existsConflictForUpdate(
             schedule.getId(),
-            schedule.getInterpreterId(),
+            schedule.getInterpreter().getId(),
             schedule.getDay(),
             schedule.getStartTime(),
             schedule.getEndTime()
@@ -130,7 +133,7 @@ public class ScheduleService {
 
         return ScheduleResponseDTO.builder()
             .id(saved.getId())
-            .interpreterId(saved.getInterpreterId())
+            .interpreterId(saved.getInterpreter().getId())
             .day(saved.getDay())
             .startTime(saved.getStartTime())
             .endTime(saved.getEndTime())

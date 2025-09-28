@@ -19,7 +19,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, UUID>, JpaSp
 
     boolean existsByInterpreterIdAndDayAndStartTimeLessThanAndEndTimeGreaterThan(UUID interpreterId, DayOfWeek day, LocalTime endTime, LocalTime startTime);
 
-    @Query("SELECT COUNT(s) > 0 FROM Schedule s WHERE s.interpreterId = :interpreterId AND s.day = :day AND s.id <> :id AND s.startTime < :endTime AND s.endTime > :startTime")
+    @Query("SELECT COUNT(s) > 0 FROM Schedule s WHERE s.interpreter.id = :interpreterId AND s.day = :day AND s.id <> :id AND s.startTime < :endTime AND s.endTime > :startTime")
     boolean existsConflictForUpdate(@Param("id") UUID id, @Param("interpreterId") UUID interpreterId, @Param("day") DayOfWeek day, @Param("startTime") LocalTime startTime, @Param("endTime") LocalTime endTime);
 
     default Page<Schedule> findAllWithFilters(Pageable pageable, UUID interpreterId, DayOfWeek day, LocalTime dateFrom, LocalTime dateTo) {

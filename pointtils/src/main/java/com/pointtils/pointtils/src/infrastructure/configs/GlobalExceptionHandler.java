@@ -1,28 +1,34 @@
 
 package com.pointtils.pointtils.src.infrastructure.configs;
 
-import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
-import com.pointtils.pointtils.src.core.domain.exceptions.ClientTimeoutException;
-import com.pointtils.pointtils.src.core.domain.exceptions.DuplicateResourceException;
-import com.pointtils.pointtils.src.core.domain.exceptions.UserSpecialtyException;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.ConstraintViolationException;
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import com.fasterxml.jackson.databind.exc.ValueInstantiationException;
+import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
+import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
+import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
+import com.pointtils.pointtils.src.core.domain.exceptions.ClientTimeoutException;
+import com.pointtils.pointtils.src.core.domain.exceptions.DuplicateResourceException;
+import com.pointtils.pointtils.src.core.domain.exceptions.UserSpecialtyException;
+
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @ControllerAdvice
@@ -199,11 +205,18 @@ public class GlobalExceptionHandler {
 		String message;
 		if (requiredType != null && UUID.class.equals(requiredType)) {
 			message = "UUID inválido";
-		} else {
-			message = String.format("Valor inválido para parâmetro '%s'", paramName);
-		}
-		
-		ErrorResponse errorResponse = new ErrorResponse(
+        }
+        else if (requiredType != null && InterpreterModality.class.equals(requiredType)) {
+            message = "Modalidade inválida";
+        }
+        else if (requiredType != null && Gender.class.equals(requiredType)) {
+            message = "Gênero inválido";
+        }
+         else {
+            message = String.format("Valor inválido para parâmetro '%s'", paramName);
+        }
+            
+            ErrorResponse errorResponse = new ErrorResponse(
 				HttpStatus.BAD_REQUEST.value(),
 				message,
 				System.currentTimeMillis());
@@ -220,30 +233,39 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-	public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
-		List<String> errors = new ArrayList<>();
-		
-		boolean hasRequiredFieldErrors = ex.getBindingResult().getFieldErrors().stream()
-				.anyMatch(error -> "NotBlank".equals(error.getCode()) || "NotNull".equals(error.getCode()) || "NotEmpty".equals(error.getCode()));
-		
-		boolean hasFormatErrors = !hasRequiredFieldErrors && ex.getBindingResult().getFieldErrors().stream()
-				.anyMatch(error -> "Pattern".equals(error.getCode()) || "Email".equals(error.getCode()));
-		
-		ex.getBindingResult().getFieldErrors()
+    public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        List<String> errors = new ArrayList<>();
+
+        boolean hasRequiredFieldErrors = ex.getBindingResult().getFieldErrors().stream()
+                .anyMatch(error -> "NotBlank".equals(error.getCode()) || "NotNull".equals(error.getCode()) || "NotEmpty".equals(error.getCode()));
+
+        boolean hasFormatErrors = !hasRequiredFieldErrors && ex.getBindingResult().getFieldErrors().stream()
+                .anyMatch(error -> "Pattern".equals(error.getCode()) || "Email".equals(error.getCode()));
+
+        ex.getBindingResult().getFieldErrors()
                 .forEach(error -> errors.add(error.getDefaultMessage()));
-		
-		String message = "Dados inválidos: " + errors;
+
+        String message = "Dados inválidos: " + errors;
 
         HttpStatus fieldFormatErrorStatus = hasFormatErrors ? HttpStatus.UNPROCESSABLE_ENTITY : HttpStatus.BAD_REQUEST;
-		HttpStatus finalStatus = hasRequiredFieldErrors ? HttpStatus.BAD_REQUEST : fieldFormatErrorStatus;
-		
-		ErrorResponse errorResponse = new ErrorResponse(
+        HttpStatus finalStatus = hasRequiredFieldErrors ? HttpStatus.BAD_REQUEST : fieldFormatErrorStatus;
+
+        ErrorResponse errorResponse = new ErrorResponse(
                 finalStatus.value(),
-				message,
-				System.currentTimeMillis());
-		
-		return new ResponseEntity<>(errorResponse, finalStatus);
-	}
+                message,
+                System.currentTimeMillis());
+
+        return new ResponseEntity<>(errorResponse, finalStatus);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
+        if (ex.getCause() instanceof ValueInstantiationException valueInstantiationException
+                && valueInstantiationException.getCause() instanceof IllegalArgumentException cause) {
+            return handleIllegalArgumentException(cause);
+        }
+        return handleGlobalException(ex);
+    }
 
     @Data
     public static class ErrorResponse {

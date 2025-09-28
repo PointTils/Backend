@@ -3,28 +3,33 @@ package com.pointtils.pointtils.src.application.services;
 import com.pointtils.pointtils.src.application.dto.requests.EnterprisePatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.EnterpriseRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.EnterpriseResponseDTO;
+import com.pointtils.pointtils.src.application.mapper.EnterpriseResponseMapper;
+import com.pointtils.pointtils.src.application.mapper.UserSpecialtyMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Enterprise;
-import com.pointtils.pointtils.src.application.dto.LocationDTO;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
 import com.pointtils.pointtils.src.core.domain.exceptions.DuplicateResourceException;
 import com.pointtils.pointtils.src.infrastructure.repositories.EnterpriseRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class EnterpriseServiceTest {
     @Mock
     private EnterpriseRepository enterpriseRepository;
@@ -32,13 +37,12 @@ class EnterpriseServiceTest {
     private UserRepository userRepository;
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Spy
+    private UserSpecialtyMapper userSpecialtyMapper = new UserSpecialtyMapper();
+    @Spy
+    private EnterpriseResponseMapper enterpriseResponseMapper = new EnterpriseResponseMapper(userSpecialtyMapper);
     @InjectMocks
     private EnterpriseService enterpriseService;
-
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-    }
 
     @Test
     void registerEnterprise_shouldSaveAndReturnResponseDTO() {
@@ -49,10 +53,6 @@ class EnterpriseServiceTest {
         dto.setPassword("pass");
         dto.setPhone("123456789");
         dto.setPicture("pic.png");
-        LocationDTO locationDTO = new LocationDTO();
-        locationDTO.setUf("RS");
-        locationDTO.setCity("Porto Alegre");
-        dto.setLocation(locationDTO);
 
         when(enterpriseRepository.existsByCnpj(dto.getCnpj())).thenReturn(false);
         when(userRepository.existsByEmail(dto.getEmail())).thenReturn(false);

@@ -1,7 +1,7 @@
 package com.pointtils.pointtils.src.application.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pointtils.pointtils.src.application.dto.AddUserSpecialtiesRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.AddUserSpecialtiesRequestDTO;
 import com.pointtils.pointtils.src.application.dto.UserSpecialtyDTO;
 import com.pointtils.pointtils.src.application.services.UserSpecialtyService;
 import com.pointtils.pointtils.src.core.domain.entities.Specialty;
@@ -45,7 +45,7 @@ class UserSpecialtyControllerTest {
     @InjectMocks
     private UserSpecialtyController userSpecialtyController;
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private UUID userId;
     private UUID specialtyId;
@@ -99,7 +99,7 @@ class UserSpecialtyControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Especialidades do usuário obtidas com sucesso"))
-                .andExpect(jsonPath("$.data.userSpecialties[0].id").value(userSpecialtyResponseDTO.getId().toString()));
+                .andExpect(jsonPath("$.data[0].id").value(userSpecialtyResponseDTO.getId().toString()));
 
         verify(userSpecialtyService).getUserSpecialties(userId);
     }
@@ -127,7 +127,6 @@ class UserSpecialtyControllerTest {
 
         when(userSpecialtyService.addUserSpecialties(userId, List.of(specialtyId), false))
                 .thenReturn(List.of(userSpecialty));
-        when(userSpecialtyService.countUserSpecialties(userId)).thenReturn(1L);
 
         // Act & Assert
         mockMvc.perform(post("/v1/users/{userId}/specialties", userId)
@@ -136,7 +135,7 @@ class UserSpecialtyControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Especialidades adicionadas com sucesso"))
-                .andExpect(jsonPath("$.data.userSpecialties[0].id").value(userSpecialtyResponseDTO.getId().toString()));
+                .andExpect(jsonPath("$.data[0].id").value(userSpecialtyResponseDTO.getId().toString()));
 
         verify(userSpecialtyService).addUserSpecialties(userId, List.of(specialtyId), false);
     }
@@ -174,7 +173,7 @@ class UserSpecialtyControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Especialidades do usuário atualizadas com sucesso"))
-                .andExpect(jsonPath("$.data.userSpecialties[0].id").value(userSpecialtyResponseDTO.getId().toString()));
+                .andExpect(jsonPath("$.data[0].id").value(userSpecialtyResponseDTO.getId().toString()));
 
         verify(userSpecialtyService).replaceUserSpecialties(userId, List.of(specialtyId));
     }
@@ -208,7 +207,6 @@ class UserSpecialtyControllerTest {
     void removeUserSpecialties_ShouldRemoveSpecialties() throws Exception {
         // Arrange
         doNothing().when(userSpecialtyService).removeUserSpecialties(userId, List.of(specialtyId));
-        when(userSpecialtyService.countUserSpecialties(userId)).thenReturn(0L);
 
         // Act & Assert
         mockMvc.perform(delete("/v1/users/{userId}/specialties", userId)

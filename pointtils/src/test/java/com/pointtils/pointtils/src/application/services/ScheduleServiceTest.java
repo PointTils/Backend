@@ -5,6 +5,7 @@ import com.pointtils.pointtils.src.application.dto.requests.SchedulePatchRequest
 import com.pointtils.pointtils.src.application.dto.requests.ScheduleRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.PaginatedScheduleResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ScheduleResponseDTO;
+import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
 import com.pointtils.pointtils.src.core.domain.entities.Schedule;
 import com.pointtils.pointtils.src.core.domain.entities.enums.DayOfWeek;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
@@ -19,17 +20,18 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-// Removed unused Specification import for type safety
 
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-// Removed unused anyString import; use any(Class) to match nullable strings
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class ScheduleServiceTest {
     @Mock
@@ -46,15 +48,17 @@ class ScheduleServiceTest {
 
     @Test
     void registerSchedule_shouldSaveAndReturnResponseDTO() {
+        UUID interpreterId = UUID.randomUUID();
         ScheduleRequestDTO dto = new ScheduleRequestDTO();
-        dto.setInterpreterId(UUID.randomUUID());
+        dto.setInterpreterId(interpreterId);
         dto.setDay(DayOfWeek.MON);
         dto.setStartTime(LocalTime.of(9, 0));
         dto.setEndTime(LocalTime.of(17, 0));
 
-        when(interpreterRepository.existsById(dto.getInterpreterId())).thenReturn(true);
+        when(interpreterRepository.findById(interpreterId))
+                .thenReturn(Optional.of(Interpreter.builder().id(interpreterId).build()));
         when(scheduleRepository.existsByInterpreterIdAndDayAndStartTimeLessThanAndEndTimeGreaterThan(
-            dto.getInterpreterId(), dto.getDay(), dto.getEndTime(), dto.getStartTime())).thenReturn(false);
+                dto.getInterpreterId(), dto.getDay(), dto.getEndTime(), dto.getStartTime())).thenReturn(false);
         when(scheduleRepository.save(any(Schedule.class))).thenAnswer(i -> i.getArgument(0));
 
         ScheduleResponseDTO response = scheduleService.registerSchedule(dto);
@@ -72,15 +76,18 @@ class ScheduleServiceTest {
         assertThrows(EntityNotFoundException.class, () -> scheduleService.registerSchedule(dto));
     }
 
+    @Test
     void registerSchedule_shouldThrowIllegalArgumentWhenConflict() {
+        UUID interpreterId = UUID.randomUUID();
         ScheduleRequestDTO dto = new ScheduleRequestDTO();
-        dto.setInterpreterId(UUID.randomUUID());
+        dto.setInterpreterId(interpreterId);
         dto.setDay(DayOfWeek.MON);
         dto.setStartTime(LocalTime.of(9, 0));
         dto.setEndTime(LocalTime.of(17, 0));
-        when(interpreterRepository.existsById(dto.getInterpreterId())).thenReturn(true);
+        when(interpreterRepository.findById(interpreterId))
+                .thenReturn(Optional.of(Interpreter.builder().id(interpreterId).build()));
         when(scheduleRepository.existsByInterpreterIdAndDayAndStartTimeLessThanAndEndTimeGreaterThan(
-            dto.getInterpreterId(), dto.getDay(), dto.getEndTime(), dto.getStartTime())).thenReturn(true);
+                dto.getInterpreterId(), dto.getDay(), dto.getEndTime(), dto.getStartTime())).thenReturn(true);
         assertThrows(IllegalArgumentException.class, () -> scheduleService.registerSchedule(dto));
     }
 
@@ -88,12 +95,12 @@ class ScheduleServiceTest {
     void findById_shouldReturnScheduleResponseDTO() {
         UUID id = UUID.randomUUID();
         Schedule schedule = Schedule.builder()
-            .id(id)
-            .interpreterId(UUID.randomUUID())
-            .day(DayOfWeek.MON)
-            .startTime(LocalTime.of(9, 0))
-            .endTime(LocalTime.of(17, 0))
-            .build();
+                .id(id)
+                .interpreter(new Interpreter())
+                .day(DayOfWeek.MON)
+                .startTime(LocalTime.of(9, 0))
+                .endTime(LocalTime.of(17, 0))
+                .build();
         when(scheduleRepository.findById(id)).thenReturn(Optional.of(schedule));
         ScheduleResponseDTO result = scheduleService.findById(id);
         assertEquals(id, result.getId());
@@ -114,15 +121,15 @@ class ScheduleServiceTest {
         query.setSize(10);
         Pageable pageable = PageRequest.of(0, 10);
         Schedule schedule = Schedule.builder()
-            .id(UUID.randomUUID())
-            .interpreterId(UUID.randomUUID())
-            .day(DayOfWeek.MON)
-            .startTime(LocalTime.of(9, 0))
-            .endTime(LocalTime.of(17, 0))
-            .build();
+                .id(UUID.randomUUID())
+                .interpreter(new Interpreter())
+                .day(DayOfWeek.MON)
+                .startTime(LocalTime.of(9, 0))
+                .endTime(LocalTime.of(17, 0))
+                .build();
         Page<Schedule> page = new PageImpl<>(List.of(schedule), pageable, 1);
         when(scheduleRepository.findAllWithFilters(
-            any(), any(), any(), any(), any()
+                any(), any(), any(), any(), any()
         )).thenReturn(page);
         PaginatedScheduleResponseDTO result = scheduleService.findAll(query, pageable);
         assertEquals(0, result.getPage());
@@ -134,15 +141,17 @@ class ScheduleServiceTest {
     @Test
     void updateSchedule_shouldUpdateAndReturnResponseDTO() {
         UUID id = UUID.randomUUID();
+        Interpreter interpreter = new Interpreter();
+        interpreter.setId(UUID.randomUUID());
         Schedule schedule = Schedule.builder()
-            .id(id)
-            .interpreterId(UUID.randomUUID())
-            .day(DayOfWeek.MON)
-            .startTime(LocalTime.of(9, 0))
-            .endTime(LocalTime.of(17, 0))
-            .build();
+                .id(id)
+                .interpreter(interpreter)
+                .day(DayOfWeek.MON)
+                .startTime(LocalTime.of(9, 0))
+                .endTime(LocalTime.of(17, 0))
+                .build();
         SchedulePatchRequestDTO dto = new SchedulePatchRequestDTO();
-        dto.setInterpreterId(schedule.getInterpreterId());
+        dto.setInterpreterId(schedule.getInterpreter().getId());
         dto.setDay(DayOfWeek.TUE);
         dto.setStartTime(LocalTime.of(10, 0));
         dto.setEndTime(LocalTime.of(18, 0));
@@ -166,12 +175,12 @@ class ScheduleServiceTest {
     void updateSchedule_shouldThrowIllegalArgumentWhenDifferentInterpreter() {
         UUID id = UUID.randomUUID();
         Schedule schedule = Schedule.builder()
-            .id(id)
-            .interpreterId(UUID.randomUUID())
-            .day(DayOfWeek.MON)
-            .startTime(LocalTime.of(9, 0))
-            .endTime(LocalTime.of(17, 0))
-            .build();
+                .id(id)
+                .interpreter(new Interpreter())
+                .day(DayOfWeek.MON)
+                .startTime(LocalTime.of(9, 0))
+                .endTime(LocalTime.of(17, 0))
+                .build();
         SchedulePatchRequestDTO dto = new SchedulePatchRequestDTO();
         dto.setInterpreterId(UUID.randomUUID()); // different
         when(scheduleRepository.findById(id)).thenReturn(Optional.of(schedule));
@@ -181,15 +190,17 @@ class ScheduleServiceTest {
     @Test
     void updateSchedule_shouldThrowIllegalArgumentWhenConflict() {
         UUID id = UUID.randomUUID();
+        Interpreter interpreter = new Interpreter();
+        interpreter.setId(UUID.randomUUID());
         Schedule schedule = Schedule.builder()
-            .id(id)
-            .interpreterId(UUID.randomUUID())
-            .day(DayOfWeek.MON)
-            .startTime(LocalTime.of(9, 0))
-            .endTime(LocalTime.of(17, 0))
-            .build();
+                .id(id)
+                .interpreter(interpreter)
+                .day(DayOfWeek.MON)
+                .startTime(LocalTime.of(9, 0))
+                .endTime(LocalTime.of(17, 0))
+                .build();
         SchedulePatchRequestDTO dto = new SchedulePatchRequestDTO();
-        dto.setInterpreterId(schedule.getInterpreterId());
+        dto.setInterpreterId(schedule.getInterpreter().getId());
         dto.setDay(DayOfWeek.TUE);
         when(scheduleRepository.findById(id)).thenReturn(Optional.of(schedule));
         when(scheduleRepository.existsConflictForUpdate(any(UUID.class), any(UUID.class), any(DayOfWeek.class), any(LocalTime.class), any(LocalTime.class))).thenReturn(true);

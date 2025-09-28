@@ -9,6 +9,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,6 +27,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
+    @SuppressWarnings("UseSpecificCatch")
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
@@ -44,24 +46,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         
         // Verificar se o token está na blacklist apenas se não for uma requisição de logout
         String requestURI = request.getRequestURI();
-        if (!isLogoutEndpoint(requestURI)) {
-            if (memoryBlacklistService.isBlacklisted(token)) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("Token inválido");
-                return;
-            }
+        if (!isLogoutEndpoint(requestURI) && memoryBlacklistService.isBlacklisted(token)) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Token inválido");
+            return;
         }
 
         try {
-            final String jwt = token;
-
-            if (jwtService.isTokenExpired(jwt)) {
+            if (jwtService.isTokenExpired(token)) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.getWriter().write("Unauthorized.");
                 return;
             }
 
-            String subject = jwtService.extractClaim(jwt, claims -> claims.getSubject());
+            String subject = jwtService.extractClaim(token, Claims::getSubject);
             UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(subject, null, new ArrayList<>());
             SecurityContextHolder.getContext().setAuthentication(authToken);
 

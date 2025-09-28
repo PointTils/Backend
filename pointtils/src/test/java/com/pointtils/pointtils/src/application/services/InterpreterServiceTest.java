@@ -1,0 +1,273 @@
+package com.pointtils.pointtils.src.application.services;
+
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
+import com.pointtils.pointtils.src.application.mapper.InterpreterResponseMapper;
+import com.pointtils.pointtils.src.application.mapper.LocationMapper;
+import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
+import com.pointtils.pointtils.src.core.domain.entities.Location;
+import com.pointtils.pointtils.src.core.domain.entities.Schedule;
+import com.pointtils.pointtils.src.core.domain.entities.Specialty;
+import com.pointtils.pointtils.src.core.domain.entities.enums.DayOfWeek;
+import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
+import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
+import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
+import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
+import jakarta.persistence.EntityNotFoundException;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.math.BigDecimal;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+
+import static com.pointtils.pointtils.src.util.TestDataUtil.createInterpreterCreationRequest;
+import static com.pointtils.pointtils.src.util.TestDataUtil.createInterpreterPatchRequest;
+import static com.pointtils.pointtils.src.util.TestDataUtil.createLocationPatchRequest;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class InterpreterServiceTest {
+
+    @Mock
+    private InterpreterRepository repository;
+    @Mock
+    private PasswordEncoder passwordEncoder;
+    @Mock
+    private InterpreterResponseMapper responseMapper;
+    @Spy
+    private LocationMapper locationMapper = new LocationMapper();
+    @InjectMocks
+    private InterpreterService service;
+
+    @Test
+    void shouldRegisterNewInterpreter() {
+        Interpreter interpreter = new Interpreter();
+        InterpreterResponseDTO mappedResponse = new InterpreterResponseDTO();
+        ArgumentCaptor<Interpreter> interpreterArgumentCaptor = ArgumentCaptor.forClass(Interpreter.class);
+        when(repository.save(interpreterArgumentCaptor.capture())).thenReturn(interpreter);
+        when(responseMapper.toResponseDTO(interpreter)).thenReturn(mappedResponse);
+        when(passwordEncoder.encode("senha123")).thenReturn("hashedPassword");
+
+        assertEquals(mappedResponse, service.registerBasic(createInterpreterCreationRequest()));
+        assertEquals("João Intérprete", interpreterArgumentCaptor.getValue().getName());
+        assertEquals("interpreter@exemplo.com", interpreterArgumentCaptor.getValue().getEmail());
+        assertEquals("51999999999", interpreterArgumentCaptor.getValue().getPhone());
+        assertEquals("hashedPassword", interpreterArgumentCaptor.getValue().getPassword());
+        assertEquals("PENDING", interpreterArgumentCaptor.getValue().getStatus().name());
+        assertEquals("INTERPRETER", interpreterArgumentCaptor.getValue().getType().name());
+        assertEquals("picture_url", interpreterArgumentCaptor.getValue().getPicture());
+        assertEquals("MALE", interpreterArgumentCaptor.getValue().getGender().name());
+        assertEquals("1990-01-01", interpreterArgumentCaptor.getValue().getBirthday().toString());
+        assertEquals(BigDecimal.ZERO, interpreterArgumentCaptor.getValue().getRating());
+        assertEquals(BigDecimal.ZERO, interpreterArgumentCaptor.getValue().getMinValue());
+        assertEquals(BigDecimal.ZERO, interpreterArgumentCaptor.getValue().getMaxValue());
+        assertEquals("", interpreterArgumentCaptor.getValue().getDescription());
+        assertEquals("ALL", interpreterArgumentCaptor.getValue().getModality().name());
+        assertFalse(interpreterArgumentCaptor.getValue().getImageRights());
+    }
+
+    @Test
+    void shouldFindAll() {
+        UUID id = UUID.randomUUID();
+        Interpreter foundInterpreter = Interpreter.builder().id(id).build();
+        InterpreterListResponseDTO mappedResponse = InterpreterListResponseDTO.builder().id(id).build();
+        when(repository.findAll(any(Specification.class))).thenReturn(List.of(foundInterpreter));
+        when(responseMapper.toListResponseDTO(foundInterpreter)).thenReturn(mappedResponse);
+
+        assertThat(service.findAll(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null))
+                .hasSize(1)
+                .contains(mappedResponse);
+    }
+
+    @Test
+    void shouldFindAllWithFilters() {
+        // Arrange
+        UUID id = UUID.randomUUID();
+        Location location = Location.builder()
+                .id(UUID.randomUUID())
+                .uf("SP")
+                .city("São Paulo")
+                .neighborhood("Higienópolis")
+                .build();
+
+        List<Location> locations = new ArrayList<>();
+        locations.add(location);
+
+        Specialty specialty = new Specialty("Libras");
+        specialty.setId(UUID.randomUUID());
+        Set<Specialty> specialties = new HashSet<>();
+        specialties.add(specialty);
+
+        Schedule schedule = new Schedule();
+        schedule.setDay(DayOfWeek.WED);
+        schedule.setStartTime(LocalTime.of(9, 0));
+        schedule.setEndTime(LocalTime.of(18, 0));
+        Set<Schedule> schedules = new HashSet<>();
+        schedules.add(schedule);
+
+        Interpreter foundInterpreter = Interpreter.builder()
+                .id(id)
+                .name("interpreter")
+                .gender(Gender.FEMALE)
+                .modality(InterpreterModality.ONLINE)
+                .locations(locations)
+                .specialties(specialties)
+                .schedules(schedules)
+                .build();
+
+        InterpreterListResponseDTO mappedResponse = InterpreterListResponseDTO.builder()
+                .id(id)
+                .build();
+
+        when(repository.findAll(any(Specification.class))).thenReturn(List.of(foundInterpreter));
+        when(responseMapper.toListResponseDTO(foundInterpreter)).thenReturn(mappedResponse);
+
+        // Act
+        List<InterpreterListResponseDTO> result = service.findAll(
+                "ONLINE",
+                "FEMALE",
+                "São Paulo",
+                "SP",
+                "Higienópolis",
+                specialty.getId().toString(),
+                "2025-12-31 10:00"
+        );
+
+        // Assert
+        assertThat(result)
+                .hasSize(1)
+                .contains(mappedResponse);
+    }
+
+
+    @Test
+    void shouldFindById() {
+        UUID id = UUID.randomUUID();
+        Interpreter foundInterpreter = Interpreter.builder().id(id).build();
+        InterpreterResponseDTO mappedResponse = InterpreterResponseDTO.builder().id(id).build();
+        when(repository.findById(id)).thenReturn(Optional.of(foundInterpreter));
+        when(responseMapper.toResponseDTO(foundInterpreter)).thenReturn(mappedResponse);
+
+        assertEquals(mappedResponse, service.findById(id));
+    }
+
+    @Test
+    void shouldThrowExceptionIfFindByIdHasNoInterpreter() {
+        UUID id = UUID.randomUUID();
+        when(repository.findById(id)).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> service.findById(id));
+    }
+
+    @Test
+    void shouldDeleteById() {
+        UUID id = UUID.randomUUID();
+        Interpreter foundInterpreter = Interpreter.builder().id(id).build();
+        ArgumentCaptor<Interpreter> interpreterArgumentCaptor = ArgumentCaptor.forClass(Interpreter.class);
+        when(repository.findById(id)).thenReturn(Optional.of(foundInterpreter));
+        when(repository.save(interpreterArgumentCaptor.capture())).thenReturn(foundInterpreter);
+
+        assertDoesNotThrow(() -> service.delete(id));
+        assertEquals(UserStatus.INACTIVE, interpreterArgumentCaptor.getValue().getStatus());
+    }
+
+    @Test
+    void shouldThrowExceptionIfDeleteByIdHasNoInterpreter() {
+        UUID id = UUID.randomUUID();
+        when(repository.findById(id)).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> service.delete(id));
+    }
+
+    @Test
+    void shouldUpdateAllInterpreterData() {
+        UUID interpreterId = UUID.randomUUID();
+        Interpreter foundInterpreter = Interpreter.builder().id(interpreterId).build();
+        Location oldLocation = Location.builder()
+                .id(UUID.randomUUID())
+                .uf("RS")
+                .city("Porto Alegre")
+                .neighborhood("São João")
+                .interpreter(foundInterpreter)
+                .build();
+        foundInterpreter.setLocations(new ArrayList<>(List.of(oldLocation)));
+        InterpreterResponseDTO mappedResponse = InterpreterResponseDTO.builder().id(interpreterId).build();
+        ArgumentCaptor<Interpreter> interpreterArgumentCaptor = ArgumentCaptor.forClass(Interpreter.class);
+
+        when(repository.findById(interpreterId)).thenReturn(Optional.of(foundInterpreter));
+        when(repository.save(interpreterArgumentCaptor.capture())).thenReturn(foundInterpreter);
+        when(responseMapper.toResponseDTO(foundInterpreter)).thenReturn(mappedResponse);
+
+        assertEquals(mappedResponse, service.updatePartial(interpreterId, createInterpreterPatchRequest()));
+        assertEquals("Novo Nome", interpreterArgumentCaptor.getValue().getName());
+        assertEquals("novo.nome@email.com", interpreterArgumentCaptor.getValue().getEmail());
+        assertEquals("51988888888", interpreterArgumentCaptor.getValue().getPhone());
+        assertEquals(Gender.FEMALE, interpreterArgumentCaptor.getValue().getGender());
+        assertEquals("98765432000196", interpreterArgumentCaptor.getValue().getCnpj());
+        assertEquals(InterpreterModality.ONLINE, interpreterArgumentCaptor.getValue().getModality());
+        assertEquals(250, interpreterArgumentCaptor.getValue().getMinValue().doubleValue());
+        assertEquals(500, interpreterArgumentCaptor.getValue().getMaxValue().doubleValue());
+        assertEquals("Teste", interpreterArgumentCaptor.getValue().getDescription());
+        assertFalse(interpreterArgumentCaptor.getValue().getImageRights());
+        assertThat(interpreterArgumentCaptor.getValue().getLocations())
+                .hasSize(1)
+                .anyMatch(loc -> loc.getUf().equals("SP") &&
+                        loc.getCity().equals("São Paulo") &&
+                        loc.getNeighborhood().equals("Higienópolis") &&
+                        loc.getInterpreter().getId().equals(interpreterId));
+    }
+
+    @Test
+    void shouldUpdateInterpreterLocationById() {
+        UUID interpreterId = UUID.randomUUID();
+        Interpreter foundInterpreter = Interpreter.builder().id(interpreterId).build();
+        Location oldLocation = Location.builder()
+                .id(UUID.randomUUID())
+                .uf("RS")
+                .city("Porto Alegre")
+                .neighborhood("São João")
+                .interpreter(foundInterpreter)
+                .build();
+        foundInterpreter.setLocations(new ArrayList<>(List.of(oldLocation)));
+        InterpreterResponseDTO mappedResponse = InterpreterResponseDTO.builder().id(interpreterId).build();
+        ArgumentCaptor<Interpreter> interpreterArgumentCaptor = ArgumentCaptor.forClass(Interpreter.class);
+
+        when(repository.findById(interpreterId)).thenReturn(Optional.of(foundInterpreter));
+        when(repository.save(interpreterArgumentCaptor.capture())).thenReturn(foundInterpreter);
+        when(responseMapper.toResponseDTO(foundInterpreter)).thenReturn(mappedResponse);
+
+        assertEquals(mappedResponse, service.updatePartial(interpreterId, createLocationPatchRequest()));
+        assertThat(interpreterArgumentCaptor.getValue().getLocations())
+                .hasSize(1)
+                .anyMatch(loc -> loc.getUf().equals("SP") &&
+                        loc.getCity().equals("São Paulo") &&
+                        loc.getNeighborhood().equals("Higienópolis") &&
+                        loc.getInterpreter().getId().equals(interpreterId));
+    }
+}

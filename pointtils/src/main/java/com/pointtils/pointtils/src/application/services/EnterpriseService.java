@@ -3,6 +3,7 @@ package com.pointtils.pointtils.src.application.services;
 import com.pointtils.pointtils.src.application.dto.requests.EnterprisePatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.EnterpriseRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.EnterpriseResponseDTO;
+import com.pointtils.pointtils.src.application.mapper.EnterpriseResponseMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Enterprise;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
@@ -22,71 +23,69 @@ import java.util.UUID;
 @Transactional
 @RequiredArgsConstructor
 public class EnterpriseService {
-	private static final String ENTERPRISE_NOT_FOUND_MSG = "Empresa não encontrada";
-	private final EnterpriseRepository enterpriseRepository;
-	private final UserRepository userRepository;
-	private final PasswordEncoder passwordEncoder;
+    private static final String ENTERPRISE_NOT_FOUND_MSG = "Empresa não encontrada";
+    private final EnterpriseRepository enterpriseRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final EnterpriseResponseMapper enterpriseResponseMapper;
 
-	public EnterpriseResponseDTO registerEnterprise(EnterpriseRequestDTO dto) {
-		if (enterpriseRepository.existsByCnpj(dto.getCnpj())) {
-			throw new DuplicateResourceException("Já existe uma empresa cadastrada com este CNPJ");
-		}
+    public EnterpriseResponseDTO registerEnterprise(EnterpriseRequestDTO dto) {
+        if (enterpriseRepository.existsByCnpj(dto.getCnpj())) {
+            throw new DuplicateResourceException("Já existe uma empresa cadastrada com este CNPJ");
+        }
 
-		if (userRepository.existsByEmail(dto.getEmail())) {
-			throw new DuplicateResourceException("Já existe um usuário cadastrado com este email");
-		}
+        if (userRepository.existsByEmail(dto.getEmail())) {
+            throw new DuplicateResourceException("Já existe um usuário cadastrado com este email");
+        }
 
-		Enterprise enterprise = Enterprise.builder()
-								.corporateReason(dto.getCorporateReason())
-								.cnpj(dto.getCnpj())
-								.email(dto.getEmail())
-								.password(passwordEncoder.encode(dto.getPassword()))
-								.phone(dto.getPhone())
-								.picture(dto.getPicture())
-								.status(UserStatus.ACTIVE)
-								.type(UserTypeE.ENTERPRISE)
-								.build();
+        Enterprise enterprise = Enterprise.builder()
+                .corporateReason(dto.getCorporateReason())
+                .cnpj(dto.getCnpj())
+                .email(dto.getEmail())
+                .password(passwordEncoder.encode(dto.getPassword()))
+                .phone(dto.getPhone())
+                .picture(dto.getPicture())
+                .status(UserStatus.ACTIVE)
+                .type(UserTypeE.ENTERPRISE)
+                .build();
 
-		Enterprise savedEnterprise = enterpriseRepository.save(enterprise);
+        Enterprise savedEnterprise = enterpriseRepository.save(enterprise);
 
-		return new EnterpriseResponseDTO(savedEnterprise);
-	}
+        return enterpriseResponseMapper.toResponseDTO(savedEnterprise);
+    }
 
-	public List<EnterpriseResponseDTO> findAll() {
-		List<Enterprise> enterpriseList = enterpriseRepository.findAllByStatus(UserStatus.ACTIVE);
-		return enterpriseList.stream()
-				.map(EnterpriseResponseDTO::new)
-				.toList();
-	}
+    public List<EnterpriseResponseDTO> findAll() {
+        List<Enterprise> enterpriseList = enterpriseRepository.findAllByStatus(UserStatus.ACTIVE);
+        return enterpriseList.stream()
+                .map(enterpriseResponseMapper::toResponseDTO)
+                .toList();
+    }
 
-	public EnterpriseResponseDTO findById(UUID id) {
-		Enterprise enterprise = enterpriseRepository.findByIdAndStatus(id, UserStatus.ACTIVE)
-				.orElseThrow(() -> new EntityNotFoundException(ENTERPRISE_NOT_FOUND_MSG));
-		return new EnterpriseResponseDTO(enterprise);
-	}
+    public EnterpriseResponseDTO findById(UUID id) {
+        Enterprise enterprise = enterpriseRepository.findByIdAndStatus(id, UserStatus.ACTIVE)
+                .orElseThrow(() -> new EntityNotFoundException(ENTERPRISE_NOT_FOUND_MSG));
+        return enterpriseResponseMapper.toResponseDTO(enterprise);
+    }
 
-	public EnterpriseResponseDTO patchEnterprise(
-			UUID id,
-			EnterprisePatchRequestDTO dto
-	) {
-		Enterprise enterprise = enterpriseRepository.findByIdAndStatus(id, UserStatus.ACTIVE)
-				.orElseThrow(() -> new EntityNotFoundException(ENTERPRISE_NOT_FOUND_MSG));
+    public EnterpriseResponseDTO patchEnterprise(UUID id, EnterprisePatchRequestDTO dto) {
+        Enterprise enterprise = enterpriseRepository.findByIdAndStatus(id, UserStatus.ACTIVE)
+                .orElseThrow(() -> new EntityNotFoundException(ENTERPRISE_NOT_FOUND_MSG));
 
-		if (dto.getCorporateReason() != null) enterprise.setCorporateReason(dto.getCorporateReason());
-		if (dto.getCnpj() != null) enterprise.setCnpj(dto.getCnpj());
-		if (dto.getEmail() != null) enterprise.setEmail(dto.getEmail());
-		if (dto.getPhone() != null) enterprise.setPhone(dto.getPhone());
-		if (dto.getPicture() != null) enterprise.setPicture(dto.getPicture());
+        if (dto.getCorporateReason() != null) enterprise.setCorporateReason(dto.getCorporateReason());
+        if (dto.getCnpj() != null) enterprise.setCnpj(dto.getCnpj());
+        if (dto.getEmail() != null) enterprise.setEmail(dto.getEmail());
+        if (dto.getPhone() != null) enterprise.setPhone(dto.getPhone());
+        if (dto.getPicture() != null) enterprise.setPicture(dto.getPicture());
 
-		Enterprise patchedEnterprise = enterpriseRepository.save(enterprise);
-		return new EnterpriseResponseDTO(patchedEnterprise);
-	}
+        Enterprise patchedEnterprise = enterpriseRepository.save(enterprise);
+        return enterpriseResponseMapper.toResponseDTO(patchedEnterprise);
+    }
 
-	public void delete(UUID id) {
-		Enterprise enterprise = enterpriseRepository.findById(id)
-				.orElseThrow(() -> new EntityNotFoundException(ENTERPRISE_NOT_FOUND_MSG));
+    public void delete(UUID id) {
+        Enterprise enterprise = enterpriseRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(ENTERPRISE_NOT_FOUND_MSG));
 
-		enterprise.setStatus(UserStatus.INACTIVE);
-		enterpriseRepository.save(enterprise);
-	}
+        enterprise.setStatus(UserStatus.INACTIVE);
+        enterpriseRepository.save(enterprise);
+    }
 }

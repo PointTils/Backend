@@ -17,7 +17,7 @@ public class ScheduleSpecifications {
             List<Predicate> predicates = new ArrayList<>();
 
             if (interpreterId != null) {
-                predicates.add(criteriaBuilder.equal(root.get("interpreterId"), interpreterId));
+                predicates.add(criteriaBuilder.equal(root.get("interpreter").get("id"), interpreterId));
             }
 
             if (day != null) {

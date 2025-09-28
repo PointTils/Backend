@@ -1,9 +1,10 @@
 package com.pointtils.pointtils.src.application.controllers;
 
-import com.pointtils.pointtils.src.application.dto.PersonCreationDTO;
+import com.pointtils.pointtils.src.application.dto.requests.PersonCreationRequestDTO;
 import com.pointtils.pointtils.src.application.dto.PersonDTO;
 import com.pointtils.pointtils.src.application.dto.requests.PersonPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ApiResponse;
+import com.pointtils.pointtils.src.application.dto.responses.PersonResponseDTO;
 import com.pointtils.pointtils.src.application.services.PersonService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -34,18 +35,18 @@ public class PersonController {
 
     @PostMapping("/register")
     @Operation(summary = "Cadastra um usuário surdo")
-    public ResponseEntity<ApiResponse<PersonDTO>> createUser(@Valid @RequestBody PersonCreationDTO dto) {
-        PersonDTO created = service.registerPerson(dto);
-        ApiResponse<PersonDTO> response = ApiResponse.success("Usuário surdo cadastrado com sucesso", created);
+    public ResponseEntity<ApiResponse<PersonResponseDTO>> createUser(@Valid @RequestBody PersonCreationRequestDTO dto) {
+        PersonResponseDTO created = service.registerPerson(dto);
+        ApiResponse<PersonResponseDTO> response = ApiResponse.success("Usuário surdo cadastrado com sucesso", created);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Busca todos os usuários surdos")
-    public ResponseEntity<ApiResponse<List<PersonDTO>>> findAll() {
-        List<PersonDTO> personUsers = service.findAll();
-        ApiResponse<List<PersonDTO>> response =
+    public ResponseEntity<ApiResponse<List<PersonResponseDTO>>> findAll() {
+        List<PersonResponseDTO> personUsers = service.findAll();
+        ApiResponse<List<PersonResponseDTO>> response =
                 ApiResponse.success("Usuários surdos encontrados com sucesso", personUsers);
         return ResponseEntity.ok(response);
     }
@@ -53,26 +54,26 @@ public class PersonController {
     @GetMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Busca um usuário surdo por ID")
-    public ResponseEntity<ApiResponse<PersonDTO>> findById(@PathVariable UUID id) {
-        PersonDTO person = service.findById(id);
+    public ResponseEntity<ApiResponse<PersonResponseDTO>> findById(@PathVariable UUID id) {
+        PersonResponseDTO person = service.findById(id);
         return ResponseEntity.ok(ApiResponse.success("Usuário surdo encontrado com sucesso", person));
     }
 
     @PatchMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Atualiza parcialmente um usuário surdo por ID")
-    public ResponseEntity<ApiResponse<PersonDTO>> updateUser(@PathVariable UUID id,
+    public ResponseEntity<ApiResponse<PersonResponseDTO>> updateUser(@PathVariable UUID id,
                                                              @RequestBody @Valid PersonPatchRequestDTO dto) {
-        PersonDTO updated = service.updatePartial(id, dto);
+        PersonResponseDTO updated = service.updatePartial(id, dto);
         return ResponseEntity.ok(ApiResponse.success("Usuário surdo atualizado com sucesso", updated));
     }
 
     @PutMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Atualiza um usuário surdo por ID")
-    public ResponseEntity<ApiResponse<PersonDTO>> updateComplete(@PathVariable UUID id,
+    public ResponseEntity<ApiResponse<PersonResponseDTO>> updateComplete(@PathVariable UUID id,
                                                                  @RequestBody @Valid PersonDTO dto) {
-        PersonDTO updated = service.updateComplete(id, dto);
+        PersonResponseDTO updated = service.updateComplete(id, dto);
         return ResponseEntity.ok(ApiResponse.success("Usuário surdo atualizado com sucesso", updated));
     }
 

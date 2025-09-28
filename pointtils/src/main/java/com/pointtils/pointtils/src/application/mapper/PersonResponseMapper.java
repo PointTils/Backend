@@ -1,33 +1,31 @@
 package com.pointtils.pointtils.src.application.mapper;
 
-
-import com.pointtils.pointtils.src.application.dto.PersonDTO;
+import com.pointtils.pointtils.src.application.dto.responses.PersonResponseDTO;
+import com.pointtils.pointtils.src.application.util.MaskUtil;
 import com.pointtils.pointtils.src.core.domain.entities.Person;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class PersonResponseMapper {
 
-    public PersonDTO toResponseDTO(Person person) {
-        PersonDTO dto = new PersonDTO();
-        dto.setId(person.getId());
-        dto.setName(person.getName());
-        dto.setGender(person.getGender());
-        dto.setBirthday(person.getBirthday());
-        dto.setCpf(maskCpf(person.getCpf()));
-        dto.setEmail(person.getEmail());
-        dto.setPhone(person.getPhone());
-        dto.setPicture(person.getPicture());
-        dto.setStatus(person.getStatus());
-        dto.setType(person.getType());
-        return dto;
-    }
+    private final UserSpecialtyMapper userSpecialtyMapper;
 
-    private String maskCpf(String cpf) {
-        if (cpf == null || cpf.length() != 11) {
-            return cpf;
-        }
-        return cpf.substring(0, 3) + ".***.***-" + cpf.substring(9);
+    public PersonResponseDTO toResponseDTO(Person person) {
+        return PersonResponseDTO.builder()
+                .id(person.getId())
+                .name(person.getName())
+                .gender(person.getGender())
+                .birthday(person.getBirthday())
+                .cpf(MaskUtil.maskCpf(person.getCpf()))
+                .email(person.getEmail())
+                .phone(person.getPhone())
+                .picture(person.getPicture())
+                .status(person.getStatus().name())
+                .type(person.getType().name())
+                .specialties(userSpecialtyMapper.toDtoList(person.getSpecialties()))
+                .build();
     }
 }
 

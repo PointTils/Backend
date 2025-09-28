@@ -2,31 +2,23 @@ package com.pointtils.pointtils.src.application.dto.responses;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.pointtils.pointtils.src.application.dto.LocationDTO;
-import com.pointtils.pointtils.src.application.dto.PersonDTO;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.util.List;
-import java.util.UUID;
 
 @Data
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class InterpreterResponseDTO {
+@EqualsAndHashCode(callSuper = true)
+public class InterpreterResponseDTO extends PersonResponseDTO {
 
-    @JsonProperty("id_interpreter")
-    private UUID idInterpreter;
+    private List<LocationDTO> locations;
 
-    private UserResponseDTO user;
-
-    private PersonDTO person;
-
-    @JsonProperty("professional_info")
-    private ProfessionalInfoResponseDTO professionalInfo;
-
-    private LocationDTO location;
-
-    private List<SpecialtyResponseDTO> specialties;
+    @JsonProperty("professional_data")
+    private ProfessionalDataResponseDTO professionalData;
 }

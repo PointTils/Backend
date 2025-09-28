@@ -1,11 +1,8 @@
 package com.pointtils.pointtils.src.application.controllers;
 
-import java.util.List;
-import java.util.UUID;
-
-import com.pointtils.pointtils.src.application.dto.AddUserSpecialtiesRequestDTO;
-import com.pointtils.pointtils.src.application.dto.UserSpecialtiesResponseDTO;
 import com.pointtils.pointtils.src.application.dto.UserSpecialtyDTO;
+import com.pointtils.pointtils.src.application.dto.requests.AddUserSpecialtiesRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.UserSpecialtiesResponseDTO;
 import com.pointtils.pointtils.src.application.services.UserSpecialtyService;
 import com.pointtils.pointtils.src.core.domain.entities.UserSpecialty;
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,6 +21,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @SecurityRequirement(name = "bearerAuth")
@@ -46,14 +46,7 @@ public class UserSpecialtyController {
         UserSpecialtiesResponseDTO response = new UserSpecialtiesResponseDTO(
                 true,
                 "Especialidades do usuário obtidas com sucesso",
-                new UserSpecialtiesResponseDTO.Data(
-                        responseDTOs,
-                        new UserSpecialtiesResponseDTO.Summary(
-                                responseDTOs.size(),
-                                responseDTOs.size(),
-                                0
-                        )
-                )
+                responseDTOs
         );
 
         return ResponseEntity.ok(response);
@@ -71,20 +64,10 @@ public class UserSpecialtyController {
                 .map(this::convertToResponseDTO)
                 .toList();
 
-        long totalUserSpecialties = userSpecialtyService.countUserSpecialties(userId);
-        int duplicatesIgnored = request.getSpecialtyIds().size() - addedSpecialties.size();
-
         UserSpecialtiesResponseDTO response = new UserSpecialtiesResponseDTO(
                 true,
                 "Especialidades adicionadas com sucesso",
-                new UserSpecialtiesResponseDTO.Data(
-                        responseDTOs,
-                        new UserSpecialtiesResponseDTO.Summary(
-                                addedSpecialties.size(),
-                                (int) totalUserSpecialties,
-                                duplicatesIgnored
-                        )
-                )
+                responseDTOs
         );
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -104,14 +87,7 @@ public class UserSpecialtyController {
         UserSpecialtiesResponseDTO response = new UserSpecialtiesResponseDTO(
                 true,
                 "Especialidades do usuário atualizadas com sucesso",
-                new UserSpecialtiesResponseDTO.Data(
-                        responseDTOs,
-                        new UserSpecialtiesResponseDTO.Summary(
-                                replacedSpecialties.size(),
-                                replacedSpecialties.size(),
-                                0
-                        )
-                )
+                responseDTOs
         );
 
         return ResponseEntity.ok(response);
@@ -150,14 +126,7 @@ public class UserSpecialtyController {
         UserSpecialtiesResponseDTO response = new UserSpecialtiesResponseDTO(
                 true,
                 "Especialidades removidas com sucesso",
-                new UserSpecialtiesResponseDTO.Data(
-                        null,
-                        new UserSpecialtiesResponseDTO.Summary(
-                                0,
-                                (int) userSpecialtyService.countUserSpecialties(userId),
-                                0
-                        )
-                )
+                null
         );
 
         return ResponseEntity.ok(response);

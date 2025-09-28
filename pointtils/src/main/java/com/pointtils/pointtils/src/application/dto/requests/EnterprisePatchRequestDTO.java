@@ -1,40 +1,25 @@
 package com.pointtils.pointtils.src.application.dto.requests;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.pointtils.pointtils.src.application.dto.LocationDTO;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class EnterprisePatchRequestDTO {
-	@JsonProperty("corporate_reason")
-	private String corporateReason;
+@EqualsAndHashCode(callSuper = true)
+public class EnterprisePatchRequestDTO extends UserPatchRequestDTO {
 
-	@Pattern(regexp = "^\\d{14}$", message = "CNPJ precisa ter 14 dígitos")
-	private String cnpj;
-	
-	@Email(message = "Email inválido")
-	private String email;
+    @JsonProperty("corporate_reason")
+    private String corporateReason;
 
-	private String password;
-
-	@Pattern(regexp = "^\\d+$", message = "Número de telefone inválido")
-	private String phone;
-
-	private String picture;
-
-	private String status;
-
-	private String type;
-	
-	@Valid
-	private LocationDTO location;
+    @Pattern(regexp = "^\\d{14}$", message = "CNPJ precisa ter 14 dígitos")
+    @Size(min = 14, max = 14, message = "CNPJ deve ter exatamente 14 digitos")
+    private String cnpj;
 }
