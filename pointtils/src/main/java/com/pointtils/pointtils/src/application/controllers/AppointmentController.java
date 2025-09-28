@@ -3,6 +3,7 @@ package com.pointtils.pointtils.src.application.controllers;
 import java.util.List;
 import java.util.UUID;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,6 +32,7 @@ import lombok.AllArgsConstructor;
 @RequestMapping("/v1/appointments")
 @AllArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
+@Tag(name = "Appointment Controller", description = "Endpoints para gerenciamento de solicitações de agendamento")
 public class AppointmentController {
     
     private final AppointmentService appointmentService;
