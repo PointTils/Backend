@@ -50,6 +50,8 @@ public class TestDataUtil {
         request.setBirthday(LocalDate.of(2000, 2, 15));
         request.setCpf("22233344455");
         request.setPicture("new_picture");
+        request.setStatus(UserStatus.ACTIVE);
+        request.setType(UserTypeE.PERSON);
         return request;
     }
 

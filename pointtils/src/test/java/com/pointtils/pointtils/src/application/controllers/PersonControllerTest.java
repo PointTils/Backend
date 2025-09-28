@@ -1,7 +1,9 @@
 package com.pointtils.pointtils.src.application.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pointtils.pointtils.src.application.dto.PersonDTO;
 import com.pointtils.pointtils.src.application.dto.requests.PersonCreationRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.PersonPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.PersonResponseDTO;
 import com.pointtils.pointtils.src.application.services.PersonService;
 import io.awspring.cloud.autoconfigure.s3.S3AutoConfiguration;
@@ -21,14 +23,18 @@ import java.util.List;
 import java.util.UUID;
 
 import static com.pointtils.pointtils.src.util.TestDataUtil.createPersonCreationRequest;
+import static com.pointtils.pointtils.src.util.TestDataUtil.createPersonPatchRequest;
 import static com.pointtils.pointtils.src.util.TestDataUtil.createPersonResponse;
+import static com.pointtils.pointtils.src.util.TestDataUtil.createPersonUpdateRequest;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -143,5 +149,63 @@ class PersonControllerTest {
                         .with(user("testuser").roles("USER"))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("Deve atualizar pessoa por ID com sucesso")
+    void deveAtualizarPessoaPorIdComSucesso() throws Exception {
+        // Arrange
+        UUID personId = UUID.randomUUID();
+        PersonResponseDTO mockResponse = createPersonResponse();
+        PersonDTO personDTO = createPersonUpdateRequest();
+        when(personService.updateComplete(personId, personDTO)).thenReturn(mockResponse);
+
+        // Act & Assert
+        mockMvc.perform(put("/v1/person/{id}", personId)
+                        .with(user("testuser").roles("USER"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(personDTO)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Usuário surdo atualizado com sucesso"))
+                .andExpect(jsonPath("$.data.id").exists())
+                .andExpect(jsonPath("$.data.email").value("pessoa@exemplo.com"))
+                .andExpect(jsonPath("$.data.name").value("João Pessoa"))
+                .andExpect(jsonPath("$.data.type").value("PERSON"))
+                .andExpect(jsonPath("$.data.status").value("ACTIVE"))
+                .andExpect(jsonPath("$.data.gender").value("MALE"))
+                .andExpect(jsonPath("$.data.cpf").value("11122233344"))
+                .andExpect(jsonPath("$.data.picture").value("picture_url"))
+                .andExpect(jsonPath("$.data.birthday").value("1990-01-01"))
+                .andExpect(jsonPath("$.data.password").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("Deve atualizar pessoa por ID parcialmente com sucesso")
+    void deveAtualizarPessoaPorIdParcialmenteComSucesso() throws Exception {
+        // Arrange
+        UUID personId = UUID.randomUUID();
+        PersonResponseDTO mockResponse = createPersonResponse();
+        PersonPatchRequestDTO personDTO = createPersonPatchRequest();
+        when(personService.updatePartial(personId, personDTO)).thenReturn(mockResponse);
+
+        // Act & Assert
+        mockMvc.perform(patch("/v1/person/{id}", personId)
+                        .with(user("testuser").roles("USER"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(personDTO)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Usuário surdo atualizado com sucesso"))
+                .andExpect(jsonPath("$.data.id").exists())
+                .andExpect(jsonPath("$.data.email").value("pessoa@exemplo.com"))
+                .andExpect(jsonPath("$.data.name").value("João Pessoa"))
+                .andExpect(jsonPath("$.data.type").value("PERSON"))
+                .andExpect(jsonPath("$.data.status").value("ACTIVE"))
+                .andExpect(jsonPath("$.data.gender").value("MALE"))
+                .andExpect(jsonPath("$.data.cpf").value("11122233344"))
+                .andExpect(jsonPath("$.data.picture").value("picture_url"))
+                .andExpect(jsonPath("$.data.birthday").value("1990-01-01"))
+                .andExpect(jsonPath("$.data.password").doesNotExist());
     }
 }
