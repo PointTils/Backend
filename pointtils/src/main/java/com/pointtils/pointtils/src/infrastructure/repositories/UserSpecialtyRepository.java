@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -30,13 +31,16 @@ public interface UserSpecialtyRepository extends JpaRepository<UserSpecialty, UU
     
     @Query("SELECT us FROM UserSpecialty us WHERE us.user.id = :userId AND us.specialty.id IN :specialtyIds")
     List<UserSpecialty> findByUserIdAndSpecialtyIds(@Param("userId") UUID userId, @Param("specialtyIds") List<UUID> specialtyIds);
-    
+
+    @Modifying
     @Query("DELETE FROM UserSpecialty us WHERE us.user.id = :userId AND us.specialty.id = :specialtyId")
     void deleteByUserIdAndSpecialtyId(@Param("userId") UUID userId, @Param("specialtyId") UUID specialtyId);
-    
+
+    @Modifying
     @Query("DELETE FROM UserSpecialty us WHERE us.user.id = :userId AND us.specialty.id IN :specialtyIds")
     void deleteByUserIdAndSpecialtyIds(@Param("userId") UUID userId, @Param("specialtyIds") List<UUID> specialtyIds);
-    
+
+    @Modifying
     @Query("DELETE FROM UserSpecialty us WHERE us.user.id = :userId")
     void deleteAllByUserId(@Param("userId") UUID userId);
 }
