@@ -5,6 +5,7 @@ import java.time.LocalTime;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentModality;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -30,9 +31,11 @@ public class AppointmentRequestDTO {
     private String neighborhood;
     
     private String street;
-    
+
+    @JsonProperty("street_number")
     private Integer streetNumber;
-    
+
+    @JsonProperty("address_details")
     private String addressDetails;
     
     @Schema(description = "Modalidade do atendimento",
@@ -47,20 +50,24 @@ public class AppointmentRequestDTO {
     private LocalDate date;
 
     private String description;
-    
+
+    @JsonProperty("interpreter_id")
     @NotNull(message = "ID do intérprete é obrigatório")
     private UUID interpreterId;
-    
+
+    @JsonProperty("user_id")
     @NotNull(message = "ID do usuário é obrigatório")
     private UUID userId;
-    
+
+    @JsonProperty("start_time")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm:ss")
     @Schema(description = "Hora de início",
         type = "string",
         example = "09:30:00",
         pattern = "^([01]\\d|2[0-3]):([0-5]\\d):([0-5]\\d)$")
     private LocalTime startTime;
-    
+
+    @JsonProperty("end_time")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm:ss")
     @Schema(description = "Hora de término",
         type = "string",
