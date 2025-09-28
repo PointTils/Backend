@@ -7,10 +7,12 @@ import com.pointtils.pointtils.src.core.domain.entities.Enterprise;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
 import com.pointtils.pointtils.src.infrastructure.repositories.EnterpriseRepository;
+import io.awspring.cloud.autoconfigure.s3.S3AutoConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
@@ -20,6 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
+import software.amazon.awssdk.services.s3.S3Client;
 
 import java.util.List;
 import java.util.Optional;
@@ -39,6 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
+@EnableAutoConfiguration(exclude = S3AutoConfiguration.class)
 @Transactional
 @ActiveProfiles("test")
 class EnterpriseControllerTest {
@@ -48,6 +52,9 @@ class EnterpriseControllerTest {
 
     @MockitoBean
     private JwtService jwtService;
+
+    @MockitoBean
+    private S3Client s3Client;
 
     @Autowired
     private WebApplicationContext webApplicationContext;

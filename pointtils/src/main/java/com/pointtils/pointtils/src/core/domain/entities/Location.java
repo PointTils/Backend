@@ -1,6 +1,11 @@
 package com.pointtils.pointtils.src.core.domain.entities;
 
+import java.util.UUID;
+
+import org.hibernate.annotations.UuidGenerator;
+
 import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -14,9 +19,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.hibernate.annotations.UuidGenerator;
-
-import java.util.UUID;
 
 @Entity
 @Table(name = "location")
@@ -47,4 +49,5 @@ public class Location {
     @JsonBackReference
     @JoinColumn(name = "user_id", nullable = false)
     private Interpreter interpreter;
+
 }

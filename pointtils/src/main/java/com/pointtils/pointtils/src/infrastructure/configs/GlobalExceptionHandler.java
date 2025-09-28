@@ -1,16 +1,11 @@
 
 package com.pointtils.pointtils.src.infrastructure.configs;
 
-import com.fasterxml.jackson.databind.exc.ValueInstantiationException;
-import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
-import com.pointtils.pointtils.src.core.domain.exceptions.ClientTimeoutException;
-import com.pointtils.pointtils.src.core.domain.exceptions.DuplicateResourceException;
-import com.pointtils.pointtils.src.core.domain.exceptions.UserSpecialtyException;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.ConstraintViolationException;
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -21,10 +16,19 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import com.fasterxml.jackson.databind.exc.ValueInstantiationException;
+import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
+import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
+import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
+import com.pointtils.pointtils.src.core.domain.exceptions.ClientTimeoutException;
+import com.pointtils.pointtils.src.core.domain.exceptions.DuplicateResourceException;
+import com.pointtils.pointtils.src.core.domain.exceptions.UserSpecialtyException;
+
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @ControllerAdvice
@@ -193,26 +197,33 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
-        String paramName = ex.getName();
-        Class<?> requiredType = ex.getRequiredType();
-
-        String message;
-        if (requiredType != null && UUID.class.equals(requiredType)) {
-            message = "UUID inválido";
-        } else {
+	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
+	public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
+		String paramName = ex.getName();
+		Class<?> requiredType = ex.getRequiredType();
+		
+		String message;
+		if (requiredType != null && UUID.class.equals(requiredType)) {
+			message = "UUID inválido";
+        }
+        else if (requiredType != null && InterpreterModality.class.equals(requiredType)) {
+            message = "Modalidade inválida";
+        }
+        else if (requiredType != null && Gender.class.equals(requiredType)) {
+            message = "Gênero inválido";
+        }
+         else {
             message = String.format("Valor inválido para parâmetro '%s'", paramName);
         }
-
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                message,
-                System.currentTimeMillis());
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler(DuplicateResourceException.class)
+            
+            ErrorResponse errorResponse = new ErrorResponse(
+				HttpStatus.BAD_REQUEST.value(),
+				message,
+				System.currentTimeMillis());
+		return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+	}
+	
+	@ExceptionHandler(DuplicateResourceException.class)
     public ResponseEntity<ErrorResponse> handleDuplicateResource(DuplicateResourceException ex) {
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.CONFLICT.value(),

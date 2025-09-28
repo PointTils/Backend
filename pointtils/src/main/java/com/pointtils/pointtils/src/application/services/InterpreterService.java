@@ -4,14 +4,18 @@ import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequ
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.LocationRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataPatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
 import com.pointtils.pointtils.src.application.mapper.InterpreterResponseMapper;
 import com.pointtils.pointtils.src.application.mapper.LocationMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
+import com.pointtils.pointtils.src.core.domain.entities.enums.DayOfWeek;
+import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
+import com.pointtils.pointtils.src.infrastructure.repositories.spec.InterpreterSpecification;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,6 +23,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -31,6 +39,7 @@ public class InterpreterService {
     private final InterpreterRepository repository;
     private final PasswordEncoder passwordEncoder;
     private final InterpreterResponseMapper responseMapper;
+    private final LocationMapper locationMapper;
 
     public InterpreterResponseDTO registerBasic(InterpreterBasicRequestDTO request) {
         Interpreter interpreter = Interpreter.builder()
@@ -68,11 +77,85 @@ public class InterpreterService {
         repository.save(interpreter);
     }
 
-    public List<InterpreterResponseDTO> findAll() {
-        List<Interpreter> interpreters = repository.findAll();
-        return interpreters.stream()
-                .map(responseMapper::toResponseDTO)
+    public List<InterpreterListResponseDTO> findAll(
+            String modality,
+            String gender,
+            String city,
+            String uf,
+            String neighborhood,
+            String specialty,
+            String availableDate) {
+
+        InterpreterModality modalityEnum = null;
+        if (modality != null) {
+            modalityEnum = InterpreterModality.valueOf(modality.toUpperCase());
+        }
+
+        Gender genderEnum = null;
+        if (gender != null) {
+            genderEnum = Gender.valueOf(gender.toUpperCase());
+        }
+
+        DayOfWeek dayOfWeek = null;
+        LocalTime requestedStart = null;
+        LocalTime requestedEnd = null;
+
+        if (availableDate != null) {
+            LocalDateTime dateTime = LocalDateTime.parse(availableDate,
+                    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+            dayOfWeek = DayOfWeek.valueOf(dateTime.getDayOfWeek().name().substring(0, 3));
+            requestedStart = dateTime.toLocalTime();
+            requestedEnd = requestedStart.plusHours(1);
+        }
+
+        List<UUID> specialtyList = null;
+        if (specialty != null) {
+            specialtyList = Arrays.stream(specialty.split(","))
+                    .map(UUID::fromString)
+                    .toList();
+        }
+
+        return repository.findAll(
+                        InterpreterSpecification.filter(modalityEnum, uf, city, neighborhood, specialtyList, genderEnum, dayOfWeek,
+                                requestedStart, requestedEnd))
+                .stream()
+                .map(responseMapper::toListResponseDTO)
                 .toList();
+    }
+
+    public InterpreterResponseDTO updateComplete(UUID id, InterpreterBasicRequestDTO dto) {
+        Interpreter interpreter = findInterpreterById(id);
+
+        if (dto != null) {
+            interpreter.setName(dto.getName());
+            interpreter.setEmail(dto.getEmail());
+            interpreter.setPhone(dto.getPhone());
+            interpreter.setPicture(dto.getPicture());
+            interpreter.setBirthday(dto.getBirthday());
+            interpreter.setCpf(dto.getCpf());
+            interpreter.setGender(dto.getGender());
+
+            if (dto.getPassword() != null) {
+                interpreter.setPassword(passwordEncoder.encode(dto.getPassword()));
+            }
+        }
+
+        if (dto != null && dto.getProfessionalData() != null) {
+            var professionalData = dto.getProfessionalData();
+            interpreter.setCnpj(professionalData.getCnpj());
+            interpreter.setMinValue(professionalData.getMinValue());
+            interpreter.setMaxValue(professionalData.getMaxValue());
+            interpreter.setImageRights(professionalData.getImageRights());
+            interpreter.setModality(professionalData.getModality());
+            interpreter.setDescription(professionalData.getDescription());
+        }
+
+        if (dto != null) {
+            updateLocation(dto.getLocations(), interpreter);
+        }
+
+        Interpreter updatedInterpreter = repository.save(interpreter);
+        return responseMapper.toResponseDTO(updatedInterpreter);
     }
 
     public InterpreterResponseDTO updatePartial(UUID id, InterpreterPatchRequestDTO dto) {
@@ -101,7 +184,6 @@ public class InterpreterService {
         if (requestDto.getGender() != null) {
             interpreter.setGender(requestDto.getGender());
         }
-        // TODO - atualizar foto de perfil
     }
 
     private void updateProfessionalPatchRequest(ProfessionalDataPatchRequestDTO dto, Interpreter interpreter) {
@@ -135,7 +217,7 @@ public class InterpreterService {
 
         interpreter.getLocations().clear();
         locations.stream()
-                .map(locationDTO -> LocationMapper.toDomain(locationDTO, interpreter))
+                .map(locationDTO -> locationMapper.toDomain(locationDTO, interpreter))
                 .forEach(location -> interpreter.getLocations().add(location));
     }
 

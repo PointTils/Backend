@@ -3,35 +3,43 @@ package com.pointtils.pointtils.src.application.controllers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pointtils.pointtils.src.application.dto.PersonDTO;
 import com.pointtils.pointtils.src.application.dto.requests.PersonCreationRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.PersonPatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.PersonResponseDTO;
 import com.pointtils.pointtils.src.application.services.PersonService;
-import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
-import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
-import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
+import io.awspring.cloud.autoconfigure.s3.S3AutoConfiguration;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import software.amazon.awssdk.services.s3.S3Client;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import static com.pointtils.pointtils.src.util.TestDataUtil.createPersonCreationRequest;
+import static com.pointtils.pointtils.src.util.TestDataUtil.createPersonPatchRequest;
+import static com.pointtils.pointtils.src.util.TestDataUtil.createPersonResponse;
+import static com.pointtils.pointtils.src.util.TestDataUtil.createPersonUpdateRequest;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
+@EnableAutoConfiguration(exclude = S3AutoConfiguration.class)
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 class PersonControllerTest {
@@ -45,12 +53,15 @@ class PersonControllerTest {
     @MockitoBean
     private PersonService personService;
 
+    @MockitoBean
+    private S3Client s3Client;
+
     @Test
     @DisplayName("Deve cadastrar pessoa com sucesso")
     void deveCadastrarPessoaComSucesso() throws Exception {
         // Arrange
-        PersonCreationRequestDTO request = createValidRequest();
-        PersonDTO mockResponse = createMockResponse();
+        PersonCreationRequestDTO request = createPersonCreationRequest();
+        PersonResponseDTO mockResponse = createPersonResponse();
 
         when(personService.registerPerson(any(PersonCreationRequestDTO.class))).thenReturn(mockResponse);
 
@@ -77,7 +88,7 @@ class PersonControllerTest {
     @DisplayName("Deve buscar todas as pessoas com sucesso")
     void deveBuscarPessoasComSucesso() throws Exception {
         // Arrange
-        PersonDTO mockResponse = createMockResponse();
+        PersonResponseDTO mockResponse = createPersonResponse();
         when(personService.findAll()).thenReturn(List.of(mockResponse));
 
         // Act & Assert
@@ -104,7 +115,7 @@ class PersonControllerTest {
     void deveBuscarPessoaPorIdComSucesso() throws Exception {
         // Arrange
         UUID personId = UUID.randomUUID();
-        PersonDTO mockResponse = createMockResponse();
+        PersonResponseDTO mockResponse = createPersonResponse();
         when(personService.findById(personId)).thenReturn(mockResponse);
 
         // Act & Assert
@@ -140,31 +151,61 @@ class PersonControllerTest {
                 .andExpect(status().isNoContent());
     }
 
-    private PersonCreationRequestDTO createValidRequest() {
-        PersonCreationRequestDTO request = new PersonCreationRequestDTO();
-        request.setName("João Pessoa");
-        request.setEmail("pessoa@exemplo.com");
-        request.setPassword("senha123");
-        request.setPhone("51999999999");
-        request.setGender(Gender.MALE);
-        request.setBirthday(LocalDate.of(1990, 1, 1));
-        request.setCpf("11122233344");
-        request.setPicture("picture_url");
-        return request;
+    @Test
+    @DisplayName("Deve atualizar pessoa por ID com sucesso")
+    void deveAtualizarPessoaPorIdComSucesso() throws Exception {
+        // Arrange
+        UUID personId = UUID.randomUUID();
+        PersonResponseDTO mockResponse = createPersonResponse();
+        PersonDTO personDTO = createPersonUpdateRequest();
+        when(personService.updateComplete(personId, personDTO)).thenReturn(mockResponse);
+
+        // Act & Assert
+        mockMvc.perform(put("/v1/person/{id}", personId)
+                        .with(user("testuser").roles("USER"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(personDTO)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Usuário surdo atualizado com sucesso"))
+                .andExpect(jsonPath("$.data.id").exists())
+                .andExpect(jsonPath("$.data.email").value("pessoa@exemplo.com"))
+                .andExpect(jsonPath("$.data.name").value("João Pessoa"))
+                .andExpect(jsonPath("$.data.type").value("PERSON"))
+                .andExpect(jsonPath("$.data.status").value("ACTIVE"))
+                .andExpect(jsonPath("$.data.gender").value("MALE"))
+                .andExpect(jsonPath("$.data.cpf").value("11122233344"))
+                .andExpect(jsonPath("$.data.picture").value("picture_url"))
+                .andExpect(jsonPath("$.data.birthday").value("1990-01-01"))
+                .andExpect(jsonPath("$.data.password").doesNotExist());
     }
 
-    private PersonDTO createMockResponse() {
-        PersonDTO response = new PersonDTO();
-        response.setId(UUID.randomUUID());
-        response.setEmail("pessoa@exemplo.com");
-        response.setName("João Pessoa");
-        response.setType(UserTypeE.PERSON);
-        response.setStatus(UserStatus.ACTIVE);
-        response.setPhone("51999999999");
-        response.setPicture("picture_url");
-        response.setGender(Gender.MALE);
-        response.setBirthday(LocalDate.of(1990, 1, 1));
-        response.setCpf("11122233344");
-        return response;
+    @Test
+    @DisplayName("Deve atualizar pessoa por ID parcialmente com sucesso")
+    void deveAtualizarPessoaPorIdParcialmenteComSucesso() throws Exception {
+        // Arrange
+        UUID personId = UUID.randomUUID();
+        PersonResponseDTO mockResponse = createPersonResponse();
+        PersonPatchRequestDTO personDTO = createPersonPatchRequest();
+        when(personService.updatePartial(personId, personDTO)).thenReturn(mockResponse);
+
+        // Act & Assert
+        mockMvc.perform(patch("/v1/person/{id}", personId)
+                        .with(user("testuser").roles("USER"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(personDTO)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Usuário surdo atualizado com sucesso"))
+                .andExpect(jsonPath("$.data.id").exists())
+                .andExpect(jsonPath("$.data.email").value("pessoa@exemplo.com"))
+                .andExpect(jsonPath("$.data.name").value("João Pessoa"))
+                .andExpect(jsonPath("$.data.type").value("PERSON"))
+                .andExpect(jsonPath("$.data.status").value("ACTIVE"))
+                .andExpect(jsonPath("$.data.gender").value("MALE"))
+                .andExpect(jsonPath("$.data.cpf").value("11122233344"))
+                .andExpect(jsonPath("$.data.picture").value("picture_url"))
+                .andExpect(jsonPath("$.data.birthday").value("1990-01-01"))
+                .andExpect(jsonPath("$.data.password").doesNotExist());
     }
 }

@@ -4,9 +4,12 @@ import com.pointtils.pointtils.src.core.domain.entities.Person;
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -14,14 +17,13 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+@ExtendWith(MockitoExtension.class)
 class PersonResponseMapperTest {
 
+    @Spy
+    private UserSpecialtyMapper userSpecialtyMapper = new UserSpecialtyMapper();
+    @InjectMocks
     private PersonResponseMapper personResponseMapper;
-
-    @BeforeEach
-    void setUp() {
-        personResponseMapper = new PersonResponseMapper();
-    }
 
     @Test
     @DisplayName("Deve mapear dados da pessoa para DTO e mascarar CPF")
@@ -51,15 +53,15 @@ class PersonResponseMapperTest {
         assertEquals("54963636363", actualDTO.getPhone());
         assertEquals("minhafoto", actualDTO.getPicture());
         assertEquals(birthDate, actualDTO.getBirthday());
-        assertEquals(UserStatus.ACTIVE, actualDTO.getStatus());
-        assertEquals(UserTypeE.PERSON, actualDTO.getType());
+        assertEquals(UserStatus.ACTIVE.name(), actualDTO.getStatus());
+        assertEquals(UserTypeE.PERSON.name(), actualDTO.getType());
     }
 
     @Test
     @DisplayName("Deve mapear dados da pessoa para DTO sem mascarar CPF se for nulo")
     void shouldNotMaskNullCPF() {
         UUID id = UUID.randomUUID();
-        Person person = Person.builder().id(id).build();
+        Person person = Person.builder().id(id).status(UserStatus.ACTIVE).type(UserTypeE.PERSON).build();
 
         var actualDTO = personResponseMapper.toResponseDTO(person);
         assertEquals(id, actualDTO.getId());
@@ -70,7 +72,7 @@ class PersonResponseMapperTest {
     @DisplayName("Deve mapear dados da pessoa para DTO sem mascarar CPF não tiver 11 dígitos")
     void shouldNotMaskInvalidCPF() {
         UUID id = UUID.randomUUID();
-        Person person = Person.builder().id(id).cpf("123").build();
+        Person person = Person.builder().id(id).cpf("123").status(UserStatus.ACTIVE).type(UserTypeE.PERSON).build();
 
         var actualDTO = personResponseMapper.toResponseDTO(person);
         assertEquals(id, actualDTO.getId());

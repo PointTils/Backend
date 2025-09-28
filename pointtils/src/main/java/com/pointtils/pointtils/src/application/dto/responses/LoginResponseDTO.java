@@ -1,7 +1,6 @@
 package com.pointtils.pointtils.src.application.dto.responses;
 
 import com.pointtils.pointtils.src.application.dto.TokensDTO;
-import com.pointtils.pointtils.src.application.dto.UserDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,7 +16,7 @@ public class LoginResponseDTO {
     String message;
     Data data;
 
-    public record Data(UserDTO user, TokensDTO tokens) {
+    public record Data(UserLoginResponseDTO user, TokensDTO tokens) {
 
     }
 }
