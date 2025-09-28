@@ -9,16 +9,16 @@ public enum AppointmentModality {
     @JsonCreator
     public static AppointmentModality fromJson(String value) {
         if (value == null) {
-            throw new IllegalArgumentException("Valor null não é aceito para AppointmentModality");
+            throw new IllegalArgumentException("Modalidade da solicitação não pode ser nulo");
         }
-        String v = value.trim().toLowerCase();
+        String v = value.trim().toUpperCase();
         if (v.isEmpty()) {
-            throw new IllegalArgumentException("Valor vazio não é aceito para AppointmentModality");
+            throw new IllegalArgumentException("Modalidade da solicitação não pode ser vazio");
         }
         return switch (v) {
-            case "presencial", "personally", "p" -> PERSONALLY;
-            case "online", "remoto", "r" -> ONLINE;
-            default -> throw new IllegalArgumentException("Valor inválido para AppointmentModality: '" + value + "'. Aceitos: online, remoto, presencial, personally");
+            case "PERSONALLY" -> PERSONALLY;
+            case "ONLINE" -> ONLINE;
+            default -> throw new IllegalArgumentException("Valor inválido para modalidade da solicitação: '" + value + "'. Aceitos: ONLINE, PERSONALLY");
         };
     }
 

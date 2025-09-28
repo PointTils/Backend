@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
 
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentModality;
@@ -23,6 +24,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "appointment")
@@ -58,6 +60,7 @@ public class Appointment {
     private String addressDetails;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "modality", nullable = false)
     private AppointmentModality modality;
 
@@ -68,6 +71,7 @@ public class Appointment {
     private String description;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "status", nullable = false)
     private AppointmentStatus status;
 

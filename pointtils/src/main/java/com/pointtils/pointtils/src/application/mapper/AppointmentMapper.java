@@ -7,10 +7,12 @@ import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
 import com.pointtils.pointtils.src.core.domain.entities.User;
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentModality;
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentStatus;
+import org.springframework.stereotype.Component;
 
+@Component
 public class AppointmentMapper {
-    
-    public static AppointmentRequestDTO toDTO(Appointment appointament) {
+
+    public AppointmentRequestDTO toDTO(Appointment appointament) {
         return AppointmentRequestDTO.builder()
                 .uf(appointament.getUf())
                 .city(appointament.getCity())
@@ -28,18 +30,18 @@ public class AppointmentMapper {
                 .build();
     }
 
-    public static Appointment toDomain(AppointmentRequestDTO dto, Interpreter interpreter, User user) {
-    return Appointment.builder()
+    public Appointment toDomain(AppointmentRequestDTO dto, Interpreter interpreter, User user) {
+        return Appointment.builder()
                 .uf(dto.getUf())
                 .city(dto.getCity())
-        .neighborhood(dto.getNeighborhood())
-        .street(dto.getStreet())
-        .streetNumber(dto.getStreetNumber())
-        .addressDetails(dto.getAddressDetails())
+                .neighborhood(dto.getNeighborhood())
+                .street(dto.getStreet())
+                .streetNumber(dto.getStreetNumber())
+                .addressDetails(dto.getAddressDetails())
                 .modality(dto.getModality() == null ? AppointmentModality.ONLINE : dto.getModality())
                 .date(dto.getDate())
                 .description(dto.getDescription())
-        .status(AppointmentStatus.PENDING)
+                .status(AppointmentStatus.PENDING)
                 .interpreter(interpreter)
                 .user(user)
                 .startTime(dto.getStartTime())
@@ -47,16 +49,16 @@ public class AppointmentMapper {
                 .build();
     }
 
-    public static AppointmentResponseDTO toResponseDTO(Appointment appointment) {
-    return AppointmentResponseDTO.builder()
-        .id(appointment.getId())
-        .uf(appointment.getUf())
+    public AppointmentResponseDTO toResponseDTO(Appointment appointment) {
+        return AppointmentResponseDTO.builder()
+                .id(appointment.getId())
+                .uf(appointment.getUf())
                 .city(appointment.getCity())
-        .neighborhood(appointment.getNeighborhood())
-        .street(appointment.getStreet())
-        .streetNumber(appointment.getStreetNumber())
-        .addressDetails(appointment.getAddressDetails())
-                                .modality(appointment.getModality().name())
+                .neighborhood(appointment.getNeighborhood())
+                .street(appointment.getStreet())
+                .streetNumber(appointment.getStreetNumber())
+                .addressDetails(appointment.getAddressDetails())
+                .modality(appointment.getModality().name())
                 .date(appointment.getDate().toString())
                 .description(appointment.getDescription())
                 .status(appointment.getStatus().name())

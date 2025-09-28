@@ -1,12 +1,5 @@
 package com.pointtils.pointtils.src.application.services;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import org.springframework.stereotype.Service;
-
 import com.pointtils.pointtils.src.application.dto.requests.AppointmentPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.AppointmentRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.AppointmentResponseDTO;
@@ -17,17 +10,22 @@ import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentStatus;
 import com.pointtils.pointtils.src.infrastructure.repositories.AppointmentRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
-
 import jakarta.persistence.EntityNotFoundException;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class AppointmentService {
 
-    private AppointmentRepository appointmentRepository;
+    private final AppointmentRepository appointmentRepository;
     private final InterpreterRepository interpreterRepository;
     private final UserRepository userRepository;
+    private final AppointmentMapper appointmentMapper;
 
     public AppointmentResponseDTO createAppointment(AppointmentRequestDTO dto) {
         var interpreter = interpreterRepository.findById(dto.getInterpreterId())
@@ -35,23 +33,23 @@ public class AppointmentService {
         var user = userRepository.findById(dto.getUserId())
                 .orElseThrow(() -> new EntityNotFoundException("User não encontrado com o id: " + dto.getUserId()));
 
-        var appointment = AppointmentMapper.toDomain(dto, interpreter, user);
+        var appointment = appointmentMapper.toDomain(dto, interpreter, user);
 
         var savedAppointment = appointmentRepository.save(appointment);
-        
-        return AppointmentMapper.toResponseDTO(savedAppointment);
+
+        return appointmentMapper.toResponseDTO(savedAppointment);
     }
 
     public List<AppointmentResponseDTO> findAll() {
         return appointmentRepository.findAll().stream()
-                .map(AppointmentMapper::toResponseDTO)
+                .map(appointmentMapper::toResponseDTO)
                 .toList();
     }
 
     public AppointmentResponseDTO findById(UUID id) {
         Appointment appointment = appointmentRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Solicitação não encontrada com o id: " + id));
-        return AppointmentMapper.toResponseDTO(appointment);
+        return appointmentMapper.toResponseDTO(appointment);
     }
 
     public AppointmentResponseDTO updatePartial(UUID id, AppointmentPatchRequestDTO dto) {
@@ -60,14 +58,14 @@ public class AppointmentService {
 
         if (dto.getUf() != null) appointment.setUf(dto.getUf());
         if (dto.getCity() != null) appointment.setCity(dto.getCity());
-    if (dto.getModality() != null) appointment.setModality(dto.getModality());
+        if (dto.getModality() != null) appointment.setModality(dto.getModality());
         if (dto.getDate() != null) appointment.setDate(dto.getDate());
         if (dto.getDescription() != null) appointment.setDescription(dto.getDescription());
         if (dto.getStatus() != null) appointment.setStatus(dto.getStatus());
-    if (dto.getNeighborhood() != null) appointment.setNeighborhood(dto.getNeighborhood());
-    if (dto.getStreet() != null) appointment.setStreet(dto.getStreet());
-    if (dto.getStreetNumber() != null) appointment.setStreetNumber(dto.getStreetNumber());
-    if (dto.getAddressDetails() != null) appointment.setAddressDetails(dto.getAddressDetails());
+        if (dto.getNeighborhood() != null) appointment.setNeighborhood(dto.getNeighborhood());
+        if (dto.getStreet() != null) appointment.setStreet(dto.getStreet());
+        if (dto.getStreetNumber() != null) appointment.setStreetNumber(dto.getStreetNumber());
+        if (dto.getAddressDetails() != null) appointment.setAddressDetails(dto.getAddressDetails());
         if (dto.getInterpreterId() != null) {
             var interpreter = interpreterRepository.findById(dto.getInterpreterId())
                     .orElseThrow(() -> new EntityNotFoundException("Interpreter não encontrado com o id: " + dto.getInterpreterId()));
@@ -82,7 +80,7 @@ public class AppointmentService {
         if (dto.getEndTime() != null) appointment.setEndTime(dto.getEndTime());
 
         Appointment saved = appointmentRepository.save(appointment);
-        return AppointmentMapper.toResponseDTO(saved);
+        return appointmentMapper.toResponseDTO(saved);
     }
 
     public void delete(UUID id) {
@@ -95,15 +93,15 @@ public class AppointmentService {
     /*Testar! */
     public List<AppointmentResponseDTO> searchAppointments(UUID interpreterId, UUID userId, AppointmentStatus status, AppointmentModality modality, LocalDateTime fromDateTime) {
         List<Appointment> appointments = appointmentRepository.findAll();
-        
+
         return appointments.stream()
                 .filter(appointment -> interpreterId == null || appointment.getInterpreter().getId().equals(interpreterId))
                 .filter(appointment -> userId == null || appointment.getUser().getId().equals(userId))
                 .filter(appointment -> status == null || appointment.getStatus().equals(status))
                 .filter(appointment -> modality == null || appointment.getModality().equals(modality))
                 .filter(appointment -> fromDateTime == null || isAfterDateTime(appointment, fromDateTime))
-                .map(AppointmentMapper::toResponseDTO)
-                .collect(Collectors.toList());
+                .map(appointmentMapper::toResponseDTO)
+                .toList();
     }
 
     private boolean isAfterDateTime(Appointment appointment, LocalDateTime fromDateTime) {

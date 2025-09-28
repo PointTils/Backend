@@ -9,18 +9,18 @@ public enum AppointmentStatus {
     @JsonCreator
     public static AppointmentStatus fromJson(String value) {
         if (value == null) {
-            throw new IllegalArgumentException("Valor null não é aceito para AppointmentStatus");
+            throw new IllegalArgumentException("Status da solicitação não pode ser nulo");
         }
-        String v = value.trim().toLowerCase();
+        String v = value.trim().toUpperCase();
         if (v.isEmpty()) {
-            throw new IllegalArgumentException("Valor vazio não é aceito para AppointmentStatus");
+            throw new IllegalArgumentException("Status da solicitação não pode ser vazio");
         }
         return switch (v) {
-            case "pending", "pendente" -> PENDING;
-            case "accepted", "aceito" -> ACCEPTED;
-            case "canceled", "cancelado" -> CANCELED;
-            case "completed", "completado" -> COMPLETED;
-            default -> throw new IllegalArgumentException("Valor inválido para AppointmentStatus: '" + value + "'. Aceitos: pending, accepted, canceled, completed");
+            case "PENDING" -> PENDING;
+            case "ACCEPTED" -> ACCEPTED;
+            case "CANCELED" -> CANCELED;
+            case "COMPLETED" -> COMPLETED;
+            default -> throw new IllegalArgumentException("Valor inválido para status da solicitação: '" + value + "'. Aceitos: PENDING, ACCEPTED, CANCELED, COMPLETED");
         };
     }
 
