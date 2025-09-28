@@ -4,6 +4,7 @@ import static org.mockito.Mockito.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import java.time.LocalTime;
 
+import com.pointtils.pointtils.src.core.domain.entities.enums.DayOfWeek;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -17,7 +18,6 @@ import org.springframework.data.jpa.domain.Specification;
 
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
 import com.pointtils.pointtils.src.core.domain.entities.Schedule;
-import com.pointtils.pointtils.src.core.domain.entities.enums.DaysOfWeek;
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 
 import jakarta.persistence.criteria.JoinType;
@@ -96,7 +96,7 @@ class InterpreterSpecificationTest {
         LocalTime requestedStart = LocalTime.of(10, 0);
         LocalTime requestedEnd = requestedStart.plusHours(1);
 
-        when(cb.equal(scheduleJoin.get("day"), DaysOfWeek.MON)).thenReturn(dayPredicate);
+        when(cb.equal(scheduleJoin.get("day"), DayOfWeek.MON)).thenReturn(dayPredicate);
         when(cb.lessThanOrEqualTo(scheduleJoin.get("startTime"), requestedStart)).thenReturn(startPredicate);
         when(cb.greaterThanOrEqualTo(scheduleJoin.get("endTime"), requestedEnd)).thenReturn(endPredicate);
 
@@ -105,12 +105,12 @@ class InterpreterSpecificationTest {
         when(cb.and(startPredicate, endPredicate)).thenReturn(endPredicate);
 
         Specification<Interpreter> spec = InterpreterSpecification.filter(
-                null, null, null, null, null, null, DaysOfWeek.MON, requestedStart, requestedEnd);
+                null, null, null, null, null, null, DayOfWeek.MON, requestedStart, requestedEnd);
 
         Predicate result = spec.toPredicate(root, query, cb);
 
         assertThat(result).isEqualTo(endPredicate);
-        verify(cb).equal(scheduleJoin.get("day"), DaysOfWeek.MON);
+        verify(cb).equal(scheduleJoin.get("day"), DayOfWeek.MON);
         verify(cb).lessThanOrEqualTo(scheduleJoin.get("startTime"), requestedStart);
         verify(cb).greaterThanOrEqualTo(scheduleJoin.get("endTime"), requestedEnd);
     }

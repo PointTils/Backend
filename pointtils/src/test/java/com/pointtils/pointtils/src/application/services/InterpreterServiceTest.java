@@ -8,7 +8,7 @@ import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
 import com.pointtils.pointtils.src.core.domain.entities.Location;
 import com.pointtils.pointtils.src.core.domain.entities.Schedule;
 import com.pointtils.pointtils.src.core.domain.entities.Specialty;
-import com.pointtils.pointtils.src.core.domain.entities.enums.DaysOfWeek;
+import com.pointtils.pointtils.src.core.domain.entities.enums.DayOfWeek;
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
@@ -125,7 +125,7 @@ class InterpreterServiceTest {
         specialties.add(specialty);
 
         Schedule schedule = new Schedule();
-        schedule.setDay(DaysOfWeek.WED);
+        schedule.setDay(DayOfWeek.WED);
         schedule.setStartTime(LocalTime.of(9, 0));
         schedule.setEndTime(LocalTime.of(18, 0));
         Set<Schedule> schedules = new HashSet<>();

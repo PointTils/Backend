@@ -1,6 +1,6 @@
 package com.pointtils.pointtils.src.core.domain.entities.enums;
 
-public enum DaysOfWeek {
+public enum DayOfWeek {
     MON,
     TUE,
     WED,

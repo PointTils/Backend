@@ -9,7 +9,7 @@ import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponse
 import com.pointtils.pointtils.src.application.mapper.InterpreterResponseMapper;
 import com.pointtils.pointtils.src.application.mapper.LocationMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
-import com.pointtils.pointtils.src.core.domain.entities.enums.DaysOfWeek;
+import com.pointtils.pointtils.src.core.domain.entities.enums.DayOfWeek;
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
@@ -96,14 +96,14 @@ public class InterpreterService {
             genderEnum = Gender.valueOf(gender.toUpperCase());
         }
 
-        DaysOfWeek dayOfWeek = null;
+        DayOfWeek dayOfWeek = null;
         LocalTime requestedStart = null;
         LocalTime requestedEnd = null;
 
         if (availableDate != null) {
             LocalDateTime dateTime = LocalDateTime.parse(availableDate,
                     DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
-            dayOfWeek = DaysOfWeek.valueOf(dateTime.getDayOfWeek().name().substring(0, 3));
+            dayOfWeek = DayOfWeek.valueOf(dateTime.getDayOfWeek().name().substring(0, 3));
             requestedStart = dateTime.toLocalTime();
             requestedEnd = requestedStart.plusHours(1);
         }
