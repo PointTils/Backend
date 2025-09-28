@@ -4,9 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pointtils.pointtils.src.application.dto.requests.PersonCreationRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.PersonResponseDTO;
 import com.pointtils.pointtils.src.application.services.PersonService;
-import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
-import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
-import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
 import io.awspring.cloud.autoconfigure.s3.S3AutoConfiguration;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,10 +17,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import software.amazon.awssdk.services.s3.S3Client;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import static com.pointtils.pointtils.src.util.TestDataUtil.createPersonCreationRequest;
+import static com.pointtils.pointtils.src.util.TestDataUtil.createPersonResponse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
@@ -56,8 +54,8 @@ class PersonControllerTest {
     @DisplayName("Deve cadastrar pessoa com sucesso")
     void deveCadastrarPessoaComSucesso() throws Exception {
         // Arrange
-        PersonCreationRequestDTO request = createValidRequest();
-        PersonResponseDTO mockResponse = createMockResponse();
+        PersonCreationRequestDTO request = createPersonCreationRequest();
+        PersonResponseDTO mockResponse = createPersonResponse();
 
         when(personService.registerPerson(any(PersonCreationRequestDTO.class))).thenReturn(mockResponse);
 
@@ -84,7 +82,7 @@ class PersonControllerTest {
     @DisplayName("Deve buscar todas as pessoas com sucesso")
     void deveBuscarPessoasComSucesso() throws Exception {
         // Arrange
-        PersonResponseDTO mockResponse = createMockResponse();
+        PersonResponseDTO mockResponse = createPersonResponse();
         when(personService.findAll()).thenReturn(List.of(mockResponse));
 
         // Act & Assert
@@ -111,7 +109,7 @@ class PersonControllerTest {
     void deveBuscarPessoaPorIdComSucesso() throws Exception {
         // Arrange
         UUID personId = UUID.randomUUID();
-        PersonResponseDTO mockResponse = createMockResponse();
+        PersonResponseDTO mockResponse = createPersonResponse();
         when(personService.findById(personId)).thenReturn(mockResponse);
 
         // Act & Assert
@@ -145,33 +143,5 @@ class PersonControllerTest {
                         .with(user("testuser").roles("USER"))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
-    }
-
-    private PersonCreationRequestDTO createValidRequest() {
-        PersonCreationRequestDTO request = new PersonCreationRequestDTO();
-        request.setName("João Pessoa");
-        request.setEmail("pessoa@exemplo.com");
-        request.setPassword("senha123");
-        request.setPhone("51999999999");
-        request.setGender(Gender.MALE);
-        request.setBirthday(LocalDate.of(1990, 1, 1));
-        request.setCpf("11122233344");
-        request.setPicture("picture_url");
-        return request;
-    }
-
-    private PersonResponseDTO createMockResponse() {
-        PersonResponseDTO response = new PersonResponseDTO();
-        response.setId(UUID.randomUUID());
-        response.setEmail("pessoa@exemplo.com");
-        response.setName("João Pessoa");
-        response.setType(UserTypeE.PERSON.name());
-        response.setStatus(UserStatus.ACTIVE.name());
-        response.setPhone("51999999999");
-        response.setPicture("picture_url");
-        response.setGender(Gender.MALE);
-        response.setBirthday(LocalDate.of(1990, 1, 1));
-        response.setCpf("11122233344");
-        return response;
     }
 }

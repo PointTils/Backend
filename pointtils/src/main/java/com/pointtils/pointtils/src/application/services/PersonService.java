@@ -107,7 +107,7 @@ public class PersonService {
         return personResponseMapper.toResponseDTO(updated);
     }
 
-    public Person findPersonById(UUID id) {
+    private Person findPersonById(UUID id) {
         return personRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
     }
