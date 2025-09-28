@@ -3,6 +3,8 @@ package com.pointtils.pointtils.src.application.services;
 import com.pointtils.pointtils.src.application.dto.requests.EnterprisePatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.EnterpriseRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.EnterpriseResponseDTO;
+import com.pointtils.pointtils.src.application.mapper.EnterpriseResponseMapper;
+import com.pointtils.pointtils.src.application.mapper.UserSpecialtyMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Enterprise;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
@@ -14,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -34,6 +37,10 @@ class EnterpriseServiceTest {
     private UserRepository userRepository;
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Spy
+    private UserSpecialtyMapper userSpecialtyMapper = new UserSpecialtyMapper();
+    @Spy
+    private EnterpriseResponseMapper enterpriseResponseMapper = new EnterpriseResponseMapper(userSpecialtyMapper);
     @InjectMocks
     private EnterpriseService enterpriseService;
 

@@ -3,6 +3,7 @@ package com.pointtils.pointtils.src.application.services;
 import com.pointtils.pointtils.src.application.dto.requests.PersonCreationRequestDTO;
 import com.pointtils.pointtils.src.application.dto.PersonDTO;
 import com.pointtils.pointtils.src.application.dto.requests.PersonPatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.PersonResponseDTO;
 import com.pointtils.pointtils.src.application.mapper.PersonResponseMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Person;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
@@ -28,7 +29,7 @@ public class PersonService {
     private final PasswordEncoder passwordEncoder;
     private final PersonResponseMapper personResponseMapper;
 
-    public PersonDTO registerPerson(PersonCreationRequestDTO dto) {
+    public PersonResponseDTO registerPerson(PersonCreationRequestDTO dto) {
         Person person = new Person();
 
         person.setId(person.getId());
@@ -47,7 +48,7 @@ public class PersonService {
         return personResponseMapper.toResponseDTO(savedPerson);
     }
 
-    public PersonDTO findById(UUID id) {
+    public PersonResponseDTO findById(UUID id) {
         Person person = findPersonById(id);
         return personResponseMapper.toResponseDTO(person);
     }
@@ -58,14 +59,14 @@ public class PersonService {
         personRepository.save(person);
     }
 
-    public List<PersonDTO> findAll() {
+    public List<PersonResponseDTO> findAll() {
         List<Person> persons = personRepository.findAllByType(UserTypeE.PERSON);
         return persons.stream()
                 .map(personResponseMapper::toResponseDTO)
                 .toList();
     }
 
-    public PersonDTO updateComplete(UUID id, PersonDTO dto) {
+    public PersonResponseDTO updateComplete(UUID id, PersonDTO dto) {
         Person person = findPersonById(id);
 
         person.setName(dto.getName());
@@ -80,7 +81,7 @@ public class PersonService {
         return personResponseMapper.toResponseDTO(updated);
     }
 
-    public PersonDTO updatePartial(UUID id, PersonPatchRequestDTO dto) {
+    public PersonResponseDTO updatePartial(UUID id, PersonPatchRequestDTO dto) {
         Person person = findPersonById(id);
 
         if (dto.getName() != null) {
@@ -106,7 +107,7 @@ public class PersonService {
         return personResponseMapper.toResponseDTO(updated);
     }
 
-    public Person findPersonById(UUID id) {
+    private Person findPersonById(UUID id) {
         return personRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
     }

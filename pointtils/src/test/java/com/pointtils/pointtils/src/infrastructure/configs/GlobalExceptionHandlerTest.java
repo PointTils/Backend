@@ -1,6 +1,8 @@
 package com.pointtils.pointtils.src.infrastructure.configs;
 
 import com.fasterxml.jackson.databind.exc.ValueInstantiationException;
+import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
+import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
 import com.pointtils.pointtils.src.core.domain.exceptions.ClientTimeoutException;
 import com.pointtils.pointtils.src.core.domain.exceptions.UserSpecialtyException;
@@ -9,9 +11,13 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.Set;
 
@@ -36,8 +42,8 @@ class GlobalExceptionHandlerTest {
         EntityNotFoundException ex = new EntityNotFoundException("Entity not found");
 
         // Act
-        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response =
-                globalExceptionHandler.handleEntityNotFoundException(ex);
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler
+                .handleEntityNotFoundException(ex);
 
         // Assert
         assertNotNull(response);
@@ -54,8 +60,8 @@ class GlobalExceptionHandlerTest {
         Exception ex = new Exception("Unexpected error");
 
         // Act
-        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response =
-                globalExceptionHandler.handleGlobalException(ex);
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler
+                .handleGlobalException(ex);
 
         // Assert
         assertNotNull(response);
@@ -72,8 +78,7 @@ class GlobalExceptionHandlerTest {
         AuthenticationException ex = new AuthenticationException("O campo email é obrigatório");
 
         // Act
-        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response =
-                globalExceptionHandler.handleAuthentication(ex);
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler.handleAuthentication(ex);
 
         // Assert
         assertNotNull(response);
@@ -87,8 +92,7 @@ class GlobalExceptionHandlerTest {
         AuthenticationException ex = new AuthenticationException("Formato de e-mail inválido");
 
         // Act
-        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response =
-                globalExceptionHandler.handleAuthentication(ex);
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler.handleAuthentication(ex);
 
         // Assert
         assertNotNull(response);
@@ -102,8 +106,7 @@ class GlobalExceptionHandlerTest {
         AuthenticationException ex = new AuthenticationException("Usuário não encontrado");
 
         // Act
-        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response =
-                globalExceptionHandler.handleAuthentication(ex);
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler.handleAuthentication(ex);
 
         // Assert
         assertNotNull(response);
@@ -117,8 +120,7 @@ class GlobalExceptionHandlerTest {
         AuthenticationException ex = new AuthenticationException("Muitas tentativas de login");
 
         // Act
-        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response =
-                globalExceptionHandler.handleAuthentication(ex);
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler.handleAuthentication(ex);
 
         // Assert
         assertNotNull(response);
@@ -132,8 +134,7 @@ class GlobalExceptionHandlerTest {
         AuthenticationException ex = new AuthenticationException("Credenciais inválidas");
 
         // Act
-        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response =
-                globalExceptionHandler.handleAuthentication(ex);
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler.handleAuthentication(ex);
 
         // Assert
         assertNotNull(response);
@@ -147,8 +148,7 @@ class GlobalExceptionHandlerTest {
         AuthenticationException ex = new AuthenticationException("Usuário bloqueado");
 
         // Act
-        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response =
-                globalExceptionHandler.handleAuthentication(ex);
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler.handleAuthentication(ex);
 
         // Assert
         assertNotNull(response);
@@ -162,8 +162,7 @@ class GlobalExceptionHandlerTest {
         AuthenticationException ex = new AuthenticationException("Refresh token não fornecido");
 
         // Act
-        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response =
-                globalExceptionHandler.handleAuthentication(ex);
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler.handleAuthentication(ex);
 
         // Assert
         assertNotNull(response);
@@ -177,8 +176,7 @@ class GlobalExceptionHandlerTest {
         AuthenticationException ex = new AuthenticationException("Refresh token inválido ou expirado");
 
         // Act
-        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response =
-                globalExceptionHandler.handleAuthentication(ex);
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler.handleAuthentication(ex);
 
         // Assert
         assertNotNull(response);
@@ -192,8 +190,7 @@ class GlobalExceptionHandlerTest {
         AuthenticationException ex = new AuthenticationException("Unknown error");
 
         // Act
-        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response =
-                globalExceptionHandler.handleAuthentication(ex);
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler.handleAuthentication(ex);
 
         // Assert
         assertNotNull(response);
@@ -207,8 +204,7 @@ class GlobalExceptionHandlerTest {
         UserSpecialtyException ex = new UserSpecialtyException("User specialty error");
 
         // Act
-        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response =
-                globalExceptionHandler.handleUserSpecialty(ex);
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler.handleUserSpecialty(ex);
 
         // Assert
         assertNotNull(response);
@@ -224,8 +220,8 @@ class GlobalExceptionHandlerTest {
         long timestamp = System.currentTimeMillis();
 
         // Act
-        GlobalExceptionHandler.ErrorResponse errorResponse =
-                new GlobalExceptionHandler.ErrorResponse(status, message, timestamp);
+        GlobalExceptionHandler.ErrorResponse errorResponse = new GlobalExceptionHandler.ErrorResponse(status, message,
+                timestamp);
 
         // Assert
         assertEquals(status, errorResponse.getStatus());
@@ -239,8 +235,7 @@ class GlobalExceptionHandlerTest {
         InternalError ex = new InternalError("Internal error");
 
         // Act
-        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response =
-                globalExceptionHandler.handleInternalError(ex);
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler.handleInternalError(ex);
 
         // Assert
         assertNotNull(response);
@@ -254,8 +249,8 @@ class GlobalExceptionHandlerTest {
         ClientTimeoutException ex = new ClientTimeoutException("Timeout");
 
         // Act
-        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response =
-                globalExceptionHandler.handleClientTimeoutException(ex);
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler
+                .handleClientTimeoutException(ex);
 
         // Assert
         assertNotNull(response);
@@ -269,8 +264,8 @@ class GlobalExceptionHandlerTest {
         ConstraintViolationException ex = new ConstraintViolationException("Error", Set.of());
 
         // Act
-        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response =
-                globalExceptionHandler.handleConstraintViolationException(ex);
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler
+                .handleConstraintViolationException(ex);
 
         // Assert
         assertNotNull(response);
@@ -286,8 +281,8 @@ class GlobalExceptionHandlerTest {
         ConstraintViolationException ex = new ConstraintViolationException("Error", Set.of(mockViolation));
 
         // Act
-        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response =
-                globalExceptionHandler.handleConstraintViolationException(ex);
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler
+                .handleConstraintViolationException(ex);
 
         // Assert
         assertNotNull(response);
@@ -305,8 +300,8 @@ class GlobalExceptionHandlerTest {
         when(thrownException.getCause()).thenReturn(valueEx);
 
         // Act
-        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response =
-                globalExceptionHandler.handleHttpMessageNotReadable(thrownException);
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler
+                .handleHttpMessageNotReadable(thrownException);
 
         // Assert
         assertNotNull(response);
@@ -323,10 +318,67 @@ class GlobalExceptionHandlerTest {
         when(thrownException.getCause()).thenReturn(valueEx);
 
         // Act
-        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response =
-                globalExceptionHandler.handleHttpMessageNotReadable(thrownException);
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler
+                .handleHttpMessageNotReadable(thrownException);
 
         // Assert
+        assertNotNull(response);
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertEquals("Ocorreu um erro inesperado. Tente novamente mais tarde.", response.getBody().getMessage());
+    }
+
+    @Test
+    void handleMethodArgumentTypeMismatch_ShouldReturnBadRequest_WithInterpreterModality() {
+        String paramName = "modality";
+        Class<?> requiredType = InterpreterModality.class;
+        MethodArgumentTypeMismatchException ex = new MethodArgumentTypeMismatchException("value", requiredType,
+                paramName, null, null);
+
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler
+                .handleMethodArgumentTypeMismatch(ex);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Modalidade inválida", response.getBody().getMessage());
+    }
+
+    @Test
+    void handleMethodArgumentTypeMismatch_ShouldReturnBadRequest_WithGender() {
+        String paramName = "gender";
+        Class<?> requiredType = Gender.class;
+        MethodArgumentTypeMismatchException ex = new MethodArgumentTypeMismatchException("value", requiredType,
+                paramName, null, null);
+
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler
+                .handleMethodArgumentTypeMismatch(ex);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Gênero inválido", response.getBody().getMessage());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"user_account", "person", "enterprise"})
+    void handleDataIntegrityViolation_ShouldReturnConflict_WithDuplicateKey(String table) {
+        String exceptionMessage = "duplicate key for key 'email' in '" + table + "'";
+        DataIntegrityViolationException ex = new DataIntegrityViolationException(exceptionMessage);
+
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler
+                .handleDataIntegrityViolationException(ex);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertEquals("Já existe um usuário cadastrado com estes dados", response.getBody().getMessage());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"duplicate key", "error"})
+    void handleDataIntegrityViolation_ShouldReturnInternalServerError_WithUnknownMessage(String exMessage) {
+        DataIntegrityViolationException ex = new DataIntegrityViolationException(exMessage);
+
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler
+                .handleDataIntegrityViolationException(ex);
+
         assertNotNull(response);
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertEquals("Ocorreu um erro inesperado. Tente novamente mais tarde.", response.getBody().getMessage());
