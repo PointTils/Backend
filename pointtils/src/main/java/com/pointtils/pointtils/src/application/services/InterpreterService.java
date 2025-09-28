@@ -1,17 +1,5 @@
 package com.pointtils.pointtils.src.application.services;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
-
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.LocationRequestDTO;
@@ -28,9 +16,20 @@ import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.spec.InterpreterSpecification;
-
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -40,6 +39,7 @@ public class InterpreterService {
     private final InterpreterRepository repository;
     private final PasswordEncoder passwordEncoder;
     private final InterpreterResponseMapper responseMapper;
+    private final LocationMapper locationMapper;
 
     public InterpreterResponseDTO registerBasic(InterpreterBasicRequestDTO request) {
         Interpreter interpreter = Interpreter.builder()
@@ -108,9 +108,16 @@ public class InterpreterService {
             requestedEnd = requestedStart.plusHours(1);
         }
 
+        List<UUID> specialtyList = null;
+        if (specialty != null) {
+            specialtyList = Arrays.stream(specialty.split(","))
+                    .map(UUID::fromString)
+                    .toList();
+        }
+
         return repository.findAll(
-                InterpreterSpecification.filter(modalityEnum, uf, city, neighborhood, specialty, genderEnum, dayOfWeek,
-                        requestedStart, requestedEnd))
+                        InterpreterSpecification.filter(modalityEnum, uf, city, neighborhood, specialtyList, genderEnum, dayOfWeek,
+                                requestedStart, requestedEnd))
                 .stream()
                 .map(responseMapper::toListResponseDTO)
                 .toList();
@@ -177,7 +184,6 @@ public class InterpreterService {
         if (requestDto.getGender() != null) {
             interpreter.setGender(requestDto.getGender());
         }
-        // TODO - atualizar foto de perfil
     }
 
     private void updateProfessionalPatchRequest(ProfessionalDataPatchRequestDTO dto, Interpreter interpreter) {
@@ -211,7 +217,7 @@ public class InterpreterService {
 
         interpreter.getLocations().clear();
         locations.stream()
-                .map(locationDTO -> LocationMapper.toDomain(locationDTO, interpreter))
+                .map(locationDTO -> locationMapper.toDomain(locationDTO, interpreter))
                 .forEach(location -> interpreter.getLocations().add(location));
     }
 

@@ -1,5 +1,6 @@
 package com.pointtils.pointtils.src.application.dto.responses;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,11 +20,12 @@ import lombok.NoArgsConstructor;
 public class InterpreterListResponseDTO {
     private UUID id;
     private String name;
-    private float rating;
-    private float minValue;
-    private float maxValue;
+    private BigDecimal rating;
+    @JsonProperty("min_value")
+    private BigDecimal minValue;
+    @JsonProperty("max_value")
+    private BigDecimal maxValue;
     private InterpreterModality modality;
     private List<LocationDTO> locations;
-    @JsonProperty("profile_picture")
-    private String profilePicture;
+    private String picture;
 }

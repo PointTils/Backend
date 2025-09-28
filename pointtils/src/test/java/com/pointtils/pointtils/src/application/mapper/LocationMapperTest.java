@@ -14,6 +14,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 class LocationMapperTest {
 
+    private final LocationMapper locationMapper = new LocationMapper();
+
     @Test
     void shouldMapLocationToDto() {
         Interpreter interpreter = new Interpreter();
@@ -25,7 +27,7 @@ class LocationMapperTest {
                 .interpreter(interpreter)
                 .build();
 
-        LocationDTO actualDTO = LocationMapper.toDto(location);
+        LocationDTO actualDTO = locationMapper.toDto(location);
         assertNotNull(actualDTO);
         assertEquals("SP", actualDTO.getUf());
         assertEquals("São Paulo", actualDTO.getCity());
@@ -34,7 +36,7 @@ class LocationMapperTest {
 
     @Test
     void shouldMapNullLocationToNullDto() {
-        assertNull(LocationMapper.toDto(null));
+        assertNull(locationMapper.toDto(null));
     }
 
     @Test
@@ -45,7 +47,7 @@ class LocationMapperTest {
         dto.setCity("São Paulo");
         dto.setNeighborhood("Higienópolis");
 
-        Location location = LocationMapper.toDomain(dto, interpreter);
+        Location location = locationMapper.toDomain(dto, interpreter);
         assertNotNull(location);
         assertEquals("SP", location.getUf());
         assertEquals("São Paulo", location.getCity());
@@ -56,6 +58,6 @@ class LocationMapperTest {
     @Test
     void shouldMapNullDtoToNullLocation() {
         Interpreter interpreter = new Interpreter();
-        assertNull(LocationMapper.toDomain(null, interpreter));
+        assertNull(locationMapper.toDomain(null, interpreter));
     }
 }

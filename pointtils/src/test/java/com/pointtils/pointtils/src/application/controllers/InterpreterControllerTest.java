@@ -1,15 +1,12 @@
 package com.pointtils.pointtils.src.application.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pointtils.pointtils.src.application.dto.LocationDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataBasicRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataPatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
-import com.pointtils.pointtils.src.application.dto.responses.ProfessionalDataResponseDTO;
 import com.pointtils.pointtils.src.application.services.InterpreterService;
-import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
 import io.awspring.cloud.autoconfigure.s3.S3AutoConfiguration;
 import org.junit.jupiter.api.DisplayName;
@@ -25,12 +22,15 @@ import org.springframework.test.web.servlet.MockMvc;
 import software.amazon.awssdk.services.s3.S3Client;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import static com.pointtils.pointtils.src.util.TestDataUtil.createInterpreterCreationRequest;
+import static com.pointtils.pointtils.src.util.TestDataUtil.createInterpreterListResponse;
+import static com.pointtils.pointtils.src.util.TestDataUtil.createInterpreterResponse;
+import static com.pointtils.pointtils.src.util.TestDataUtil.createInterpreterResponseWithProfessionalData;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -38,10 +38,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResponseDTO;
 
 @SpringBootTest
 @EnableAutoConfiguration(exclude = S3AutoConfiguration.class)
@@ -65,16 +64,16 @@ class InterpreterControllerTest {
     @DisplayName("Deve cadastrar intérprete com sucesso usando dados básicos")
     void deveCadastrarInterpreterComSucessoUsandoDadosBasicos() throws Exception {
         // Arrange
-        InterpreterBasicRequestDTO request = createValidBasicRequest();
-        InterpreterResponseDTO mockResponse = createMockResponse();
+        InterpreterBasicRequestDTO request = createInterpreterCreationRequest();
+        InterpreterResponseDTO mockResponse = createInterpreterResponse();
 
         when(interpreterService.registerBasic(any(InterpreterBasicRequestDTO.class)))
                 .thenReturn(mockResponse);
 
         // Act & Assert
         mockMvc.perform(post("/v1/interpreters/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Intérprete cadastrado com sucesso"))
@@ -89,13 +88,13 @@ class InterpreterControllerTest {
     @DisplayName("Deve retornar 400 quando dados pessoais não forem fornecidos")
     void deveRetornar400QuandoDadosPessoaisNaoFornecidos() throws Exception {
         // Arrange
-        InterpreterBasicRequestDTO request = createValidBasicRequest();
+        InterpreterBasicRequestDTO request = createInterpreterCreationRequest();
         request.setName(null);
 
         // Act & Assert
         mockMvc.perform(post("/v1/interpreters/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Dados inválidos: [Nome deve ser preenchido]"));
     }
@@ -104,13 +103,13 @@ class InterpreterControllerTest {
     @DisplayName("Deve retornar 422 quando email for inválido")
     void deveRetornar422QuandoEmailForInvalido() throws Exception {
         // Arrange
-        InterpreterBasicRequestDTO request = createValidBasicRequest();
+        InterpreterBasicRequestDTO request = createInterpreterCreationRequest();
         request.setEmail("email-invalido");
 
         // Act & Assert
         mockMvc.perform(post("/v1/interpreters/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.message").value("Dados inválidos: [Email inválido]"));
     }
@@ -119,13 +118,13 @@ class InterpreterControllerTest {
     @DisplayName("Deve retornar 422 quando CPF for inválido")
     void deveRetornar422QuandoCpfForInvalido() throws Exception {
         // Arrange
-        InterpreterBasicRequestDTO request = createValidBasicRequest();
+        InterpreterBasicRequestDTO request = createInterpreterCreationRequest();
         request.setCpf("123"); // CPF inválido
 
         // Act & Assert
         mockMvc.perform(post("/v1/interpreters/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnprocessableEntity());
     }
 
@@ -147,15 +146,15 @@ class InterpreterControllerTest {
 
         patchRequest.setProfessionalData(professionalData);
 
-        InterpreterResponseDTO mockResponse = createMockResponseWithProfessionalData();
+        InterpreterResponseDTO mockResponse = createInterpreterResponseWithProfessionalData();
 
         when(interpreterService.updatePartial(any(UUID.class), any(InterpreterPatchRequestDTO.class)))
                 .thenReturn(mockResponse);
 
         // Act & Assert
         mockMvc.perform(patch("/v1/interpreters/{id}", interpreterId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(patchRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(patchRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Intérprete atualizado com sucesso"))
@@ -173,13 +172,13 @@ class InterpreterControllerTest {
     void deveBuscarInterpreterPorIdComSucesso() throws Exception {
         // Arrange
         UUID interpreterId = UUID.randomUUID();
-        InterpreterResponseDTO mockResponse = createMockResponse();
+        InterpreterResponseDTO mockResponse = createInterpreterResponse();
         when(interpreterService.findById(interpreterId)).thenReturn(mockResponse);
 
         // Act & Assert
         mockMvc.perform(get("/v1/interpreters/{interpreterId}", interpreterId)
-                .with(user("testuser").roles("USER"))
-                .contentType(MediaType.APPLICATION_JSON))
+                        .with(user("testuser").roles("USER"))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Intérprete encontrado com sucesso"))
@@ -196,8 +195,8 @@ class InterpreterControllerTest {
 
         // Act & Assert
         mockMvc.perform(delete("/v1/interpreters/{interpreterId}", interpreterId)
-                .with(user("testuser").roles("USER"))
-                .contentType(MediaType.APPLICATION_JSON))
+                        .with(user("testuser").roles("USER"))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
     }
 
@@ -205,108 +204,42 @@ class InterpreterControllerTest {
     @DisplayName("Deve encontrar todos os intérpretes com sucesso")
     void deveBuscarInterpretesComSucesso() throws Exception {
         // Arrange
-        InterpreterListResponseDTO mockResponse = createMockListResponse();
+        InterpreterListResponseDTO mockResponse = createInterpreterListResponse();
         when(interpreterService.findAll(
                 null, null, null, null, null, null, null)).thenReturn(List.of(mockResponse));
 
         // Act & Assert
         mockMvc.perform(get("/v1/interpreters")
-                .with(user("testuser").roles("USER"))
-                .contentType(MediaType.APPLICATION_JSON))
+                        .with(user("testuser").roles("USER"))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Intérpretes encontrados com sucesso"))
                 .andExpect(jsonPath("$.data[0].id").exists());
     }
 
-    private InterpreterBasicRequestDTO createValidBasicRequest() {
-        InterpreterBasicRequestDTO request = new InterpreterBasicRequestDTO();
-        request.setName("João Intérprete");
-        request.setEmail("interpreter@exemplo.com");
-        request.setPassword("senha123");
-        request.setPhone("51999999999");
-        request.setGender(Gender.MALE);
-        request.setBirthday(LocalDate.of(1990, 1, 1));
-        request.setCpf("12345678901");
-        request.setPicture("picture_url");
-        request.setProfessionalData(new ProfessionalDataBasicRequestDTO("12345678000195",
-                new BigDecimal("100.00"),
-                new BigDecimal("500.00"),
-                true,
-                InterpreterModality.PERSONALLY,
-                "Intérprete experiente em LIBRAS"));
-        return request;
-    }
+    @Test
+    @DisplayName("Deve atualizar todos os dados do intérprete intérprete com sucesso")
+    void deveRealizarAtualizacaoCompletaDoInterpreterComSucesso() throws Exception {
+        // Arrange
+        UUID interpreterId = UUID.randomUUID();
+        InterpreterBasicRequestDTO request = createInterpreterCreationRequest();
+        InterpreterResponseDTO mockResponse = createInterpreterResponse();
 
-    private InterpreterResponseDTO createMockResponse() {
-        ProfessionalDataResponseDTO professionalInfo = ProfessionalDataResponseDTO.builder()
-                .cnpj(null)
-                .rating(new BigDecimal("0.0"))
-                .minValue(new BigDecimal("0.0"))
-                .maxValue(new BigDecimal("0.0"))
-                .imageRights(false)
-                .modality(null)
-                .description(null)
-                .build();
+        when(interpreterService.updateComplete(eq(interpreterId), any(InterpreterBasicRequestDTO.class)))
+                .thenReturn(mockResponse);
 
-        return InterpreterResponseDTO.builder()
-                .id(UUID.randomUUID())
-                .email("interpreter@exemplo.com")
-                .type("interpreter")
-                .status("pending")
-                .phone("51999999999")
-                .picture("picture_url")
-                .name("João Intérprete")
-                .gender(Gender.MALE)
-                .birthday(LocalDate.of(1990, 1, 1))
-                .cpf("12345678901")
-                .locations(List.of(
-                        new LocationDTO(UUID.randomUUID(), "RS", "Porto Alegre", "São João")))
-                .specialties(Collections.emptyList())
-                .professionalData(professionalInfo)
-                .build();
-    }
-
-    private InterpreterListResponseDTO createMockListResponse() {
-        return InterpreterListResponseDTO.builder()
-                .id(UUID.randomUUID())
-                .name("João Intérprete")
-                .rating(0f)
-                .minValue(0f)
-                .maxValue(0f)
-                .modality(InterpreterModality.ALL)
-                .locations(List.of(
-                        new LocationDTO(UUID.randomUUID(), "RS", "Porto Alegre", "São João")))
-                .profilePicture("picture_url")
-                .build();
-    }
-
-    private InterpreterResponseDTO createMockResponseWithProfessionalData() {
-        ProfessionalDataResponseDTO professionalInfo = ProfessionalDataResponseDTO.builder()
-                .cnpj("12345678000195")
-                .rating(new BigDecimal("0.0"))
-                .minValue(new BigDecimal("100.00"))
-                .maxValue(new BigDecimal("500.00"))
-                .imageRights(true)
-                .modality("presencial")
-                .description("Intérprete experiente em LIBRAS")
-                .build();
-
-        return InterpreterResponseDTO.builder()
-                .id(UUID.randomUUID())
-                .email("interpreter@exemplo.com")
-                .type("interpreter")
-                .status("pending")
-                .phone("51999999999")
-                .picture("picture_url")
-                .name("João Intérprete")
-                .gender(Gender.MALE)
-                .birthday(LocalDate.of(1990, 1, 1))
-                .cpf("12345678901")
-                .locations(List.of(
-                        new LocationDTO(UUID.randomUUID(), "RS", "Porto Alegre", "São João")))
-                .specialties(Collections.emptyList())
-                .professionalData(professionalInfo)
-                .build();
+        // Act & Assert
+        mockMvc.perform(put("/v1/interpreters/{id}", interpreterId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Intérprete atualizado com sucesso"))
+                .andExpect(jsonPath("$.data.id").exists())
+                .andExpect(jsonPath("$.data.email").value("interpreter@exemplo.com"))
+                .andExpect(jsonPath("$.data.name").value("João Intérprete"))
+                .andExpect(jsonPath("$.data.type").value("interpreter"))
+                .andExpect(jsonPath("$.data.status").value("pending"));
     }
 }
