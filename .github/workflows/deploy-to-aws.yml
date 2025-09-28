@@ -1,6 +1,9 @@
 name: Deploy to AWS
 
 on:
+  pull_request:
+    branches: [ main ]
+    types: [closed]
   push:
     branches: [ main ]
   workflow_dispatch:  # Permite execução manual da pipeline
@@ -9,30 +12,20 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  ECR_REPOSITORY: pointtils
+  APP_IMAGE_TAG: latest
+  DB_IMAGE_TAG: latest
+
 jobs:
-  build-and-deploy:
-    name: Build and Deploy
+  build-and-push-images:
+    name: Build and Push Docker Images
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Set up JDK 17
-      uses: actions/setup-java@v3
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: 'maven'
-    
-    - name: Grant execute permission to mvnw
-      run: chmod +x pointtils/mvnw
-
-    - name: Build with Maven
-      run: |
-        cd pointtils
-        ./mvnw clean package -DskipTests
-    
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
@@ -46,26 +39,52 @@ jobs:
 
     - name: Check if ECR repository exists and create if needed
       run: |
-        exists=$(aws ecr describe-repositories --repository-names ${{ secrets.ECR_REPOSITORY }} 2>/dev/null || echo "false")
+        exists=$(aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY }} 2>/dev/null || echo "false")
         if [ "$exists" = "false" ]; then
-          echo "Creating ECR repository ${{ secrets.ECR_REPOSITORY }}"
-          aws ecr create-repository --repository-name ${{ secrets.ECR_REPOSITORY }} --image-tag-mutability MUTABLE --image-scanning-configuration scanOnPush=true
+          echo "Creating ECR repository ${{ env.ECR_REPOSITORY }}"
+          aws ecr create-repository --repository-name ${{ env.ECR_REPOSITORY }} --image-tag-mutability MUTABLE --image-scanning-configuration scanOnPush=true
         else
-          echo "ECR repository ${{ secrets.ECR_REPOSITORY }} already exists"
+          echo "ECR repository ${{ env.ECR_REPOSITORY }} already exists"
         fi
 
-    - name: Build, tag, and push Docker image to Amazon ECR
-      id: build-image
+    - name: Build and push images with docker-compose
+      id: build-images
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
         IMAGE_TAG: ${{ github.sha }}
       run: |
-        cd pointtils
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+        # Construir imagens usando docker-compose.prod.yaml
+        docker-compose -f docker-compose.prod.yaml build
+        
+        # Tag e push da imagem da aplicação
+        docker tag pointtils $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
+        docker tag pointtils $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ env.APP_IMAGE_TAG }}
+        docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
+        docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ env.APP_IMAGE_TAG }}
+        echo "app_image=$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
+        
+        # Tag e push da imagem do banco de dados
+        docker tag pointtils-db $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:$IMAGE_TAG
+        docker tag pointtils-db $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:${{ env.DB_IMAGE_TAG }}
+        docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:$IMAGE_TAG
+        docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:${{ env.DB_IMAGE_TAG }}
+        echo "db_image=$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+  deploy-infrastructure:
+    name: Deploy Infrastructure
+    runs-on: ubuntu-latest
+    needs: build-and-push-images
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
 
     - name: Create SSH key file
       run: |
@@ -84,6 +103,8 @@ jobs:
         aws_region     = "${{ secrets.AWS_REGION }}"
         db_username    = "${{ secrets.DB_USERNAME }}"
         db_password    = "${{ secrets.DB_PASSWORD }}"
+        app_image      = "${{ needs.build-and-push-images.outputs.app_image }}"
+        db_image       = "${{ needs.build-and-push-images.outputs.db_image }}"
         EOF
 
     - name: Terraform Init
@@ -101,20 +122,14 @@ jobs:
     - name: Terraform Apply
       working-directory: terraform
       id: terraform-apply
-      continue-on-error: true  # Continuar mesmo se houver erro
+      continue-on-error: true
       run: terraform apply -auto-approve tfplan
 
     - name: Get Terraform outputs
       working-directory: terraform
       id: terraform-outputs
       run: |
-        # Diagnóstico para entender o que está disponível
-        echo "=== Terraform Outputs Disponíveis ==="
-        terraform output || echo "Nenhum output disponível"
-        
-        # Configurar IP para a aplicação
         echo "=== Obtendo IP da instância EC2 ==="
-        # Buscar instância EC2 pelo nome
         INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=pointtils-app" --query 'Reservations[*].Instances[*].InstanceId' --output text)
         
         if [ -n "$INSTANCE_ID" ]; then
@@ -146,24 +161,7 @@ jobs:
           echo "app_ip=127.0.0.1" >> $GITHUB_OUTPUT
         fi
         
-        # Buscar bucket S3
-        echo "=== Buscando bucket S3 ==="
-        BUCKET_NAME=$(aws s3api list-buckets --query 'Buckets[?starts_with(Name, `pointtils-api-tests-`)].Name' --output text || echo "")
-        
-        if [ -n "$BUCKET_NAME" ]; then
-          echo "Bucket S3 encontrado: $BUCKET_NAME"
-          echo "s3_bucket=$BUCKET_NAME" >> $GITHUB_OUTPUT
-        else
-          echo "Nenhum bucket S3 encontrado, usando nome padrão"
-          echo "s3_bucket=pointtils-api-tests-default" >> $GITHUB_OUTPUT
-        fi
-        
-        # Obter URL do ECR
-        echo "ecr_repo=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}" >> $GITHUB_OUTPUT
-        
-        # Verificar os valores definidos
-        echo "=== Valores definidos ==="
-        cat $GITHUB_OUTPUT
+        echo "ecr_repo=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}" >> $GITHUB_OUTPUT
 
     - name: Verify EC2 host availability
       run: |
@@ -199,274 +197,25 @@ jobs:
           fi
         done
 
-    - name: Check IP Address
-      run: |
-        IP_ADDRESS="${{ steps.terraform-outputs.outputs.app_ip }}"
-        echo "Endereço IP a ser usado para SSH: $IP_ADDRESS"
-        if [ "$IP_ADDRESS" = "127.0.0.1" ]; then
-          echo "AVISO: Usando IP placeholder (127.0.0.1) - a implantação não será concluída"
-          echo "HOST_READY=false" >> $GITHUB_ENV
-        fi
-
-    - name: Deploy application to EC2
+    - name: Health check application
       if: steps.terraform-outputs.outputs.app_ip != '127.0.0.1' && env.HOST_READY == 'true'
-      uses: appleboy/ssh-action@master
-      continue-on-error: true  # Continuar mesmo se houver falha na conexão SSH
-      id: ssh-deploy
-      with:
-        host: ${{ steps.terraform-outputs.outputs.app_ip }}
-        username: ubuntu
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        port: 22
-        command_timeout: "30m"
-        script: |
-          echo "=== Iniciando deploy na instância EC2 ==="
-          
-          # Verificar se o Docker está instalado
-          docker --version
-          if [ $? -ne 0 ]; then
-            echo "Docker não está instalado corretamente"
-            exit 1
-          fi
-          
-          # Instalar e configurar AWS CLI
-          echo "=== Instalando AWS CLI ==="
-          sudo apt-get update -y
-          sudo apt-get install -y awscli python3-pip
-          
-          # Verificar instalação da AWS CLI
-          aws --version || {
-            echo "AWS CLI não está instalado, tentando com pip3"
-            pip3 install --user awscli
-            export PATH=$PATH:$HOME/.local/bin
-            aws --version || {
-              echo "Falha ao instalar AWS CLI"
-              exit 1
-            }
-          }
-          
-          # Configurar AWS CLI com as credenciais
-          mkdir -p ~/.aws
-          cat > ~/.aws/credentials << AWSCREDS
-          [default]
-          aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          region=${{ secrets.AWS_REGION }}
-          AWSCREDS
-          
-          # Criar diretório para a aplicação
-          mkdir -p ~/pointtils
-          
-          # Criar arquivo docker-compose.yml
-          cat > ~/pointtils/docker-compose.yml << EOF
-          version: '3.8'
-          services:
-            app:
-              image: ${{ steps.build-image.outputs.image }}
-              container_name: pointtils
-              environment:
-                # Configurações básicas do Spring
-                - SPRING_APPLICATION_NAME=pointtils
-                - SPRING_PROFILES_ACTIVE=prod
-                - SERVER_PORT=8080
-                
-                # Configurações de segurança JWT
-                - JWT_SECRET=${{ secrets.JWT_SECRET || 'defaultsecretkey1234567890123456789012345678901234' }}
-                - JWT_EXPIRATION_TIME=3600000
-                - JWT_REFRESH_EXPIRATION_TIME=86400000
-                
-                # Configurações de clientes externos
-                - CLIENT_IBGE_STATE_URL=https://servicodados.ibge.gov.br/api/v1/localidades/estados
-                - CLIENT_IBGE_CITY_URL=https://servicodados.ibge.gov.br/api/v1/localidades/municipios
-                
-                # Configurações de banco de dados - usando nome do container
-                - SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-db:5432/pointtilsdb
-                - SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME }}
-                - SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }}
-                - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
-                - SPRING_JPA_SHOW_SQL=false
-                
-                # Configurações do Flyway
-                - SPRING_FLYWAY_ENABLED=true
-                - SPRING_FLYWAY_LOCATIONS=classpath:db/migration
-                - SPRING_FLYWAY_BASELINE_ON_MIGRATE=true
-                - SPRING_FLYWAY_VALIDATE_ON_MIGRATE=true
-                
-                # Configurações do Swagger/OpenAPI
-                - SPRINGDOC_API_DOCS_ENABLED=true
-                - SPRINGDOC_SWAGGER_UI_ENABLED=true
-                - SPRINGDOC_SWAGGER_UI_PATH=/swagger-ui.html
-                
-                # Configurações da AWS
-                - S3_BUCKET_NAME=${{ steps.terraform-outputs.outputs.s3_bucket }}
-                - AWS_REGION=${{ secrets.AWS_REGION }}
-                - AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-                - AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-              ports:
-                - "8080:8080"
-              depends_on:
-                pointtils-db:
-                  condition: service_healthy
-              networks:
-                - pointtils-network
-              restart: unless-stopped
-
-            pointtils-db:
-              image: postgres:15
-              container_name: pointtils-db
-              environment:
-                POSTGRES_DB: pointtilsdb
-                POSTGRES_USER: ${{ secrets.DB_USERNAME }}
-                POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
-              ports:
-                - "5432:5432"
-              volumes:
-                - postgres_data:/var/lib/postgresql/data
-              networks:
-                - pointtils-network
-              healthcheck:
-                test: ["CMD-SHELL", "pg_isready -U ${{ secrets.DB_USERNAME }} -d pointtilsdb"]
-                interval: 30s
-                timeout: 10s
-                retries: 3
-                start_period: 40s
-              restart: unless-stopped
-
-          volumes:
-            postgres_data:
-
-          networks:
-            pointtils-network:
-              driver: bridge
-          EOF
-          
-          # Login no ECR
-          echo "=== Fazendo login no ECR ==="
-          ECR_URL="${{ steps.terraform-outputs.outputs.ecr_repo }}"
-          ECR_REGISTRY="${ECR_URL%/*}"
-          
-          # Garantir que o login seja feito de forma não interativa
-          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} > ~/.ecr_password
-          cat ~/.ecr_password | docker login --username AWS --password-stdin $ECR_REGISTRY
-          rm -f ~/.ecr_password
-          
-          echo "=== Verificando login no ECR ==="
-          docker info | grep Registry || echo "Aviso: Registro não encontrado"
-          
-          # Parar contêineres anteriores, se existirem
-          echo "=== Parando contêineres anteriores ==="
-          cd ~/pointtils
-          docker-compose down || true
-          
-          # Iniciar a aplicação
-          echo "=== Iniciando a aplicação ==="
-          echo "Baixando imagem: ${{ steps.build-image.outputs.image }}"
-          docker pull ${{ steps.build-image.outputs.image }} || {
-            echo "Falha ao baixar imagem, tentando novamente com login manual"
-            echo "URL do ECR: $ECR_REGISTRY"
-            docker logout
-            aws ecr get-login --no-include-email --region ${{ secrets.AWS_REGION }} | bash
-            docker pull ${{ steps.build-image.outputs.image }} || {
-              echo "ERRO: Não foi possível baixar a imagem do ECR"
-              exit 1
-            }
-          }
-          
-          # Verificar se os containers estão rodando
-          echo "=== Verificando status dos containers ==="
-          docker-compose ps
-          
-          # Aguardar o banco de dados ficar pronto
-          echo "=== Aguardando banco de dados ficar pronto ==="
-          sleep 30
-          
-          # Verificar se o banco está acessível
-          echo "=== Verificando conectividade com o banco de dados ==="
-          docker-compose exec -T pointtils-db pg_isready -U ${{ secrets.DB_USERNAME }} -d pointtilsdb || {
-            echo "Banco de dados não está respondendo, tentando reiniciar..."
-            docker-compose restart pointtils-db
-            sleep 20
-          }
-          
-          docker-compose up -d
-          
-          # Verificar se o contêiner está em execução
-          echo "=== Verificando status do contêiner ==="
-          docker ps
-          
-          # Verificar status do PostgreSQL no container
-          echo "=== Verificando status do PostgreSQL no container ==="
-          docker-compose logs pointtils-db | tail -10
-          
-          # Verificar logs do contêiner para debugging
-          echo "=== Logs da aplicação ==="
-          sleep 10  # Aguardar alguns segundos para inicialização
-          docker-compose logs app
-          
-          # Verificar se o contêiner está em execução
-          echo "=== Verificando se o contêiner está em execução ==="
-          CONTAINER_RUNNING=$(docker ps | grep pointtils | grep -i up)
-          if [ -z "$CONTAINER_RUNNING" ]; then
-            echo "AVISO: Contêiner não parece estar em execução"
-            docker ps -a
+      run: |
+        HOST_IP="${{ steps.terraform-outputs.outputs.app_ip }}"
+        echo "Realizando health check na aplicação: http://$HOST_IP:8080/actuator/health"
+        
+        # Aguardar aplicação inicializar
+        sleep 30
+        
+        for i in {1..10}; do
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://$HOST_IP:8080/actuator/health || echo "000")
+          if [ "$RESPONSE" = "200" ]; then
+            echo "✅ Aplicação respondendo corretamente (HTTP 200)"
+            break
           else
-            echo "Contêiner em execução: $CONTAINER_RUNNING"
+            echo "Tentativa $i: Aplicação não respondeu (HTTP $RESPONSE). Aguardando..."
+            sleep 15
           fi
-          
-          # Testar se a aplicação está respondendo
-          echo "=== Testando acesso à aplicação ==="
-          MAX_ATTEMPTS=12
-          
-          # Criar um script para depuração
-          cat > ~/pointtils/debug.sh << 'DEBUGSCRIPT'
-          #!/bin/bash
-          echo "=== Verificando variáveis de ambiente no contêiner ==="
-          docker exec $(docker ps -q -f name=pointtils_app) env | sort
-          
-          echo "=== Verificando conectividade com PostgreSQL ==="
-          docker exec $(docker ps -q -f name=pointtils_app) nc -zv localhost 5432 || echo "Falha ao conectar ao PostgreSQL"
-          
-          echo "=== Verificando logs da aplicação ==="
-          docker-compose logs app
-          DEBUGSCRIPT
-          chmod +x ~/pointtils/debug.sh
-          
-          # Esperar um pouco para a aplicação inicializar
-          sleep 20
-          
-          # Tentar acessar a aplicação várias vezes
-          for i in $(seq 1 $MAX_ATTEMPTS); do
-            echo "Tentativa $i de $MAX_ATTEMPTS..."
-            if curl -sI --connect-timeout 5 localhost:8080 | grep -q "HTTP/"; then
-              echo "✅ Aplicação respondendo corretamente!"
-              APP_RUNNING=true
-              break
-            else
-              echo "Aplicação ainda não está respondendo. Aguardando..."
-              sleep 15
-              
-              # A cada 3 tentativas, verificar os logs
-              if [ $((i % 3)) -eq 0 ]; then
-                echo "Verificando logs da aplicação..."
-                docker-compose logs --tail 20 app
-              fi
-            fi
-          done
-          
-          if [ "$APP_RUNNING" != "true" ]; then
-            echo "⚠️ Aplicação não respondeu após $MAX_ATTEMPTS tentativas"
-            echo "Executando script de debug..."
-            ~/pointtils/debug.sh
-            
-            # Tentar reiniciar a aplicação
-            echo "Tentando reiniciar o contêiner..."
-            docker-compose down
-            docker-compose up -d
-            sleep 30
-            docker-compose logs app
-          fi
-          
-          echo "=== Deploy concluído ==="
+        done
 
     - name: Deployment Summary
       run: |
@@ -482,6 +231,7 @@ jobs:
         
         if [ "${{ steps.terraform-outputs.outputs.app_ip }}" != "127.0.0.1" ]; then
           echo "Application URL: http://${{ steps.terraform-outputs.outputs.app_ip }}:8080"
+          echo "Swagger UI: http://${{ steps.terraform-outputs.outputs.app_ip }}:8080/swagger-ui.html"
           echo "SSH Access: ssh ubuntu@${{ steps.terraform-outputs.outputs.app_ip }}"
         else
           echo "Application URL: Not available (deployment incomplete)"
@@ -489,11 +239,4 @@ jobs:
         fi
         
         echo "ECR Repository: ${{ steps.terraform-outputs.outputs.ecr_repo }}"
-        echo "S3 Bucket: ${{ steps.terraform-outputs.outputs.s3_bucket }}"
-        echo "======================================"
-        
-        if [ "${{ env.HOST_READY }}" == "true" ]; then
-          echo "Para verificar logs da aplicação:"
-          echo "ssh ubuntu@${{ steps.terraform-outputs.outputs.app_ip }} 'cd ~/pointtils && docker-compose logs'"
-        fi
         echo "======================================"
