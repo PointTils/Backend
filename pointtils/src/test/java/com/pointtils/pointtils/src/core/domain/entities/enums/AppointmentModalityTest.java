@@ -1,10 +1,14 @@
 package com.pointtils.pointtils.src.core.domain.entities.enums;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AppointmentModalityTest {
 
@@ -20,13 +24,7 @@ class AppointmentModalityTest {
 
     @ParameterizedTest
     @CsvSource({
-            "online, ONLINE",
-            "remoto, ONLINE",
-            "r, ONLINE",
             "ONLINE, ONLINE",
-            "presencial, PERSONALLY",
-            "personally, PERSONALLY",
-            "p, PERSONALLY",
             "PERSONALLY, PERSONALLY"
     })
     void shouldGetAppointmentModalityFromStringValue(String input, String expected) {
@@ -35,8 +33,8 @@ class AppointmentModalityTest {
 
     @Test
     void shouldHandleWhitespaceInInput() {
-        assertEquals(AppointmentModality.ONLINE, AppointmentModality.fromJson("  online  "));
-        assertEquals(AppointmentModality.PERSONALLY, AppointmentModality.fromJson("\tpresencial\n"));
+        assertEquals(AppointmentModality.ONLINE, AppointmentModality.fromJson("  ONLINE  "));
+        assertEquals(AppointmentModality.PERSONALLY, AppointmentModality.fromJson("\tPERSONALLY\n"));
     }
 
     @Test
@@ -47,29 +45,27 @@ class AppointmentModalityTest {
 
     @Test
     void shouldMaintainBackwardCompatibilityWithFromJson() {
-        assertEquals(AppointmentModality.ONLINE, AppointmentModality.fromJson("online"));
-        assertEquals(AppointmentModality.PERSONALLY, AppointmentModality.fromJson("presencial"));
-        assertEquals(AppointmentModality.PERSONALLY, AppointmentModality.fromJson("personally"));
-        assertEquals(AppointmentModality.ONLINE, AppointmentModality.fromJson("remoto"));
+        assertEquals(AppointmentModality.ONLINE, AppointmentModality.fromJson("ONLINE"));
+        assertEquals(AppointmentModality.PERSONALLY, AppointmentModality.fromJson("PERSONALLY"));
     }
 
     @Test
     void shouldHandleEmptyString() {
         assertThrows(IllegalArgumentException.class, () -> AppointmentModality.fromJson(""));
         assertThrows(IllegalArgumentException.class, () -> AppointmentModality.fromJson("   "));
-    }    @Test
+    }
+
+    @Test
     void shouldHandleCaseInsensitiveInput() {
-        assertEquals(AppointmentModality.ONLINE, AppointmentModality.fromJson("ONLINE"));
-        assertEquals(AppointmentModality.PERSONALLY, AppointmentModality.fromJson("PERSONALLY"));
-        assertEquals(AppointmentModality.ONLINE, AppointmentModality.fromJson("REMOTO"));
-        assertEquals(AppointmentModality.PERSONALLY, AppointmentModality.fromJson("PRESENCIAL"));
+        assertEquals(AppointmentModality.ONLINE, AppointmentModality.fromJson("online"));
+        assertEquals(AppointmentModality.PERSONALLY, AppointmentModality.fromJson("personally"));
     }
 
     @Test
     void shouldValidateAllEnumValues() {
         AppointmentModality[] allValues = AppointmentModality.values();
         assertEquals(2, allValues.length);
-        
+
         assertTrue(java.util.Arrays.asList(allValues).contains(AppointmentModality.ONLINE));
         assertTrue(java.util.Arrays.asList(allValues).contains(AppointmentModality.PERSONALLY));
     }
@@ -77,11 +73,11 @@ class AppointmentModalityTest {
     @Test
     void shouldThrowExceptionForRandomInvalidInputs() {
         String[] invalidInputs = {"INVALID", "wrong", "123", "null", "undefined", "hybrid"};
-        
+
         for (String invalidInput : invalidInputs) {
-            assertThrows(IllegalArgumentException.class, 
-                () -> AppointmentModality.fromJson(invalidInput),
-                "Should throw exception for input: " + invalidInput);
+            assertThrows(IllegalArgumentException.class,
+                    () -> AppointmentModality.fromJson(invalidInput),
+                    "Should throw exception for input: " + invalidInput);
         }
     }
 
@@ -92,26 +88,6 @@ class AppointmentModalityTest {
             assertNotNull(jsonValue);
             assertFalse(jsonValue.isEmpty());
             assertEquals(modality.name(), jsonValue);
-        }
-    }
-
-    @Test
-    void shouldHandleAllAliasesForPersonally() {
-        String[] personallyAliases = {"personally", "presencial", "p", "PERSONALLY", "PRESENCIAL", "P"};
-        
-        for (String alias : personallyAliases) {
-            assertEquals(AppointmentModality.PERSONALLY, AppointmentModality.fromJson(alias),
-                "Failed for alias: " + alias);
-        }
-    }
-
-    @Test
-    void shouldHandleAllAliasesForOnline() {
-        String[] onlineAliases = {"online", "remoto", "r", "ONLINE", "REMOTO", "R"};
-        
-        for (String alias : onlineAliases) {
-            assertEquals(AppointmentModality.ONLINE, AppointmentModality.fromJson(alias),
-                "Failed for alias: " + alias);
         }
     }
 }

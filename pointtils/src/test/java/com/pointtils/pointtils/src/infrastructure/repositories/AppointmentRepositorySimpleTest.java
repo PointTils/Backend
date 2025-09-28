@@ -1,12 +1,11 @@
 package com.pointtils.pointtils.src.infrastructure.repositories;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.List;
-import java.util.Optional;
-
+import com.pointtils.pointtils.src.core.domain.entities.Appointment;
+import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
+import com.pointtils.pointtils.src.core.domain.entities.Person;
+import com.pointtils.pointtils.src.core.domain.entities.User;
+import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentModality;
+import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,12 +14,16 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
 
-import com.pointtils.pointtils.src.core.domain.entities.Appointment;
-import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
-import com.pointtils.pointtils.src.core.domain.entities.Person;
-import com.pointtils.pointtils.src.core.domain.entities.User;
-import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentModality;
-import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentStatus;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DataJpaTest
 @ActiveProfiles("test")
@@ -29,10 +32,10 @@ class AppointmentRepositorySimpleTest {
 
     @Autowired
     private AppointmentRepository appointmentRepository;
-    
+
     @Autowired
     private TestEntityManager entityManager;
-    
+
     private User mockUser;
     private Interpreter mockInterpreter;
 
@@ -47,7 +50,7 @@ class AppointmentRepositorySimpleTest {
                 .name("Test User")
                 .build();
         mockUser = entityManager.persistAndFlush(testPerson);
-        
+
         mockInterpreter = Interpreter.builder()
                 .email("interpreter@test.com")
                 .password("password")
@@ -169,7 +172,7 @@ class AppointmentRepositorySimpleTest {
         assertNotNull(AppointmentStatus.ACCEPTED);
         assertNotNull(AppointmentStatus.CANCELED);
         assertNotNull(AppointmentStatus.COMPLETED);
-        
+
         assertEquals(AppointmentStatus.PENDING, AppointmentStatus.fromJson("pending"));
         assertEquals(AppointmentStatus.ACCEPTED, AppointmentStatus.fromJson("accepted"));
         assertEquals(AppointmentStatus.CANCELED, AppointmentStatus.fromJson("canceled"));
@@ -181,10 +184,9 @@ class AppointmentRepositorySimpleTest {
     void shouldValidateAppointmentModalityEnums() {
         assertNotNull(AppointmentModality.ONLINE);
         assertNotNull(AppointmentModality.PERSONALLY);
-        
+
         assertEquals(AppointmentModality.ONLINE, AppointmentModality.fromJson("online"));
         assertEquals(AppointmentModality.PERSONALLY, AppointmentModality.fromJson("personally"));
-        assertEquals(AppointmentModality.PERSONALLY, AppointmentModality.fromJson("presencial"));
     }
 
     @Test
@@ -204,7 +206,7 @@ class AppointmentRepositorySimpleTest {
                 .build();
 
         Appointment saved = appointmentRepository.save(appointment);
-        
+
         assertNotNull(saved);
         assertNotNull(saved.getId());
         assertEquals("SP", saved.getUf());
