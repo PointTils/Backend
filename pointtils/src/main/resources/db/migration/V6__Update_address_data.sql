@@ -39,7 +39,7 @@ ALTER TABLE appointment
 ADD COLUMN neighborhood VARCHAR(255),
 ADD COLUMN street VARCHAR(255),
 ADD COLUMN street_number INTEGER,
-ADD COLUMN address_details VARCHAR(255);
+ADD COLUMN address_details TEXT;
 
 -- 6. Atualiza registros de appointment existentes para nao preencher endereco, por ser online
 UPDATE appointment
