@@ -32,7 +32,12 @@ variable "jwt_secret" {
   description = "Secret key para JWT"
   type        = string
   sensitive   = true
-  default     = "testandoUmaNovaSenhaMasterComMaisDeTrintaEdoisCaracteres"
+}
+
+variable "db_name" {
+  description = "Nome do banco de dados PostgreSQL"
+  type        = string
+  default     = "pointtils-db"
 }
 
 variable "app_image" {

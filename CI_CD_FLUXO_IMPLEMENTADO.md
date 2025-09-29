@@ -65,6 +65,7 @@ O workflow é acionado automaticamente quando:
 - `AWS_ACCOUNT_ID`
 - `DB_USERNAME`
 - `DB_PASSWORD`
+- `DB_NAME`
 - `JWT_SECRET`
 - `SSH_PRIVATE_KEY`
 - `SSH_PUBLIC_KEY`
