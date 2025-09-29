@@ -1,11 +1,13 @@
 package com.pointtils.pointtils.src.application.services;
 
+import com.pointtils.pointtils.src.application.dto.TimeSlotDTO;
 import com.pointtils.pointtils.src.application.dto.requests.ScheduleListRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.SchedulePatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.ScheduleRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.AvailableTimeSlotsResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.PaginatedScheduleResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ScheduleResponseDTO;
-import com.pointtils.pointtils.src.application.dto.responses.TimeSlotResponseDTO;
+import com.pointtils.pointtils.src.application.mapper.TimeSlotMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
 import com.pointtils.pointtils.src.core.domain.entities.Schedule;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
@@ -28,6 +30,7 @@ import java.util.UUID;
 public class ScheduleService {
     private final ScheduleRepository scheduleRepository;
     private final InterpreterRepository interpreterRepository;
+    private final TimeSlotMapper timeSlotMapper;
 
     public ScheduleResponseDTO registerSchedule(ScheduleRequestDTO dto) {
         Optional<Interpreter> foundInterpreter = interpreterRepository.findById(dto.getInterpreterId());
@@ -102,17 +105,18 @@ public class ScheduleService {
                 .build();
     }
 
-    public List<TimeSlotResponseDTO> findAvailableSchedules(UUID interpreterId, LocalDate dateFrom, LocalDate dateTo) {
+    public List<AvailableTimeSlotsResponseDTO> findAvailableSchedules(UUID interpreterId, LocalDate dateFrom, LocalDate dateTo) {
         List<Object[]> timeSlots = scheduleRepository.findAvailableTimeSlots(interpreterId, dateFrom, dateTo);
 
-        return timeSlots.stream()
-                .map(timeSlot -> new TimeSlotResponseDTO(
+        List<TimeSlotDTO> foundTimeSlots = timeSlots.stream()
+                .map(timeSlot -> new TimeSlotDTO(
                         (Date) timeSlot[1],
                         (UUID) timeSlot[0],
                         ((Time) timeSlot[2]).toLocalTime(),
                         ((Time) timeSlot[3]).toLocalTime()
                 ))
                 .toList();
+        return timeSlotMapper.toAvailableTimeSlotsResponse(foundTimeSlots);
     }
 
     public ScheduleResponseDTO updateSchedule(UUID scheduleId, SchedulePatchRequestDTO dto) {

@@ -4,9 +4,9 @@ import com.pointtils.pointtils.src.application.dto.requests.ScheduleListRequestD
 import com.pointtils.pointtils.src.application.dto.requests.SchedulePatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.ScheduleRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ApiResponse;
+import com.pointtils.pointtils.src.application.dto.responses.AvailableTimeSlotsResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.PaginatedScheduleResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ScheduleResponseDTO;
-import com.pointtils.pointtils.src.application.dto.responses.TimeSlotResponseDTO;
 import com.pointtils.pointtils.src.application.services.ScheduleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -83,11 +83,11 @@ public class ScheduleController {
 
     @GetMapping("/available")
     @Operation(summary = "Lista todos os intervalos de horários disponíveis cadastrados")
-    public ResponseEntity<ApiResponse<List<TimeSlotResponseDTO>>> listAvailableSchedules(@RequestParam UUID interpreterId,
-                                                                                         @RequestParam LocalDate dateFrom,
-                                                                                         @RequestParam LocalDate dateTo) {
-        List<TimeSlotResponseDTO> availableTimeSlots = service.findAvailableSchedules(interpreterId, dateFrom, dateTo);
-        ApiResponse<List<TimeSlotResponseDTO>> response = new ApiResponse<>(true, "Horários disponíveis obtidos com sucesso", availableTimeSlots);
+    public ResponseEntity<ApiResponse<List<AvailableTimeSlotsResponseDTO>>> listAvailableSchedules(@RequestParam UUID interpreterId,
+                                                                                                   @RequestParam LocalDate dateFrom,
+                                                                                                   @RequestParam LocalDate dateTo) {
+        List<AvailableTimeSlotsResponseDTO> availableTimeSlots = service.findAvailableSchedules(interpreterId, dateFrom, dateTo);
+        ApiResponse<List<AvailableTimeSlotsResponseDTO>> response = new ApiResponse<>(true, "Horários disponíveis obtidos com sucesso", availableTimeSlots);
         return ResponseEntity.ok(response);
     }
 }

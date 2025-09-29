@@ -2,7 +2,6 @@ package com.pointtils.pointtils.src.infrastructure.repositories;
 
 import com.pointtils.pointtils.src.core.domain.entities.Schedule;
 import com.pointtils.pointtils.src.core.domain.entities.enums.DayOfWeek;
-import com.pointtils.pointtils.src.infrastructure.repositories.spec.ScheduleSpecifications;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -115,6 +114,6 @@ public interface ScheduleRepository extends JpaRepository<Schedule, UUID>, JpaSp
             ORDER BY interpreter_id, selected_date, slot_start
             """, nativeQuery = true)
     List<Object[]> findAvailableTimeSlots(@Param("interpreterId") UUID interpreterId,
-                                             @Param("dateFrom") LocalDate dateFrom,
-                                             @Param("dateTo") LocalDate dateTo);
+                                          @Param("dateFrom") LocalDate dateFrom,
+                                          @Param("dateTo") LocalDate dateTo);
 }

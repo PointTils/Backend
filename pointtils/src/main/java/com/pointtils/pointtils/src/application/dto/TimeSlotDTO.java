@@ -1,21 +1,22 @@
-package com.pointtils.pointtils.src.application.dto.responses;
+package com.pointtils.pointtils.src.application.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalTime;
+import java.util.Date;
+import java.util.UUID;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class TimeSlotResponseDTO {
+public class TimeSlotDTO {
 
-    @JsonProperty("start_time")
+    private Date date;
+    private UUID interpreterId;
     private LocalTime startTime;
-    @JsonProperty("end_time")
     private LocalTime endTime;
 }
