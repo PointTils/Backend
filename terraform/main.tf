@@ -210,16 +210,16 @@ data "template_file" "user_data" {
               # Criar arquivo .env para variáveis de ambiente
               cat > /home/ubuntu/Backend/.env << ENVFILE
               # Database Container Configuration
-              POSTGRES_USER=postgres
-              POSTGRES_PASSWORD=postgres
-              POSTGRES_DB=pointtils
+              POSTGRES_USER=${var.db_username}
+              POSTGRES_PASSWORD=${var.db_password}
+              POSTGRES_DB=${var.db_name}
               
               # Spring Application Configuration
               SPRING_APPLICATION_NAME=pointtils-api
               SERVER_PORT=8080
               
               # Spring DataSource Configuration
-              SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-db:5432/pointtils
+              SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-db:5432/${var.db_name}
               SPRING_DATASOURCE_USERNAME=${var.db_username}
               SPRING_DATASOURCE_PASSWORD=${var.db_password}
               
@@ -228,7 +228,7 @@ data "template_file" "user_data" {
               SPRING_JPA_SHOW_SQL=true
               
               # JWT Configuration
-              JWT_SECRET=testandoUmaNovaSenhaMasterComMaisDeTrintaEdoisCaracteres
+              JWT_SECRET=${var.jwt_secret}
               JWT_ISSUER=pointtils-api
               JWT_EXPIRATION_TIME=900000
               JWT_REFRESH_EXPIRATION_TIME=604800000
