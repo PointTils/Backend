@@ -52,6 +52,21 @@ jobs:
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         IMAGE_TAG: ${{ github.sha }}
+        SPRING_DATASOURCE_URL: jdbc:postgresql://pointtils-db:5432/pointtilsdb
+        SPRING_DATASOURCE_USERNAME: ${{ secrets.DB_USERNAME }}
+        SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        SPRING_APPLICATION_NAME: pointtils
+        SERVER_PORT: 8080
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        JWT_EXPIRATION_TIME: 3600000
+        SPRING_JPA_HIBERNATE_DDL_AUTO: update
+        SPRING_JPA_SHOW_SQL: false
+        SPRINGDOC_API_DOCS_ENABLED: true
+        SPRINGDOC_SWAGGER_UI_ENABLED: true
+        SPRINGDOC_SWAGGER_UI_PATH: /swagger-ui.html
+        POSTGRES_DB: pointtilsdb
+        POSTGRES_USER: ${{ secrets.DB_USERNAME }}
+        POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
       run: |
         # Construir imagens usando docker-compose.prod.yaml
         docker compose -f docker-compose.prod.yaml build
