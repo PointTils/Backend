@@ -39,12 +39,22 @@ jobs:
 
     - name: Check if ECR repository exists and create if needed
       run: |
+        # Verificar e criar repositório da aplicação
         exists=$(aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY }} 2>/dev/null || echo "false")
         if [ "$exists" = "false" ]; then
           echo "Creating ECR repository ${{ env.ECR_REPOSITORY }}"
           aws ecr create-repository --repository-name ${{ env.ECR_REPOSITORY }} --image-tag-mutability MUTABLE --image-scanning-configuration scanOnPush=true
         else
           echo "ECR repository ${{ env.ECR_REPOSITORY }} already exists"
+        fi
+        
+        # Verificar e criar repositório do banco de dados
+        exists_db=$(aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY }}-db 2>/dev/null || echo "false")
+        if [ "$exists_db" = "false" ]; then
+          echo "Creating ECR repository ${{ env.ECR_REPOSITORY }}-db"
+          aws ecr create-repository --repository-name ${{ env.ECR_REPOSITORY }}-db --image-tag-mutability MUTABLE --image-scanning-configuration scanOnPush=true
+        else
+          echo "ECR repository ${{ env.ECR_REPOSITORY }}-db already exists"
         fi
 
     - name: Build and push images with docker compose
