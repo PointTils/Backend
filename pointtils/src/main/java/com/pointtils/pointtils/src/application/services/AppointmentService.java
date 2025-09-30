@@ -2,6 +2,7 @@ package com.pointtils.pointtils.src.application.services;
 
 import com.pointtils.pointtils.src.application.dto.requests.AppointmentPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.AppointmentRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.AppointmentFilterResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.AppointmentResponseDTO;
 import com.pointtils.pointtils.src.application.mapper.AppointmentMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Appointment;
@@ -91,7 +92,7 @@ public class AppointmentService {
     }
 
     /*Testar! */
-    public List<AppointmentResponseDTO> searchAppointments(UUID interpreterId, UUID userId, AppointmentStatus status, AppointmentModality modality, LocalDateTime fromDateTime) {
+    public List<AppointmentFilterResponseDTO> searchAppointments(UUID interpreterId, UUID userId, AppointmentStatus status, AppointmentModality modality, LocalDateTime fromDateTime) {
         List<Appointment> appointments = appointmentRepository.findAll();
 
         return appointments.stream()
@@ -100,7 +101,13 @@ public class AppointmentService {
                 .filter(appointment -> status == null || appointment.getStatus().equals(status))
                 .filter(appointment -> modality == null || appointment.getModality().equals(modality))
                 .filter(appointment -> fromDateTime == null || isAfterDateTime(appointment, fromDateTime))
-                .map(appointmentMapper::toResponseDTO)
+                .map(appointment -> {
+                    if (interpreterId != null) {
+                        return appointmentMapper.toFilterResponseDTO(appointment, appointment.getUser());
+                    } else {
+                        return appointmentMapper.toFilterResponseDTO(appointment, appointment.getInterpreter());
+                    }
+                })
                 .toList();
     }
 
