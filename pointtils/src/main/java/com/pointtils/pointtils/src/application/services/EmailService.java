@@ -30,6 +30,11 @@ public class EmailService {
      * @return true se o email foi enviado com sucesso, false caso contrário
      */
     public boolean sendSimpleEmail(EmailRequestDTO emailRequest) {
+        if (emailRequest == null) {
+            log.error("EmailRequestDTO não pode ser nulo");
+            return false;
+        }
+        
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(emailFrom);
@@ -53,6 +58,11 @@ public class EmailService {
      * @return true se o email foi enviado com sucesso, false caso contrário
      */
     public boolean sendHtmlEmail(EmailRequestDTO emailRequest) {
+        if (emailRequest == null) {
+            log.error("EmailRequestDTO não pode ser nulo");
+            return false;
+        }
+        
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -66,7 +76,7 @@ public class EmailService {
             log.info("Email HTML enviado com sucesso para: {}", emailRequest.getTo());
             return true;
             
-        } catch (MessagingException e) {
+        } catch (Exception e) {
             log.error("Erro ao enviar email HTML para {}: {}", emailRequest.getTo(), e.getMessage());
             return false;
         }
