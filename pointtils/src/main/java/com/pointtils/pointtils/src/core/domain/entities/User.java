@@ -77,4 +77,6 @@ public abstract class User {
     private Set<Specialty> specialties = new HashSet<>();
 
     public abstract String getDisplayName();
+
+    public abstract String getDocument();
 }

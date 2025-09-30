@@ -54,6 +54,11 @@ public class Person extends User {
     public String getDisplayName() {
         return name;
     }
+
+    @Override
+    public String getDocument() {
+        return cpf;
+    }
 }
 
 
