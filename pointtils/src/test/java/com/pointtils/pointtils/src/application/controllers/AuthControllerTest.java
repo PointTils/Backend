@@ -31,6 +31,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import software.amazon.awssdk.services.s3.S3Client;
 import com.pointtils.pointtils.src.infrastructure.configs.TestEmailConfiguration;
+import com.pointtils.pointtils.src.infrastructure.configs.TestSecurityConfiguration;
 
 import java.util.UUID;
 
@@ -43,6 +44,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @EnableAutoConfiguration(exclude = S3AutoConfiguration.class)
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
+@Import({TestEmailConfiguration.class, TestSecurityConfiguration.class})
 class AuthControllerTest {
 
     @Autowired
