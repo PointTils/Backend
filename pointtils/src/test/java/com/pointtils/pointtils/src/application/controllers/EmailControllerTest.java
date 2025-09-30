@@ -52,20 +52,20 @@ class EmailControllerTest {
         when(emailService.sendSimpleEmail(any(EmailRequestDTO.class))).thenReturn(true);
 
         // Act & Assert
-        mockMvc.perform(post("/v1/email/send-simple")
+        mockMvc.perform(post("/v1/email/send")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {
                         "to": "destinatario@exemplo.com",
                         "subject": "Assunto do Email",
                         "body": "Corpo do email",
-                        "senderName": "PointTils"
+                        "fromName": "PointTils"
                     }
                     """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Email enviado com sucesso"))
-                .andExpect(jsonPath("$.data").value(true));
+                .andExpect(jsonPath("$.to").value("destinatario@exemplo.com"));
     }
 
     @Test
@@ -82,20 +82,20 @@ class EmailControllerTest {
         when(emailService.sendSimpleEmail(any(EmailRequestDTO.class))).thenReturn(false);
 
         // Act & Assert
-        mockMvc.perform(post("/v1/email/send-simple")
+        mockMvc.perform(post("/v1/email/send")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {
                         "to": "destinatario@exemplo.com",
                         "subject": "Assunto do Email",
                         "body": "Corpo do email",
-                        "senderName": "PointTils"
+                        "fromName": "PointTils"
                     }
                     """))
-                .andExpect(status().isInternalServerError())
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Erro ao enviar email"))
-                .andExpect(jsonPath("$.data").value(false));
+                .andExpect(jsonPath("$.message").value("Falha ao enviar email"))
+                .andExpect(jsonPath("$.to").value("destinatario@exemplo.com"));
     }
 
     @Test
@@ -119,13 +119,13 @@ class EmailControllerTest {
                         "to": "destinatario@exemplo.com",
                         "subject": "Assunto do Email HTML",
                         "body": "<html><body><h1>Email HTML</h1></body></html>",
-                        "senderName": "PointTils"
+                        "fromName": "PointTils"
                     }
                     """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Email HTML enviado com sucesso"))
-                .andExpect(jsonPath("$.data").value(true));
+                .andExpect(jsonPath("$.to").value("destinatario@exemplo.com"));
     }
 
     @Test
@@ -149,13 +149,13 @@ class EmailControllerTest {
                         "to": "destinatario@exemplo.com",
                         "subject": "Assunto do Email HTML",
                         "body": "<html><body><h1>Email HTML</h1></body></html>",
-                        "senderName": "PointTils"
+                        "fromName": "PointTils"
                     }
                     """))
-                .andExpect(status().isInternalServerError())
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Erro ao enviar email HTML"))
-                .andExpect(jsonPath("$.data").value(false));
+                .andExpect(jsonPath("$.message").value("Falha ao enviar email HTML"))
+                .andExpect(jsonPath("$.to").value("destinatario@exemplo.com"));
     }
 
     @Test
@@ -166,18 +166,13 @@ class EmailControllerTest {
             .thenReturn(true);
 
         // Act & Assert
-        mockMvc.perform(post("/v1/email/send-welcome")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                    {
-                        "email": "novousuario@exemplo.com",
-                        "userName": "João Silva"
-                    }
-                    """))
+        mockMvc.perform(post("/v1/email/welcome/novousuario@exemplo.com")
+                .param("userName", "João Silva"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Email de boas-vindas enviado com sucesso"))
-                .andExpect(jsonPath("$.data").value(true));
+                .andExpect(jsonPath("$.to").value("novousuario@exemplo.com"))
+                .andExpect(jsonPath("$.userName").value("João Silva"));
     }
 
     @Test
@@ -188,19 +183,14 @@ class EmailControllerTest {
             .thenReturn(true);
 
         // Act & Assert
-        mockMvc.perform(post("/v1/email/send-password-reset")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                    {
-                        "email": "usuario@exemplo.com",
-                        "userName": "Maria Silva",
-                        "resetToken": "ABC123"
-                    }
-                    """))
+        mockMvc.perform(post("/v1/email/password-reset/usuario@exemplo.com")
+                .param("userName", "Maria Silva")
+                .param("resetToken", "ABC123"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Email de recuperação de senha enviado com sucesso"))
-                .andExpect(jsonPath("$.data").value(true));
+                .andExpect(jsonPath("$.message").value("Email de recuperação enviado com sucesso"))
+                .andExpect(jsonPath("$.to").value("usuario@exemplo.com"))
+                .andExpect(jsonPath("$.userName").value("Maria Silva"));
     }
 
     @Test
@@ -212,44 +202,41 @@ class EmailControllerTest {
             .thenReturn(true);
 
         // Act & Assert
-        mockMvc.perform(post("/v1/email/send-appointment-confirmation")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                    {
-                        "email": "cliente@exemplo.com",
-                        "userName": "Carlos Santos",
-                        "appointmentDate": "15/12/2024 às 14:00",
-                        "interpreterName": "Ana Interprete"
-                    }
-                    """))
+        mockMvc.perform(post("/v1/email/appointment-confirmation/cliente@exemplo.com")
+                .param("userName", "Carlos Santos")
+                .param("appointmentDate", "15/12/2024 às 14:00")
+                .param("interpreterName", "Ana Interprete"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Email de confirmação de agendamento enviado com sucesso"))
-                .andExpect(jsonPath("$.data").value(true));
+                .andExpect(jsonPath("$.message").value("Email de confirmação enviado com sucesso"))
+                .andExpect(jsonPath("$.to").value("cliente@exemplo.com"))
+                .andExpect(jsonPath("$.userName").value("Carlos Santos"))
+                .andExpect(jsonPath("$.appointmentDate").value("15/12/2024 às 14:00"))
+                .andExpect(jsonPath("$.interpreterName").value("Ana Interprete"));
     }
 
     @Test
     @DisplayName("Deve retornar erro quando email for inválido")
     void deveRetornarErroQuandoEmailForInvalido() throws Exception {
         // Act & Assert
-        mockMvc.perform(post("/v1/email/send-simple")
+        mockMvc.perform(post("/v1/email/send")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {
                         "to": "email-invalido",
                         "subject": "Assunto do Email",
                         "body": "Corpo do email",
-                        "senderName": "PointTils"
+                        "fromName": "PointTils"
                     }
                     """))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isUnprocessableEntity());
     }
 
     @Test
     @DisplayName("Deve retornar erro quando campos obrigatórios estiverem faltando")
     void deveRetornarErroQuandoCamposObrigatoriosEstiveremFaltando() throws Exception {
         // Act & Assert
-        mockMvc.perform(post("/v1/email/send-simple")
+        mockMvc.perform(post("/v1/email/send")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {
