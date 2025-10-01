@@ -73,7 +73,16 @@ echo "Aguardando banco de dados ficar saudável..."
 for i in {1..30}; do
   if docker inspect --format='{{.State.Health.Status}}' pointtils-db | grep -q "healthy"; then
     echo "✅ Banco de dados saudável"
-    break
+    # Testar conexão com as credenciais reais
+    echo "Testando conexão com banco de dados..."
+    if docker exec pointtils-db pg_isready -U $DB_USERNAME -d $DB_NAME; then
+      echo "✅ Conexão com banco de dados bem-sucedida"
+      break
+    else
+      echo "❌ Conexão com banco de dados falhou"
+      echo "Credenciais usadas: usuário=$DB_USERNAME, banco=$DB_NAME"
+      exit 1
+    fi
   else
     echo "Tentativa $i: Banco ainda não está saudável. Aguardando..."
     sleep 5
