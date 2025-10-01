@@ -30,9 +30,9 @@ public class AppointmentService {
 
     public AppointmentResponseDTO createAppointment(AppointmentRequestDTO dto) {
         var interpreter = interpreterRepository.findById(dto.getInterpreterId())
-                .orElseThrow(() -> new EntityNotFoundException("Interpreter não encontrado com o id: " + dto.getInterpreterId()));
+                .orElseThrow(() -> new EntityNotFoundException("Intérprete não encontrado com o id: " + dto.getInterpreterId()));
         var user = userRepository.findById(dto.getUserId())
-                .orElseThrow(() -> new EntityNotFoundException("User não encontrado com o id: " + dto.getUserId()));
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com o id: " + dto.getUserId()));
 
         var appointment = appointmentMapper.toDomain(dto, interpreter, user);
 
@@ -69,12 +69,12 @@ public class AppointmentService {
         if (dto.getAddressDetails() != null) appointment.setAddressDetails(dto.getAddressDetails());
         if (dto.getInterpreterId() != null) {
             var interpreter = interpreterRepository.findById(dto.getInterpreterId())
-                    .orElseThrow(() -> new EntityNotFoundException("Interpreter não encontrado com o id: " + dto.getInterpreterId()));
+                    .orElseThrow(() -> new EntityNotFoundException("Intérprete não encontrado com o id: " + dto.getInterpreterId()));
             appointment.setInterpreter(interpreter);
         }
         if (dto.getUserId() != null) {
             var user = userRepository.findById(dto.getUserId())
-                    .orElseThrow(() -> new EntityNotFoundException("User não encontrado com o id: " + dto.getUserId()));
+                    .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com o id: " + dto.getUserId()));
             appointment.setUser(user);
         }
         if (dto.getStartTime() != null) appointment.setStartTime(dto.getStartTime());

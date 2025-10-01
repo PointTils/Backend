@@ -236,11 +236,11 @@ class ScheduleServiceTest {
         UUID interpreterId = UUID.randomUUID();
         LocalDate startLocalDate = LocalDate.of(2025, 9, 30);
         LocalDate endLocalDate = LocalDate.of(2025, 10, 10);
-        Date startDate = Date.from(startLocalDate.atStartOfDay(ZoneId.of("America/Sao_Paulo")).toInstant());
-        Date endDate = Date.from(endLocalDate.atStartOfDay(ZoneId.of("America/Sao_Paulo")).toInstant());
+        Date startDate = Date.from(startLocalDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        Date endDate = Date.from(endLocalDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
         List<Object[]> mockData = List.of(
-                new Object[]{interpreterId, startDate, new Time(32400000), new Time(36000000)},
-                new Object[]{interpreterId, endDate, new Time(39600000), new Time(43200000)}
+                new Object[]{interpreterId, startDate, Time.valueOf("09:00:00"), Time.valueOf("10:00:00")},
+                new Object[]{interpreterId, endDate, Time.valueOf("11:00:00"), Time.valueOf("12:00:00")}
         );
 
         ArgumentCaptor<List<TimeSlotDTO>> timeSlotsCaptor = ArgumentCaptor.forClass(List.class);
@@ -254,11 +254,11 @@ class ScheduleServiceTest {
         assertEquals(2, timeSlotsCaptor.getValue().size());
         assertTrue(timeSlotsCaptor.getValue().get(0).getDate().toString().startsWith("Tue Sep 30"));
         assertEquals(interpreterId, timeSlotsCaptor.getValue().get(0).getInterpreterId());
-        assertEquals("06:00", timeSlotsCaptor.getValue().get(0).getStartTime().toString());
-        assertEquals("07:00", timeSlotsCaptor.getValue().get(0).getEndTime().toString());
+        assertEquals("09:00", timeSlotsCaptor.getValue().get(0).getStartTime().toString());
+        assertEquals("10:00", timeSlotsCaptor.getValue().get(0).getEndTime().toString());
         assertTrue(timeSlotsCaptor.getValue().get(1).getDate().toString().startsWith("Fri Oct 10"));
         assertEquals(interpreterId, timeSlotsCaptor.getValue().get(1).getInterpreterId());
-        assertEquals("08:00", timeSlotsCaptor.getValue().get(1).getStartTime().toString());
-        assertEquals("09:00", timeSlotsCaptor.getValue().get(1).getEndTime().toString());
+        assertEquals("11:00", timeSlotsCaptor.getValue().get(1).getStartTime().toString());
+        assertEquals("12:00", timeSlotsCaptor.getValue().get(1).getEndTime().toString());
     }
 }
