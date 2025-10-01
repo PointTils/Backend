@@ -195,7 +195,7 @@ resource "aws_iam_instance_profile" "ec2_profile" {
 # Chave SSH para acesso às instâncias EC2
 resource "aws_key_pair" "pointtils_key" {
   key_name   = "pointtils_key"
-  public_key = var.ssh_public_key
+  public_key = file("${path.module}/pointtils_key.pub")
 }
 
 # Script de inicialização para a instância EC2

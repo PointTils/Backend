@@ -119,15 +119,10 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
-    - name: Create SSH key file
+    - name: Set SSH key permissions
       run: |
-        mkdir -p ./terraform
-        # Criar chave SSH privada
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ./terraform/pointtils_key
-        # Corrigir permissões da chave SSH
+        # Corrigir permissões da chave SSH local
         chmod 600 ./terraform/pointtils_key
-        # Criar chave SSH pública
-        echo "${{ secrets.SSH_PUBLIC_KEY }}" > ./terraform/pointtils_key.pub
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
@@ -145,7 +140,6 @@ jobs:
         jwt_secret     = "${{ secrets.JWT_SECRET }}"
         app_image      = "${{ needs.build-and-push-images.outputs.app_image }}"
         db_image       = "${{ needs.build-and-push-images.outputs.db_image }}"
-        ssh_public_key = "${{ secrets.SSH_PUBLIC_KEY }}"
         EOF
 
     - name: Terraform Init

@@ -57,9 +57,3 @@ variable "create_ecr" {
   type        = bool
   default     = false
 }
-
-variable "ssh_public_key" {
-  description = "Chave SSH pública para acesso às instâncias EC2"
-  type        = string
-  sensitive   = true
-}
