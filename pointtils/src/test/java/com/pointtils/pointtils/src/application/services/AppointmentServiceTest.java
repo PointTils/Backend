@@ -154,7 +154,7 @@ class AppointmentServiceTest {
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, 
             () -> appointmentService.createAppointment(appointmentRequestDTO));
         
-        assertEquals("Interpreter não encontrado com o id: " + interpreterId, exception.getMessage());
+        assertEquals("Intérprete não encontrado com o id: " + interpreterId, exception.getMessage());
         verify(interpreterRepository).findById(interpreterId);
         verify(userRepository, never()).findById(any());
         verify(appointmentRepository, never()).save(any());
@@ -169,7 +169,7 @@ class AppointmentServiceTest {
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, 
             () -> appointmentService.createAppointment(appointmentRequestDTO));
         
-        assertEquals("User não encontrado com o id: " + userId, exception.getMessage());
+        assertEquals("Usuário não encontrado com o id: " + userId, exception.getMessage());
         verify(interpreterRepository).findById(interpreterId);
         verify(userRepository).findById(userId);
         verify(appointmentRepository, never()).save(any());
@@ -366,7 +366,7 @@ class AppointmentServiceTest {
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
                 () -> appointmentService.updatePartial(appointmentId, patchDTO));
 
-        assertEquals("Interpreter não encontrado com o id: " + newInterpreterId, exception.getMessage());
+        assertEquals("Intérprete não encontrado com o id: " + newInterpreterId, exception.getMessage());
         verify(appointmentRepository).findById(appointmentId);
         verify(interpreterRepository).findById(newInterpreterId);
         verify(appointmentRepository, never()).save(any());
@@ -386,7 +386,7 @@ class AppointmentServiceTest {
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
                 () -> appointmentService.updatePartial(appointmentId, patchDTO));
 
-        assertEquals("User não encontrado com o id: " + newUserId, exception.getMessage());
+        assertEquals("Usuário não encontrado com o id: " + newUserId, exception.getMessage());
         verify(appointmentRepository).findById(appointmentId);
         verify(userRepository).findById(newUserId);
         verify(appointmentRepository, never()).save(any());
