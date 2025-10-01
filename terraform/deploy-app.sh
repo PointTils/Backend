@@ -26,28 +26,28 @@ echo "S3 Bucket: $S3_BUCKET_NAME"
 
 # Fazer login no ECR
 echo "Fazendo login no ECR..."
-aws ecr get-login-password --region $AWS_REGION | sudo docker login --username AWS --password-stdin $ECR_REGISTRY
+aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
 
 # Puxar as imagens mais recentes do ECR
 echo "Puxando imagens mais recentes do ECR..."
-sudo docker pull $APP_IMAGE
-sudo docker pull $DB_IMAGE
+docker pull $APP_IMAGE
+docker pull $DB_IMAGE
 
 # Parar e remover containers existentes
 echo "Parando containers existentes..."
-sudo docker stop pointtils pointtils-db 2>/dev/null || true
-sudo docker rm pointtils pointtils-db 2>/dev/null || true
+docker stop pointtils pointtils-db 2>/dev/null || true
+docker rm pointtils pointtils-db 2>/dev/null || true
 
 # Remover rede existente se houver
-sudo docker network rm pointtils-network 2>/dev/null || true
+docker network rm pointtils-network 2>/dev/null || true
 
 # Criar rede para os containers
 echo "Criando rede para os containers..."
-sudo docker network create pointtils-network
+docker network create pointtils-network
 
 # Iniciar container do banco de dados
 echo "Iniciando container do banco de dados..."
-sudo docker run -d \
+docker run -d \
   --name pointtils-db \
   --network pointtils-network \
   -e POSTGRES_DB=$DB_NAME \
@@ -66,7 +66,7 @@ sudo docker run -d \
 # Aguardar banco ficar saudável
 echo "Aguardando banco de dados ficar saudável..."
 for i in {1..30}; do
-  if sudo docker inspect --format='{{.State.Health.Status}}' pointtils-db | grep -q "healthy"; then
+  if docker inspect --format='{{.State.Health.Status}}' pointtils-db | grep -q "healthy"; then
     echo "✅ Banco de dados saudável"
     break
   else
@@ -81,7 +81,7 @@ done
 
 # Iniciar container da aplicação
 echo "Iniciando container da aplicação..."
-sudo docker run -d \
+docker run -d \
   --name pointtils \
   --network pointtils-network \
   -e SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-db:5432/$DB_NAME \
@@ -112,11 +112,11 @@ sleep 30
 
 # Verificar status dos containers
 echo "Verificando status dos containers:"
-sudo docker ps
+docker ps
 
 # Verificar logs da aplicação
 echo "Verificando logs da aplicação:"
-sudo docker logs --tail=20 pointtils
+docker logs --tail=20 pointtils
 
 # Health check
 echo "Realizando health check..."
