@@ -269,33 +269,30 @@ data "template_file" "user_data" {
               aws ecr get-login-password --region ${var.aws_region} | sudo docker login --username AWS --password-stdin ${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com
               
               # Criar docker-compose.yaml para usar imagens do ECR
-              cat > /home/ubuntu/pointtils/docker-compose.yaml << 'DOCKERFILE'
-              version: '3.8'
-              
+              cat > /home/ubuntu/pointtils/docker-compose.yaml << DOCKERFILE
               services:
                 pointtils:
                   image: ${var.app_image}
                   container_name: pointtils
                   environment:
-                    - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
-                    - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
-                    - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
-                    - SPRING_APPLICATION_NAME=${SPRING_APPLICATION_NAME}
-                    - SERVER_PORT=${SERVER_PORT}
-                    - JWT_SECRET=${JWT_SECRET}
-                    - JWT_EXPIRATION_TIME=${JWT_EXPIRATION_TIME}
-                    - SPRING_JPA_HIBERNATE_DDL_AUTO=${SPRING_JPA_HIBERNATE_DDL_AUTO}
-                    - SPRING_JPA_SHOW_SQL=${SPRING_JPA_SHOW_SQL}
-                    - SPRINGDOC_API_DOCS_ENABLED=${SPRINGDOC_API_DOCS_ENABLED}
-                    - SPRINGDOC_SWAGGER_UI_ENABLED=${SPRINGDOC_SWAGGER_UI_ENABLED}
-                    - SPRINGDOC_SWAGGER_UI_PATH=${SPRINGDOC_SWAGGER_UI_PATH}
-                    - SPRING_CLOUD_AWS_S3_ENABLED=${SPRING_CLOUD_AWS_S3_ENABLED}
-                    - CLOUD_AWS_BUCKET_NAME=${CLOUD_AWS_BUCKET_NAME}
-                    - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-                    - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-                    - AWS_REGION=${AWS_REGION}
+                    - SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-db:5432/${var.db_name}
+                    - SPRING_DATASOURCE_USERNAME=${var.db_username}
+                    - SPRING_DATASOURCE_PASSWORD=${var.db_password}
+                    - SPRING_APPLICATION_NAME=pointtils-api
+                    - SERVER_PORT=8080
+                    - JWT_SECRET=${var.jwt_secret}
+                    - JWT_EXPIRATION_TIME=900000
+                    - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
+                    - SPRING_JPA_SHOW_SQL=true
+                    - SPRINGDOC_API_DOCS_ENABLED=true
+                    - SPRINGDOC_SWAGGER_UI_ENABLED=true
+                    - SPRINGDOC_SWAGGER_UI_PATH=/swagger-ui.html
+                    - CLOUD_AWS_BUCKET_NAME=pointtils-api-tests-d9396dcc
+                    - AWS_ACCESS_KEY_ID=$${AWS_ACCESS_KEY_ID}
+                    - AWS_SECRET_ACCESS_KEY=$${AWS_SECRET_ACCESS_KEY}
+                    - AWS_REGION=${var.aws_region}
                   ports:
-                    - "${SERVER_PORT}:${SERVER_PORT}"
+                    - "8080:8080"
                   depends_on:
                     pointtils-db:
                       condition: service_healthy
@@ -307,9 +304,9 @@ data "template_file" "user_data" {
                   image: ${var.db_image}
                   container_name: pointtils-db
                   environment:
-                    POSTGRES_DB: ${POSTGRES_DB}
-                    POSTGRES_USER: ${POSTGRES_USER}
-                    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+                    POSTGRES_DB: ${var.db_name}
+                    POSTGRES_USER: ${var.db_username}
+                    POSTGRES_PASSWORD: ${var.db_password}
                   ports:
                     - "5432:5432"
                   volumes:
@@ -317,7 +314,7 @@ data "template_file" "user_data" {
                   networks:
                     - pointtils-network
                   healthcheck:
-                    test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+                    test: ["CMD-SHELL", "pg_isready -U ${var.db_username} -d ${var.db_name}"]
                     interval: 30s
                     timeout: 10s
                     retries: 3
