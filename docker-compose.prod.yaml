@@ -2,9 +2,7 @@ version: '3.8'
 
 services:
   pointtils:
-    build:
-      context: ./pointtils
-      dockerfile: Dockerfile
+    image: ${APP_IMAGE:-pointtils:latest}
     container_name: pointtils
     
     environment:
@@ -35,9 +33,7 @@ services:
     restart: unless-stopped
 
   pointtils-db:
-    build:
-      context: ./utils/postgres
-      dockerfile: Dockerfile
+    image: ${DB_IMAGE:-postgres:15}
     container_name: pointtils-db
  
     environment:
