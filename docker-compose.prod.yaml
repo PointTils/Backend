@@ -33,7 +33,10 @@ services:
     restart: unless-stopped
 
   pointtils-db:
-    image: ${DB_IMAGE:-postgres:15}
+    build:
+      context: ./utils/postgres
+      dockerfile: Dockerfile
+    image: pointtils-db:latest
     container_name: pointtils-db
  
     environment:
