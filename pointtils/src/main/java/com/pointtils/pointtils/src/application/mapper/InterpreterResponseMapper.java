@@ -61,6 +61,7 @@ public class InterpreterResponseMapper {
                         .toList()
                         : Collections.emptyList())
                 .picture(interpreter.getPicture())
+                .specialties(userSpecialtyMapper.toDtoList(interpreter.getSpecialties()))
                 .build();
     }
 

@@ -1,31 +1,40 @@
 package com.pointtils.pointtils.src.application.services;
 
+import com.pointtils.pointtils.src.application.dto.TimeSlotDTO;
 import com.pointtils.pointtils.src.application.dto.requests.ScheduleListRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.SchedulePatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.ScheduleRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.AvailableTimeSlotsResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.PaginatedScheduleResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ScheduleResponseDTO;
+import com.pointtils.pointtils.src.application.mapper.TimeSlotMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
 import com.pointtils.pointtils.src.core.domain.entities.Schedule;
 import com.pointtils.pointtils.src.core.domain.entities.enums.DayOfWeek;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.ScheduleRepository;
 import jakarta.persistence.EntityNotFoundException;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import java.sql.Time;
+import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -33,18 +42,16 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class ScheduleServiceTest {
     @Mock
     private ScheduleRepository scheduleRepository;
     @Mock
     private InterpreterRepository interpreterRepository;
+    @Mock
+    private TimeSlotMapper timeSlotMapper;
     @InjectMocks
     private ScheduleService scheduleService;
-
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-    }
 
     @Test
     void registerSchedule_shouldSaveAndReturnResponseDTO() {
@@ -72,7 +79,7 @@ class ScheduleServiceTest {
     void registerSchedule_shouldThrowEntityNotFoundWhenInterpreterNotExists() {
         ScheduleRequestDTO dto = new ScheduleRequestDTO();
         dto.setInterpreterId(UUID.randomUUID());
-        when(interpreterRepository.existsById(dto.getInterpreterId())).thenReturn(false);
+        when(interpreterRepository.findById(dto.getInterpreterId())).thenReturn(Optional.empty());
         assertThrows(EntityNotFoundException.class, () -> scheduleService.registerSchedule(dto));
     }
 
@@ -220,5 +227,37 @@ class ScheduleServiceTest {
         UUID id = UUID.randomUUID();
         when(scheduleRepository.existsById(id)).thenReturn(false);
         assertThrows(EntityNotFoundException.class, () -> scheduleService.deleteById(id));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void findAvailableSchedules_shouldReturnTimeSlotList() {
+        UUID interpreterId = UUID.randomUUID();
+        LocalDate startLocalDate = LocalDate.of(2025, 9, 30);
+        LocalDate endLocalDate = LocalDate.of(2025, 10, 10);
+        Date startDate = Date.from(startLocalDate.atStartOfDay(ZoneId.of("America/Sao_Paulo")).toInstant());
+        Date endDate = Date.from(endLocalDate.atStartOfDay(ZoneId.of("America/Sao_Paulo")).toInstant());
+        List<Object[]> mockData = List.of(
+                new Object[]{interpreterId, startDate, new Time(32400000), new Time(36000000)},
+                new Object[]{interpreterId, endDate, new Time(39600000), new Time(43200000)}
+        );
+
+        ArgumentCaptor<List<TimeSlotDTO>> timeSlotsCaptor = ArgumentCaptor.forClass(List.class);
+        AvailableTimeSlotsResponseDTO mockMappedResponse = new AvailableTimeSlotsResponseDTO();
+        when(scheduleRepository.findAvailableTimeSlots(interpreterId, startLocalDate, endLocalDate)).thenReturn(mockData);
+        when(timeSlotMapper.toAvailableTimeSlotsResponse(timeSlotsCaptor.capture())).thenReturn(List.of(mockMappedResponse));
+
+        assertThat(scheduleService.findAvailableSchedules(interpreterId, startLocalDate, endLocalDate))
+                .hasSize(1)
+                .contains(mockMappedResponse);
+        assertEquals(2, timeSlotsCaptor.getValue().size());
+        assertEquals("Tue Sep 30 00:00:00 BRT 2025", timeSlotsCaptor.getValue().get(0).getDate().toString());
+        assertEquals(interpreterId, timeSlotsCaptor.getValue().get(0).getInterpreterId());
+        assertEquals("06:00", timeSlotsCaptor.getValue().get(0).getStartTime().toString());
+        assertEquals("07:00", timeSlotsCaptor.getValue().get(0).getEndTime().toString());
+        assertEquals("Fri Oct 10 00:00:00 BRT 2025", timeSlotsCaptor.getValue().get(1).getDate().toString());
+        assertEquals(interpreterId, timeSlotsCaptor.getValue().get(1).getInterpreterId());
+        assertEquals("08:00", timeSlotsCaptor.getValue().get(1).getStartTime().toString());
+        assertEquals("09:00", timeSlotsCaptor.getValue().get(1).getEndTime().toString());
     }
 }
