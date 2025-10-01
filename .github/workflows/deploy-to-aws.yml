@@ -232,13 +232,36 @@ jobs:
           fi
         done
 
+    - name: Deploy latest images to EC2
+      if: steps.terraform-outputs.outputs.app_ip != '127.0.0.1' && env.HOST_READY == 'true'
+      run: |
+        HOST_IP="${{ steps.terraform-outputs.outputs.app_ip }}"
+        echo "Executando deploy das imagens mais recentes na EC2: $HOST_IP"
+        
+        # Copiar script de deploy para a EC2
+        echo "Copiando script de deploy para a EC2..."
+        scp -o StrictHostKeyChecking=no -i ./terraform/pointtils_key terraform/deploy-app.sh ubuntu@$HOST_IP:/home/ubuntu/
+        
+        # Executar script de deploy na EC2 com parâmetros
+        echo "Executando script de deploy com parâmetros..."
+        ssh -o StrictHostKeyChecking=no -i ./terraform/pointtils_key ubuntu@$HOST_IP "chmod +x /home/ubuntu/deploy-app.sh && /home/ubuntu/deploy-app.sh \
+          '${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com' \
+          '${{ secrets.DB_USERNAME }}' \
+          '${{ secrets.DB_PASSWORD }}' \
+          '${{ secrets.DB_NAME || 'pointtils-db' }}' \
+          '${{ secrets.JWT_SECRET }}' \
+          '${{ secrets.AWS_REGION }}' \
+          '${{ secrets.CLOUD_AWS_BUCKET_NAME }}'"
+        
+        echo "✅ Deploy das imagens mais recentes concluído com sucesso!"
+
     - name: Health check application
       if: steps.terraform-outputs.outputs.app_ip != '127.0.0.1' && env.HOST_READY == 'true'
       run: |
         HOST_IP="${{ steps.terraform-outputs.outputs.app_ip }}"
-        echo "Realizando health check na aplicação: http://$HOST_IP:8080/actuator/health"
+        echo "Realizando health check final na aplicação: http://$HOST_IP:8080/actuator/health"
         
-        # Aguardar aplicação inicializar
+        # Aguardar aplicação inicializar após deploy
         sleep 30
         
         for i in {1..10}; do
