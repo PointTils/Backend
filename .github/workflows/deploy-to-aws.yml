@@ -123,6 +123,8 @@ jobs:
       run: |
         mkdir -p ./terraform
         echo "${{ secrets.SSH_PUBLIC_KEY }}" > ./terraform/pointtils_key.pub
+        # Corrigir permissões da chave SSH
+        chmod 600 ./terraform/pointtils_key
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
