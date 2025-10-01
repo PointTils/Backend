@@ -85,16 +85,16 @@ jobs:
         
         # Tag e push da imagem da aplicação (com senha mascarada)
         echo "Tagging and pushing application image..."
-        docker tag backend-pointtils $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
-        docker tag backend-pointtils $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ env.APP_IMAGE_TAG }}
+        docker tag pointtils $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
+        docker tag pointtils $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ env.APP_IMAGE_TAG }}
         docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
         docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ env.APP_IMAGE_TAG }}
         echo "app_image=$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
         
         # Tag e push da imagem do banco de dados (com senha mascarada)
         echo "Tagging and pushing database image..."
-        docker tag backend-pointtils-db $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:$IMAGE_TAG
-        docker tag backend-pointtils-db $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:${{ env.DB_IMAGE_TAG }}
+        docker tag pointtils-db $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:$IMAGE_TAG
+        docker tag pointtils-db $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:${{ env.DB_IMAGE_TAG }}
         docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:$IMAGE_TAG
         docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:${{ env.DB_IMAGE_TAG }}
         echo "db_image=$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:$IMAGE_TAG" >> $GITHUB_OUTPUT
