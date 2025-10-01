@@ -145,6 +145,7 @@ jobs:
         jwt_secret     = "${{ secrets.JWT_SECRET }}"
         app_image      = "${{ needs.build-and-push-images.outputs.app_image }}"
         db_image       = "${{ needs.build-and-push-images.outputs.db_image }}"
+        ssh_public_key = "${{ secrets.SSH_PUBLIC_KEY }}"
         EOF
 
     - name: Terraform Init
