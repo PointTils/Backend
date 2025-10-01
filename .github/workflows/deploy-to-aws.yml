@@ -36,6 +36,8 @@ jobs:
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
+      with:
+        mask-password: 'true'
 
     - name: Check if ECR repository exists and create if needed
       run: |
@@ -74,6 +76,10 @@ jobs:
         SPRINGDOC_API_DOCS_ENABLED: true
         SPRINGDOC_SWAGGER_UI_ENABLED: true
         SPRINGDOC_SWAGGER_UI_PATH: /swagger-ui.html
+        CLOUD_AWS_BUCKET_NAME: ${{ secrets.CLOUD_AWS_BUCKET_NAME }}
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: ${{ secrets.AWS_REGION }}
         POSTGRES_DB: ${{ secrets.DB_NAME || 'pointtils-db' }}
         POSTGRES_USER: ${{ secrets.DB_USERNAME }}
         POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
@@ -81,16 +87,18 @@ jobs:
         # Construir imagens usando docker-compose.prod.yaml
         docker compose -f docker-compose.prod.yaml build
         
-        # Tag e push da imagem da aplicação
-        docker tag backend-pointtils $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
-        docker tag backend-pointtils $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ env.APP_IMAGE_TAG }}
+        # Tag e push da imagem da aplicação (com senha mascarada)
+        echo "Tagging and pushing application image..."
+        docker tag pointtils $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
+        docker tag pointtils $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ env.APP_IMAGE_TAG }}
         docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
         docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ env.APP_IMAGE_TAG }}
         echo "app_image=$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
         
-        # Tag e push da imagem do banco de dados
-        docker tag backend-pointtils-db $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:$IMAGE_TAG
-        docker tag backend-pointtils-db $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:${{ env.DB_IMAGE_TAG }}
+        # Tag e push da imagem do banco de dados (com senha mascarada)
+        echo "Tagging and pushing database image..."
+        docker tag pointtils-db $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:$IMAGE_TAG
+        docker tag pointtils-db $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:${{ env.DB_IMAGE_TAG }}
         docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:$IMAGE_TAG
         docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:${{ env.DB_IMAGE_TAG }}
         echo "db_image=$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:$IMAGE_TAG" >> $GITHUB_OUTPUT
@@ -114,6 +122,11 @@ jobs:
     - name: Create SSH key file
       run: |
         mkdir -p ./terraform
+        # Criar chave SSH privada
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ./terraform/pointtils_key
+        # Corrigir permissões da chave SSH
+        chmod 600 ./terraform/pointtils_key
+        # Criar chave SSH pública
         echo "${{ secrets.SSH_PUBLIC_KEY }}" > ./terraform/pointtils_key.pub
 
     - name: Setup Terraform
@@ -124,7 +137,7 @@ jobs:
 
     - name: Create terraform.tfvars file
       run: |
-        cat > terraform/terraform.tfvars << EOF
+        cat > terraform/terraform.tfvars << 'EOF'
         aws_region     = "${{ secrets.AWS_REGION }}"
         db_username    = "${{ secrets.DB_USERNAME }}"
         db_password    = "${{ secrets.DB_PASSWORD }}"
@@ -224,13 +237,38 @@ jobs:
           fi
         done
 
+    - name: Deploy latest images to EC2
+      if: steps.terraform-outputs.outputs.app_ip != '127.0.0.1' && env.HOST_READY == 'true'
+      run: |
+        HOST_IP="${{ steps.terraform-outputs.outputs.app_ip }}"
+        echo "Executando deploy das imagens mais recentes na EC2: $HOST_IP"
+        
+        # Copiar script de deploy para a EC2
+        echo "Copiando script de deploy para a EC2..."
+        scp -o StrictHostKeyChecking=no -i ./terraform/pointtils_key terraform/deploy-app.sh ubuntu@$HOST_IP:/home/ubuntu/
+        
+        # Executar script de deploy na EC2 com parâmetros
+        echo "Executando script de deploy com parâmetros..."
+        ssh -o StrictHostKeyChecking=no -i ./terraform/pointtils_key ubuntu@$HOST_IP "chmod +x /home/ubuntu/deploy-app.sh && /home/ubuntu/deploy-app.sh \
+          '${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com' \
+          '${{ secrets.DB_USERNAME }}' \
+          '${{ secrets.DB_PASSWORD }}' \
+          '${{ secrets.DB_NAME || 'pointtils-db' }}' \
+          '${{ secrets.JWT_SECRET }}' \
+          '${{ secrets.AWS_REGION }}' \
+          '${{ secrets.CLOUD_AWS_BUCKET_NAME }}' \
+          '${{ secrets.AWS_ACCESS_KEY_ID }}' \
+          '${{ secrets.AWS_SECRET_ACCESS_KEY }}'"
+        
+        echo "✅ Deploy das imagens mais recentes concluído com sucesso!"
+
     - name: Health check application
       if: steps.terraform-outputs.outputs.app_ip != '127.0.0.1' && env.HOST_READY == 'true'
       run: |
         HOST_IP="${{ steps.terraform-outputs.outputs.app_ip }}"
-        echo "Realizando health check na aplicação: http://$HOST_IP:8080/actuator/health"
+        echo "Realizando health check final na aplicação: http://$HOST_IP:8080/actuator/health"
         
-        # Aguardar aplicação inicializar
+        # Aguardar aplicação inicializar após deploy
         sleep 30
         
         for i in {1..10}; do

@@ -161,6 +161,31 @@ resource "aws_iam_role_policy" "ecr_policy" {
   })
 }
 
+# Policy para a instância EC2 acessar o S3
+resource "aws_iam_role_policy" "s3_policy" {
+  name = "pointtils-s3-policy"
+  role = aws_iam_role.ec2_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject",
+          "s3:ListBucket"
+        ]
+        Effect = "Allow"
+        Resource = [
+          "${aws_s3_bucket.pointtils_api_tests.arn}",
+          "${aws_s3_bucket.pointtils_api_tests.arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
 # Profile de instância para associar o IAM role à instância EC2
 resource "aws_iam_instance_profile" "ec2_profile" {
   name = "pointtils-ec2-profile"
@@ -198,17 +223,12 @@ data "template_file" "user_data" {
               sudo curl -L "https://github.com/docker/compose/releases/download/v2.15.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
               sudo chmod +x /usr/local/bin/docker-compose
               
-              # Clonar o repositório da aplicação
-              cd /home/ubuntu
-              if [ ! -d "Backend" ]; then
-                git clone https://github.com/PointTils/Backend.git
-              else
-                cd Backend
-                git pull origin main
-              fi
+              # Criar diretório para a aplicação
+              mkdir -p /home/ubuntu/pointtils
+              cd /home/ubuntu/pointtils
               
               # Criar arquivo .env para variáveis de ambiente
-              cat > /home/ubuntu/Backend/.env << ENVFILE
+              cat > /home/ubuntu/pointtils/.env << ENVFILE
               # Database Container Configuration
               POSTGRES_USER=${var.db_username}
               POSTGRES_PASSWORD=${var.db_password}
@@ -245,10 +265,71 @@ data "template_file" "user_data" {
               SPRINGDOC_SWAGGER_UI_PATH=/swagger-ui.html
               ENVFILE
               
-              # Iniciar a aplicação com Docker Compose de produção
-              cd /home/ubuntu/Backend
-              sudo docker-compose -f docker-compose.prod.yaml build
-              sudo docker-compose -f docker-compose.prod.yaml up -d
+              # Fazer login no ECR
+              aws ecr get-login-password --region ${var.aws_region} | sudo docker login --username AWS --password-stdin ${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com
+              
+              # Criar docker-compose.yaml para usar imagens do ECR
+              cat > /home/ubuntu/pointtils/docker-compose.yaml << DOCKERFILE
+              services:
+                pointtils:
+                  image: ${var.app_image}
+                  container_name: pointtils
+                  environment:
+                    - SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-db:5432/${var.db_name}
+                    - SPRING_DATASOURCE_USERNAME=${var.db_username}
+                    - SPRING_DATASOURCE_PASSWORD=${var.db_password}
+                    - SPRING_APPLICATION_NAME=pointtils-api
+                    - SERVER_PORT=8080
+                    - JWT_SECRET=${var.jwt_secret}
+                    - JWT_EXPIRATION_TIME=900000
+                    - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
+                    - SPRING_JPA_SHOW_SQL=true
+                    - SPRINGDOC_API_DOCS_ENABLED=true
+                    - SPRINGDOC_SWAGGER_UI_ENABLED=true
+                    - SPRINGDOC_SWAGGER_UI_PATH=/swagger-ui.html
+                    - CLOUD_AWS_BUCKET_NAME=pointtils-api-tests-d9396dcc
+                    - AWS_REGION=${var.aws_region}
+                  ports:
+                    - "8080:8080"
+                  depends_on:
+                    pointtils-db:
+                      condition: service_healthy
+                  networks:
+                    - pointtils-network
+                  restart: unless-stopped
+              
+                pointtils-db:
+                  image: ${var.db_image}
+                  container_name: pointtils-db
+                  environment:
+                    POSTGRES_DB: ${var.db_name}
+                    POSTGRES_USER: ${var.db_username}
+                    POSTGRES_PASSWORD: ${var.db_password}
+                  ports:
+                    - "5432:5432"
+                  volumes:
+                    - postgres_data:/var/lib/postgresql/data
+                  networks:
+                    - pointtils-network
+                  healthcheck:
+                    test: ["CMD-SHELL", "pg_isready -U ${var.db_username} -d ${var.db_name}"]
+                    interval: 30s
+                    timeout: 10s
+                    retries: 3
+                    start_period: 40s
+                  restart: unless-stopped
+              
+              volumes:
+                postgres_data:
+              
+              networks:
+                pointtils-network:
+                  driver: bridge
+              DOCKERFILE
+              
+              # Iniciar a aplicação com Docker Compose usando imagens do ECR
+              cd /home/ubuntu/pointtils
+              sudo docker-compose up -d
               
               # Aguardar a aplicação iniciar e verificar status
               echo "Aguardando aplicação iniciar..."

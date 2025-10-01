@@ -1,10 +1,9 @@
-version: '3.8'
-
 services:
   pointtils:
     build:
       context: ./pointtils
       dockerfile: Dockerfile
+    image: pointtils:latest
     container_name: pointtils
     
     environment:
@@ -20,6 +19,10 @@ services:
       - SPRINGDOC_API_DOCS_ENABLED=${SPRINGDOC_API_DOCS_ENABLED}
       - SPRINGDOC_SWAGGER_UI_ENABLED=${SPRINGDOC_SWAGGER_UI_ENABLED}
       - SPRINGDOC_SWAGGER_UI_PATH=${SPRINGDOC_SWAGGER_UI_PATH}
+      - CLOUD_AWS_BUCKET_NAME=${CLOUD_AWS_BUCKET_NAME}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION}
     ports:
       - "${SERVER_PORT}:${SERVER_PORT}"
     depends_on:
@@ -33,6 +36,7 @@ services:
     build:
       context: ./utils/postgres
       dockerfile: Dockerfile
+    image: pointtils-db:latest
     container_name: pointtils-db
  
     environment:

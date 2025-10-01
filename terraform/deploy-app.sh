@@ -1,73 +1,148 @@
 #!/bin/bash
 set -e  # Exit on any error
 
-echo "=== Script de Deploy Automatizado para Pointtils ==="
+echo "=== Iniciando deploy da aplicação PointTils ==="
 
-# Configurações
-APP_DIR="/home/ubuntu/Backend"
-ENV_FILE="$APP_DIR/.env"
-COMPOSE_FILE="$APP_DIR/docker-compose.prod.yaml"
+# Parâmetros recebidos do pipeline
+ECR_REGISTRY="${1:-969285065739.dkr.ecr.us-east-2.amazonaws.com}"
+DB_USERNAME="${2:-pointtilsadmin}"
+DB_PASSWORD="${3:-password}"
+DB_NAME="${4:-pointtils-db}"
+JWT_SECRET="${5:-defaultsecretkey1234567890123456789012345678901234}"
+AWS_REGION="${6:-us-east-2}"
+S3_BUCKET_NAME="${7:-pointtils-api-tests-d9396dcc}"
+AWS_ACCESS_KEY_ID="${8}"
+AWS_SECRET_ACCESS_KEY="${9}"
 
-# Verificar se o diretório da aplicação existe
-if [ ! -d "$APP_DIR" ]; then
-    echo "Erro: Diretório da aplicação não encontrado: $APP_DIR"
-    exit 1
-fi
+APP_IMAGE="$ECR_REGISTRY/pointtils:latest"
+DB_IMAGE="$ECR_REGISTRY/pointtils-db:latest"
 
-cd "$APP_DIR"
+echo "ECR Registry: $ECR_REGISTRY"
+echo "App Image: $APP_IMAGE"
+echo "DB Image: $DB_IMAGE"
+echo "Database: $DB_NAME"
+echo "AWS Region: $AWS_REGION"
+echo "S3 Bucket: $S3_BUCKET_NAME"
 
-# Verificar se o arquivo .env existe
-if [ ! -f "$ENV_FILE" ]; then
-    echo "Erro: Arquivo .env não encontrado: $ENV_FILE"
-    exit 1
-fi
+# Corrigir permissões do Docker
+echo "Corrigindo permissões do Docker..."
+sudo chown ubuntu:ubuntu /home/ubuntu/.docker -R 2>/dev/null || true
+sudo chmod 755 /home/ubuntu/.docker 2>/dev/null || true
+
+# Fazer login no ECR
+echo "Fazendo login no ECR..."
+aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+
+# Puxar as imagens mais recentes do ECR
+echo "Puxando imagens mais recentes do ECR..."
+docker pull $APP_IMAGE
+docker pull $DB_IMAGE
 
 # Parar e remover containers existentes
 echo "Parando containers existentes..."
-sudo docker-compose -f "$COMPOSE_FILE" down --remove-orphans || true
+docker stop pointtils pointtils-db 2>/dev/null || true
+docker rm pointtils pointtils-db 2>/dev/null || true
 
-# Limpar recursos Docker não utilizados
-echo "Limpando recursos Docker..."
-sudo docker system prune -f
-sudo docker volume prune -f
+# Remover rede existente se houver
+docker network rm pointtils-network 2>/dev/null || true
 
-# Build das imagens
-echo "Fazendo build das imagens Docker..."
-sudo docker-compose -f "$COMPOSE_FILE" build
+# Criar rede para os containers
+echo "Criando rede para os containers..."
+docker network create pointtils-network
 
-# Iniciar a aplicação
-echo "Iniciando a aplicação com Docker Compose..."
-sudo docker-compose -f "$COMPOSE_FILE" up -d
+# Iniciar container do banco de dados
+echo "Iniciando container do banco de dados..."
+docker run -d \
+  --name pointtils-db \
+  --network pointtils-network \
+  -e POSTGRES_DB=$DB_NAME \
+  -e POSTGRES_USER=$DB_USERNAME \
+  -e POSTGRES_PASSWORD=$DB_PASSWORD \
+  -p 5432:5432 \
+  -v postgres_data:/var/lib/postgresql/data \
+  --health-cmd="pg_isready -U $DB_USERNAME -d $DB_NAME" \
+  --health-interval=30s \
+  --health-timeout=10s \
+  --health-retries=3 \
+  --health-start-period=40s \
+  --restart unless-stopped \
+  $DB_IMAGE
 
-# Aguardar a aplicação iniciar
-echo "Aguardando a aplicação iniciar..."
+# Aguardar banco ficar saudável
+echo "Aguardando banco de dados ficar saudável..."
+for i in {1..30}; do
+  if docker inspect --format='{{.State.Health.Status}}' pointtils-db | grep -q "healthy"; then
+    echo "✅ Banco de dados saudável"
+    # Testar conexão com as credenciais reais
+    echo "Testando conexão com banco de dados..."
+    if docker exec pointtils-db pg_isready -U $DB_USERNAME -d $DB_NAME; then
+      echo "✅ Conexão com banco de dados bem-sucedida"
+      break
+    else
+      echo "❌ Conexão com banco de dados falhou"
+      echo "Credenciais usadas: usuário=$DB_USERNAME, banco=$DB_NAME"
+      exit 1
+    fi
+  else
+    echo "Tentativa $i: Banco ainda não está saudável. Aguardando..."
+    sleep 5
+  fi
+  if [ $i -eq 30 ]; then
+    echo "❌ Banco de dados não ficou saudável após 30 tentativas"
+    exit 1
+  fi
+done
+
+# Iniciar container da aplicação
+echo "Iniciando container da aplicação..."
+docker run -d \
+  --name pointtils \
+  --network pointtils-network \
+  -e SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-db:5432/$DB_NAME \
+  -e SPRING_DATASOURCE_USERNAME=$DB_USERNAME \
+  -e SPRING_DATASOURCE_PASSWORD=$DB_PASSWORD \
+  -e SPRING_APPLICATION_NAME=pointtils-api \
+  -e SERVER_PORT=8080 \
+  -e JWT_SECRET=$JWT_SECRET \
+  -e JWT_EXPIRATION_TIME=3600000 \
+  -e JWT_REFRESH_EXPIRATION_TIME=86400000 \
+  -e SPRING_JPA_HIBERNATE_DDL_AUTO=validate \
+  -e SPRING_JPA_SHOW_SQL=false \
+  -e SPRINGDOC_API_DOCS_ENABLED=true \
+  -e SPRINGDOC_SWAGGER_UI_ENABLED=true \
+  -e SPRINGDOC_SWAGGER_UI_PATH=/swagger-ui.html \
+  -e CLOUD_AWS_BUCKET_NAME=$S3_BUCKET_NAME \
+  -e AWS_REGION=$AWS_REGION \
+  -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+  -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+  -e SPRING_PROFILES_ACTIVE=prod \
+  -p 8080:8080 \
+  --restart unless-stopped \
+  $APP_IMAGE
+
+# Aguardar aplicação iniciar
+echo "Aguardando aplicação iniciar..."
 sleep 30
 
 # Verificar status dos containers
 echo "Verificando status dos containers:"
-sudo docker-compose -f "$COMPOSE_FILE" ps
+docker ps
 
 # Verificar logs da aplicação
 echo "Verificando logs da aplicação:"
-sudo docker-compose -f "$COMPOSE_FILE" logs --tail=50 pointtils
+docker logs --tail=20 pointtils
 
-# Verificar logs do banco de dados
-echo "Verificando logs do banco de dados:"
-sudo docker-compose -f "$COMPOSE_FILE" logs --tail=20 pointtils-db
-
-# Testar conexão com a aplicação
-echo "Testando conexão com a aplicação..."
-APP_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
-if curl -s --retry 10 --retry-delay 5 "http://localhost:8080/actuator/health" | grep -q '"status":"UP"'; then
-    echo "✅ Aplicação está rodando e saudável!"
-    echo "📱 Acesse a aplicação em: http://$APP_IP:8080"
-    echo "📊 Health check: http://$APP_IP:8080/actuator/health"
-    echo "📚 Swagger UI: http://$APP_IP:8080/swagger-ui.html"
+# Health check
+echo "Realizando health check..."
+HEALTH_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/actuator/health || echo "000")
+if [ "$HEALTH_RESPONSE" = "200" ]; then
+    echo "✅ Health check: SUCCESS (HTTP 200)"
 else
-    echo "❌ Aplicação não está respondendo corretamente"
-    echo "Verificando logs detalhados..."
-    sudo docker-compose -f "$COMPOSE_FILE" logs pointtils
+    echo "❌ Health check: FAILED (HTTP $HEALTH_RESPONSE)"
     exit 1
 fi
 
 echo "=== Deploy concluído com sucesso! ==="
+echo "Aplicação disponível em: http://localhost:8080"
+echo "Swagger UI: http://localhost:8080/swagger-ui.html"
+echo "Actuator Health: http://localhost:8080/actuator/health"
