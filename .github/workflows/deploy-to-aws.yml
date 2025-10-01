@@ -122,9 +122,12 @@ jobs:
     - name: Create SSH key file
       run: |
         mkdir -p ./terraform
-        echo "${{ secrets.SSH_PUBLIC_KEY }}" > ./terraform/pointtils_key.pub
+        # Criar chave SSH privada
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ./terraform/pointtils_key
         # Corrigir permissões da chave SSH
         chmod 600 ./terraform/pointtils_key
+        # Criar chave SSH pública
+        echo "${{ secrets.SSH_PUBLIC_KEY }}" > ./terraform/pointtils_key.pub
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
