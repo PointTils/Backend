@@ -161,6 +161,31 @@ resource "aws_iam_role_policy" "ecr_policy" {
   })
 }
 
+# Policy para a instância EC2 acessar o S3
+resource "aws_iam_role_policy" "s3_policy" {
+  name = "pointtils-s3-policy"
+  role = aws_iam_role.ec2_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject",
+          "s3:ListBucket"
+        ]
+        Effect = "Allow"
+        Resource = [
+          "${aws_s3_bucket.pointtils_api_tests.arn}",
+          "${aws_s3_bucket.pointtils_api_tests.arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
 # Profile de instância para associar o IAM role à instância EC2
 resource "aws_iam_instance_profile" "ec2_profile" {
   name = "pointtils-ec2-profile"
