@@ -11,6 +11,8 @@ DB_NAME="${4:-pointtils-db}"
 JWT_SECRET="${5:-defaultsecretkey1234567890123456789012345678901234}"
 AWS_REGION="${6:-us-east-2}"
 S3_BUCKET_NAME="${7:-pointtils-api-tests-d9396dcc}"
+AWS_ACCESS_KEY_ID="${8}"
+AWS_SECRET_ACCESS_KEY="${9}"
 
 APP_IMAGE="$ECR_REGISTRY/pointtils:latest"
 DB_IMAGE="$ECR_REGISTRY/pointtils-db:latest"
@@ -20,6 +22,7 @@ echo "App Image: $APP_IMAGE"
 echo "DB Image: $DB_IMAGE"
 echo "Database: $DB_NAME"
 echo "AWS Region: $AWS_REGION"
+echo "S3 Bucket: $S3_BUCKET_NAME"
 
 # Fazer login no ECR
 echo "Fazendo login no ECR..."
@@ -96,6 +99,8 @@ sudo docker run -d \
   -e SPRINGDOC_SWAGGER_UI_PATH=/swagger-ui.html \
   -e CLOUD_AWS_BUCKET_NAME=$S3_BUCKET_NAME \
   -e AWS_REGION=$AWS_REGION \
+  -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+  -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
   -e SPRING_PROFILES_ACTIVE=prod \
   -p 8080:8080 \
   --restart unless-stopped \

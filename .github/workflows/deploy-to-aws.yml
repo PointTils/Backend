@@ -251,7 +251,9 @@ jobs:
           '${{ secrets.DB_NAME || 'pointtils-db' }}' \
           '${{ secrets.JWT_SECRET }}' \
           '${{ secrets.AWS_REGION }}' \
-          '${{ secrets.CLOUD_AWS_BUCKET_NAME }}'"
+          '${{ secrets.CLOUD_AWS_BUCKET_NAME }}' \
+          '${{ secrets.AWS_ACCESS_KEY_ID }}' \
+          '${{ secrets.AWS_SECRET_ACCESS_KEY }}'"
         
         echo "✅ Deploy das imagens mais recentes concluído com sucesso!"
 
