@@ -288,8 +288,6 @@ data "template_file" "user_data" {
                     - SPRINGDOC_SWAGGER_UI_ENABLED=true
                     - SPRINGDOC_SWAGGER_UI_PATH=/swagger-ui.html
                     - CLOUD_AWS_BUCKET_NAME=pointtils-api-tests-d9396dcc
-                    - AWS_ACCESS_KEY_ID=$${AWS_ACCESS_KEY_ID}
-                    - AWS_SECRET_ACCESS_KEY=$${AWS_SECRET_ACCESS_KEY}
                     - AWS_REGION=${var.aws_region}
                   ports:
                     - "8080:8080"
