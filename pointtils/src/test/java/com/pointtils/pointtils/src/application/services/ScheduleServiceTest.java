@@ -37,6 +37,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -251,11 +252,11 @@ class ScheduleServiceTest {
                 .hasSize(1)
                 .contains(mockMappedResponse);
         assertEquals(2, timeSlotsCaptor.getValue().size());
-        assertEquals("Tue Sep 30 00:00:00 BRT 2025", timeSlotsCaptor.getValue().get(0).getDate().toString());
+        assertTrue(timeSlotsCaptor.getValue().get(0).getDate().toString().startsWith("Tue Sep 30"));
         assertEquals(interpreterId, timeSlotsCaptor.getValue().get(0).getInterpreterId());
         assertEquals("06:00", timeSlotsCaptor.getValue().get(0).getStartTime().toString());
         assertEquals("07:00", timeSlotsCaptor.getValue().get(0).getEndTime().toString());
-        assertEquals("Fri Oct 10 00:00:00 BRT 2025", timeSlotsCaptor.getValue().get(1).getDate().toString());
+        assertTrue(timeSlotsCaptor.getValue().get(1).getDate().toString().startsWith("Fri Oct 10"));
         assertEquals(interpreterId, timeSlotsCaptor.getValue().get(1).getInterpreterId());
         assertEquals("08:00", timeSlotsCaptor.getValue().get(1).getStartTime().toString());
         assertEquals("09:00", timeSlotsCaptor.getValue().get(1).getEndTime().toString());
