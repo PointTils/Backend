@@ -28,4 +28,5 @@ public class InterpreterListResponseDTO {
     private InterpreterModality modality;
     private List<LocationDTO> locations;
     private String picture;
+    private List<SpecialtyResponseDTO> specialties;
 }

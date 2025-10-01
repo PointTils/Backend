@@ -2,8 +2,10 @@ package com.pointtils.pointtils.src.application.services;
 
 import com.pointtils.pointtils.src.application.dto.requests.AppointmentPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.AppointmentRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.AppointmentFilterResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.AppointmentResponseDTO;
 import com.pointtils.pointtils.src.application.mapper.AppointmentMapper;
+import com.pointtils.pointtils.src.application.mapper.UserSpecialtyMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Appointment;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
 import com.pointtils.pointtils.src.core.domain.entities.Person;
@@ -54,7 +56,7 @@ class AppointmentServiceTest {
     private UserRepository userRepository;
 
     @Spy
-    private AppointmentMapper appointmentMapper = new AppointmentMapper();
+    private AppointmentMapper appointmentMapper = new AppointmentMapper(new UserSpecialtyMapper());
 
     @InjectMocks
     private AppointmentService appointmentService;
@@ -152,7 +154,7 @@ class AppointmentServiceTest {
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, 
             () -> appointmentService.createAppointment(appointmentRequestDTO));
         
-        assertEquals("Interpreter não encontrado com o id: " + interpreterId, exception.getMessage());
+        assertEquals("Intérprete não encontrado com o id: " + interpreterId, exception.getMessage());
         verify(interpreterRepository).findById(interpreterId);
         verify(userRepository, never()).findById(any());
         verify(appointmentRepository, never()).save(any());
@@ -167,7 +169,7 @@ class AppointmentServiceTest {
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, 
             () -> appointmentService.createAppointment(appointmentRequestDTO));
         
-        assertEquals("User não encontrado com o id: " + userId, exception.getMessage());
+        assertEquals("Usuário não encontrado com o id: " + userId, exception.getMessage());
         verify(interpreterRepository).findById(interpreterId);
         verify(userRepository).findById(userId);
         verify(appointmentRepository, never()).save(any());
@@ -283,7 +285,7 @@ class AppointmentServiceTest {
         
         LocalDateTime fromDateTime = LocalDateTime.now();
 
-        List<AppointmentResponseDTO> result = appointmentService.searchAppointments(
+        List<AppointmentFilterResponseDTO> result = appointmentService.searchAppointments(
             interpreterId, userId, AppointmentStatus.PENDING, AppointmentModality.ONLINE, fromDateTime);
 
         assertNotNull(result);
@@ -296,7 +298,7 @@ class AppointmentServiceTest {
         List<Appointment> appointments = Arrays.asList(mockAppointment);
         when(appointmentRepository.findAll()).thenReturn(appointments);
 
-        List<AppointmentResponseDTO> result = appointmentService.searchAppointments(
+        List<AppointmentFilterResponseDTO> result = appointmentService.searchAppointments(
             null, null, null, null, null);
 
         assertNotNull(result);
@@ -364,7 +366,7 @@ class AppointmentServiceTest {
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
                 () -> appointmentService.updatePartial(appointmentId, patchDTO));
 
-        assertEquals("Interpreter não encontrado com o id: " + newInterpreterId, exception.getMessage());
+        assertEquals("Intérprete não encontrado com o id: " + newInterpreterId, exception.getMessage());
         verify(appointmentRepository).findById(appointmentId);
         verify(interpreterRepository).findById(newInterpreterId);
         verify(appointmentRepository, never()).save(any());
@@ -384,7 +386,7 @@ class AppointmentServiceTest {
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
                 () -> appointmentService.updatePartial(appointmentId, patchDTO));
 
-        assertEquals("User não encontrado com o id: " + newUserId, exception.getMessage());
+        assertEquals("Usuário não encontrado com o id: " + newUserId, exception.getMessage());
         verify(appointmentRepository).findById(appointmentId);
         verify(userRepository).findById(newUserId);
         verify(appointmentRepository, never()).save(any());
@@ -426,7 +428,7 @@ class AppointmentServiceTest {
         List<Appointment> appointments = Arrays.asList(mockAppointment, otherAppointment);
         when(appointmentRepository.findAll()).thenReturn(appointments);
 
-        List<AppointmentResponseDTO> result = appointmentService.searchAppointments(
+        List<AppointmentFilterResponseDTO> result = appointmentService.searchAppointments(
                 interpreterId, null, null, null, null);
 
         assertNotNull(result);
@@ -459,7 +461,7 @@ class AppointmentServiceTest {
         List<Appointment> appointments = Arrays.asList(mockAppointment, otherAppointment);
         when(appointmentRepository.findAll()).thenReturn(appointments);
 
-        List<AppointmentResponseDTO> result = appointmentService.searchAppointments(
+        List<AppointmentFilterResponseDTO> result = appointmentService.searchAppointments(
                 null, userId, null, null, null);
 
         assertNotNull(result);
@@ -483,7 +485,7 @@ class AppointmentServiceTest {
         List<Appointment> appointments = Arrays.asList(mockAppointment, acceptedAppointment);
         when(appointmentRepository.findAll()).thenReturn(appointments);
 
-        List<AppointmentResponseDTO> result = appointmentService.searchAppointments(
+        List<AppointmentFilterResponseDTO> result = appointmentService.searchAppointments(
                 null, null, AppointmentStatus.PENDING, null, null);
 
         assertNotNull(result);
@@ -507,7 +509,7 @@ class AppointmentServiceTest {
         List<Appointment> appointments = Arrays.asList(mockAppointment, personallyAppointment);
         when(appointmentRepository.findAll()).thenReturn(appointments);
 
-        List<AppointmentResponseDTO> result = appointmentService.searchAppointments(
+        List<AppointmentFilterResponseDTO> result = appointmentService.searchAppointments(
                 null, null, null, AppointmentModality.ONLINE, null);
 
         assertNotNull(result);
@@ -534,7 +536,7 @@ class AppointmentServiceTest {
 
         LocalDateTime fromDateTime = LocalDateTime.now(); // Filtro para appointments após agora
 
-        List<AppointmentResponseDTO> result = appointmentService.searchAppointments(
+        List<AppointmentFilterResponseDTO> result = appointmentService.searchAppointments(
                 null, null, null, null, fromDateTime);
 
         assertNotNull(result);
@@ -549,7 +551,7 @@ class AppointmentServiceTest {
         when(appointmentRepository.findAll()).thenReturn(appointments);
 
         UUID nonExistentId = UUID.randomUUID();
-        List<AppointmentResponseDTO> result = appointmentService.searchAppointments(
+        List<AppointmentFilterResponseDTO> result = appointmentService.searchAppointments(
                 nonExistentId, null, null, null, null);
 
         assertNotNull(result);

@@ -30,6 +30,11 @@ public class Enterprise extends User {
     }
 
     @Override
+    public String getDocument() {
+        return cnpj;
+    }
+
+    @Override
     public UserTypeE getType() {
         return UserTypeE.ENTERPRISE;
     }

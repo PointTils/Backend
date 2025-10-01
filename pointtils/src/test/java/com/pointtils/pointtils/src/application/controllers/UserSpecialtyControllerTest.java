@@ -64,6 +64,11 @@ class UserSpecialtyControllerTest {
             }
 
             @Override
+            public String getDocument() {
+                return "11122233344";
+            }
+
+            @Override
             public UserTypeE getType() {
                 return UserTypeE.PERSON;
             }
