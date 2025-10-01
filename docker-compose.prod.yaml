@@ -1,6 +1,9 @@
 services:
   pointtils:
-    image: ${APP_IMAGE:-pointtils:latest}
+    build:
+      context: ./pointtils
+      dockerfile: Dockerfile
+    image: pointtils:latest
     container_name: pointtils
     
     environment:
