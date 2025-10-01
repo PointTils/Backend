@@ -24,6 +24,11 @@ echo "Database: $DB_NAME"
 echo "AWS Region: $AWS_REGION"
 echo "S3 Bucket: $S3_BUCKET_NAME"
 
+# Corrigir permissões do Docker
+echo "Corrigindo permissões do Docker..."
+sudo chown ubuntu:ubuntu /home/ubuntu/.docker -R 2>/dev/null || true
+sudo chmod 755 /home/ubuntu/.docker 2>/dev/null || true
+
 # Fazer login no ECR
 echo "Fazendo login no ECR..."
 aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
