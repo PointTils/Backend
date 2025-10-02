@@ -2,6 +2,7 @@ package com.pointtils.pointtils.src.infrastructure.repositories;
 
 import com.pointtils.pointtils.src.core.domain.entities.Schedule;
 import com.pointtils.pointtils.src.core.domain.entities.enums.DayOfWeek;
+import com.pointtils.pointtils.src.infrastructure.repositories.spec.ScheduleSpecifications;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;

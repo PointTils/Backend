@@ -69,7 +69,7 @@ public class InterpreterResponseMapper {
                 .rating(interpreter.getRating() != null ? interpreter.getRating() : BigDecimal.ZERO)
                 .minValue(interpreter.getMinValue())
                 .maxValue(interpreter.getMaxValue())
-                .modality(interpreter.getModality() != null ? interpreter.getModality().name() : null)
+                .modality(interpreter.getModality())
                 .description(interpreter.getDescription())
                 .imageRights(interpreter.getImageRights())
                 .build();
@@ -80,7 +80,7 @@ public class InterpreterResponseMapper {
                 .rating(interpreter.getRating() != null ? interpreter.getRating() : BigDecimal.ZERO)
                 .minValue(interpreter.getMinValue())
                 .maxValue(interpreter.getMaxValue())
-                .modality(interpreter.getModality() != null ? interpreter.getModality().name() : null)
+                .modality(interpreter.getModality())
                 .build();
     }
 }

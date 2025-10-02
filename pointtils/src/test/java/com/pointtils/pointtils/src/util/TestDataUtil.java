@@ -116,8 +116,8 @@ public class TestDataUtil {
         return InterpreterResponseDTO.builder()
                 .id(UUID.randomUUID())
                 .email("interpreter@exemplo.com")
-                .type("interpreter")
-                .status("pending")
+                .type(UserTypeE.INTERPRETER.name())
+                .status(UserStatus.PENDING.name())
                 .phone("51999999999")
                 .picture("picture_url")
                 .name("João Intérprete")
@@ -136,7 +136,7 @@ public class TestDataUtil {
                 .rating(new BigDecimal("0.0"))
                 .minValue(new BigDecimal("100.00"))
                 .maxValue(new BigDecimal("500.00"))
-                .modality("presencial")
+                .modality(InterpreterModality.PERSONALLY)
                 .build();
 
         return InterpreterListResponseDTO.builder()
@@ -155,15 +155,15 @@ public class TestDataUtil {
                 .minValue(new BigDecimal("100.00"))
                 .maxValue(new BigDecimal("500.00"))
                 .imageRights(true)
-                .modality("presencial")
+                .modality(InterpreterModality.PERSONALLY)
                 .description("Intérprete experiente em LIBRAS")
                 .build();
 
         return InterpreterResponseDTO.builder()
                 .id(UUID.randomUUID())
                 .email("interpreter@exemplo.com")
-                .type("interpreter")
-                .status("pending")
+                .type(UserTypeE.INTERPRETER.name())
+                .status(UserStatus.PENDING.name())
                 .phone("51999999999")
                 .picture("picture_url")
                 .name("João Intérprete")
