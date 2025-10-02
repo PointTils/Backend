@@ -3,6 +3,7 @@ package com.pointtils.pointtils.src.application.mapper;
 import com.pointtils.pointtils.src.application.dto.LocationDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.ProfessionalDataListResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ProfessionalDataResponseDTO;
 import com.pointtils.pointtils.src.application.util.MaskUtil;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
@@ -51,10 +52,6 @@ public class InterpreterResponseMapper {
         return InterpreterListResponseDTO.builder()
                 .id(interpreter.getId())
                 .name(interpreter.getName())
-                .rating(interpreter.getRating() != null ? interpreter.getRating() : BigDecimal.ZERO)
-                .minValue(interpreter.getMinValue() != null ? interpreter.getMinValue() : BigDecimal.ZERO)
-                .maxValue(interpreter.getMaxValue() != null ? interpreter.getMaxValue() : BigDecimal.ZERO)
-                .modality(interpreter.getModality())
                 .locations(interpreter.getLocations() != null
                         ? interpreter.getLocations().stream()
                         .map(locationMapper::toDto)
@@ -62,6 +59,7 @@ public class InterpreterResponseMapper {
                         : Collections.emptyList())
                 .picture(interpreter.getPicture())
                 .specialties(userSpecialtyMapper.toDtoList(interpreter.getSpecialties()))
+                .professionalData(toProfessionalDataListResponseDTO(interpreter))
                 .build();
     }
 
@@ -74,6 +72,15 @@ public class InterpreterResponseMapper {
                 .modality(interpreter.getModality() != null ? interpreter.getModality().name() : null)
                 .description(interpreter.getDescription())
                 .imageRights(interpreter.getImageRights())
+                .build();
+    }
+
+    private ProfessionalDataListResponseDTO toProfessionalDataListResponseDTO(Interpreter interpreter) {
+        return ProfessionalDataListResponseDTO.builder()
+                .rating(interpreter.getRating() != null ? interpreter.getRating() : BigDecimal.ZERO)
+                .minValue(interpreter.getMinValue())
+                .maxValue(interpreter.getMaxValue())
+                .modality(interpreter.getModality() != null ? interpreter.getModality().name() : null)
                 .build();
     }
 }
