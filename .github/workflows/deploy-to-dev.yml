@@ -147,7 +147,7 @@ jobs:
     - name: Create SSH key file for development
       run: |
         mkdir -p ./terraform-dev
-        # Criar chave SSH privada para desenvolvimento
+        # Criar chave SSH privada
         echo "${{ secrets.SSH_DEV_PRIVATE_KEY }}" > ./terraform-dev/pointtils-dev-key.pem
         # Corrigir permissões da chave SSH
         chmod 600 ./terraform-dev/pointtils-dev-key.pem
