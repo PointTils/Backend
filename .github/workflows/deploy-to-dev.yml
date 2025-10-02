@@ -16,6 +16,7 @@ env:
   ECR_REPOSITORY: pointtils
   APP_IMAGE_TAG: dev-latest
   DB_IMAGE_TAG: dev-latest
+  ENVIRONMENT: development
  
 
 jobs:
@@ -267,13 +268,13 @@ jobs:
         HOST_IP="${{ steps.terraform-outputs.outputs.dev_app_ip }}"
         echo "Executando deploy das imagens mais recentes na EC2 de desenvolvimento: $HOST_IP"
         
-        # Copiar script de deploy para a EC2 de desenvolvimento
-        echo "Copiando script de deploy para a EC2 de desenvolvimento..."
-        scp -o StrictHostKeyChecking=no -i ./terraform-dev/pointtils_dev_key terraform/deploy-app.sh ubuntu@$HOST_IP:/home/ubuntu/
+        # Copiar script de deploy ESPECÍFICO para desenvolvimento
+        echo "Copiando script de deploy ESPECÍFICO para desenvolvimento..."
+        scp -o StrictHostKeyChecking=no -i ./terraform-dev/pointtils_dev_key terraform-dev/deploy-dev-app.sh ubuntu@$HOST_IP:/home/ubuntu/
         
-        # Executar script de deploy na EC2 com parâmetros de desenvolvimento
-        echo "Executando script de deploy com parâmetros de desenvolvimento..."
-        ssh -o StrictHostKeyChecking=no -i ./terraform-dev/pointtils_dev_key ubuntu@$HOST_IP "chmod +x /home/ubuntu/deploy-app.sh && /home/ubuntu/deploy-app.sh \
+        # Executar script de deploy ESPECÍFICO para desenvolvimento
+        echo "Executando script de deploy ESPECÍFICO para desenvolvimento..."
+        ssh -o StrictHostKeyChecking=no -i ./terraform-dev/pointtils_dev_key ubuntu@$HOST_IP "chmod +x /home/ubuntu/deploy-dev-app.sh && /home/ubuntu/deploy-dev-app.sh \
           '${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com' \
           '${{ secrets.DB_DEV_USERNAME || 'pointtilsdevadmin' }}' \
           '${{ secrets.DB_DEV_PASSWORD || 'devpassword123' }}' \
@@ -312,11 +313,11 @@ jobs:
         HOST_IP="${{ steps.terraform-outputs.outputs.dev_app_ip }}"
         echo "🚨 Deploy de desenvolvimento falhou! Iniciando rollback automático..."
         
-        # Copiar script de rollback para a EC2 de desenvolvimento
-        scp -o StrictHostKeyChecking=no -i ./terraform-dev/pointtils_dev_key terraform/rollback-app.sh ubuntu@$HOST_IP:/home/ubuntu/
+        # Copiar script de rollback ESPECÍFICO para desenvolvimento
+        scp -o StrictHostKeyChecking=no -i ./terraform-dev/pointtils_dev_key terraform-dev/rollback-dev-app.sh ubuntu@$HOST_IP:/home/ubuntu/
         
-        # Executar rollback na EC2 de desenvolvimento
-        ssh -o StrictHostKeyChecking=no -i ./terraform-dev/pointtils_dev_key ubuntu@$HOST_IP "chmod +x /home/ubuntu/rollback-app.sh && /home/ubuntu/rollback-app.sh \
+        # Executar rollback ESPECÍFICO para desenvolvimento
+        ssh -o StrictHostKeyChecking=no -i ./terraform-dev/pointtils_dev_key ubuntu@$HOST_IP "chmod +x /home/ubuntu/rollback-dev-app.sh && /home/ubuntu/rollback-dev-app.sh \
           '${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com' \
           '${{ secrets.DB_DEV_USERNAME || 'pointtilsdevadmin' }}' \
           '${{ secrets.DB_DEV_PASSWORD || 'devpassword123' }}' \
@@ -328,7 +329,7 @@ jobs:
           '${{ secrets.AWS_SECRET_ACCESS_KEY }}' \
           'previous'"
         
-        echo "⚠️ Rollback executado. Verifique o status da aplicação de desenvolvimento manualmente."
+        echo "⚠️ Rollback de DESENVOLVIMENTO executado. Verifique o status da aplicação de desenvolvimento manualmente."
 
     - name: Development Deployment Summary
       run: |
