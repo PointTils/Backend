@@ -193,7 +193,7 @@ resource "aws_iam_instance_profile" "dev_ec2_profile" {
 }
 
 # Chave SSH para acesso às instâncias EC2 do NOVO ambiente de desenvolvimento
-resource "aws_key_pair" "pointtils_dev_key" {
+resource "aws_key_pair" "pointtils_key" {
   key_name   = "pointtils_dev_key"
   public_key = file("${path.module}/pointtils_dev_key.pub")
 }
