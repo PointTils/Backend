@@ -194,8 +194,8 @@ resource "aws_iam_instance_profile" "dev_ec2_profile" {
 
 # Chave SSH para acesso às instâncias EC2 do NOVO ambiente de desenvolvimento
 resource "aws_key_pair" "pointtils_key" {
-  key_name_prefix = "pointtils-dev-key-"
-  public_key      = file("${path.module}/pointtils-dev-key.pub")
+  key_name   = "pointtils-dev-key"
+  public_key = file("${path.module}/pointtils-dev-key.pub")
 }
 
 # Script de inicialização para a instância EC2 do NOVO ambiente de desenvolvimento
@@ -354,10 +354,10 @@ data "template_file" "dev_user_data" {
               EOF
 }
 
-# Instância EC2 para a aplicação Pointtils do NOVO ambiente de desenvolvimento (t2.micro para economia)
+# Instância EC2 para a aplicação Pointtils do NOVO ambiente de desenvolvimento (t2.medium para melhor performance)
 resource "aws_instance" "pointtils_dev_app" {
   ami                    = var.ec2_ami
-  instance_type          = "t2.micro"  # Instância menor para desenvolvimento
+  instance_type          = "t2.medium"  # Instância maior para melhor performance
   key_name               = aws_key_pair.pointtils_key.key_name
   vpc_security_group_ids = [aws_security_group.dev_app_sg.id]
   subnet_id              = aws_subnet.dev_public_subnet_1.id
