@@ -14,12 +14,14 @@ import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Subquery;
+import lombok.experimental.UtilityClass;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
+@UtilityClass
 public class InterpreterSpecification {
 
     @SuppressWarnings("null")

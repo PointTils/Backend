@@ -22,11 +22,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 class InterpreterSpecificationTest {
 
     @Test
     void shouldBuildPredicateWithGender() {
-        @SuppressWarnings("unchecked")
         Root<Interpreter> root = mock(Root.class);
         CriteriaQuery<?> query = mock(CriteriaQuery.class);
         CriteriaBuilder cb = mock(CriteriaBuilder.class);
@@ -46,7 +46,6 @@ class InterpreterSpecificationTest {
         verify(cb).equal(root.get("gender"), Gender.MALE);
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
     @Test
     void shouldBuildPredicateWithCity() {
         Root<Interpreter> root = mock(Root.class);
@@ -76,7 +75,33 @@ class InterpreterSpecificationTest {
         verify(cb).like(lowerCityExpression, "%são paulo%");
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
+    @Test
+    void shouldBuildPredicateWithUF() {
+        Root<Interpreter> root = mock(Root.class);
+        CriteriaQuery<?> query = mock(CriteriaQuery.class);
+        CriteriaBuilder cb = mock(CriteriaBuilder.class);
+        Predicate basePredicate = mock(Predicate.class);
+        Predicate ufPredicate = mock(Predicate.class);
+
+        Join<Interpreter, ?> locationJoin = (Join<Interpreter, ?>) mock(Join.class);
+
+        Path ufPath = mock(Path.class);
+
+        when(root.join("locations", JoinType.LEFT)).thenReturn((Join) locationJoin);
+        when(locationJoin.get("uf")).thenReturn(ufPath);
+        when(cb.equal(ufPath, "RS")).thenReturn(ufPredicate);
+        when(cb.and(basePredicate, ufPredicate)).thenReturn(ufPredicate);
+        when(cb.conjunction()).thenReturn(basePredicate);
+
+        Specification<Interpreter> spec = InterpreterSpecification.filter(null, "RS", null,
+                null, null, null, null, null, null, null);
+
+        Predicate result = spec.toPredicate(root, query, cb);
+
+        assertThat(result).isEqualTo(ufPredicate);
+        verify(cb).equal(ufPath, "RS");
+    }
+
     @Test
     void shouldBuildPredicateWithScheduleAndTime() {
         Root<Interpreter> root = mock(Root.class);
@@ -112,5 +137,31 @@ class InterpreterSpecificationTest {
         verify(cb).equal(scheduleJoin.get("day"), DayOfWeek.MON);
         verify(cb).lessThanOrEqualTo(scheduleJoin.get("startTime"), requestedStart);
         verify(cb).greaterThanOrEqualTo(scheduleJoin.get("endTime"), requestedEnd);
+    }
+
+    @Test
+    void shouldBuildPredicateWithName() {
+        Root<Interpreter> root = mock(Root.class);
+        CriteriaQuery<?> query = mock(CriteriaQuery.class);
+        CriteriaBuilder cb = mock(CriteriaBuilder.class);
+        Predicate basePredicate = mock(Predicate.class);
+        Predicate namePredicate = mock(Predicate.class);
+
+        Path namePath = mock(Path.class);
+        Expression<String> lowerNameExpression = mock(Expression.class);
+
+        when(cb.conjunction()).thenReturn(basePredicate);
+        when(root.get("name")).thenReturn(namePath);
+        when(cb.lower(namePath)).thenReturn(lowerNameExpression);
+        when(cb.like(lowerNameExpression, "%souza%")).thenReturn(namePredicate);
+        when(cb.and(basePredicate, namePredicate)).thenReturn(namePredicate);
+
+        Specification<Interpreter> spec = InterpreterSpecification.filter(null, null, null, null,
+                null, null, null, null, null, "SOUZA");
+
+        Predicate result = spec.toPredicate(root, query, cb);
+
+        assertThat(result).isEqualTo(namePredicate);
+        verify(cb).like(lowerNameExpression, "%souza%");
     }
 }
