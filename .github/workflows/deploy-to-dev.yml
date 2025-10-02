@@ -198,6 +198,15 @@ jobs:
         echo "Chave privada salva com permissões corretas"
         echo "Verificando se a chave foi criada:"
         ls -la pointtils-dev-key.pem
+        echo "Conteúdo da chave (primeiras 1000 caracteres):"
+        head -c 1000 pointtils-dev-key.pem
+
+    - name: Upload SSH key as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ssh-key-dev
+        path: terraform-dev/pointtils-dev-key.pem
+        retention-days: 1
 
     - name: Get Terraform outputs (Development)
       working-directory: terraform-dev
