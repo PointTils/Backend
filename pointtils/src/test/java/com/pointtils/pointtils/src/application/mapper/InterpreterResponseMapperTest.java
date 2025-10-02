@@ -113,10 +113,10 @@ class InterpreterResponseMapperTest {
         // Assert
         assertThat(listResponseDTO.getId()).isEqualTo(id);
         assertThat(listResponseDTO.getName()).isEqualTo("John Doe");
-        assertThat(listResponseDTO.getRating()).isEqualTo(BigDecimal.valueOf(4.5));
-        assertThat(listResponseDTO.getMinValue()).isEqualTo(BigDecimal.valueOf(100));
-        assertThat(listResponseDTO.getMaxValue()).isEqualTo(BigDecimal.valueOf(200));
-        assertThat(listResponseDTO.getModality()).isEqualTo(InterpreterModality.ONLINE);
+        assertThat(listResponseDTO.getProfessionalData().getRating()).isEqualTo(BigDecimal.valueOf(4.5));
+        assertThat(listResponseDTO.getProfessionalData().getMinValue()).isEqualTo(BigDecimal.valueOf(100));
+        assertThat(listResponseDTO.getProfessionalData().getMaxValue()).isEqualTo(BigDecimal.valueOf(200));
+        assertThat(listResponseDTO.getProfessionalData().getModality()).isEqualTo(InterpreterModality.ONLINE.name());
         assertThat(listResponseDTO.getPicture()).isEqualTo("profile.jpg");
         assertThat(listResponseDTO.getLocations()).hasSize(1);
     }

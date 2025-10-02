@@ -12,6 +12,7 @@ import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataPatc
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.PersonResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.ProfessionalDataListResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ProfessionalDataResponseDTO;
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
@@ -131,15 +132,19 @@ public class TestDataUtil {
     }
 
     public static InterpreterListResponseDTO createInterpreterListResponse() {
+        ProfessionalDataListResponseDTO professionalInfo = ProfessionalDataListResponseDTO.builder()
+                .rating(new BigDecimal("0.0"))
+                .minValue(new BigDecimal("100.00"))
+                .maxValue(new BigDecimal("500.00"))
+                .modality("presencial")
+                .build();
+
         return InterpreterListResponseDTO.builder()
                 .id(UUID.randomUUID())
                 .name("João Intérprete")
-                .rating(BigDecimal.ZERO)
-                .minValue(BigDecimal.ZERO)
-                .maxValue(BigDecimal.ZERO)
-                .modality(InterpreterModality.ALL)
                 .locations(List.of(new LocationDTO(UUID.randomUUID(), "RS", "Porto Alegre", "São João")))
                 .picture("picture_url")
+                .professionalData(professionalInfo)
                 .build();
     }
 
