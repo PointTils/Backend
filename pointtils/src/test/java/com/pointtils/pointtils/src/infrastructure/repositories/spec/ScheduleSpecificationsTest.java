@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.time.LocalTime;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -68,5 +69,32 @@ class ScheduleSpecificationsTest {
         assertThat(predicateCaptor.getValue())
                 .hasSize(1)
                 .contains(interpreterIdPredicate);
+    }
+
+    @Test
+    void shouldBuildPredicateWithDateRange() {
+        Root<Schedule> root = mock(Root.class);
+        CriteriaQuery<?> query = mock(CriteriaQuery.class);
+        CriteriaBuilder criteriaBuilder = mock(CriteriaBuilder.class);
+        Predicate startDatePredicate = mock(Predicate.class);
+        Predicate endDatePredicate = mock(Predicate.class);
+        Predicate finalPredicate = mock(Predicate.class);
+        ArgumentCaptor<Predicate[]> predicateCaptor = ArgumentCaptor.forClass(Predicate[].class);
+
+        LocalTime startTime = LocalTime.of(9, 0);
+        LocalTime endTime = LocalTime.of(14, 0);
+
+        when(criteriaBuilder.greaterThanOrEqualTo(root.get("startTime"), startTime)).thenReturn(startDatePredicate);
+        when(criteriaBuilder.lessThanOrEqualTo(root.get("endTime"), endTime)).thenReturn(endDatePredicate);
+        when(criteriaBuilder.and(predicateCaptor.capture())).thenReturn(finalPredicate);
+
+        Specification<Schedule> spec = ScheduleSpecifications.withFilters(null, null, startTime, endTime);
+        assertEquals(finalPredicate, spec.toPredicate(root, query, criteriaBuilder));
+        verify(criteriaBuilder).greaterThanOrEqualTo(root.get("startTime"), startTime);
+        verify(criteriaBuilder).lessThanOrEqualTo(root.get("endTime"), endTime);
+        assertThat(predicateCaptor.getValue())
+                .hasSize(2)
+                .contains(startDatePredicate)
+                .contains(endDatePredicate);
     }
 }
