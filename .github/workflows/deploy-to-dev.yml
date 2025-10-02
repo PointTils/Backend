@@ -172,6 +172,12 @@ jobs:
         db_image       = "${{ needs.build-and-test.outputs.db_image }}"
         EOF
 
+    - name: Create Terraform backend resources
+      run: |
+        echo "Criando recursos de backend para Terraform..."
+        chmod +x terraform-dev/create-backend.sh
+        ./terraform-dev/create-backend.sh "${{ secrets.AWS_REGION }}"
+
     - name: Terraform Init (Development)
       working-directory: terraform-dev
       run: terraform init
