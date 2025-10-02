@@ -1,11 +1,11 @@
-name: Deploy to AWS
+name: Deploy to Development
 
 on:
-  pull_request:
-    branches: [ main ]
-    types: [closed]
   push:
-    branches: [ main ]
+    branches: [ dev, feature/* ]
+  pull_request:
+    branches: [ dev ]
+    types: [closed]
   workflow_dispatch:  # Permite execução manual da pipeline
 
 permissions:
@@ -14,17 +14,41 @@ permissions:
 
 env:
   ECR_REPOSITORY: pointtils
-  APP_IMAGE_TAG: latest
-  DB_IMAGE_TAG: latest
+  APP_IMAGE_TAG: dev-latest
+  DB_IMAGE_TAG: dev-latest
+ 
 
 jobs:
-  build-and-push-images:
-    name: Build and Push Docker Images
+  build-and-test:
+    name: Build, Test and Push Docker Images
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
+
+    - name: Cache Maven dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Run unit tests
+      run: mvn clean test
+      working-directory: ./pointtils
+
+    - name: Build with Maven
+      run: mvn clean package -DskipTests
+      working-directory: ./pointtils
 
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v2
@@ -63,11 +87,11 @@ jobs:
       id: build-images
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        IMAGE_TAG: ${{ github.sha }}
+        IMAGE_TAG: dev-${{ github.sha }}
         SPRING_DATASOURCE_URL: jdbc:postgresql://pointtils-db:5432/${{ secrets.DB_NAME || 'pointtils-db' }}
         SPRING_DATASOURCE_USERNAME: ${{ secrets.DB_USERNAME }}
         SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
-        SPRING_APPLICATION_NAME: pointtils
+        SPRING_APPLICATION_NAME: pointtils-dev
         SERVER_PORT: 8080
         JWT_SECRET: ${{ secrets.JWT_SECRET }}
         JWT_EXPIRATION_TIME: 3600000
@@ -103,10 +127,10 @@ jobs:
         docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:${{ env.DB_IMAGE_TAG }}
         echo "db_image=$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-  deploy-infrastructure:
-    name: Deploy Infrastructure
+  deploy-dev-infrastructure:
+    name: Deploy Development Infrastructure
     runs-on: ubuntu-latest
-    needs: build-and-push-images
+    needs: build-and-test
     
     steps:
     - name: Checkout repository
@@ -119,15 +143,15 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
-    - name: Create SSH key file
+    - name: Create SSH key file for development
       run: |
-        mkdir -p ./terraform
-        # Criar chave SSH privada
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ./terraform/pointtils_key
+        mkdir -p ./terraform-dev
+        # Criar chave SSH privada para desenvolvimento
+        echo "${{ secrets.SSH_DEV_PRIVATE_KEY }}" > ./terraform-dev/pointtils_dev_key
         # Corrigir permissões da chave SSH
-        chmod 600 ./terraform/pointtils_key
-        # Criar chave SSH pública
-        echo "${{ secrets.SSH_PUBLIC_KEY }}" > ./terraform/pointtils_key.pub
+        chmod 600 ./terraform-dev/pointtils_dev_key
+        # Criar chave SSH pública para desenvolvimento
+        echo "${{ secrets.SSH_DEV_PUBLIC_KEY }}" > ./terraform-dev/pointtils_dev_key.pub
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
@@ -135,42 +159,42 @@ jobs:
         terraform_version: '1.5.0'
         cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
-    - name: Create terraform.tfvars file
+    - name: Create terraform.tfvars file for development
       run: |
-        cat > terraform/terraform.tfvars << 'EOF'
+        cat > terraform-dev/terraform.tfvars << 'EOF'
         aws_region     = "${{ secrets.AWS_REGION }}"
-        db_username    = "${{ secrets.DB_USERNAME }}"
-        db_password    = "${{ secrets.DB_PASSWORD }}"
-        db_name        = "${{ secrets.DB_NAME || 'pointtils-db' }}"
-        jwt_secret     = "${{ secrets.JWT_SECRET }}"
-        app_image      = "${{ needs.build-and-push-images.outputs.app_image }}"
-        db_image       = "${{ needs.build-and-push-images.outputs.db_image }}"
+        db_username    = "${{ secrets.DB_DEV_USERNAME || 'pointtilsdevadmin' }}"
+        db_password    = "${{ secrets.DB_DEV_PASSWORD || 'devpassword123' }}"
+        db_name        = "${{ secrets.DB_DEV_NAME || 'pointtils-dev-db' }}"
+        jwt_secret     = "${{ secrets.JWT_DEV_SECRET || 'devjwtsecretkey1234567890123456789012345678901234' }}"
+        app_image      = "${{ needs.build-and-test.outputs.app_image }}"
+        db_image       = "${{ needs.build-and-test.outputs.db_image }}"
         EOF
 
-    - name: Terraform Init
-      working-directory: terraform
+    - name: Terraform Init (Development)
+      working-directory: terraform-dev
       run: terraform init
 
-    - name: Terraform Validate
-      working-directory: terraform
+    - name: Terraform Validate (Development)
+      working-directory: terraform-dev
       run: terraform validate
 
-    - name: Terraform Plan
-      working-directory: terraform
+    - name: Terraform Plan (Development)
+      working-directory: terraform-dev
       run: terraform plan -out=tfplan
 
-    - name: Terraform Apply
-      working-directory: terraform
+    - name: Terraform Apply (Development)
+      working-directory: terraform-dev
       id: terraform-apply
       continue-on-error: true
       run: terraform apply -auto-approve tfplan
 
-    - name: Get Terraform outputs
-      working-directory: terraform
+    - name: Get Terraform outputs (Development)
+      working-directory: terraform-dev
       id: terraform-outputs
       run: |
-        echo "=== Obtendo IP da instância EC2 ==="
-        INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=pointtils-app" --query 'Reservations[*].Instances[*].InstanceId' --output text)
+        echo "=== Obtendo IP da instância EC2 de desenvolvimento ==="
+        INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=pointtils-dev-app" --query 'Reservations[*].Instances[*].InstanceId' --output text)
         
         if [ -n "$INSTANCE_ID" ]; then
           echo "Instance ID encontrado: $INSTANCE_ID"
@@ -191,40 +215,40 @@ jobs:
           # Verificar se o IP tem formato válido
           if [[ "$CLEAN_IP" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "IP válido: $CLEAN_IP"
-            echo "app_ip=$CLEAN_IP" >> $GITHUB_OUTPUT
+            echo "dev_app_ip=$CLEAN_IP" >> $GITHUB_OUTPUT
           else
             echo "AVISO: Formato de IP inválido ($CLEAN_IP), usando placeholder"
-            echo "app_ip=127.0.0.1" >> $GITHUB_OUTPUT
+            echo "dev_app_ip=127.0.0.1" >> $GITHUB_OUTPUT
           fi
         else
-          echo "Nenhuma instância encontrada, usando IP placeholder"
-          echo "app_ip=127.0.0.1" >> $GITHUB_OUTPUT
+          echo "Nenhuma instância de desenvolvimento encontrada, usando IP placeholder"
+          echo "dev_app_ip=127.0.0.1" >> $GITHUB_OUTPUT
         fi
         
-        echo "ecr_repo=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}" >> $GITHUB_OUTPUT
+        echo "dev_ecr_repo=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}" >> $GITHUB_OUTPUT
 
-    - name: Verify EC2 host availability
+    - name: Verify EC2 host availability (Development)
       run: |
-        HOST_IP="${{ steps.terraform-outputs.outputs.app_ip }}"
+        HOST_IP="${{ steps.terraform-outputs.outputs.dev_app_ip }}"
         
         if [ "$HOST_IP" = "127.0.0.1" ]; then
           echo "Usando IP placeholder (127.0.0.1), pulando verificação de SSH"
-          echo "HOST_READY=false" >> $GITHUB_ENV
+          echo "DEV_HOST_READY=false" >> $GITHUB_ENV
           exit 0
         fi
         
-        echo "Verificando disponibilidade do host: $HOST_IP"
+        echo "Verificando disponibilidade do host de desenvolvimento: $HOST_IP"
         # Instalar netcat se necessário
         sudo apt-get update -y && sudo apt-get install -y netcat-openbsd
         # Aguardar um tempo para garantir que a instância esteja pronta
-        echo "Aguardando 60 segundos para inicialização da instância..."
+        echo "Aguardando 60 segundos para inicialização da instância de desenvolvimento..."
         sleep 60
         
         # Tentar conectar várias vezes com um timeout
         for i in {1..12}; do
           if nc -z -v -w5 $HOST_IP 22; then
-            echo "Host disponível para SSH"
-            echo "HOST_READY=true" >> $GITHUB_ENV
+            echo "Host de desenvolvimento disponível para SSH"
+            echo "DEV_HOST_READY=true" >> $GITHUB_ENV
             break
           else
             echo "Tentativa $i: SSH ainda não disponível. Aguardando..."
@@ -232,41 +256,41 @@ jobs:
           fi
           
           if [ $i -eq 12 ]; then
-            echo "AVISO: Host não respondeu após 12 tentativas, mas vamos continuar mesmo assim"
-            echo "HOST_READY=false" >> $GITHUB_ENV
+            echo "AVISO: Host de desenvolvimento não respondeu após 12 tentativas, mas vamos continuar mesmo assim"
+            echo "DEV_HOST_READY=false" >> $GITHUB_ENV
           fi
         done
 
-    - name: Deploy latest images to EC2
-      if: steps.terraform-outputs.outputs.app_ip != '127.0.0.1' && env.HOST_READY == 'true'
+    - name: Deploy latest images to Development EC2
+      if: steps.terraform-outputs.outputs.dev_app_ip != '127.0.0.1' && env.DEV_HOST_READY == 'true'
       run: |
-        HOST_IP="${{ steps.terraform-outputs.outputs.app_ip }}"
-        echo "Executando deploy das imagens mais recentes na EC2: $HOST_IP"
+        HOST_IP="${{ steps.terraform-outputs.outputs.dev_app_ip }}"
+        echo "Executando deploy das imagens mais recentes na EC2 de desenvolvimento: $HOST_IP"
         
-        # Copiar script de deploy para a EC2
-        echo "Copiando script de deploy para a EC2..."
-        scp -o StrictHostKeyChecking=no -i ./terraform/pointtils_key terraform/deploy-app.sh ubuntu@$HOST_IP:/home/ubuntu/
+        # Copiar script de deploy para a EC2 de desenvolvimento
+        echo "Copiando script de deploy para a EC2 de desenvolvimento..."
+        scp -o StrictHostKeyChecking=no -i ./terraform-dev/pointtils_dev_key terraform/deploy-app.sh ubuntu@$HOST_IP:/home/ubuntu/
         
-        # Executar script de deploy na EC2 com parâmetros
-        echo "Executando script de deploy com parâmetros..."
-        ssh -o StrictHostKeyChecking=no -i ./terraform/pointtils_key ubuntu@$HOST_IP "chmod +x /home/ubuntu/deploy-app.sh && /home/ubuntu/deploy-app.sh \
+        # Executar script de deploy na EC2 com parâmetros de desenvolvimento
+        echo "Executando script de deploy com parâmetros de desenvolvimento..."
+        ssh -o StrictHostKeyChecking=no -i ./terraform-dev/pointtils_dev_key ubuntu@$HOST_IP "chmod +x /home/ubuntu/deploy-app.sh && /home/ubuntu/deploy-app.sh \
           '${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com' \
-          '${{ secrets.DB_USERNAME }}' \
-          '${{ secrets.DB_PASSWORD }}' \
-          '${{ secrets.DB_NAME || 'pointtils-db' }}' \
-          '${{ secrets.JWT_SECRET }}' \
+          '${{ secrets.DB_DEV_USERNAME || 'pointtilsdevadmin' }}' \
+          '${{ secrets.DB_DEV_PASSWORD || 'devpassword123' }}' \
+          '${{ secrets.DB_DEV_NAME || 'pointtils-dev-db' }}' \
+          '${{ secrets.JWT_DEV_SECRET || 'devjwtsecretkey1234567890123456789012345678901234' }}' \
           '${{ secrets.AWS_REGION }}' \
           '${{ secrets.CLOUD_AWS_BUCKET_NAME }}' \
           '${{ secrets.AWS_ACCESS_KEY_ID }}' \
           '${{ secrets.AWS_SECRET_ACCESS_KEY }}'"
         
-        echo "✅ Deploy das imagens mais recentes concluído com sucesso!"
+        echo "✅ Deploy das imagens mais recentes para desenvolvimento concluído com sucesso!"
 
-    - name: Health check application
-      if: steps.terraform-outputs.outputs.app_ip != '127.0.0.1' && env.HOST_READY == 'true'
+    - name: Health check development application
+      if: steps.terraform-outputs.outputs.dev_app_ip != '127.0.0.1' && env.DEV_HOST_READY == 'true'
       run: |
-        HOST_IP="${{ steps.terraform-outputs.outputs.app_ip }}"
-        echo "Realizando health check final na aplicação: http://$HOST_IP:8080/actuator/health"
+        HOST_IP="${{ steps.terraform-outputs.outputs.dev_app_ip }}"
+        echo "Realizando health check final na aplicação de desenvolvimento: http://$HOST_IP:8080/actuator/health"
         
         # Aguardar aplicação inicializar após deploy
         sleep 30
@@ -274,58 +298,58 @@ jobs:
         for i in {1..10}; do
           RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://$HOST_IP:8080/actuator/health || echo "000")
           if [ "$RESPONSE" = "200" ]; then
-            echo "✅ Aplicação respondendo corretamente (HTTP 200)"
+            echo "✅ Aplicação de desenvolvimento respondendo corretamente (HTTP 200)"
             break
           else
-            echo "Tentativa $i: Aplicação não respondeu (HTTP $RESPONSE). Aguardando..."
+            echo "Tentativa $i: Aplicação de desenvolvimento não respondeu (HTTP $RESPONSE). Aguardando..."
             sleep 15
           fi
         done
 
-    - name: Rollback on failure (Production)
-      if: failure() && steps.terraform-outputs.outputs.app_ip != '127.0.0.1' && env.HOST_READY == 'true'
+    - name: Rollback on failure (Development)
+      if: failure() && steps.terraform-outputs.outputs.dev_app_ip != '127.0.0.1' && env.DEV_HOST_READY == 'true'
       run: |
-        HOST_IP="${{ steps.terraform-outputs.outputs.app_ip }}"
-        echo "🚨 Deploy de produção falhou! Iniciando rollback automático..."
+        HOST_IP="${{ steps.terraform-outputs.outputs.dev_app_ip }}"
+        echo "🚨 Deploy de desenvolvimento falhou! Iniciando rollback automático..."
         
-        # Copiar script de rollback para a EC2 de produção
-        scp -o StrictHostKeyChecking=no -i ./terraform/pointtils_key terraform/rollback-app.sh ubuntu@$HOST_IP:/home/ubuntu/
+        # Copiar script de rollback para a EC2 de desenvolvimento
+        scp -o StrictHostKeyChecking=no -i ./terraform-dev/pointtils_dev_key terraform/rollback-app.sh ubuntu@$HOST_IP:/home/ubuntu/
         
-        # Executar rollback na EC2 de produção
-        ssh -o StrictHostKeyChecking=no -i ./terraform/pointtils_key ubuntu@$HOST_IP "chmod +x /home/ubuntu/rollback-app.sh && /home/ubuntu/rollback-app.sh \
+        # Executar rollback na EC2 de desenvolvimento
+        ssh -o StrictHostKeyChecking=no -i ./terraform-dev/pointtils_dev_key ubuntu@$HOST_IP "chmod +x /home/ubuntu/rollback-app.sh && /home/ubuntu/rollback-app.sh \
           '${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com' \
-          '${{ secrets.DB_USERNAME }}' \
-          '${{ secrets.DB_PASSWORD }}' \
-          '${{ secrets.DB_NAME || 'pointtils-db' }}' \
-          '${{ secrets.JWT_SECRET }}' \
+          '${{ secrets.DB_DEV_USERNAME || 'pointtilsdevadmin' }}' \
+          '${{ secrets.DB_DEV_PASSWORD || 'devpassword123' }}' \
+          '${{ secrets.DB_DEV_NAME || 'pointtils-dev-db' }}' \
+          '${{ secrets.JWT_DEV_SECRET || 'devjwtsecretkey1234567890123456789012345678901234' }}' \
           '${{ secrets.AWS_REGION }}' \
           '${{ secrets.CLOUD_AWS_BUCKET_NAME }}' \
           '${{ secrets.AWS_ACCESS_KEY_ID }}' \
           '${{ secrets.AWS_SECRET_ACCESS_KEY }}' \
           'previous'"
         
-        echo "⚠️ Rollback executado. Verifique o status da aplicação de produção manualmente."
+        echo "⚠️ Rollback executado. Verifique o status da aplicação de desenvolvimento manualmente."
 
-    - name: Deployment Summary
+    - name: Development Deployment Summary
       run: |
         echo "======================================"
-        if [ "${{ env.HOST_READY }}" == "true" ]; then
-          echo "✅ Deployment completed successfully!"
-        elif [ "${{ steps.terraform-outputs.outputs.app_ip }}" == "127.0.0.1" ]; then
-          echo "⚠️ Infrastructure deployment incomplete - could not retrieve valid IP"
+        if [ "${{ env.DEV_HOST_READY }}" == "true" ]; then
+          echo "✅ Development deployment completed successfully!"
+        elif [ "${{ steps.terraform-outputs.outputs.dev_app_ip }}" == "127.0.0.1" ]; then
+          echo "⚠️ Development infrastructure deployment incomplete - could not retrieve valid IP"
         else
-          echo "⚠️ Deployment may have issues - host was not ready for SSH"
+          echo "⚠️ Development deployment may have issues - host was not ready for SSH"
         fi
         echo "======================================"
         
-        if [ "${{ steps.terraform-outputs.outputs.app_ip }}" != "127.0.0.1" ]; then
-          echo "Application URL: http://${{ steps.terraform-outputs.outputs.app_ip }}:8080"
-          echo "Swagger UI: http://${{ steps.terraform-outputs.outputs.app_ip }}:8080/swagger-ui.html"
-          echo "SSH Access: ssh ubuntu@${{ steps.terraform-outputs.outputs.app_ip }}"
+        if [ "${{ steps.terraform-outputs.outputs.dev_app_ip }}" != "127.0.0.1" ]; then
+          echo "Development Application URL: http://${{ steps.terraform-outputs.outputs.dev_app_ip }}:8080"
+          echo "Development Swagger UI: http://${{ steps.terraform-outputs.outputs.dev_app_ip }}:8080/swagger-ui.html"
+          echo "Development SSH Access: ssh ubuntu@${{ steps.terraform-outputs.outputs.dev_app_ip }}"
         else
-          echo "Application URL: Not available (deployment incomplete)"
-          echo "SSH Access: Not available (deployment incomplete)"
+          echo "Development Application URL: Not available (deployment incomplete)"
+          echo "Development SSH Access: Not available (deployment incomplete)"
         fi
         
-        echo "ECR Repository: ${{ steps.terraform-outputs.outputs.ecr_repo }}"
+        echo "Development ECR Repository: ${{ steps.terraform-outputs.outputs.dev_ecr_repo }}"
         echo "======================================"
