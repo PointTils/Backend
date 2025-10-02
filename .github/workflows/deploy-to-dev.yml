@@ -187,6 +187,14 @@ jobs:
       continue-on-error: true
       run: terraform apply -auto-approve tfplan
 
+    - name: Save SSH private key from Terraform output
+      working-directory: terraform-dev
+      run: |
+        echo "Salvando chave privada SSH do output do Terraform..."
+        terraform output -raw private_key_pem > pointtils-dev-key.pem
+        chmod 600 pointtils-dev-key.pem
+        echo "Chave privada salva com permissões corretas"
+
     - name: Get Terraform outputs (Development)
       working-directory: terraform-dev
       id: terraform-outputs
