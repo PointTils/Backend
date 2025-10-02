@@ -148,11 +148,11 @@ jobs:
       run: |
         mkdir -p ./terraform-dev
         # Criar chave SSH privada para desenvolvimento
-        echo "${{ secrets.SSH_DEV_PRIVATE_KEY }}" > ./terraform-dev/pointtils_dev_key
+        echo "${{ secrets.SSH_DEV_PRIVATE_KEY }}" > ./terraform-dev/pointtils-dev-key.pem
         # Corrigir permissões da chave SSH
-        chmod 600 ./terraform-dev/pointtils_dev_key
-        # Criar chave SSH pública para desenvolvimento
-        echo "${{ secrets.SSH_DEV_PUBLIC_KEY }}" > ./terraform-dev/pointtils_dev_key.pub
+        chmod 600 ./terraform-dev/pointtils-dev-key.pem
+        # Gerar chave SSH pública a partir da chave privada
+        ssh-keygen -y -f ./terraform-dev/pointtils-dev-key.pem > ./terraform-dev/pointtils-dev-key.pub
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
@@ -276,11 +276,11 @@ jobs:
         
         # Copiar script de deploy ESPECÍFICO para desenvolvimento
         echo "Copiando script de deploy ESPECÍFICO para desenvolvimento..."
-        scp -o StrictHostKeyChecking=no -i ./terraform-dev/pointtils_dev_key terraform-dev/deploy-dev-app.sh ubuntu@$HOST_IP:/home/ubuntu/
+        scp -o StrictHostKeyChecking=no -i ./terraform-dev/pointtils-dev-key.pem terraform-dev/deploy-dev-app.sh ubuntu@$HOST_IP:/home/ubuntu/
         
         # Executar script de deploy ESPECÍFICO para desenvolvimento
         echo "Executando script de deploy ESPECÍFICO para desenvolvimento..."
-        ssh -o StrictHostKeyChecking=no -i ./terraform-dev/pointtils_dev_key ubuntu@$HOST_IP "chmod +x /home/ubuntu/deploy-dev-app.sh && /home/ubuntu/deploy-dev-app.sh \
+        ssh -o StrictHostKeyChecking=no -i ./terraform-dev/pointtils-dev-key.pem ubuntu@$HOST_IP "chmod +x /home/ubuntu/deploy-dev-app.sh && /home/ubuntu/deploy-dev-app.sh \
           '${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com' \
           '${{ secrets.DB_DEV_USERNAME || 'pointtilsdevadmin' }}' \
           '${{ secrets.DB_DEV_PASSWORD || 'devpassword123' }}' \
@@ -320,10 +320,10 @@ jobs:
         echo "🚨 Deploy de desenvolvimento falhou! Iniciando rollback automático..."
         
         # Copiar script de rollback ESPECÍFICO para desenvolvimento
-        scp -o StrictHostKeyChecking=no -i ./terraform-dev/pointtils_dev_key terraform-dev/rollback-dev-app.sh ubuntu@$HOST_IP:/home/ubuntu/
+        scp -o StrictHostKeyChecking=no -i ./terraform-dev/pointtils-dev-key.pem terraform-dev/rollback-dev-app.sh ubuntu@$HOST_IP:/home/ubuntu/
         
         # Executar rollback ESPECÍFICO para desenvolvimento
-        ssh -o StrictHostKeyChecking=no -i ./terraform-dev/pointtils_dev_key ubuntu@$HOST_IP "chmod +x /home/ubuntu/rollback-dev-app.sh && /home/ubuntu/rollback-dev-app.sh \
+        ssh -o StrictHostKeyChecking=no -i ./terraform-dev/pointtils-dev-key.pem ubuntu@$HOST_IP "chmod +x /home/ubuntu/rollback-dev-app.sh && /home/ubuntu/rollback-dev-app.sh \
           '${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com' \
           '${{ secrets.DB_DEV_USERNAME || 'pointtilsdevadmin' }}' \
           '${{ secrets.DB_DEV_PASSWORD || 'devpassword123' }}' \
