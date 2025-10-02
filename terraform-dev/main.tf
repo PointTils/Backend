@@ -358,7 +358,7 @@ data "template_file" "dev_user_data" {
 resource "aws_instance" "pointtils_dev_app" {
   ami                    = var.ec2_ami
   instance_type          = "t2.micro"  # Instância menor para desenvolvimento
-  key_name               = aws_key_pair.pointtils_dev_key.key_name
+  key_name               = aws_key_pair.pointtils_key.key_name
   vpc_security_group_ids = [aws_security_group.dev_app_sg.id]
   subnet_id              = aws_subnet.dev_public_subnet_1.id
   iam_instance_profile   = aws_iam_instance_profile.dev_ec2_profile.name
