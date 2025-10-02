@@ -192,10 +192,21 @@ resource "aws_iam_instance_profile" "dev_ec2_profile" {
   role = aws_iam_role.dev_ec2_role.name
 }
 
-# Chave SSH para acesso às instâncias EC2 do NOVO ambiente de desenvolvimento
+# Gera um par de chaves SSH
+resource "tls_private_key" "ssh" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+# Cria o Key Pair no AWS usando a chave pública gerada
 resource "aws_key_pair" "pointtils_key" {
   key_name   = "pointtils-dev-key"
-  public_key = file("${path.module}/pointtils-dev-key.pub")
+  public_key = tls_private_key.ssh.public_key_openssh
+
+  tags = {
+    Name        = "pointtils-dev-key"
+    Environment = var.environment
+  }
 }
 
 # Script de inicialização para a instância EC2 do NOVO ambiente de desenvolvimento
@@ -423,4 +434,16 @@ output "dev_app_url" {
 output "dev_s3_bucket" {
   description = "Nome do bucket S3 do NOVO ambiente de desenvolvimento"
   value       = aws_s3_bucket.pointtils_dev_api_tests.bucket
+}
+
+# Output da chave privada (IMPORTANTE!)
+output "private_key_pem" {
+  description = "Chave privada SSH gerada automaticamente"
+  value       = tls_private_key.ssh.private_key_pem
+  sensitive   = true
+}
+
+output "public_key_openssh" {
+  description = "Chave pública SSH gerada automaticamente"
+  value       = tls_private_key.ssh.public_key_openssh
 }

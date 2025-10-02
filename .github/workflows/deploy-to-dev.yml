@@ -144,15 +144,6 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
-    - name: Create SSH key file for development
-      run: |
-        mkdir -p ./terraform-dev
-        # Criar chave SSH privada
-        echo "${{ secrets.SSH_DEV_PRIVATE_KEY }}" > ./terraform-dev/pointtils-dev-key.pem
-        # Corrigir permissões da chave SSH
-        chmod 600 ./terraform-dev/pointtils-dev-key.pem
-        # Gerar chave SSH pública a partir da chave privada
-        ssh-keygen -y -f ./terraform-dev/pointtils-dev-key.pem > ./terraform-dev/pointtils-dev-key.pub
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
