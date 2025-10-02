@@ -205,8 +205,8 @@ class InterpreterControllerTest {
     void deveBuscarInterpretesComSucesso() throws Exception {
         // Arrange
         InterpreterListResponseDTO mockResponse = createInterpreterListResponse();
-        when(interpreterService.findAll(
-                null, null, null, null, null, null, null)).thenReturn(List.of(mockResponse));
+        when(interpreterService.findAll(null, null, null, null, null, null, null, null))
+                .thenReturn(List.of(mockResponse));
 
         // Act & Assert
         mockMvc.perform(get("/v1/interpreters")

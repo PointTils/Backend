@@ -93,14 +93,7 @@ class InterpreterServiceTest {
         when(repository.findAll(any(Specification.class))).thenReturn(List.of(foundInterpreter));
         when(responseMapper.toListResponseDTO(foundInterpreter)).thenReturn(mappedResponse);
 
-        assertThat(service.findAll(
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null))
+        assertThat(service.findAll(null, null, null, null, null, null, null, null))
                 .hasSize(1)
                 .contains(mappedResponse);
     }
@@ -156,7 +149,8 @@ class InterpreterServiceTest {
                 "SP",
                 "Higienópolis",
                 specialty.getId().toString(),
-                "2025-12-31 10:00"
+                "2025-12-31 10:00",
+                null
         );
 
         // Assert
