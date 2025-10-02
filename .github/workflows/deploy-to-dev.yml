@@ -191,9 +191,13 @@ jobs:
       working-directory: terraform-dev
       run: |
         echo "Salvando chave privada SSH do output do Terraform..."
+        # Primeiro inicializar novamente para garantir que o estado esteja disponível
+        terraform init
         terraform output -raw private_key_pem > pointtils-dev-key.pem
         chmod 600 pointtils-dev-key.pem
         echo "Chave privada salva com permissões corretas"
+        echo "Verificando se a chave foi criada:"
+        ls -la pointtils-dev-key.pem
 
     - name: Get Terraform outputs (Development)
       working-directory: terraform-dev
