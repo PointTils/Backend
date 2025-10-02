@@ -1,7 +1,8 @@
-package com.pointtils.pointtils.src.infrastructure.repositories;
+package com.pointtils.pointtils.src.infrastructure.repositories.spec;
 
 import com.pointtils.pointtils.src.core.domain.entities.Schedule;
 import com.pointtils.pointtils.src.core.domain.entities.enums.DayOfWeek;
+import lombok.experimental.UtilityClass;
 import org.springframework.data.jpa.domain.Specification;
 
 import jakarta.persistence.criteria.Predicate;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@UtilityClass
 public class ScheduleSpecifications {
 
     public static Specification<Schedule> withFilters(UUID interpreterId, DayOfWeek day, LocalTime dateFrom, LocalTime dateTo) {
