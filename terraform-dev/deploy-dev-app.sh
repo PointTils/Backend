@@ -1,28 +1,23 @@
 #!/bin/bash
 set -e  # Exit on any error
 
-echo "=== Iniciando deploy da aplicação PointTils para DESENVOLVIMENTO ==="
+echo "=== Deploy Simples da Aplicação PointTils para DESENVOLVIMENTO ==="
 
 # Parâmetros recebidos do pipeline
 ECR_REGISTRY="${1:-969285065739.dkr.ecr.us-east-2.amazonaws.com}"
-DB_USERNAME="${2:-pointtilsdevadmin}"
-DB_PASSWORD="${3:-devpassword123}"
-DB_NAME="${4:-pointtils-dev-db}"
-JWT_SECRET="${5:-devjwtsecretkey1234567890123456789012345678901234}"
-AWS_REGION="${6:-us-east-2}"
-S3_BUCKET_NAME="${7:-pointtils-dev-api-tests}"
-AWS_ACCESS_KEY_ID="${8}"
-AWS_SECRET_ACCESS_KEY="${9}"
+AWS_REGION="${2:-us-east-2}"
 
 APP_IMAGE="$ECR_REGISTRY/pointtils:dev-latest"
 DB_IMAGE="$ECR_REGISTRY/pointtils-db:dev-latest"
 
+# Valores padrão para desenvolvimento
+DB_USERNAME="pointtilsdevadmin"
+DB_PASSWORD="devpassword123"
+DB_NAME="pointtils-dev-db"
+
 echo "ECR Registry: $ECR_REGISTRY"
 echo "App Image: $APP_IMAGE"
-echo "DB Image: $DB_IMAGE"
-echo "Database: $DB_NAME"
 echo "AWS Region: $AWS_REGION"
-echo "S3 Bucket: $S3_BUCKET_NAME"
 echo "Environment: DEVELOPMENT"
 
 # Corrigir permissões do Docker
@@ -43,13 +38,6 @@ docker pull $DB_IMAGE
 echo "Parando containers de DESENVOLVIMENTO existentes..."
 docker stop pointtils-dev pointtils-dev-db 2>/dev/null || true
 docker rm pointtils-dev pointtils-dev-db 2>/dev/null || true
-
-# Remover rede existente se houver
-docker network rm pointtils-dev-network 2>/dev/null || true
-
-# Criar rede para os containers de DESENVOLVIMENTO
-echo "Criando rede para os containers de DESENVOLVIMENTO..."
-docker network create pointtils-dev-network
 
 # Iniciar container do banco de dados de DESENVOLVIMENTO
 echo "Iniciando container do banco de dados de DESENVOLVIMENTO..."
@@ -94,55 +82,62 @@ for i in {1..30}; do
   fi
 done
 
-# Iniciar container da aplicação de DESENVOLVIMENTO
-echo "Iniciando container da aplicação de DESENVOLVIMENTO..."
+# Iniciar novo container da aplicação (SEM variáveis - já configuradas na imagem)
+echo "Iniciando novo container da aplicação de DESENVOLVIMENTO..."
 docker run -d \
   --name pointtils-dev \
   --network pointtils-dev-network \
-  -e SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-dev-db:5432/$DB_NAME \
-  -e SPRING_DATASOURCE_USERNAME=$DB_USERNAME \
-  -e SPRING_DATASOURCE_PASSWORD=$DB_PASSWORD \
-  -e SPRING_APPLICATION_NAME=pointtils-api-dev \
-  -e SERVER_PORT=8080 \
-  -e JWT_SECRET=$JWT_SECRET \
-  -e JWT_EXPIRATION_TIME=3600000 \
-  -e JWT_REFRESH_EXPIRATION_TIME=86400000 \
-  -e SPRING_JPA_HIBERNATE_DDL_AUTO=update \
-  -e SPRING_JPA_SHOW_SQL=true \
-  -e SPRINGDOC_API_DOCS_ENABLED=true \
-  -e SPRINGDOC_SWAGGER_UI_ENABLED=true \
-  -e SPRINGDOC_SWAGGER_UI_PATH=/swagger-ui.html \
-  -e CLOUD_AWS_BUCKET_NAME=$S3_BUCKET_NAME \
-  -e AWS_REGION=$AWS_REGION \
-  -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
-  -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
-  -e SPRING_PROFILES_ACTIVE=dev \
-  -e LOGGING_LEVEL_COM_POINTTILS=DEBUG \
   -p 8080:8080 \
   --restart unless-stopped \
   $APP_IMAGE
 
-# Aguardar aplicação iniciar
+# Aguardar aplicação iniciar com verificações robustas
 echo "Aguardando aplicação de DESENVOLVIMENTO iniciar..."
-sleep 30
+for i in {1..10}; do
+  # Verificar se o container está rodando
+  if docker ps | grep -q pointtils-dev; then
+    echo "✅ Container da aplicação está rodando"
+    
+    # Verificar logs para ver se a aplicação iniciou
+    echo "Verificando logs da aplicação (tentativa $i):"
+    docker logs --tail=10 pointtils-dev | grep -E "(Started|ERROR|Exception|failed)" || echo "Aguardando inicialização..."
+    
+    # Tentar health check com timeout
+    echo "Tentativa $i: Health check..."
+    HEALTH_RESPONSE=$(timeout 10 curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/actuator/health 2>/dev/null || echo "000")
+    
+    if [ "$HEALTH_RESPONSE" = "200" ]; then
+        echo "✅ Health check de DESENVOLVIMENTO: SUCCESS (HTTP 200)"
+        echo "✅ Deploy de DESENVOLVIMENTO concluído com sucesso!"
+        break
+    elif [ "$HEALTH_RESPONSE" != "000" ]; then
+        echo "⚠️  Health check retornou HTTP $HEALTH_RESPONSE - aplicação pode estar iniciando"
+    else
+        echo "❌ Health check falhou (sem resposta) - aplicação ainda não está respondendo"
+    fi
+  else
+    echo "❌ Container da aplicação não está rodando"
+    exit 1
+  fi
+  
+  if [ $i -eq 10 ]; then
+    echo "❌ Health check de DESENVOLVIMENTO: FAILED após 10 tentativas"
+    echo "⚠️  Deploy executado, mas aplicação pode ter problemas de inicialização"
+    echo "Verifique os logs manualmente: docker logs pointtils-dev"
+    exit 1
+  fi
+  
+  echo "Aguardando 10 segundos antes da próxima tentativa..."
+  sleep 10
+done
 
-# Verificar status dos containers
-echo "Verificando status dos containers de DESENVOLVIMENTO:"
+# Verificar status final dos containers
+echo "Verificando status final dos containers de DESENVOLVIMENTO:"
 docker ps
 
-# Verificar logs da aplicação
-echo "Verificando logs da aplicação de DESENVOLVIMENTO:"
-docker logs --tail=20 pointtils-dev
-
-# Health check
-echo "Realizando health check de DESENVOLVIMENTO..."
-HEALTH_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/actuator/health || echo "000")
-if [ "$HEALTH_RESPONSE" = "200" ]; then
-    echo "✅ Health check de DESENVOLVIMENTO: SUCCESS (HTTP 200)"
-else
-    echo "❌ Health check de DESENVOLVIMENTO: FAILED (HTTP $HEALTH_RESPONSE)"
-    exit 1
-fi
+# Verificar logs finais da aplicação
+echo "Verificando logs finais da aplicação de DESENVOLVIMENTO:"
+docker logs --tail=30 pointtils-dev
 
 echo "=== Deploy de DESENVOLVIMENTO concluído com sucesso! ==="
 echo "Aplicação de DESENVOLVIMENTO disponível em: http://localhost:8080"

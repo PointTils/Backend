@@ -284,26 +284,19 @@ jobs:
       if: steps.terraform-outputs.outputs.dev_app_ip != '127.0.0.1' && env.DEV_HOST_READY == 'true'
       run: |
         HOST_IP="${{ steps.terraform-outputs.outputs.dev_app_ip }}"
-        echo "Executando deploy das imagens mais recentes na EC2 de desenvolvimento: $HOST_IP"
+        echo "Executando deploy SIMPLIFICADO das imagens mais recentes na EC2 de desenvolvimento: $HOST_IP"
         
-        # Copiar script de deploy ESPECÍFICO para desenvolvimento
-        echo "Copiando script de deploy ESPECÍFICO para desenvolvimento..."
+        # Copiar script de deploy SIMPLIFICADO para desenvolvimento
+        echo "Copiando script de deploy SIMPLIFICADO para desenvolvimento..."
         scp -o StrictHostKeyChecking=no -i ./terraform-dev/pointtils-dev-key.pem terraform-dev/deploy-dev-app.sh ubuntu@$HOST_IP:/home/ubuntu/
         
-        # Executar script de deploy ESPECÍFICO para desenvolvimento
-        echo "Executando script de deploy ESPECÍFICO para desenvolvimento..."
+        # Executar script de deploy SIMPLIFICADO para desenvolvimento
+        echo "Executando script de deploy SIMPLIFICADO para desenvolvimento..."
         ssh -o StrictHostKeyChecking=no -i ./terraform-dev/pointtils-dev-key.pem ubuntu@$HOST_IP "chmod +x /home/ubuntu/deploy-dev-app.sh && /home/ubuntu/deploy-dev-app.sh \
           '${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com' \
-          '${{ secrets.DB_DEV_USERNAME || 'pointtilsdevadmin' }}' \
-          '${{ secrets.DB_DEV_PASSWORD || 'devpassword123' }}' \
-          '${{ secrets.DB_DEV_NAME || 'pointtils-dev-db' }}' \
-          '${{ secrets.JWT_DEV_SECRET || 'devjwtsecretkey1234567890123456789012345678901234' }}' \
-          '${{ secrets.AWS_REGION }}' \
-          '${{ secrets.CLOUD_AWS_BUCKET_NAME }}' \
-          '${{ secrets.AWS_ACCESS_KEY_ID }}' \
-          '${{ secrets.AWS_SECRET_ACCESS_KEY }}'"
+          '${{ secrets.AWS_REGION }}'"
         
-        echo "✅ Deploy das imagens mais recentes para desenvolvimento concluído com sucesso!"
+        echo "✅ Deploy SIMPLIFICADO das imagens mais recentes para desenvolvimento concluído com sucesso!"
 
     - name: Health check development application
       if: steps.terraform-outputs.outputs.dev_app_ip != '127.0.0.1' && env.DEV_HOST_READY == 'true'
@@ -331,23 +324,16 @@ jobs:
         HOST_IP="${{ steps.terraform-outputs.outputs.dev_app_ip }}"
         echo "🚨 Deploy de desenvolvimento falhou! Iniciando rollback automático..."
         
-        # Copiar script de rollback ESPECÍFICO para desenvolvimento
+        # Copiar script de rollback SIMPLIFICADO para desenvolvimento
         scp -o StrictHostKeyChecking=no -i ./terraform-dev/pointtils-dev-key.pem terraform-dev/rollback-dev-app.sh ubuntu@$HOST_IP:/home/ubuntu/
         
-        # Executar rollback ESPECÍFICO para desenvolvimento
+        # Executar rollback SIMPLIFICADO para desenvolvimento
         ssh -o StrictHostKeyChecking=no -i ./terraform-dev/pointtils-dev-key.pem ubuntu@$HOST_IP "chmod +x /home/ubuntu/rollback-dev-app.sh && /home/ubuntu/rollback-dev-app.sh \
           '${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com' \
-          '${{ secrets.DB_DEV_USERNAME || 'pointtilsdevadmin' }}' \
-          '${{ secrets.DB_DEV_PASSWORD || 'devpassword123' }}' \
-          '${{ secrets.DB_DEV_NAME || 'pointtils-dev-db' }}' \
-          '${{ secrets.JWT_DEV_SECRET || 'devjwtsecretkey1234567890123456789012345678901234' }}' \
           '${{ secrets.AWS_REGION }}' \
-          '${{ secrets.CLOUD_AWS_BUCKET_NAME }}' \
-          '${{ secrets.AWS_ACCESS_KEY_ID }}' \
-          '${{ secrets.AWS_SECRET_ACCESS_KEY }}' \
           'previous'"
         
-        echo "⚠️ Rollback de DESENVOLVIMENTO executado. Verifique o status da aplicação de desenvolvimento manualmente."
+        echo "⚠️ Rollback SIMPLIFICADO de DESENVOLVIMENTO executado. Verifique o status da aplicação de desenvolvimento manualmente."
 
     - name: Development Deployment Summary
       run: |

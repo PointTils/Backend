@@ -209,18 +209,18 @@ resource "aws_key_pair" "pointtils_key" {
   }
 }
 
-# Script de inicialização para a instância EC2 do NOVO ambiente de desenvolvimento
+# Script de inicialização SIMPLIFICADO para a instância EC2 do ambiente de desenvolvimento
 data "template_file" "dev_user_data" {
   template = <<-EOF
               #!/bin/bash
               set -e  # Exit on any error
-              echo "=== Iniciando configuração do servidor de NOVO desenvolvimento ==="
+              echo "=== Iniciando configuração SIMPLIFICADA do servidor de desenvolvimento ==="
               
               # Atualizar pacotes
               sudo apt-get update -y
               sudo apt-get upgrade -y
               
-              # Instalar Docker
+              # Instalar APENAS Docker e AWS CLI (sem Docker Compose)
               sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
               curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
               echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
@@ -230,138 +230,14 @@ data "template_file" "dev_user_data" {
               sudo systemctl start docker
               sudo usermod -aG docker ubuntu
               
-              # Instalar Docker Compose
-              sudo curl -L "https://github.com/docker/compose/releases/download/v2.15.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-              sudo chmod +x /usr/local/bin/docker-compose
-              
-              # Criar diretório para a aplicação de NOVO desenvolvimento
-              mkdir -p /home/ubuntu/pointtils-dev
-              cd /home/ubuntu/pointtils-dev
-              
-              # Criar arquivo .env para variáveis de ambiente de NOVO desenvolvimento
-              cat > /home/ubuntu/pointtils-dev/.env << ENVFILE
-              # Database Container Configuration - NEW Development
-              POSTGRES_USER=${var.db_username}
-              POSTGRES_PASSWORD=${var.db_password}
-              POSTGRES_DB=${var.db_name}
-              
-              # Spring Application Configuration - NEW Development
-              SPRING_APPLICATION_NAME=pointtils-api-dev
-              SERVER_PORT=8080
-              
-              # Spring DataSource Configuration - NEW Development
-              SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-dev-db:5432/${var.db_name}
-              SPRING_DATASOURCE_USERNAME=${var.db_username}
-              SPRING_DATASOURCE_PASSWORD=${var.db_password}
-              
-              # JPA/Hibernate Configuration - NEW Development
-              SPRING_JPA_HIBERNATE_DDL_AUTO=update  # Mais permissivo para desenvolvimento
-              SPRING_JPA_SHOW_SQL=true
-              
-              # JWT Configuration - NEW Development
-              JWT_SECRET=${var.jwt_secret}
-              JWT_ISSUER=pointtils-api-dev
-              JWT_EXPIRATION_TIME=900000
-              JWT_REFRESH_EXPIRATION_TIME=604800000
-              
-              # Flyway Configuration - NEW Development
-              SPRING_FLYWAY_ENABLED=true
-              SPRING_FLYWAY_LOCATIONS=classpath:db/migration
-              SPRING_FLYWAY_BASELINE_ON_MIGRATE=true
-              SPRING_FLYWAY_VALIDATE_ON_MIGRATE=true
-              
-              # Swagger/OpenAPI Configuration - NEW Development
-              SPRINGDOC_API_DOCS_ENABLED=true
-              SPRINGDOC_SWAGGER_UI_ENABLED=true
-              SPRINGDOC_SWAGGER_UI_PATH=/swagger-ui.html
-              
-              # NEW Development-specific configurations
-              SPRING_PROFILES_ACTIVE=dev
-              LOGGING_LEVEL_COM_POINTTILS=DEBUG
-              ENVFILE
+              # Criar rede Docker para os containers
+              sudo docker network create pointtils-dev-network
               
               # Fazer login no ECR
               aws ecr get-login-password --region ${var.aws_region} | sudo docker login --username AWS --password-stdin ${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com
               
-              # Criar docker-compose.yaml para NOVO desenvolvimento
-              cat > /home/ubuntu/pointtils-dev/docker-compose.yaml << DOCKERFILE
-              services:
-                pointtils-dev:
-                  image: ${var.app_image}
-                  container_name: pointtils-dev
-                  environment:
-                    - SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-dev-db:5432/${var.db_name}
-                    - SPRING_DATASOURCE_USERNAME=${var.db_username}
-                    - SPRING_DATASOURCE_PASSWORD=${var.db_password}
-                    - SPRING_APPLICATION_NAME=pointtils-api-dev
-                    - SERVER_PORT=8080
-                    - JWT_SECRET=${var.jwt_secret}
-                    - JWT_EXPIRATION_TIME=900000
-                    - SPRING_JPA_HIBERNATE_DDL_AUTO=update
-                    - SPRING_JPA_SHOW_SQL=true
-                    - SPRINGDOC_API_DOCS_ENABLED=true
-                    - SPRINGDOC_SWAGGER_UI_ENABLED=true
-                    - SPRINGDOC_SWAGGER_UI_PATH=/swagger-ui.html
-                    - CLOUD_AWS_BUCKET_NAME=${aws_s3_bucket.pointtils_dev_api_tests.bucket}
-                    - AWS_REGION=${var.aws_region}
-                    - SPRING_PROFILES_ACTIVE=dev
-                    - LOGGING_LEVEL_COM_POINTTILS=DEBUG
-                  ports:
-                    - "8080:8080"
-                  depends_on:
-                    pointtils-dev-db:
-                      condition: service_healthy
-                  networks:
-                    - pointtils-dev-network
-                  restart: unless-stopped
-              
-                pointtils-dev-db:
-                  image: ${var.db_image}
-                  container_name: pointtils-dev-db
-                  environment:
-                    POSTGRES_DB: ${var.db_name}
-                    POSTGRES_USER: ${var.db_username}
-                    POSTGRES_PASSWORD: ${var.db_password}
-                  ports:
-                    - "5432:5432"
-                  volumes:
-                    - postgres_dev_data:/var/lib/postgresql/data
-                  networks:
-                    - pointtils-dev-network
-                  healthcheck:
-                    test: ["CMD-SHELL", "pg_isready -U ${var.db_username} -d ${var.db_name}"]
-                    interval: 30s
-                    timeout: 10s
-                    retries: 3
-                    start_period: 40s
-                  restart: unless-stopped
-              
-              volumes:
-                postgres_dev_data:
-              
-              networks:
-                pointtils-dev-network:
-                  driver: bridge
-              DOCKERFILE
-              
-              # Iniciar a aplicação com Docker Compose para NOVO desenvolvimento
-              cd /home/ubuntu/pointtils-dev
-              sudo docker-compose up -d
-              
-              # Aguardar a aplicação iniciar e verificar status
-              echo "Aguardando aplicação de NOVO desenvolvimento iniciar..."
-              sleep 30
-              
-              # Verificar se os containers estão rodando
-              echo "Verificando status dos containers de NOVO desenvolvimento:"
-              sudo docker-compose ps
-              
-              # Verificar logs para debugging
-              echo "Verificando logs da aplicação de NOVO desenvolvimento:"
-              sudo docker-compose logs --tail=20 pointtils-dev
-              
-              echo "=== Configuração do servidor de NOVO desenvolvimento concluída ==="
-              echo "=== Aplicação de NOVO desenvolvimento iniciada com Docker Compose ==="
+              echo "=== Configuração SIMPLIFICADA do servidor concluída ==="
+              echo "=== A EC2 está pronta para receber containers da ECR via deploy ==="
               EOF
 }
 
