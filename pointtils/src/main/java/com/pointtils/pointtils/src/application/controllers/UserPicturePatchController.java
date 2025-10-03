@@ -1,10 +1,8 @@
 package com.pointtils.pointtils.src.application.controllers;
 
-import com.pointtils.pointtils.src.application.dto.requests.UserPicturePatchRequestDTO;
-import com.pointtils.pointtils.src.application.dto.responses.UserResponseDTO;
-import com.pointtils.pointtils.src.application.services.UserPicturePatchService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import java.io.IOException;
+import java.util.UUID;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,13 +11,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.util.UUID;
+import com.pointtils.pointtils.src.application.dto.requests.UserPicturePatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.UserResponseDTO;
+import com.pointtils.pointtils.src.application.services.UserPicturePatchService;
+
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("v1/users")
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "spring.cloud.aws.s3.enabled", havingValue = "true")
 public class UserPicturePatchController {
 
     private final UserPicturePatchService userService;

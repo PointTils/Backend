@@ -46,6 +46,8 @@ public class SecurityConfiguration {
                         .requestMatchers("/v1/auth/logout").permitAll()
                         .requestMatchers("/api/jwt/**", "/auth/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers(HttpMethod.PATCH, "/v1/users/*/picture").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
