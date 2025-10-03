@@ -42,11 +42,27 @@ else
             ]
         }'
     
-    # Bloquear acesso público
+    # Permitir acesso público (leitura apenas)
     aws s3api put-public-access-block \
         --bucket "$BUCKET_NAME" \
         --public-access-block-configuration \
-            "BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true"
+            "BlockPublicAcls=false,IgnorePublicAcls=false,BlockPublicPolicy=false,RestrictPublicBuckets=false"
+    
+    # Configurar política de bucket para permitir acesso público de leitura
+    aws s3api put-bucket-policy \
+        --bucket "$BUCKET_NAME" \
+        --policy '{
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Sid": "PublicReadGetObject",
+                    "Effect": "Allow",
+                    "Principal": "*",
+                    "Action": "s3:GetObject",
+                    "Resource": "arn:aws:s3:::'"$BUCKET_NAME"'/*"
+                }
+            ]
+        }'
     
     echo "✅ Bucket S3 '$BUCKET_NAME' criado com sucesso"
 fi
