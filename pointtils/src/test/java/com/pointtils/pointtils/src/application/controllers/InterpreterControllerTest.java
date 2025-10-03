@@ -80,8 +80,8 @@ class InterpreterControllerTest {
                 .andExpect(jsonPath("$.data.id").exists())
                 .andExpect(jsonPath("$.data.email").value("interpreter@exemplo.com"))
                 .andExpect(jsonPath("$.data.name").value("João Intérprete"))
-                .andExpect(jsonPath("$.data.type").value("interpreter"))
-                .andExpect(jsonPath("$.data.status").value("pending"));
+                .andExpect(jsonPath("$.data.type").value("INTERPRETER"))
+                .andExpect(jsonPath("$.data.status").value("PENDING"));
     }
 
     @Test
@@ -162,7 +162,7 @@ class InterpreterControllerTest {
                 .andExpect(jsonPath("$.data.professional_data.min_value").value(100.00))
                 .andExpect(jsonPath("$.data.professional_data.max_value").value(500.00))
                 .andExpect(jsonPath("$.data.professional_data.image_rights").value(true))
-                .andExpect(jsonPath("$.data.professional_data.modality").value("presencial"))
+                .andExpect(jsonPath("$.data.professional_data.modality").value("PERSONALLY"))
                 .andExpect(jsonPath("$.data.professional_data.description")
                         .value("Intérprete experiente em LIBRAS"));
     }
@@ -205,8 +205,8 @@ class InterpreterControllerTest {
     void deveBuscarInterpretesComSucesso() throws Exception {
         // Arrange
         InterpreterListResponseDTO mockResponse = createInterpreterListResponse();
-        when(interpreterService.findAll(
-                null, null, null, null, null, null, null)).thenReturn(List.of(mockResponse));
+        when(interpreterService.findAll(null, null, null, null, null, null, null, null))
+                .thenReturn(List.of(mockResponse));
 
         // Act & Assert
         mockMvc.perform(get("/v1/interpreters")
@@ -239,7 +239,7 @@ class InterpreterControllerTest {
                 .andExpect(jsonPath("$.data.id").exists())
                 .andExpect(jsonPath("$.data.email").value("interpreter@exemplo.com"))
                 .andExpect(jsonPath("$.data.name").value("João Intérprete"))
-                .andExpect(jsonPath("$.data.type").value("interpreter"))
-                .andExpect(jsonPath("$.data.status").value("pending"));
+                .andExpect(jsonPath("$.data.type").value("INTERPRETER"))
+                .andExpect(jsonPath("$.data.status").value("PENDING"));
     }
 }
