@@ -23,11 +23,23 @@ public class UserPicturePatchService {
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
 
+        // Verifica se o S3 está habilitado antes de tentar fazer upload
+        if (!s3Service.isS3Enabled()) {
+            throw new UnsupportedOperationException("Upload de fotos está desabilitado. Configure spring.cloud.aws.s3.enabled=true para habilitar o upload para S3.");
+        }
+
         String url = s3Service.uploadFile(request.getFile(), request.getUserId().toString());
         user.setPicture(url);
 
         User savedUser = userRepository.save(user);
 
         return UserResponseDTO.fromEntity(savedUser);
+    }
+
+    /**
+     * Verifica se o serviço de upload de fotos está disponível
+     */
+    public boolean isPictureUploadEnabled() {
+        return s3Service.isS3Enabled();
     }
 }
