@@ -11,11 +11,6 @@ ROLLBACK_TAG="${3:-previous}"  # Tag da imagem anterior para rollback
 APP_IMAGE="$ECR_REGISTRY/pointtils:$ROLLBACK_TAG"
 DB_IMAGE="$ECR_REGISTRY/pointtils-db:$ROLLBACK_TAG"
 
-# Valores padrão para desenvolvimento
-DB_USERNAME="pointtilsdevadmin"
-DB_PASSWORD="devpassword123"
-DB_NAME="pointtils-dev-db"
-
 echo "ECR Registry: $ECR_REGISTRY"
 echo "Rollback App Image: $APP_IMAGE"
 echo "AWS Region: $AWS_REGION"
@@ -57,45 +52,16 @@ echo "Iniciando container do banco de dados (rollback de DESENVOLVIMENTO)..."
 docker run -d \
   --name pointtils-dev-db \
   --network pointtils-dev-network \
-  -e POSTGRES_DB=$DB_NAME \
-  -e POSTGRES_USER=$DB_USERNAME \
-  -e POSTGRES_PASSWORD=$DB_PASSWORD \
   -p 5432:5432 \
   -v postgres_dev_data:/var/lib/postgresql/data \
-  --health-cmd="pg_isready -U $DB_USERNAME -d $DB_NAME" \
-  --health-interval=30s \
-  --health-timeout=10s \
-  --health-retries=3 \
-  --health-start-period=40s \
   --restart unless-stopped \
   $DB_IMAGE
 
-# Aguardar banco ficar saudável
-echo "Aguardando banco de dados de DESENVOLVIMENTO ficar saudável..."
-for i in {1..30}; do
-  if docker inspect --format='{{.State.Health.Status}}' pointtils-dev-db | grep -q "healthy"; then
-    echo "✅ Banco de dados de DESENVOLVIMENTO saudável"
-    # Testar conexão com as credenciais reais
-    echo "Testando conexão com banco de dados de DESENVOLVIMENTO..."
-    if docker exec pointtils-dev-db pg_isready -U $DB_USERNAME -d $DB_NAME; then
-      echo "✅ Conexão com banco de dados de DESENVOLVIMENTO bem-sucedida"
-      break
-    else
-      echo "❌ Conexão com banco de dados de DESENVOLVIMENTO falhou"
-      echo "Credenciais usadas: usuário=$DB_USERNAME, banco=$DB_NAME"
-      exit 1
-    fi
-  else
-    echo "Tentativa $i: Banco de DESENVOLVIMENTO ainda não está saudável. Aguardando..."
-    sleep 5
-  fi
-  if [ $i -eq 30 ]; then
-    echo "❌ Banco de dados de DESENVOLVIMENTO não ficou saudável após 30 tentativas"
-    exit 1
-  fi
-done
+# Aguardar banco iniciar
+echo "Aguardando banco de dados de DESENVOLVIMENTO iniciar..."
+sleep 30
 
-# Iniciar container de rollback da aplicação (SEM variáveis - já configuradas na imagem)
+# Iniciar container de rollback da aplicação (sem variáveis - já configuradas na instância)
 echo "Iniciando container de rollback da aplicação de DESENVOLVIMENTO..."
 docker run -d \
   --name pointtils-dev \
@@ -110,10 +76,6 @@ for i in {1..10}; do
   # Verificar se o container está rodando
   if docker ps | grep -q pointtils-dev; then
     echo "✅ Container da aplicação está rodando"
-    
-    # Verificar logs para ver se a aplicação iniciou
-    echo "Verificando logs da aplicação (tentativa $i):"
-    docker logs --tail=10 pointtils-dev | grep -E "(Started|ERROR|Exception|failed)" || echo "Aguardando inicialização..."
     
     # Tentar health check com timeout
     echo "Tentativa $i: Health check..."
@@ -147,10 +109,6 @@ done
 # Verificar status final dos containers
 echo "Verificando status final dos containers de DESENVOLVIMENTO:"
 docker ps
-
-# Verificar logs finais da aplicação
-echo "Verificando logs finais da aplicação de DESENVOLVIMENTO:"
-docker logs --tail=30 pointtils-dev
 
 echo "=== Rollback de DESENVOLVIMENTO concluído! ==="
 echo "Aplicação de DESENVOLVIMENTO disponível em: http://localhost:8080"

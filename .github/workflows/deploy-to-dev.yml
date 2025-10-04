@@ -300,25 +300,25 @@ jobs:
         
         echo "✅ Deploy SIMPLIFICADO das imagens mais recentes para desenvolvimento concluído com sucesso!"
 
-    # - name: Health check development application
-    #   if: steps.terraform-outputs.outputs.dev_app_ip != '127.0.0.1' && env.DEV_HOST_READY == 'true'
-    #   run: |
-    #     HOST_IP="${{ steps.terraform-outputs.outputs.dev_app_ip }}"
-    #     echo "Realizando health check final na aplicação de desenvolvimento: http://$HOST_IP:8080/actuator/health"
-    #     
-    #     # Aguardar aplicação inicializar após deploy
-    #     sleep 30
-    #     
-    #     for i in {1..10}; do
-    #       RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://$HOST_IP:8080/actuator/health || echo "000")
-    #       if [ "$RESPONSE" = "200" ]; then
-    #         echo "✅ Aplicação de desenvolvimento respondendo corretamente (HTTP 200)"
-    #         break
-    #       else
-    #         echo "Tentativa $i: Aplicação de desenvolvimento não respondeu (HTTP $RESPONSE). Aguardando..."
-    #         sleep 15
-    #       fi
-    #     done
+    - name: Health check development application
+      if: steps.terraform-outputs.outputs.dev_app_ip != '127.0.0.1' && env.DEV_HOST_READY == 'true'
+      run: |
+        HOST_IP="${{ steps.terraform-outputs.outputs.dev_app_ip }}"
+        echo "Realizando health check final na aplicação de desenvolvimento: http://$HOST_IP:8080/actuator/health"
+        
+        # Aguardar aplicação inicializar após deploy
+        sleep 30
+        
+        for i in {1..10}; do
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://$HOST_IP:8080/actuator/health || echo "000")
+          if [ "$RESPONSE" = "200" ]; then
+            echo "✅ Aplicação de desenvolvimento respondendo corretamente (HTTP 200)"
+            break
+          else
+            echo "Tentativa $i: Aplicação de desenvolvimento não respondeu (HTTP $RESPONSE). Aguardando..."
+            sleep 15
+          fi
+        done
 
     - name: Rollback on failure (Development)
       if: failure() && steps.terraform-outputs.outputs.dev_app_ip != '127.0.0.1' && env.DEV_HOST_READY == 'true'
