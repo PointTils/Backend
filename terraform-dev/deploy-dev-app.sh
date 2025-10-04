@@ -80,12 +80,30 @@ for i in {1..30}; do
   fi
 done
 
-# Iniciar novo container da aplicação (SEM variáveis - já configuradas na imagem)
+# Iniciar novo container da aplicação com variáveis de ambiente
 echo "Iniciando novo container da aplicação de DESENVOLVIMENTO..."
 docker run -d \
   --name pointtils-dev \
   --network pointtils-dev-network \
   -p 8080:8080 \
+  -e SPRING_PROFILES_ACTIVE=prod \
+  -e SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-dev-db:5432/$DB_NAME \
+  -e SPRING_DATASOURCE_USERNAME=$DB_USERNAME \
+  -e SPRING_DATASOURCE_PASSWORD=$DB_PASSWORD \
+  -e SPRING_APPLICATION_NAME=pointtils-dev \
+  -e SERVER_PORT=8080 \
+  -e JWT_SECRET=testandoUmaNovaSenhaMasterComMaisDeTrintaEdoisCaracteres \
+  -e JWT_EXPIRATION_TIME=3600000 \
+  -e JWT_REFRESH_EXPIRATION_TIME=604800000 \
+  -e SPRING_JPA_HIBERNATE_DDL_AUTO=update \
+  -e SPRING_JPA_SHOW_SQL=true \
+  -e SPRING_FLYWAY_ENABLED=true \
+  -e SPRING_FLYWAY_LOCATIONS=classpath:db/migration \
+  -e SPRING_FLYWAY_BASELINE_ON_MIGRATE=true \
+  -e SPRING_FLYWAY_VALIDATE_ON_MIGRATE=true \
+  -e SPRINGDOC_API_DOCS_ENABLED=true \
+  -e SPRINGDOC_SWAGGER_UI_ENABLED=true \
+  -e SPRINGDOC_SWAGGER_UI_PATH=/swagger-ui.html \
   --restart unless-stopped \
   $APP_IMAGE
 
