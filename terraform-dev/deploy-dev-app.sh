@@ -104,6 +104,8 @@ docker run -d \
   -e SPRINGDOC_API_DOCS_ENABLED=true \
   -e SPRINGDOC_SWAGGER_UI_ENABLED=true \
   -e SPRINGDOC_SWAGGER_UI_PATH=/swagger-ui.html \
+  -e AWS_REGION=$AWS_REGION \
+  -e AWS_STACK_AUTO=false \
   --restart unless-stopped \
   $APP_IMAGE
 
