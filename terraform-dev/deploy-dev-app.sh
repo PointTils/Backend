@@ -11,9 +11,9 @@ APP_IMAGE="$ECR_REGISTRY/pointtils:dev-latest"
 DB_IMAGE="$ECR_REGISTRY/pointtils-db:dev-latest"
 
 # Valores padrão para desenvolvimento
-DB_USERNAME="pointtilsdevadmin"
-DB_PASSWORD="devpassword123"
-DB_NAME="pointtils-dev-db"
+DB_USERNAME="postgres"
+DB_PASSWORD="postgres"
+DB_NAME="postgres"
 
 echo "ECR Registry: $ECR_REGISTRY"
 echo "App Image: $APP_IMAGE"
