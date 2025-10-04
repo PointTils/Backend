@@ -48,12 +48,14 @@ docker run -d \
 echo "Aguardando banco de dados de DESENVOLVIMENTO iniciar..."
 sleep 30
 
-# Iniciar novo container da aplicação (sem variáveis de ambiente - já estão na imagem)
+# Iniciar novo container da aplicação com variáveis de ambiente necessárias
 echo "Iniciando novo container da aplicação de DESENVOLVIMENTO..."
 docker run -d \
   --name pointtils-dev \
   --network pointtils-dev-network \
   -p 8080:8080 \
+  -e SPRING_APPLICATION_NAME=pointtils-dev \
+  -e SPRING_PROFILES_ACTIVE=prod \
   --restart unless-stopped \
   $APP_IMAGE
 
