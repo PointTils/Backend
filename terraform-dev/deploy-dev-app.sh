@@ -6,14 +6,12 @@ echo "=== Deploy Simples da Aplicação PointTils para DESENVOLVIMENTO ==="
 # Parâmetros recebidos do pipeline
 ECR_REGISTRY="${1:-969285065739.dkr.ecr.us-east-2.amazonaws.com}"
 AWS_REGION="${2:-us-east-2}"
+DB_USERNAME="${3:-postgres}"
+DB_PASSWORD="${4:-postgres}"
+DB_NAME="${5:-postgres}"
 
 APP_IMAGE="$ECR_REGISTRY/pointtils:dev-latest"
 DB_IMAGE="$ECR_REGISTRY/pointtils-db:dev-latest"
-
-# Valores padrão para desenvolvimento
-DB_USERNAME="postgres"
-DB_PASSWORD="postgres"
-DB_NAME="postgres"
 
 echo "ECR Registry: $ECR_REGISTRY"
 echo "App Image: $APP_IMAGE"
