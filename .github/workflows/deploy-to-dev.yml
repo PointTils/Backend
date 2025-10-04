@@ -89,7 +89,7 @@ jobs:
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         IMAGE_TAG: dev-${{ github.sha }}
-        SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}${{ secrets.DB_NAME }}
+        SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
         SPRING_DATASOURCE_USERNAME: ${{ secrets.DB_USERNAME }}
         SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
         SPRING_APPLICATION_NAME: pointtils-dev
