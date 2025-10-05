@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 import requests
@@ -8,27 +9,19 @@ GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 GITHUB_ORG = os.getenv("GITHUB_ORG")
 PROJECT_NUMBER = int(os.getenv("PROJECT_NUMBER"))
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
+DISCORD_USERS = os.getenv("DISCORD_USERS")
 
-GITHUB_TO_DISCORD = {
-    "caBatista": "<@188403922023612416>",
-    "femelloffm": "<@688825103516958753>",
-    "Iewandowski": "<@273893904988897281>",
-    "MarcelloMarcon": "<@621164025195003944>",
-    "GuilhermeOchoa": "<@961766744668635136>",
-    "MatheusBerwaldt": "<@677320235325587475>",
-    "Glauber-Developer": "<@438054668992512020>",
-    "Bialves": "<@700064440451596319>",
-    "AugustoPBaldino": "<@669710566587105301>",
-    "viniwittler": "<@365604164019159040>",
-    "timoteostifft": "<@322948532019527680>",
-    "JaoVitorMS": "<@595019079945814016>",
-    "CarolBrose": "<@1015742768276058203>",
-    "Ferngzz": "<@129028538379534337>",
-    "juliofi": "<@325383552868941826>",
-    "MateusSNeubarth": "<@368177998970748939>",
-    "lpinheiro05": "<@280744822778888203>",
-    "joao-rangel1": "<@1278914607812968478>",
-}
+def _load_github_to_discord():
+    users_json = DISCORD_USERS.strip()
+    try:
+        parsed = json.loads(users_json)
+        if isinstance(parsed, dict):
+            return {str(k): str(v) for k, v in parsed.items()}
+    except Exception:
+        pass
+    return {}
+
+GITHUB_TO_DISCORD = _load_github_to_discord()
 
 HEADERS = {
     "Authorization": f"Bearer {GITHUB_TOKEN}",

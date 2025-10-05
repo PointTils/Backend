@@ -31,6 +31,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.DEADLINE_TOKEN }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_DEADLINE_WEBHOOK }}
+          DISCORD_USERS: ${{ secrets.DISCORD_USERS }}
           GITHUB_ORG: PointTils
           PROJECT_NUMBER: 4
         run: python scripts/check_deadlines.py
