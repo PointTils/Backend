@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 env:
-  ECR_REPOSITORY: pointtils
+  ECR_REPOSITORY: pointtils-dev
   APP_IMAGE_TAG: dev-latest
   DB_IMAGE_TAG: dev-latest
   ENVIRONMENT: development
