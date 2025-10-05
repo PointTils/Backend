@@ -20,14 +20,15 @@ import com.pointtils.pointtils.src.infrastructure.repositories.SpecialtyReposito
 import com.pointtils.pointtils.src.infrastructure.repositories.UserSpecialtyRepository;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.test.context.ActiveProfiles;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -38,8 +39,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Transactional
+@Testcontainers
 @SpringBootTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
+@ActiveProfiles(value = "testcontainers")
 class InterpreterSpecificationIntegrationTest {
 
     @Autowired
@@ -179,7 +181,6 @@ class InterpreterSpecificationIntegrationTest {
             "10:00,11:00,09:30", //requested time ends in the middle of the appointment
             "10:40,10:50,10:00", //requested time envelops the appointment
     })
-    @Disabled
     void shouldFilterZeroInterpretersIfDateTimeConflictsWithAppointment(String appointmentStartTime,
                                                                         String appointmentEndTime,
                                                                         String requestedTime) {
@@ -200,6 +201,47 @@ class InterpreterSpecificationIntegrationTest {
 
         List<Interpreter> result = interpreterRepository.findAll(spec);
         assertEquals(0, result.size());
+    }
+
+    @Test
+    void shouldFilterZeroInterpretersIfDateTimeIsNotDuringSchedule() {
+        Interpreter interpreter = buildInterpreter();
+        interpreter = interpreterRepository.save(interpreter);
+
+        Schedule schedule = buildSchedule(interpreter);
+        scheduleRepository.save(schedule);
+
+        LocalDateTime requestedDateTime = LocalDateTime.of(2025, 10, 6, 20, 0);
+        Specification<Interpreter> spec = InterpreterSpecification.filter(
+                null, null, null, null, null, null, requestedDateTime, null
+        );
+
+        List<Interpreter> result = interpreterRepository.findAll(spec);
+        assertEquals(0, result.size());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = AppointmentStatus.class, names = {"CANCELED", "PENDING"})
+    void shouldFilterInterpretersIfDateTimeConflictsWithInactiveAppointment(AppointmentStatus status) {
+        Interpreter interpreter = buildInterpreter();
+        interpreter = interpreterRepository.save(interpreter);
+
+        Schedule schedule = buildSchedule(interpreter);
+        scheduleRepository.save(schedule);
+
+        LocalDate date = LocalDate.of(2025, 10, 6);
+        Appointment appointment = buildAppointment(interpreter, date, LocalTime.of(13, 30), LocalTime.of(16, 0));
+        appointment.setStatus(status);
+        appointmentRepository.save(appointment);
+
+        LocalDateTime requestedDateTime = LocalDateTime.of(date, LocalTime.of(14, 0));
+        Specification<Interpreter> spec = InterpreterSpecification.filter(
+                null, null, null, null, null, null, requestedDateTime, null
+        );
+
+        List<Interpreter> result = interpreterRepository.findAll(spec);
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getName()).isEqualTo("Carlos Roberto Júnior");
     }
 
     private Interpreter buildInterpreter() {
@@ -229,7 +271,7 @@ class InterpreterSpecificationIntegrationTest {
         return Schedule.builder()
                 .day(DayOfWeek.MON)
                 .startTime(LocalTime.of(8, 0))
-                .startTime(LocalTime.of(20, 0))
+                .endTime(LocalTime.of(20, 0))
                 .interpreter(interpreter)
                 .build();
     }
