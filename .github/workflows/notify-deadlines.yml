@@ -2,7 +2,7 @@ name: Notify Sprint Deadlines
 
 on:
   schedule:
-    - cron: "20 21 * * *"
+    - cron: "0 08 * * *"
   workflow_dispatch:
 
 concurrency:
@@ -29,7 +29,7 @@ jobs:
 
       - name: Run deadline checker
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.DEADLINE_TOKEN }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_DEADLINE_WEBHOOK }}
           GITHUB_ORG: PointTils
           PROJECT_NUMBER: 4
