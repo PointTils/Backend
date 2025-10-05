@@ -112,34 +112,32 @@ jobs:
         POSTGRES_USER: ${{ secrets.DB_USERNAME }}
         POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
       run: |
-        # Criar arquivo .env temporário para docker compose
-        cat > .env << 'EOF'
-        SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}
-        SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME }}
-        SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }}
-        SPRING_APPLICATION_NAME=${{ secrets.SPRING_APPLICATION_NAME }}
-        JWT_SECRET=${{ secrets.JWT_DEV_SECRET }}
-        JWT_EXPIRATION_TIME=3600000
-        JWT_REFRESH_EXPIRATION_TIME=604800000
-        SPRING_JPA_HIBERNATE_DDL_AUTO=validate
-        SPRING_JPA_SHOW_SQL=false
-        SPRINGDOC_API_DOCS_ENABLED=true
-        SPRINGDOC_SWAGGER_UI_ENABLED=true
-        SPRINGDOC_SWAGGER_UI_PATH=/swagger-ui.html
-        DB_NAME=${{ secrets.DB_NAME }}
-        DB_USERNAME=${{ secrets.DB_USERNAME }}
-        DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-        POSTGRES_DB=${{ secrets.DB_NAME }}
-        POSTGRES_USER=${{ secrets.DB_USERNAME }}
-        POSTGRES_PASSWORD=${{ secrets.DB_PASSWORD }}
-        EOF
+        # Construir imagem da aplicação com todas as variáveis embutidas
+        echo "Building application image with embedded variables..."
+        docker build -t backend-pointtils-dev \
+          --build-arg SPRING_DATASOURCE_URL="${{ secrets.SPRING_DATASOURCE_URL }}" \
+          --build-arg SPRING_DATASOURCE_USERNAME="${{ secrets.DB_USERNAME }}" \
+          --build-arg SPRING_DATASOURCE_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+          --build-arg SPRING_APPLICATION_NAME="${{ secrets.SPRING_APPLICATION_NAME }}" \
+          --build-arg JWT_SECRET="${{ secrets.JWT_DEV_SECRET }}" \
+          --build-arg JWT_EXPIRATION_TIME="3600000" \
+          --build-arg JWT_REFRESH_EXPIRATION_TIME="604800000" \
+          --build-arg SPRING_JPA_HIBERNATE_DDL_AUTO="validate" \
+          --build-arg SPRING_JPA_SHOW_SQL="false" \
+          --build-arg SPRINGDOC_API_DOCS_ENABLED="true" \
+          --build-arg SPRINGDOC_SWAGGER_UI_ENABLED="true" \
+          --build-arg SPRINGDOC_SWAGGER_UI_PATH="/swagger-ui.html" \
+          --no-cache \
+          ./pointtils
         
-        # Construir imagens usando docker-compose-dev.yaml com arquivo .env
-        # Forçar rebuild de todas as imagens incluindo o banco
-        docker compose -f docker-compose-dev.yaml --env-file .env build --no-cache
-        
-        # Remover arquivo .env temporário
-        rm -f .env
+        # Construir imagem do banco com todas as variáveis embutidas
+        echo "Building database image with embedded variables..."
+        docker build -t backend-pointtils-db-dev \
+          --build-arg POSTGRES_DB="${{ secrets.DB_NAME }}" \
+          --build-arg POSTGRES_USER="${{ secrets.DB_USERNAME }}" \
+          --build-arg POSTGRES_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+          --no-cache \
+          ./utils/postgres
         
         # Tag e push da imagem da aplicação (com senha mascarada)
         echo "Tagging and pushing application image..."
