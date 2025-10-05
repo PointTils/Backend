@@ -5,7 +5,7 @@ import requests
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+DEADLINE_TOKEN = os.getenv("DEADLINE_TOKEN")
 GITHUB_ORG = os.getenv("GITHUB_ORG")
 PROJECT_NUMBER = int(os.getenv("PROJECT_NUMBER"))
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
@@ -24,7 +24,7 @@ def _load_github_to_discord():
 GITHUB_TO_DISCORD = _load_github_to_discord()
 
 HEADERS = {
-    "Authorization": f"Bearer {GITHUB_TOKEN}",
+    "Authorization": f"Bearer {DEADLINE_TOKEN}",
     "Content-Type": "application/json"
 }
 
@@ -157,7 +157,7 @@ def notify_discord(overdue_issues):
 
 def validate_env():
     missing = []
-    for key in ("GITHUB_TOKEN", "DISCORD_WEBHOOK_URL", "GITHUB_ORG", "PROJECT_NUMBER"):
+    for key in ("DEADLINE_TOKEN", "DISCORD_WEBHOOK_URL", "GITHUB_ORG", "PROJECT_NUMBER"):
         if not os.environ.get(key):
             missing.append(key)
     return missing
@@ -171,7 +171,7 @@ def main():
 
     # Basic sanity check to GitHub API
     try:
-        headers = {"Authorization": f"token {os.environ.get('GITHUB_TOKEN')}"}
+        headers = {"Authorization": f"token {os.environ.get('DEADLINE_TOKEN')}"}
         resp = requests.get("https://api.github.com/", headers=headers, timeout=10)
         print("GitHub API status:", resp.status_code)
     except Exception as e:

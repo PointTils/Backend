@@ -29,7 +29,7 @@ jobs:
 
       - name: Run deadline checker
         env:
-          GITHUB_TOKEN: ${{ secrets.DEADLINE_TOKEN }}
+          DEADLINE_TOKEN: ${{ secrets.DEADLINE_TOKEN }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_DEADLINE_WEBHOOK }}
           DISCORD_USERS: ${{ secrets.DISCORD_USERS }}
           GITHUB_ORG: PointTils
