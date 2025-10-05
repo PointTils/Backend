@@ -19,7 +19,6 @@ import com.pointtils.pointtils.src.infrastructure.repositories.ScheduleRepositor
 import com.pointtils.pointtils.src.infrastructure.repositories.SpecialtyRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserSpecialtyRepository;
 import jakarta.transaction.Transactional;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -41,7 +40,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Transactional
 @Testcontainers
 @SpringBootTest
-@ActiveProfiles(value = "testcontainers")
+@ActiveProfiles("testcontainers")
 class InterpreterSpecificationIntegrationTest {
 
     @Autowired
@@ -54,11 +53,6 @@ class InterpreterSpecificationIntegrationTest {
     private ScheduleRepository scheduleRepository;
     @Autowired
     private AppointmentRepository appointmentRepository;
-
-    @AfterEach
-    void clearDatabase() {
-        interpreterRepository.deleteAll();
-    }
 
     @Test
     void shouldFilterInterpretersByName() {
