@@ -115,9 +115,9 @@ jobs:
         # Construir imagem da aplicação com todas as variáveis embutidas
         echo "Building application image with embedded variables..."
         docker build -t backend-pointtils-dev \
-          --build-arg SPRING_DATASOURCE_URL="${{ secrets.SPRING_DATASOURCE_URL }}" \
-          --build-arg SPRING_DATASOURCE_USERNAME="${{ secrets.DB_USERNAME }}" \
-          --build-arg SPRING_DATASOURCE_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+          --build-arg SPRING_DATASOURCE_URL="jdbc:postgresql://pointtils-dev-db:5432/postgres-dev" \
+          --build-arg SPRING_DATASOURCE_USERNAME="postgres" \
+          --build-arg SPRING_DATASOURCE_PASSWORD="postgres" \
           --build-arg SPRING_APPLICATION_NAME="${{ secrets.SPRING_APPLICATION_NAME }}" \
           --build-arg JWT_SECRET="${{ secrets.JWT_DEV_SECRET }}" \
           --build-arg JWT_EXPIRATION_TIME="3600000" \
@@ -133,9 +133,9 @@ jobs:
         # Construir imagem do banco com todas as variáveis embutidas
         echo "Building database image with embedded variables..."
         docker build -t backend-pointtils-db-dev \
-          --build-arg POSTGRES_DB="${{ secrets.DB_NAME }}" \
-          --build-arg POSTGRES_USER="${{ secrets.DB_USERNAME }}" \
-          --build-arg POSTGRES_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+          --build-arg POSTGRES_DB="postgres-dev" \
+          --build-arg POSTGRES_USER="postgres" \
+          --build-arg POSTGRES_PASSWORD="postgres" \
           --no-cache \
           ./utils/postgres
         
