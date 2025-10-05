@@ -2,6 +2,7 @@ import os
 import sys
 import requests
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 GITHUB_ORG = os.getenv("GITHUB_ORG")
@@ -158,11 +159,12 @@ def notify_discord(overdue_issues):
     for issue in overdue_issues:
         assignees = ", ".join(issue["assignees"]) if issue["assignees"] else "_ninguém atribuído_"
         content += f"- [{issue['title']}]({issue['url']}) | Responsável(s): {assignees}\n"
-    requests.post(DISCORD_WEBHOOK_URL, json={"content": content})
+    response = requests.post(DISCORD_WEBHOOK_URL, json={"content": content})
+    response.raise_for_status()
 
 def validate_env():
     missing = []
-    for key in ("GITHUB_TOKEN", "DISCORD_WEBHOOK_URL"):
+    for key in ("GITHUB_TOKEN", "DISCORD_WEBHOOK_URL", "GITHUB_ORG", "PROJECT_NUMBER"):
         if not os.environ.get(key):
             missing.append(key)
     return missing
@@ -205,7 +207,7 @@ def main():
         for field in item["fieldValues"]["nodes"]:
             fieldData = field.get("field", {})
             if fieldData.get("name") == "End date" and field.get("date"):
-                end_date = datetime.fromisoformat(field.get("date")).replace(tzinfo=timezone.utc)
+                end_date = datetime.fromisoformat(field.get("date")).replace(tzinfo=ZoneInfo("America/Sao_Paulo"))
                 if end_date <= now:
                     overdue.append({
                         "title": title,

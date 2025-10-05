@@ -2,7 +2,7 @@ name: Notify Sprint Deadlines
 
 on:
   schedule:
-    - cron: "10 21 * * *"
+    - cron: "20 21 * * *"
   workflow_dispatch:
 
 concurrency:
