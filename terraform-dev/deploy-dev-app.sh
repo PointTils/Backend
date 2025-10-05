@@ -7,8 +7,8 @@ echo "=== Deploy Simples da Aplicação PointTils para DESENVOLVIMENTO ==="
 ECR_REGISTRY="${1:-969285065739.dkr.ecr.us-east-2.amazonaws.com}"
 AWS_REGION="${2:-us-east-2}"
 
-APP_IMAGE="$ECR_REGISTRY/pointtils:dev-latest"
-DB_IMAGE="$ECR_REGISTRY/pointtils-db:dev-latest"
+APP_IMAGE="$ECR_REGISTRY/pointtils-dev:dev-latest"
+DB_IMAGE="$ECR_REGISTRY/pointtils-dev-db:dev-latest"
 
 echo "ECR Registry: $ECR_REGISTRY"
 echo "App Image: $APP_IMAGE"
