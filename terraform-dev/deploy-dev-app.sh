@@ -48,7 +48,7 @@ docker run -d \
 echo "Aguardando banco de dados de DESENVOLVIMENTO iniciar..."
 sleep 30
 
-# Iniciar novo container da aplicação com variáveis de ambiente necessárias
+# Iniciar novo container da aplicação
 echo "Iniciando novo container da aplicação de DESENVOLVIMENTO..."
 docker run -d \
   --name pointtils-dev \
