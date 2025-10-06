@@ -30,6 +30,12 @@ echo "Puxando imagens de DESENVOLVIMENTO mais recentes do ECR..."
 docker pull $APP_IMAGE
 docker pull $DB_IMAGE
 
+# Verificar o conteúdo da imagem de aplicação
+echo "Verificando a imagem da aplicação..."
+docker inspect --format='{{.Config.Cmd}}' $APP_IMAGE
+echo "Verificando a imagem do banco de dados..."
+docker inspect --format='{{.Config.Cmd}}' $DB_IMAGE
+
 # Criar rede Docker se não existir
 echo "Criando rede Docker pointtils-dev-network se não existir..."
 docker network create pointtils-dev-network 2>/dev/null || true
@@ -65,7 +71,7 @@ docker run -d \
   --network pointtils-dev-network \
   -p 8080:8080 \
   --restart unless-stopped \
-  -e SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-db-dev:5432/postgres-dev \
+  -e SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-dev-db:5432/postgres-dev \
   -e SPRING_PROFILES_ACTIVE=prod \
   $APP_IMAGE
 
