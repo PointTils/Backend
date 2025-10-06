@@ -7,6 +7,7 @@ echo "=== Deploy Simples da Aplicação PointTils para DESENVOLVIMENTO ==="
 ECR_REGISTRY="${1:-969285065739.dkr.ecr.us-east-2.amazonaws.com}"
 AWS_REGION="${2:-us-east-2}"
 
+# Imagens já construídas no GitHub Actions
 APP_IMAGE="$ECR_REGISTRY/pointtils-dev:dev-latest"
 DB_IMAGE="$ECR_REGISTRY/pointtils-dev-db:dev-latest"
 
@@ -46,6 +47,7 @@ docker volume create postgres_dev_data 2>/dev/null || true
 echo "Iniciando container do banco de dados de DESENVOLVIMENTO..."
 docker run -d \
   --name pointtils-dev-db \
+  --hostname pointtils-dev-db \
   --network pointtils-dev-network \
   -p 5432:5432 \
   -v postgres_dev_data:/var/lib/postgresql/data \
