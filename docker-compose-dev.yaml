@@ -59,35 +59,9 @@ services:
       start_period: 40s
     restart: unless-stopped
 
-  # SonarQube para análise de código
-  sonarqube-dev:
-    build:
-      context: ./utils/sonarqube
-      dockerfile: Dockerfile
-    container_name: sonarqube-dev
-    ports:
-      - "9000:9000"
-    environment:
-      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
-    volumes:
-      - sonarqube_dev_data:/opt/sonarqube/data
-      - sonarqube_dev_extensions:/opt/sonarqube/extensions
-      - sonarqube_dev_logs:/opt/sonarqube/logs
-    networks:
-      - pointtils-dev-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/api/system/status"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-    restart: unless-stopped
 
 volumes:
   postgres_dev_data:
-  sonarqube_dev_data:
-  sonarqube_dev_extensions:
-  sonarqube_dev_logs:
 
 networks:
   pointtils-dev-network:
