@@ -104,7 +104,7 @@ jobs:
           SPRINGDOC_API_DOCS_ENABLED=${{ vars.SPRINGDOC_API_DOCS_ENABLED }}
           SPRINGDOC_SWAGGER_UI_ENABLED=${{ vars.SPRINGDOC_SWAGGER_UI_ENABLED }}
           SPRINGDOC_SWAGGER_UI_PATH=/swagger-ui.html
-          CLOUD_AWS_BUCKET_NAME=${{ secrets.CLOUD_AWS_BUCKET_NAME }}
+          CLOUD_AWS_BUCKET_NAME=pointtils-terraform-state-dev
           AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION=${{ secrets.AWS_REGION }}
