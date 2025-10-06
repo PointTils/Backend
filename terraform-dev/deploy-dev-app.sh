@@ -52,8 +52,8 @@ docker volume create postgres_dev_data 2>/dev/null || true
 # Iniciar container do banco de dados de DESENVOLVIMENTO
 echo "Iniciando container do banco de dados de DESENVOLVIMENTO..."
 docker run -d \
-  --name pointtils-dev-db \
-  --hostname pointtils-dev-db \
+  --name pointtils-db-dev \
+  --hostname pointtils-db-dev \
   --network pointtils-dev-network \
   -p 5432:5432 \
   -v postgres_dev_data:/var/lib/postgresql/data \
@@ -71,7 +71,7 @@ docker run -d \
   --network pointtils-dev-network \
   -p 8080:8080 \
   --restart unless-stopped \
-  -e SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-dev-db:5432/postgres-dev \
+  -e SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-dev-db:5432/pointtils-db \
   -e SPRING_PROFILES_ACTIVE=prod \
   $APP_IMAGE
 
