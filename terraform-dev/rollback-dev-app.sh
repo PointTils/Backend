@@ -44,8 +44,20 @@ fi
 
 # Parar e remover containers existentes de DESENVOLVIMENTO
 echo "Parando containers de DESENVOLVIMENTO existentes..."
-docker stop pointtils-dev pointtils-dev-db 2>/dev/null || true
-docker rm pointtils-dev pointtils-dev-db 2>/dev/null || true
+docker stop pointtils-dev pointtils-dev-db pointtils-db-dev 2>/dev/null || true
+docker rm pointtils-dev pointtils-dev-db pointtils-db-dev 2>/dev/null || true
+
+# Verificar e liberar portas em conflito
+echo "Verificando e liberando portas em conflito..."
+PORTS_TO_CHECK="5432 8080"
+for PORT in $PORTS_TO_CHECK; do
+  CONTAINER_USING_PORT=$(docker ps -q --filter "publish=$PORT")
+  if [ -n "$CONTAINER_USING_PORT" ]; then
+    echo "Parando container usando porta $PORT: $CONTAINER_USING_PORT"
+    docker stop $CONTAINER_USING_PORT 2>/dev/null || true
+    docker rm $CONTAINER_USING_PORT 2>/dev/null || true
+  fi
+done
 
 # Iniciar container do banco de dados (rollback de DESENVOLVIMENTO)
 echo "Iniciando container do banco de dados (rollback de DESENVOLVIMENTO)..."
