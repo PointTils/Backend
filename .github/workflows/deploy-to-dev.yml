@@ -124,7 +124,7 @@ jobs:
         run: |
           # Construir imagens usando docker compose com variáveis do .env
           echo "Building images with docker compose using .env variables..."
-          docker compose -f docker-compose-dev.yaml build --no-cache
+          docker compose --env-file .env -f docker-compose-dev.yaml build --no-cache
           
           # Tag e push da imagem da aplicação - usando ls para ver o nome correto das imagens
           echo "Listando imagens disponíveis para debug:"
