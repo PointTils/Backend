@@ -87,12 +87,12 @@ jobs:
           cat > .env << 'EOL'
           APP_IMAGE=backend-pointtils-dev
           DB_IMAGE=backend-pointtils-db-dev
-          SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-db-dev:5432/postgres-dev
-          SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME_DEV }}
-          SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD_DEV }}
-          SPRING_APPLICATION_NAME=${{ secrets.SPRING_APPLICATION_NAME_DEV }}
+          SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-db-dev:5432/${{ secrets.DB_NAME }}
+          SPRING_DATASOURCE_USERNAME=${{ secrets.DB_NAME }}
+          SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }}
+          SPRING_APPLICATION_NAME=pointtils-dev
           SERVER_PORT=${{ vars.SERVER_PORT }}
-          JWT_SECRET=${{ secrets.JWT_DEV_SECRET }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
           JWT_EXPIRATION_TIME=${{ vars.JWT_EXPIRATION_TIME }}
           JWT_REFRESH_EXPIRATION_TIME=${{ vars.JWT_REFRESH_EXPIRATION_TIME }}
           SPRING_JPA_HIBERNATE_DDL_AUTO=validate
@@ -108,12 +108,12 @@ jobs:
           AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION=${{ secrets.AWS_REGION }}
-          DB_NAME=${{ secrets.DB_NAME_DEV }}
-          DB_USERNAME=${{ secrets.DB_USERNAME_DEV }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD_DEV }}
-          POSTGRES_DB=${{ secrets.DB_NAME_DEV }}
-          POSTGRES_USER=${{ secrets.DB_USERNAME_DEV }}
-          POSTGRES_PASSWORD=${{ secrets.DB_PASSWORD_DEV }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          DB_USERNAME=${{ secrets.DB_USERNAME }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          POSTGRES_DB=${{ secrets.DB_NAME }}
+          POSTGRES_USER=${{ secrets.DB_USERNAME }}
+          POSTGRES_PASSWORD=${{ secrets.DB_PASSWORD }}
           EOL
 
       - name: Build and push images with docker compose
@@ -124,6 +124,7 @@ jobs:
         run: |
           # Construir imagens usando docker compose com variáveis do .env
           echo "Building images with docker compose using .env variables..."
+          echo "Using explicit .env file for build args..."
           docker compose --env-file .env -f docker-compose-dev.yaml build --no-cache
           
           # Tag e push da imagem da aplicação - usando ls para ver o nome correto das imagens
@@ -220,10 +221,10 @@ jobs:
         run: |
           cat > terraform-dev/terraform.tfvars << 'EOF'
           aws_region     = "${{ secrets.AWS_REGION }}"
-          db_username    = "${{ secrets.DB_USERNAME_DEV }}"
-          db_password    = "${{ secrets.DB_PASSWORD_DEV }}"
-          db_name        = "${{ secrets.DB_NAME_DEV }}"
-          jwt_secret     = "${{ secrets.JWT_DEV_SECRET }}"
+          db_username    = "${{ secrets.DB_NAME }}"
+          db_password    = "${{ secrets.DB_PASSWORD }}"
+          db_name        = "${{ secrets.DB_NAME }}"
+          jwt_secret     = "${{ secrets.JWT_SECRET }}"
           app_image      = "${{ needs.build-and-test.outputs.app_image }}"
           db_image       = "${{ needs.build-and-test.outputs.db_image }}"
           EOF
