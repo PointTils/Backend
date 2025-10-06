@@ -1,6 +1,9 @@
 services:
   # Aplicação principal Pointtils
   pointtils-dev:
+    build:
+      context: ./pointtils
+      dockerfile: Dockerfile
     image: ${APP_IMAGE:-backend-pointtils-dev}
     container_name: pointtils-dev
     environment:
