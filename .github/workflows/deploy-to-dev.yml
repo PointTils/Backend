@@ -126,18 +126,28 @@ jobs:
           echo "Building images with docker compose using .env variables..."
           docker compose -f docker-compose-dev.yaml build --no-cache
           
-          # Tag e push da imagem da aplicação
+          # Tag e push da imagem da aplicação - usando ls para ver o nome correto das imagens
+          echo "Listando imagens disponíveis para debug:"
+          docker images
+          
+          # Encontrar a imagem do aplicativo que acabamos de construir (sem usar nome fixo)
+          APP_IMAGE_ID=$(docker images -q backend-pointtils-dev 2>/dev/null || docker images -q pointtils-dev 2>/dev/null || docker images --format "{{.ID}}" | head -n1)
+          echo "ID da imagem encontrada: $APP_IMAGE_ID"
+          
           echo "Tagging and pushing application image..."
-          docker tag ${{ env.APP_IMAGE }} $ECR_REGISTRY/${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG
-          docker tag ${{ env.APP_IMAGE }} $ECR_REGISTRY/${{ secrets.ECR_REPOSITORY }}:${{ env.APP_IMAGE_TAG }}
+          docker tag $APP_IMAGE_ID $ECR_REGISTRY/${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG
+          docker tag $APP_IMAGE_ID $ECR_REGISTRY/${{ secrets.ECR_REPOSITORY }}:${{ env.APP_IMAGE_TAG }}
           docker push $ECR_REGISTRY/${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG
           docker push $ECR_REGISTRY/${{ secrets.ECR_REPOSITORY }}:${{ env.APP_IMAGE_TAG }}
           echo "app_image=$ECR_REGISTRY/${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
           
-          # Tag e push da imagem do banco de dados
+          # Tag e push da imagem do banco de dados - encontrando ID da imagem
+          DB_IMAGE_ID=$(docker images -q backend-pointtils-db-dev 2>/dev/null || docker images -q pointtils-db-dev 2>/dev/null || docker images --format "{{.ID}}" --filter "reference=*/postgres:*" | head -n1)
+          echo "ID da imagem do banco encontrada: $DB_IMAGE_ID"
+          
           echo "Tagging and pushing database image..."
-          docker tag ${{ env.DB_IMAGE }} $ECR_REGISTRY/${{ secrets.ECR_REPOSITORY }}-db:$IMAGE_TAG
-          docker tag ${{ env.DB_IMAGE }} $ECR_REGISTRY/${{ secrets.ECR_REPOSITORY }}-db:${{ env.DB_IMAGE_TAG }}
+          docker tag $DB_IMAGE_ID $ECR_REGISTRY/${{ secrets.ECR_REPOSITORY }}-db:$IMAGE_TAG
+          docker tag $DB_IMAGE_ID $ECR_REGISTRY/${{ secrets.ECR_REPOSITORY }}-db:${{ env.DB_IMAGE_TAG }}
           docker push $ECR_REGISTRY/${{ secrets.ECR_REPOSITORY }}-db:$IMAGE_TAG
           docker push $ECR_REGISTRY/${{ secrets.ECR_REPOSITORY }}-db:${{ env.DB_IMAGE_TAG }}
           echo "db_image=$ECR_REGISTRY/${{ secrets.ECR_REPOSITORY }}-db:$IMAGE_TAG" >> $GITHUB_OUTPUT
