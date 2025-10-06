@@ -8,8 +8,8 @@ ECR_REGISTRY="${1:-969285065739.dkr.ecr.us-east-2.amazonaws.com}"
 AWS_REGION="${2:-us-east-2}"
 ROLLBACK_TAG="${3:-previous}"  # Tag da imagem anterior para rollback
 
-APP_IMAGE="$ECR_REGISTRY/pointtils:$ROLLBACK_TAG"
-DB_IMAGE="$ECR_REGISTRY/pointtils-db:$ROLLBACK_TAG"
+APP_IMAGE="$ECR_REGISTRY/pointtils-dev:$ROLLBACK_TAG"
+DB_IMAGE="$ECR_REGISTRY/pointtils-dev-db:$ROLLBACK_TAG"
 
 echo "ECR Registry: $ECR_REGISTRY"
 echo "Rollback App Image: $APP_IMAGE"
@@ -31,14 +31,14 @@ echo "Verificando disponibilidade das imagens de rollback de DESENVOLVIMENTO..."
 if ! docker pull $APP_IMAGE 2>/dev/null; then
     echo "❌ Imagem de rollback da aplicação de DESENVOLVIMENTO não encontrada: $APP_IMAGE"
     echo "⚠️  Usando imagem 'dev-latest' como fallback..."
-    APP_IMAGE="$ECR_REGISTRY/pointtils:dev-latest"
+    APP_IMAGE="$ECR_REGISTRY/pointtils-dev:dev-latest"
     docker pull $APP_IMAGE
 fi
 
 if ! docker pull $DB_IMAGE 2>/dev/null; then
     echo "❌ Imagem de rollback do banco de DESENVOLVIMENTO não encontrada: $DB_IMAGE"
     echo "⚠️  Usando imagem 'dev-latest' como fallback..."
-    DB_IMAGE="$ECR_REGISTRY/pointtils-db:dev-latest"
+    DB_IMAGE="$ECR_REGISTRY/pointtils-dev-db:dev-latest"
     docker pull $DB_IMAGE
 fi
 
@@ -51,6 +51,7 @@ docker rm pointtils-dev pointtils-dev-db 2>/dev/null || true
 echo "Iniciando container do banco de dados (rollback de DESENVOLVIMENTO)..."
 docker run -d \
   --name pointtils-dev-db \
+  --hostname pointtils-dev-db \
   --network pointtils-dev-network \
   -p 5432:5432 \
   -v postgres_dev_data:/var/lib/postgresql/data \
@@ -61,13 +62,14 @@ docker run -d \
 echo "Aguardando banco de dados de DESENVOLVIMENTO iniciar..."
 sleep 30
 
-# Iniciar container de rollback da aplicação (sem variáveis - já configuradas na instância)
+# Iniciar container de rollback da aplicação
 echo "Iniciando container de rollback da aplicação de DESENVOLVIMENTO..."
 docker run -d \
   --name pointtils-dev \
   --network pointtils-dev-network \
   -p 8080:8080 \
   --restart unless-stopped \
+  -e SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-dev-db:5432/postgres-dev \
   $APP_IMAGE
 
 # Aguardar aplicação iniciar com verificações robustas
