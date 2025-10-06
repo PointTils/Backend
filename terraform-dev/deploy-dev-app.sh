@@ -29,10 +29,18 @@ echo "Puxando imagens de DESENVOLVIMENTO mais recentes do ECR..."
 docker pull $APP_IMAGE
 docker pull $DB_IMAGE
 
+# Criar rede Docker se não existir
+echo "Criando rede Docker pointtils-dev-network se não existir..."
+docker network create pointtils-dev-network 2>/dev/null || true
+
 # Parar e remover containers existentes de DESENVOLVIMENTO
 echo "Parando containers de DESENVOLVIMENTO existentes..."
 docker stop pointtils-dev pointtils-dev-db 2>/dev/null || true
 docker rm pointtils-dev pointtils-dev-db 2>/dev/null || true
+
+# Criar volume se não existir
+echo "Criando volume postgres_dev_data se não existir..."
+docker volume create postgres_dev_data 2>/dev/null || true
 
 # Iniciar container do banco de dados de DESENVOLVIMENTO
 echo "Iniciando container do banco de dados de DESENVOLVIMENTO..."
