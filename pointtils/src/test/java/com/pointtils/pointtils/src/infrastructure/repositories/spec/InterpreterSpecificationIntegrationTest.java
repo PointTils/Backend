@@ -26,7 +26,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.LocalDate;
@@ -40,7 +40,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Transactional
 @Testcontainers
 @SpringBootTest
-@ActiveProfiles("testcontainers")
+@TestPropertySource(properties = {
+        "spring.datasource.url=jdbc:tc:postgresql:15:///testdb",
+        "spring.datasource.driver-class-name=org.testcontainers.jdbc.ContainerDatabaseDriver",
+        "spring.datasource.username=test",
+        "spring.datasource.password=test"
+})
 class InterpreterSpecificationIntegrationTest {
 
     @Autowired
