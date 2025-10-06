@@ -2,9 +2,9 @@ name: Deploy to Development - Updated
 
 on:
   push:
-    branches: [ dev_v1, feature/* ]
+    branches: [ dev, feature/* ]
   pull_request:
-    branches: [ dev_v1 ]
+    branches: [ dev ]
     types: [closed]
   workflow_dispatch:  # Permite execução manual da pipeline via GitHub
 
