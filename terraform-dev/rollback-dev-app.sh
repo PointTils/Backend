@@ -44,8 +44,8 @@ fi
 
 # Parar e remover containers existentes de DESENVOLVIMENTO
 echo "Parando containers de DESENVOLVIMENTO existentes..."
-docker stop pointtils-dev pointtils-dev-db pointtils-db-dev 2>/dev/null || true
-docker rm pointtils-dev pointtils-dev-db pointtils-db-dev 2>/dev/null || true
+docker stop pointtils-dev pointtils-db-dev 2>/dev/null || true
+docker rm pointtils-dev pointtils-db-dev 2>/dev/null || true
 
 # Verificar e liberar portas em conflito
 echo "Verificando e liberando portas em conflito..."
@@ -62,8 +62,8 @@ done
 # Iniciar container do banco de dados (rollback de DESENVOLVIMENTO)
 echo "Iniciando container do banco de dados (rollback de DESENVOLVIMENTO)..."
 docker run -d \
-  --name pointtils-dev-db \
-  --hostname pointtils-dev-db \
+  --name pointtils-db-dev \
+  --hostname pointtils-db-dev \
   --network pointtils-dev-network \
   -p 5432:5432 \
   -v postgres_dev_data:/var/lib/postgresql/data \
@@ -81,7 +81,7 @@ docker run -d \
   --network pointtils-dev-network \
   -p 8080:8080 \
   --restart unless-stopped \
-  -e SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-db-dev:5432/postgres-dev \
+  -e SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-db-dev:5432/pointtils-db \
   -e SPRING_PROFILES_ACTIVE=prod \
   $APP_IMAGE
 
