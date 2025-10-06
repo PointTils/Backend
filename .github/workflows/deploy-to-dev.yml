@@ -135,8 +135,8 @@ jobs:
           APP_IMAGE_NAME="${{ env.APP_IMAGE }}"
           DB_IMAGE_NAME="${{ env.DB_IMAGE }}"
           
-          # Find the application image ID - must be the Spring application
-          APP_IMAGE_ID=$(docker images -q $APP_IMAGE_NAME)
+          # Find the application image ID - using both exact name and wildcard approach
+          APP_IMAGE_ID=$(docker images -q $APP_IMAGE_NAME 2>/dev/null || docker images -q "*${APP_IMAGE_NAME}*" 2>/dev/null || docker images | grep -E "$APP_IMAGE_NAME" | awk '{print $3}' | head -n1)
           echo "Nome da imagem da aplicação: $APP_IMAGE_NAME"
           echo "ID da imagem da aplicação: $APP_IMAGE_ID"
           
@@ -165,8 +165,8 @@ jobs:
           fi
           
           # Tag e push da imagem do banco de dados - encontrando ID da imagem
-          # Usando o nome exato do arquivo .env para garantir que a imagem correta seja encontrada
-          DB_IMAGE_ID=$(docker images -q $DB_IMAGE_NAME)
+          # Using a more robust approach to find the database image
+          DB_IMAGE_ID=$(docker images -q $DB_IMAGE_NAME 2>/dev/null || docker images -q "*${DB_IMAGE_NAME}*" 2>/dev/null || docker images | grep -E "$DB_IMAGE_NAME" | awk '{print $3}' | head -n1)
           echo "Nome da imagem do banco: $DB_IMAGE_NAME"
           echo "ID da imagem do banco: $DB_IMAGE_ID"
           
