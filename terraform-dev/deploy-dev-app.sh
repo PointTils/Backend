@@ -65,7 +65,7 @@ docker run -d \
   --network pointtils-dev-network \
   -p 8080:8080 \
   --restart unless-stopped \
-  -e SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-dev-db:5432/pointtils-db \
+  -e SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-db-dev:5432/postgres-dev \
   -e SPRING_PROFILES_ACTIVE=prod \
   $APP_IMAGE
 
