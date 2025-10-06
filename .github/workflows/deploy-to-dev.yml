@@ -87,9 +87,9 @@ jobs:
           cat > .env << 'EOL'
           APP_IMAGE=backend-pointtils-dev
           DB_IMAGE=backend-pointtils-db-dev
-          SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-db-dev:5432/${{ secrets.DB_NAME }}
-          SPRING_DATASOURCE_USERNAME=${{ secrets.DB_NAME }}
-          SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }}
+          SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-db-dev:5432/pointtils-db
+          SPRING_DATASOURCE_USERNAME=pointtilsadmin
+          SPRING_DATASOURCE_PASSWORD=password
           SPRING_APPLICATION_NAME=pointtils-dev
           SERVER_PORT=${{ vars.SERVER_PORT }}
           JWT_SECRET=${{ secrets.JWT_SECRET }}
