@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ dev_v1 ]
     types: [closed]
-  workflow_dispatch:  # Permite execução manual da pipeline
+  workflow_dispatch:  # Permite execução manual da pipeline via GitHub
 
 permissions:
   id-token: write
@@ -147,11 +147,12 @@ jobs:
           # Verifica se temos tanto o ID quanto o nome da imagem para garantir tagging correto
           if [ -n "$APP_IMAGE_ID" ]; then
             echo "Usando ID da imagem para tagging: $APP_IMAGE_ID"
-            docker tag $APP_IMAGE_ID $ECR_REGISTRY/${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG
-            docker tag $APP_IMAGE_ID $ECR_REGISTRY/${{ secrets.ECR_REPOSITORY }}:${{ env.APP_IMAGE_TAG }}
-            docker push $ECR_REGISTRY/${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG
-            docker push $ECR_REGISTRY/${{ secrets.ECR_REPOSITORY }}:${{ env.APP_IMAGE_TAG }}
-            echo "app_image=$ECR_REGISTRY/${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
+            # Use env.ECR_REPOSITORY (pointtils-dev) instead of secrets.ECR_REPOSITORY (pointtils)
+            docker tag $APP_IMAGE_ID $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
+            docker tag $APP_IMAGE_ID $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ env.APP_IMAGE_TAG }}
+            docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
+            docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ env.APP_IMAGE_TAG }}
+            echo "app_image=$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
           else
             echo "⚠️ ERRO: Não foi possível encontrar a imagem da aplicação para tagging!"
             exit 1
@@ -174,11 +175,12 @@ jobs:
           # Verifica se temos o ID da imagem para garantir tagging correto
           if [ -n "$DB_IMAGE_ID" ]; then
             echo "Usando ID da imagem de banco para tagging: $DB_IMAGE_ID"
-            docker tag $DB_IMAGE_ID $ECR_REGISTRY/${{ secrets.ECR_REPOSITORY }}-db:$IMAGE_TAG
-            docker tag $DB_IMAGE_ID $ECR_REGISTRY/${{ secrets.ECR_REPOSITORY }}-db:${{ env.DB_IMAGE_TAG }}
-            docker push $ECR_REGISTRY/${{ secrets.ECR_REPOSITORY }}-db:$IMAGE_TAG
-            docker push $ECR_REGISTRY/${{ secrets.ECR_REPOSITORY }}-db:${{ env.DB_IMAGE_TAG }}
-            echo "db_image=$ECR_REGISTRY/${{ secrets.ECR_REPOSITORY }}-db:$IMAGE_TAG" >> $GITHUB_OUTPUT
+            # Use env.ECR_REPOSITORY (pointtils-dev) instead of secrets.ECR_REPOSITORY (pointtils)
+            docker tag $DB_IMAGE_ID $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:$IMAGE_TAG
+            docker tag $DB_IMAGE_ID $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:${{ env.DB_IMAGE_TAG }}
+            docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:$IMAGE_TAG
+            docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:${{ env.DB_IMAGE_TAG }}
+            echo "db_image=$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:$IMAGE_TAG" >> $GITHUB_OUTPUT
           else
             echo "⚠️ ERRO: Não foi possível encontrar a imagem do banco de dados para tagging!"
             exit 1
@@ -299,7 +301,7 @@ jobs:
             echo "dev_app_ip=127.0.0.1" >> $GITHUB_OUTPUT
           fi
           
-          echo "dev_ecr_repo=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}" >> $GITHUB_OUTPUT
+          echo "dev_ecr_repo=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}" >> $GITHUB_OUTPUT
 
       - name: Verify EC2 host availability (Development)
         run: |
