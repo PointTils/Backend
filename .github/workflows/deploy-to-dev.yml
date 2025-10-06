@@ -88,9 +88,9 @@ jobs:
           APP_IMAGE=backend-pointtils-dev
           DB_IMAGE=backend-pointtils-db-dev
           SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-db-dev:5432/postgres-dev
-          SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}
-          SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}
-          SPRING_APPLICATION_NAME=${{ secrets.SPRING_APPLICATION_NAME }}
+          SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME_DEV }}
+          SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD_DEV }}
+          SPRING_APPLICATION_NAME=${{ secrets.SPRING_APPLICATION_NAME_DEV }}
           SERVER_PORT=${{ vars.SERVER_PORT }}
           JWT_SECRET=${{ secrets.JWT_DEV_SECRET }}
           JWT_EXPIRATION_TIME=${{ vars.JWT_EXPIRATION_TIME }}
@@ -108,12 +108,12 @@ jobs:
           AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION=${{ secrets.AWS_REGION }}
-          DB_NAME=${{ secrets.DB_NAME }}
-          DB_USERNAME=${{ secrets.DB_USERNAME }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          POSTGRES_DB=${{ secrets.DB_NAME }}
-          POSTGRES_USER=${{ secrets.DB_USERNAME }}
-          POSTGRES_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_NAME=${{ secrets.DB_NAME_DEV }}
+          DB_USERNAME=${{ secrets.DB_USERNAME_DEV }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD_DEV }}
+          POSTGRES_DB=${{ secrets.DB_NAME_DEV }}
+          POSTGRES_USER=${{ secrets.DB_USERNAME_DEV }}
+          POSTGRES_PASSWORD=${{ secrets.DB_PASSWORD_DEV }}
           EOL
 
       - name: Build and push images with docker compose
@@ -220,9 +220,9 @@ jobs:
         run: |
           cat > terraform-dev/terraform.tfvars << 'EOF'
           aws_region     = "${{ secrets.AWS_REGION }}"
-          db_username    = "${{ secrets.DB_USERNAME }}"
-          db_password    = "${{ secrets.DB_PASSWORD }}"
-          db_name        = "${{ secrets.DB_NAME }}"
+          db_username    = "${{ secrets.DB_USERNAME_DEV }}"
+          db_password    = "${{ secrets.DB_PASSWORD_DEV }}"
+          db_name        = "${{ secrets.DB_NAME_DEV }}"
           jwt_secret     = "${{ secrets.JWT_DEV_SECRET }}"
           app_image      = "${{ needs.build-and-test.outputs.app_image }}"
           db_image       = "${{ needs.build-and-test.outputs.db_image }}"
