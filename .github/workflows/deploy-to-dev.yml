@@ -86,19 +86,43 @@ jobs:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         IMAGE_TAG: dev-${{ github.sha }}
       run: |
-        # Construir imagem da aplicação SEM variáveis embutidas
-        echo "Building application image WITHOUT embedded variables..."
+        # Construir imagem da aplicação COM variáveis de ambiente
+        echo "Building application image WITH environment variables..."
         docker build -t backend-pointtils-dev \
+          --build-arg SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-db-dev:5432/${{ secrets.DB_NAME }} \
+          --build-arg SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME }} \
+          --build-arg SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }} \
+          --build-arg SPRING_APPLICATION_NAME=pointtils-dev \
+          --build-arg SERVER_PORT=8080 \
+          --build-arg JWT_SECRET=${{ secrets.JWT_SECRET }} \
+          --build-arg JWT_EXPIRATION_TIME=3600000 \
+          --build-arg JWT_REFRESH_EXPIRATION_TIME=604800000 \
+          --build-arg SPRING_JPA_HIBERNATE_DDL_AUTO=validate \
+          --build-arg SPRING_JPA_SHOW_SQL=false \
+          --build-arg SPRING_FLYWAY_ENABLED=true \
+          --build-arg SPRING_FLYWAY_LOCATIONS=classpath:db/migration \
+          --build-arg SPRING_FLYWAY_BASELINE_ON_MIGRATE=true \
+          --build-arg SPRING_FLYWAY_VALIDATE_ON_MIGRATE=true \
+          --build-arg SPRINGDOC_API_DOCS_ENABLED=true \
+          --build-arg SPRINGDOC_SWAGGER_UI_ENABLED=true \
+          --build-arg SPRINGDOC_SWAGGER_UI_PATH=/swagger-ui.html \
+          --build-arg CLOUD_AWS_BUCKET_NAME=${{ secrets.CLOUD_AWS_BUCKET_NAME }} \
+          --build-arg AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+          --build-arg AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+          --build-arg AWS_REGION=${{ secrets.AWS_REGION }} \
           --no-cache \
           ./pointtils
         
-        # Construir imagem do banco SEM variáveis embutidas
-        echo "Building database image WITHOUT embedded variables..."
+        # Construir imagem do banco COM variáveis de ambiente
+        echo "Building database image WITH environment variables..."
         docker build -t backend-pointtils-db-dev \
+          --build-arg POSTGRES_DB=${{ secrets.DB_NAME }} \
+          --build-arg POSTGRES_USER=${{ secrets.DB_USERNAME }} \
+          --build-arg POSTGRES_PASSWORD=${{ secrets.DB_PASSWORD }} \
           --no-cache \
           ./utils/postgres
         
-        # Tag e push da imagem da aplicação (com senha mascarada)
+        # Tag e push da imagem da aplicação
         echo "Tagging and pushing application image..."
         docker tag backend-pointtils-dev $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
         docker tag backend-pointtils-dev $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ env.APP_IMAGE_TAG }}
@@ -106,7 +130,7 @@ jobs:
         docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ env.APP_IMAGE_TAG }}
         echo "app_image=$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
         
-        # Tag e push da imagem do banco de dados (com senha mascarada)
+        # Tag e push da imagem do banco de dados
         echo "Tagging and pushing database image..."
         docker tag backend-pointtils-db-dev $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:$IMAGE_TAG
         docker tag backend-pointtils-db-dev $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:${{ env.DB_IMAGE_TAG }}

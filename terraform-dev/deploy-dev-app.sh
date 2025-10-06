@@ -54,7 +54,6 @@ docker run -d \
   --name pointtils-dev \
   --network pointtils-dev-network \
   -p 8080:8080 \
-  -e SPRING_PROFILES_ACTIVE=prod \
   --restart unless-stopped \
   $APP_IMAGE
 
