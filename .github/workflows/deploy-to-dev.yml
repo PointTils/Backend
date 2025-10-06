@@ -131,16 +131,22 @@ jobs:
           docker images
           
           # Encontrar a imagem do aplicativo que acabamos de construir - usando o nome exato mostrado no output
-          APP_IMAGE_NAME=$(docker images | grep -E 'backend-.*-dev' | awk '{print $1}' | head -n1)
-          APP_IMAGE_ID=$(docker images -q $APP_IMAGE_NAME)
-          echo "Nome da imagem encontrada: $APP_IMAGE_NAME"
-          echo "ID da imagem encontrada: $APP_IMAGE_ID"
+          # Specify exact image names to ensure the correct images are tagged
+          APP_IMAGE_NAME="${{ env.APP_IMAGE }}"
+          DB_IMAGE_NAME="${{ env.DB_IMAGE }}"
           
-          # Verificar se a ID da imagem foi encontrada
+          # Find the application image ID - must be the Spring application
+          APP_IMAGE_ID=$(docker images -q $APP_IMAGE_NAME)
+          echo "Nome da imagem da aplicação: $APP_IMAGE_NAME"
+          echo "ID da imagem da aplicação: $APP_IMAGE_ID"
+          
+          # Verificar se a ID da imagem foi encontrada - não usar fallback automático
+          # para evitar mistura de imagens
           if [ -z "$APP_IMAGE_ID" ]; then
-            echo "⚠️ Não foi possível encontrar ID da imagem. Buscando qualquer imagem..."
-            APP_IMAGE_ID=$(docker images --format "{{.ID}}" | head -n1)
-            echo "Usando ID alternativo: $APP_IMAGE_ID"
+            echo "⚠️ ERRO: Não foi possível encontrar ID da imagem da aplicação!"
+            echo "Listando todas as imagens disponíveis:"
+            docker images
+            exit 1
           fi
           
           echo "Tagging and pushing application image..."
@@ -159,16 +165,18 @@ jobs:
           fi
           
           # Tag e push da imagem do banco de dados - encontrando ID da imagem
-          DB_IMAGE_NAME=$(docker images | grep -E 'backend-.*-db-dev' | awk '{print $1}' | head -n1)
+          # Usando o nome exato do arquivo .env para garantir que a imagem correta seja encontrada
           DB_IMAGE_ID=$(docker images -q $DB_IMAGE_NAME)
-          echo "Nome da imagem do banco encontrada: $DB_IMAGE_NAME"
-          echo "ID da imagem do banco encontrada: $DB_IMAGE_ID"
+          echo "Nome da imagem do banco: $DB_IMAGE_NAME"
+          echo "ID da imagem do banco: $DB_IMAGE_ID"
           
-          # Verificar se a ID da imagem foi encontrada
+          # Verificar se a ID da imagem foi encontrada - não usar fallback automático 
+          # para evitar mistura de imagens
           if [ -z "$DB_IMAGE_ID" ]; then
-            echo "⚠️ Não foi possível encontrar ID da imagem do banco. Buscando qualquer imagem Postgres..."
-            DB_IMAGE_ID=$(docker images --format "{{.ID}}" --filter "reference=*/postgres:*" | head -n1)
-            echo "Usando ID alternativo: $DB_IMAGE_ID"
+            echo "⚠️ ERRO: Não foi possível encontrar ID da imagem do banco de dados!"
+            echo "Listando todas as imagens disponíveis:"
+            docker images
+            exit 1
           fi
           
           echo "Tagging and pushing database image..."
