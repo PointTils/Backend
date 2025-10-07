@@ -164,3 +164,5 @@ end
   - `pointtils-network`: Rede para comunicação entre containers
 - **Desenvolvimento**:
   - `pointtils-dev-network`: Rede para comunicação entre containers de desenvolvimento
+<img width="1092" height="750" alt="image" src="https://github.com/user-attachments/assets/6b62e91b-07ce-48c4-93ae-d0831d6dfcfa" />
+
