@@ -12,7 +12,7 @@ import com.pointtils.pointtils.src.core.domain.entities.Appointment;
 import com.pointtils.pointtils.src.core.domain.entities.Rating;
 import com.pointtils.pointtils.src.core.domain.entities.User;
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentStatus;
-import com.pointtils.pointtils.src.core.domain.exceptions.RaitingException;
+import com.pointtils.pointtils.src.core.domain.exceptions.RatingException;
 import com.pointtils.pointtils.src.infrastructure.repositories.AppointmentRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.RatingRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
@@ -30,18 +30,18 @@ public class RatingService {
 
     public RatingResponseDTO createRating(RatingRequestDTO ratingRequestDTO) {
         Appointment appointment = appointmentRepository.findById(ratingRequestDTO.getAppointmentId())
-                .orElseThrow(() -> new RaitingException("Agendamento ou usuário não encontrado"));
+                .orElseThrow(() -> new RatingException("Agendamento ou usuário não encontrado"));
 
         User user = userRepository.findById(ratingRequestDTO.getUserId())
-                .orElseThrow(() -> new RaitingException("Agendamento ou usuário não encontrado"));
+                .orElseThrow(() -> new RatingException("Agendamento ou usuário não encontrado"));
 
         
         if (!appointment.getUser().getId().equals(user.getId())) {
-            throw new RaitingException("Parâmetros de entrada inválidos");
+            throw new RatingException("Parâmetros de entrada inválidos");
         }
 
         if (appointment.getStatus() != AppointmentStatus.COMPLETED) {
-            throw new RaitingException("Agendamento ainda não foi concluído (só posso avaliar depois de status ser encerrado)");
+            throw new RatingException("Agendamento ainda não foi concluído (só posso avaliar depois de status ser encerrado)");
         }
 
         Rating rating = new Rating();
