@@ -270,7 +270,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RatingException.class)
     public ResponseEntity<ErrorResponse> handleRatingException(RatingException ex) {
-        if ("Agendamento ou usuário não encontrado".equals(ex.getMessage())) {
+        if ("Agendamento ou usuário não encontrado".equals(ex.getMessage()) || "Intérprete não encontrado".equals(ex.getMessage())) {
             ErrorResponse errorResponse = new ErrorResponse(
                     HttpStatus.NOT_FOUND.value(),
                     ex.getMessage(),
