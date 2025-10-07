@@ -3,9 +3,15 @@ name: Deploy to Development - Updated
 on:
   push:
     branches: [ dev, feature/* ]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
   pull_request:
     branches: [ dev ]
     types: [closed]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
   workflow_dispatch:  # Permite execução manual da pipeline via GitHub
 
 permissions:

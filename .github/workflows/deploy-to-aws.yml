@@ -4,8 +4,14 @@ on:
   pull_request:
     branches: [ main ]
     types: [closed]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
   push:
     branches: [ main ]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
   workflow_dispatch:  # Permite execução manual da pipeline
 
 permissions:
