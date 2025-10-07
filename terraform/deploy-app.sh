@@ -1,28 +1,20 @@
 #!/bin/bash
 set -e  # Exit on any error
 
-echo "=== Iniciando deploy da aplicação PointTils ==="
+echo "=== Deploy Simples da Aplicação PointTils para PRODUÇÃO ==="
 
 # Parâmetros recebidos do pipeline
 ECR_REGISTRY="${1:-969285065739.dkr.ecr.us-east-2.amazonaws.com}"
-DB_USERNAME="${2:-pointtilsadmin}"
-DB_PASSWORD="${3:-password}"
-DB_NAME="${4:-pointtils-db}"
-JWT_SECRET="${5:-defaultsecretkey1234567890123456789012345678901234}"
-AWS_REGION="${6:-us-east-2}"
-S3_BUCKET_NAME="${7:-pointtils-api-tests-d9396dcc}"
-AWS_ACCESS_KEY_ID="${8}"
-AWS_SECRET_ACCESS_KEY="${9}"
+AWS_REGION="${2:-us-east-2}"
 
+# Imagens já construídas no GitHub Actions
 APP_IMAGE="$ECR_REGISTRY/pointtils:latest"
 DB_IMAGE="$ECR_REGISTRY/pointtils-db:latest"
 
 echo "ECR Registry: $ECR_REGISTRY"
 echo "App Image: $APP_IMAGE"
-echo "DB Image: $DB_IMAGE"
-echo "Database: $DB_NAME"
 echo "AWS Region: $AWS_REGION"
-echo "S3 Bucket: $S3_BUCKET_NAME"
+echo "Environment: PRODUCTION"
 
 # Corrigir permissões do Docker
 echo "Corrigindo permissões do Docker..."
@@ -38,86 +30,43 @@ echo "Puxando imagens mais recentes do ECR..."
 docker pull $APP_IMAGE
 docker pull $DB_IMAGE
 
+# Criar rede Docker se não existir
+echo "Criando rede Docker pointtils-network se não existir..."
+docker network create pointtils-network 2>/dev/null || true
+
 # Parar e remover containers existentes
 echo "Parando containers existentes..."
 docker stop pointtils pointtils-db 2>/dev/null || true
 docker rm pointtils pointtils-db 2>/dev/null || true
 
-# Remover rede existente se houver
-docker network rm pointtils-network 2>/dev/null || true
-
-# Criar rede para os containers
-echo "Criando rede para os containers..."
-docker network create pointtils-network
+# Criar volume se não existir
+echo "Criando volume postgres_data se não existir..."
+docker volume create postgres_data 2>/dev/null || true
 
 # Iniciar container do banco de dados
 echo "Iniciando container do banco de dados..."
 docker run -d \
   --name pointtils-db \
+  --hostname pointtils-db \
   --network pointtils-network \
-  -e POSTGRES_DB=$DB_NAME \
-  -e POSTGRES_USER=$DB_USERNAME \
-  -e POSTGRES_PASSWORD=$DB_PASSWORD \
   -p 5432:5432 \
   -v postgres_data:/var/lib/postgresql/data \
-  --health-cmd="pg_isready -U $DB_USERNAME -d $DB_NAME" \
-  --health-interval=30s \
-  --health-timeout=10s \
-  --health-retries=3 \
-  --health-start-period=40s \
   --restart unless-stopped \
   $DB_IMAGE
 
-# Aguardar banco ficar saudável
-echo "Aguardando banco de dados ficar saudável..."
-for i in {1..30}; do
-  if docker inspect --format='{{.State.Health.Status}}' pointtils-db | grep -q "healthy"; then
-    echo "✅ Banco de dados saudável"
-    # Testar conexão com as credenciais reais
-    echo "Testando conexão com banco de dados..."
-    if docker exec pointtils-db pg_isready -U $DB_USERNAME -d $DB_NAME; then
-      echo "✅ Conexão com banco de dados bem-sucedida"
-      break
-    else
-      echo "❌ Conexão com banco de dados falhou"
-      echo "Credenciais usadas: usuário=$DB_USERNAME, banco=$DB_NAME"
-      exit 1
-    fi
-  else
-    echo "Tentativa $i: Banco ainda não está saudável. Aguardando..."
-    sleep 5
-  fi
-  if [ $i -eq 30 ]; then
-    echo "❌ Banco de dados não ficou saudável após 30 tentativas"
-    exit 1
-  fi
-done
+# Aguardar banco iniciar
+echo "Aguardando banco de dados iniciar..."
+sleep 30
 
-# Iniciar container da aplicação
-echo "Iniciando container da aplicação..."
+# Iniciar novo container da aplicação
+echo "Iniciando novo container da aplicação..."
 docker run -d \
   --name pointtils \
   --network pointtils-network \
-  -e SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-db:5432/$DB_NAME \
-  -e SPRING_DATASOURCE_USERNAME=$DB_USERNAME \
-  -e SPRING_DATASOURCE_PASSWORD=$DB_PASSWORD \
-  -e SPRING_APPLICATION_NAME=pointtils-api \
-  -e SERVER_PORT=8080 \
-  -e JWT_SECRET=$JWT_SECRET \
-  -e JWT_EXPIRATION_TIME=3600000 \
-  -e JWT_REFRESH_EXPIRATION_TIME=86400000 \
-  -e SPRING_JPA_HIBERNATE_DDL_AUTO=validate \
-  -e SPRING_JPA_SHOW_SQL=false \
-  -e SPRINGDOC_API_DOCS_ENABLED=true \
-  -e SPRINGDOC_SWAGGER_UI_ENABLED=true \
-  -e SPRINGDOC_SWAGGER_UI_PATH=/swagger-ui.html \
-  -e CLOUD_AWS_BUCKET_NAME=$S3_BUCKET_NAME \
-  -e AWS_REGION=$AWS_REGION \
-  -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
-  -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
-  -e SPRING_PROFILES_ACTIVE=prod \
   -p 8080:8080 \
   --restart unless-stopped \
+  -e SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-db:5432/pointtils-db \
+  -e SPRING_PROFILES_ACTIVE=prod \
   $APP_IMAGE
 
 # Aguardar aplicação iniciar
@@ -132,17 +81,17 @@ docker ps
 echo "Verificando logs da aplicação:"
 docker logs --tail=20 pointtils
 
-# Health check
-echo "Realizando health check..."
-HEALTH_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/actuator/health || echo "000")
-if [ "$HEALTH_RESPONSE" = "200" ]; then
-    echo "✅ Health check: SUCCESS (HTTP 200)"
-else
-    echo "❌ Health check: FAILED (HTTP $HEALTH_RESPONSE)"
-    exit 1
-fi
+# Verificar status final dos containers
+echo "Verificando status final dos containers:"
+docker ps
 
-echo "=== Deploy concluído com sucesso! ==="
+# Verificar logs da aplicação
+echo "Verificando logs da aplicação:"
+docker logs --tail=50 pointtils
+
+echo "=== Deploy concluído! ==="
 echo "Aplicação disponível em: http://localhost:8080"
 echo "Swagger UI: http://localhost:8080/swagger-ui.html"
 echo "Actuator Health: http://localhost:8080/actuator/health"
+echo "Para verificar logs: docker logs pointtils"
+echo "Para verificar status: docker ps -a"

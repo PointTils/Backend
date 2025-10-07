@@ -1,157 +1,133 @@
 #!/bin/bash
 set -e  # Exit on any error
 
-echo "=== Iniciando rollback da aplicação PointTils ==="
+echo "=== Rollback Simples da Aplicação PointTils para PRODUÇÃO ==="
 
 # Parâmetros recebidos do pipeline
 ECR_REGISTRY="${1:-969285065739.dkr.ecr.us-east-2.amazonaws.com}"
-DB_USERNAME="${2:-pointtilsadmin}"
-DB_PASSWORD="${3:-password}"
-DB_NAME="${4:-pointtils-db}"
-JWT_SECRET="${5:-defaultsecretkey1234567890123456789012345678901234}"
-AWS_REGION="${6:-us-east-2}"
-S3_BUCKET_NAME="${7:-pointtils-api-tests-d9396dcc}"
-AWS_ACCESS_KEY_ID="${8}"
-AWS_SECRET_ACCESS_KEY="${9}"
-ROLLBACK_TAG="${10:-previous}"  # Tag da imagem anterior para rollback
+AWS_REGION="${2:-us-east-2}"
+ROLLBACK_TAG="${3:-previous}"  # Tag da imagem anterior para rollback
 
 APP_IMAGE="$ECR_REGISTRY/pointtils:$ROLLBACK_TAG"
 DB_IMAGE="$ECR_REGISTRY/pointtils-db:$ROLLBACK_TAG"
 
 echo "ECR Registry: $ECR_REGISTRY"
 echo "Rollback App Image: $APP_IMAGE"
-echo "Rollback DB Image: $DB_IMAGE"
-echo "Database: $DB_NAME"
 echo "AWS Region: $AWS_REGION"
 echo "Rollback Tag: $ROLLBACK_TAG"
+echo "Environment: PRODUCTION"
 
-# Verificar se as imagens de rollback existem
+# Corrigir permissões do Docker
+echo "Corrigindo permissões do Docker..."
+sudo chown ubuntu:ubuntu /home/ubuntu/.docker -R 2>/dev/null || true
+sudo chmod 755 /home/ubuntu/.docker 2>/dev/null || true
+
+# Fazer login no ECR
+echo "Fazendo login no ECR..."
+aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+
+# Verificar se as imagens de rollback existem, caso contrário usar latest
 echo "Verificando disponibilidade das imagens de rollback..."
 if ! docker pull $APP_IMAGE 2>/dev/null; then
     echo "❌ Imagem de rollback da aplicação não encontrada: $APP_IMAGE"
-    echo "⚠️  Tentando usar imagem 'latest' como fallback..."
+    echo "⚠️  Usando imagem 'latest' como fallback..."
     APP_IMAGE="$ECR_REGISTRY/pointtils:latest"
     docker pull $APP_IMAGE
 fi
 
 if ! docker pull $DB_IMAGE 2>/dev/null; then
     echo "❌ Imagem de rollback do banco não encontrada: $DB_IMAGE"
-    echo "⚠️  Tentando usar imagem 'latest' como fallback..."
+    echo "⚠️  Usando imagem 'latest' como fallback..."
     DB_IMAGE="$ECR_REGISTRY/pointtils-db:latest"
     docker pull $DB_IMAGE
 fi
-
-# Fazer login no ECR (caso necessário)
-echo "Fazendo login no ECR..."
-aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
 
 # Parar e remover containers existentes
 echo "Parando containers existentes..."
 docker stop pointtils pointtils-db 2>/dev/null || true
 docker rm pointtils pointtils-db 2>/dev/null || true
 
-# Remover rede existente se houver
-docker network rm pointtils-network 2>/dev/null || true
-
-# Criar rede para os containers
-echo "Criando rede para os containers..."
-docker network create pointtils-network
+# Verificar e liberar portas em conflito
+echo "Verificando e liberando portas em conflito..."
+PORTS_TO_CHECK="5432 8080"
+for PORT in $PORTS_TO_CHECK; do
+  CONTAINER_USING_PORT=$(docker ps -q --filter "publish=$PORT")
+  if [ -n "$CONTAINER_USING_PORT" ]; then
+    echo "Parando container usando porta $PORT: $CONTAINER_USING_PORT"
+    docker stop $CONTAINER_USING_PORT 2>/dev/null || true
+    docker rm $CONTAINER_USING_PORT 2>/dev/null || true
+  fi
+done
 
 # Iniciar container do banco de dados (rollback)
 echo "Iniciando container do banco de dados (rollback)..."
 docker run -d \
   --name pointtils-db \
+  --hostname pointtils-db \
   --network pointtils-network \
-  -e POSTGRES_DB=$DB_NAME \
-  -e POSTGRES_USER=$DB_USERNAME \
-  -e POSTGRES_PASSWORD=$DB_PASSWORD \
   -p 5432:5432 \
   -v postgres_data:/var/lib/postgresql/data \
-  --health-cmd="pg_isready -U $DB_USERNAME -d $DB_NAME" \
-  --health-interval=30s \
-  --health-timeout=10s \
-  --health-retries=3 \
-  --health-start-period=40s \
   --restart unless-stopped \
   $DB_IMAGE
 
-# Aguardar banco ficar saudável
-echo "Aguardando banco de dados ficar saudável..."
-for i in {1..30}; do
-  if docker inspect --format='{{.State.Health.Status}}' pointtils-db | grep -q "healthy"; then
-    echo "✅ Banco de dados saudável"
-    # Testar conexão com as credenciais reais
-    echo "Testando conexão com banco de dados..."
-    if docker exec pointtils-db pg_isready -U $DB_USERNAME -d $DB_NAME; then
-      echo "✅ Conexão com banco de dados bem-sucedida"
-      break
-    else
-      echo "❌ Conexão com banco de dados falhou"
-      echo "Credenciais usadas: usuário=$DB_USERNAME, banco=$DB_NAME"
-      exit 1
-    fi
-  else
-    echo "Tentativa $i: Banco ainda não está saudável. Aguardando..."
-    sleep 5
-  fi
-  if [ $i -eq 30 ]; then
-    echo "❌ Banco de dados não ficou saudável após 30 tentativas"
-    exit 1
-  fi
-done
+# Aguardar banco iniciar
+echo "Aguardando banco de dados iniciar..."
+sleep 30
 
-# Iniciar container da aplicação (rollback)
-echo "Iniciando container da aplicação (rollback)..."
+# Iniciar container de rollback da aplicação
+echo "Iniciando container de rollback da aplicação..."
 docker run -d \
   --name pointtils \
   --network pointtils-network \
-  -e SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-db:5432/$DB_NAME \
-  -e SPRING_DATASOURCE_USERNAME=$DB_USERNAME \
-  -e SPRING_DATASOURCE_PASSWORD=$DB_PASSWORD \
-  -e SPRING_APPLICATION_NAME=pointtils-api \
-  -e SERVER_PORT=8080 \
-  -e JWT_SECRET=$JWT_SECRET \
-  -e JWT_EXPIRATION_TIME=3600000 \
-  -e JWT_REFRESH_EXPIRATION_TIME=86400000 \
-  -e SPRING_JPA_HIBERNATE_DDL_AUTO=validate \
-  -e SPRING_JPA_SHOW_SQL=false \
-  -e SPRINGDOC_API_DOCS_ENABLED=true \
-  -e SPRINGDOC_SWAGGER_UI_ENABLED=true \
-  -e SPRINGDOC_SWAGGER_UI_PATH=/swagger-ui.html \
-  -e CLOUD_AWS_BUCKET_NAME=$S3_BUCKET_NAME \
-  -e AWS_REGION=$AWS_REGION \
-  -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
-  -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
-  -e SPRING_PROFILES_ACTIVE=prod \
   -p 8080:8080 \
   --restart unless-stopped \
+  -e SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-db:5432/pointtils-db \
+  -e SPRING_PROFILES_ACTIVE=prod \
   $APP_IMAGE
 
-# Aguardar aplicação iniciar
-echo "Aguardando aplicação iniciar..."
-sleep 30
-
-# Verificar status dos containers
-echo "Verificando status dos containers:"
-docker ps
-
-# Verificar logs da aplicação
-echo "Verificando logs da aplicação:"
-docker logs --tail=20 pointtils
-
-# Health check
-echo "Realizando health check após rollback..."
-HEALTH_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/actuator/health || echo "000")
-if [ "$HEALTH_RESPONSE" = "200" ]; then
-    echo "✅ Health check: SUCCESS (HTTP 200)"
-    echo "✅ Rollback concluído com sucesso!"
-else
-    echo "❌ Health check: FAILED (HTTP $HEALTH_RESPONSE)"
-    echo "❌ Rollback pode ter problemas. Verifique manualmente."
+# Aguardar aplicação iniciar com verificações robustas
+echo "Aguardando aplicação iniciar após rollback..."
+for i in {1..10}; do
+  # Verificar se o container está rodando
+  if docker ps | grep -q pointtils; then
+    echo "✅ Container da aplicação está rodando"
+    
+    # Tentar health check com timeout
+    echo "Tentativa $i: Health check..."
+    HEALTH_RESPONSE=$(timeout 10 curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/actuator/health 2>/dev/null || echo "000")
+    
+    if [ "$HEALTH_RESPONSE" = "200" ]; then
+        echo "✅ Health check: SUCCESS (HTTP 200)"
+        echo "✅ Rollback concluído com sucesso!"
+        break
+    elif [ "$HEALTH_RESPONSE" != "000" ]; then
+        echo "⚠️  Health check retornou HTTP $HEALTH_RESPONSE - aplicação pode estar iniciando"
+    else
+        echo "❌ Health check falhou (sem resposta) - aplicação ainda não está respondendo"
+    fi
+  else
+    echo "❌ Container da aplicação não está rodando"
     exit 1
-fi
+  fi
+  
+  if [ $i -eq 10 ]; then
+    echo "❌ Health check: FAILED após 10 tentativas"
+    echo "⚠️  Rollback executado, mas aplicação pode ter problemas de inicialização"
+    echo "Verifique os logs manualmente: docker logs pointtils"
+    exit 1
+  fi
+  
+  echo "Aguardando 10 segundos antes da próxima tentativa..."
+  sleep 10
+done
+
+# Verificar status final dos containers
+echo "Verificando status final dos containers:"
+docker ps
 
 echo "=== Rollback concluído! ==="
 echo "Aplicação disponível em: http://localhost:8080"
 echo "Swagger UI: http://localhost:8080/swagger-ui.html"
 echo "Actuator Health: http://localhost:8080/actuator/health"
+echo "Para verificar logs: docker logs pointtils"
+echo "Para verificar status: docker ps -a"
