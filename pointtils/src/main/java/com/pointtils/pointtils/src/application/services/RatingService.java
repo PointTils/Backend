@@ -77,6 +77,9 @@ public class RatingService {
         if(request.getDescription() != null) {
             rating.setDescription(request.getDescription());
         }
+        
+        updateInterpreterAverageRating(appointmentRepository.findById(rating.getAppointment().getId())
+                .orElseThrow(() -> new RatingException("Agendamento não encontrado")));
 
         ratingRepository.save(rating);
         return ratingResponseMapper.toSingleResponseDTO(rating, userRepository.findById(rating.getUserId()).orElse(null));
