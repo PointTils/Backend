@@ -1,0 +1,93 @@
+services:
+  # Aplicação principal Pointtils
+  pointtils-dev:
+    build:
+      context: ./pointtils
+      dockerfile: Dockerfile
+      args:
+        SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+        SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+        SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+        SPRING_APPLICATION_NAME: ${SPRING_APPLICATION_NAME}
+        SERVER_PORT: ${SERVER_PORT}
+        JWT_SECRET: ${JWT_SECRET}
+        JWT_EXPIRATION_TIME: ${JWT_EXPIRATION_TIME}
+        JWT_REFRESH_EXPIRATION_TIME: ${JWT_REFRESH_EXPIRATION_TIME}
+        SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
+        SPRING_JPA_SHOW_SQL: ${SPRING_JPA_SHOW_SQL}
+        SPRING_FLYWAY_ENABLED: ${SPRING_FLYWAY_ENABLED}
+        SPRING_FLYWAY_LOCATIONS: ${SPRING_FLYWAY_LOCATIONS}
+        SPRING_FLYWAY_BASELINE_ON_MIGRATE: ${SPRING_FLYWAY_BASELINE_ON_MIGRATE}
+        SPRING_FLYWAY_VALIDATE_ON_MIGRATE: ${SPRING_FLYWAY_VALIDATE_ON_MIGRATE}
+        SPRINGDOC_API_DOCS_ENABLED: ${SPRINGDOC_API_DOCS_ENABLED}
+        SPRINGDOC_SWAGGER_UI_ENABLED: ${SPRINGDOC_SWAGGER_UI_ENABLED}
+        SPRINGDOC_SWAGGER_UI_PATH: ${SPRINGDOC_SWAGGER_UI_PATH}
+        CLOUD_AWS_BUCKET_NAME: ${CLOUD_AWS_BUCKET_NAME}
+        AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+        AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+        AWS_REGION: ${AWS_REGION}
+    image: ${APP_IMAGE:-backend-pointtils-dev}
+    container_name: pointtils-dev
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - SPRING_APPLICATION_NAME=${SPRING_APPLICATION_NAME}
+      - SERVER_PORT=${SERVER_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION_TIME=${JWT_EXPIRATION_TIME}
+      - JWT_REFRESH_EXPIRATION_TIME=${JWT_REFRESH_EXPIRATION_TIME}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${SPRING_JPA_HIBERNATE_DDL_AUTO}
+      - SPRING_JPA_SHOW_SQL=${SPRING_JPA_SHOW_SQL}
+      - SPRING_FLYWAY_ENABLED=${SPRING_FLYWAY_ENABLED}
+      - SPRING_FLYWAY_LOCATIONS=${SPRING_FLYWAY_LOCATIONS}
+      - SPRING_FLYWAY_BASELINE_ON_MIGRATE=${SPRING_FLYWAY_BASELINE_ON_MIGRATE}
+      - SPRING_FLYWAY_VALIDATE_ON_MIGRATE=${SPRING_FLYWAY_VALIDATE_ON_MIGRATE}
+      - SPRINGDOC_API_DOCS_ENABLED=${SPRINGDOC_API_DOCS_ENABLED}
+      - SPRINGDOC_SWAGGER_UI_ENABLED=${SPRINGDOC_SWAGGER_UI_ENABLED}
+      - SPRINGDOC_SWAGGER_UI_PATH=${SPRINGDOC_SWAGGER_UI_PATH}
+      - CLOUD_AWS_BUCKET_NAME=${CLOUD_AWS_BUCKET_NAME}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION}
+    ports:
+      - "8080:8080"
+    depends_on:
+      pointtils-db-dev:
+        condition: service_healthy
+    networks:
+      - pointtils-dev-network
+    restart: unless-stopped
+
+  # Banco de dados PostgreSQL
+  pointtils-db-dev:
+    build:
+      context: ./utils/postgres
+      dockerfile: Dockerfile
+      args:
+        POSTGRES_DB: ${DB_NAME}
+        POSTGRES_USER: ${DB_USERNAME}
+        POSTGRES_PASSWORD: ${DB_PASSWORD}
+    container_name: pointtils-db-dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    networks:
+      - pointtils-dev-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+
+volumes:
+  postgres_dev_data:
+
+networks:
+  pointtils-dev-network:
+    driver: bridge

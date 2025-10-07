@@ -84,7 +84,8 @@ public class InterpreterService {
             String uf,
             String neighborhood,
             String specialty,
-            String availableDate) {
+            String availableDate,
+            String name) {
 
         InterpreterModality modalityEnum = null;
         if (modality != null) {
@@ -117,7 +118,7 @@ public class InterpreterService {
 
         return repository.findAll(
                         InterpreterSpecification.filter(modalityEnum, uf, city, neighborhood, specialtyList, genderEnum, dayOfWeek,
-                                requestedStart, requestedEnd))
+                                requestedStart, requestedEnd, name))
                 .stream()
                 .map(responseMapper::toListResponseDTO)
                 .toList();

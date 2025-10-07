@@ -18,24 +18,6 @@ public class AppointmentMapper {
 
     private final UserSpecialtyMapper userSpecialtyMapper;
 
-    public AppointmentRequestDTO toDTO(Appointment appointament) {
-        return AppointmentRequestDTO.builder()
-                .uf(appointament.getUf())
-                .city(appointament.getCity())
-                .neighborhood(appointament.getNeighborhood())
-                .street(appointament.getStreet())
-                .streetNumber(appointament.getStreetNumber())
-                .addressDetails(appointament.getAddressDetails())
-                .modality(appointament.getModality())
-                .date(appointament.getDate())
-                .description(appointament.getDescription())
-                .interpreterId(appointament.getInterpreter().getId())
-                .userId(appointament.getUser().getId())
-                .startTime(appointament.getStartTime())
-                .endTime(appointament.getEndTime())
-                .build();
-    }
-
     public Appointment toDomain(AppointmentRequestDTO dto, Interpreter interpreter, User user) {
         return Appointment.builder()
                 .uf(dto.getUf())

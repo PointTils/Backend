@@ -1,8 +1,16 @@
 package com.pointtils.pointtils.src.application.controllers;
 
-import java.util.List;
-import java.util.UUID;
-
+import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.ApiResponse;
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
+import com.pointtils.pointtils.src.application.services.InterpreterService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,19 +25,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
-import com.pointtils.pointtils.src.application.dto.responses.ApiResponse;
-import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResponseDTO;
-import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
-import com.pointtils.pointtils.src.application.services.InterpreterService;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
-
+import java.util.List;
+import java.util.UUID;
 
 
 @RestController
@@ -60,10 +57,10 @@ public class InterpreterController {
             @RequestParam(required = false) String uf,
             @RequestParam(required = false) String neighborhood,
             @RequestParam(required = false) String specialty,
+            @RequestParam(required = false) String name,
             @RequestParam(required = false, name = "available_date") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm") String availableDate) {
-        List<InterpreterListResponseDTO> interpreters = service.findAll(
-                modality, gender, city, uf, neighborhood, specialty,
-                availableDate);
+        List<InterpreterListResponseDTO> interpreters = service.findAll(modality, gender, city, uf, neighborhood,
+                specialty, availableDate, name);
         return ResponseEntity.ok(ApiResponse.success("Intérpretes encontrados com sucesso", interpreters));
     }
 
@@ -79,7 +76,7 @@ public class InterpreterController {
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Atualiza parcialmente um usuário intérprete por ID")
     public ResponseEntity<ApiResponse<InterpreterResponseDTO>> patchInterpreter(@PathVariable UUID id,
-            @RequestBody @Valid InterpreterPatchRequestDTO dto) {
+                                                                                @RequestBody @Valid InterpreterPatchRequestDTO dto) {
         InterpreterResponseDTO updated = service.updatePartial(id, dto);
         return ResponseEntity.ok(ApiResponse.success("Intérprete atualizado com sucesso", updated));
     }
@@ -88,7 +85,7 @@ public class InterpreterController {
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Atualiza um usuário intérprete por ID")
     public ResponseEntity<ApiResponse<InterpreterResponseDTO>> putInterpreter(@PathVariable UUID id,
-            @RequestBody @Valid InterpreterBasicRequestDTO dto) {
+                                                                              @RequestBody @Valid InterpreterBasicRequestDTO dto) {
         InterpreterResponseDTO updated = service.updateComplete(id, dto);
         return ResponseEntity.ok(ApiResponse.success("Intérprete atualizado com sucesso", updated));
     }

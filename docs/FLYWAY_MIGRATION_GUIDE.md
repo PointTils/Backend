@@ -24,7 +24,13 @@ Criada a estrutura padrão do Flyway:
 ```
 pointtils/src/main/resources/db/migration/
 ├── V1__Create_initial_schema.sql
-└── V2__Insert_seed_data.sql
+├── V2__Insert_seed_data.sql
+├── V3__Update_user_type_and_data.sql
+├── V4__Update_user_type_and_data.sql
+├── V5__Update_specialty_names.sql
+├── V6__Update_address_data.sql
+├── V7__Insert_seed_specialties_and_update_schedule_enum.sql
+└── V8__Add_test_appointments.sql
 ```
 
 ### 3. Configurações
