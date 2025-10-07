@@ -22,6 +22,7 @@ import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModalit
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
 import com.pointtils.pointtils.src.core.domain.exceptions.ClientTimeoutException;
 import com.pointtils.pointtils.src.core.domain.exceptions.DuplicateResourceException;
+import com.pointtils.pointtils.src.core.domain.exceptions.RatingException;
 import com.pointtils.pointtils.src.core.domain.exceptions.UserSpecialtyException;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -265,6 +266,36 @@ public class GlobalExceptionHandler {
             return handleIllegalArgumentException(cause);
         }
         return handleGlobalException(ex);
+    }
+
+    @ExceptionHandler(RatingException.class)
+    public ResponseEntity<ErrorResponse> handleRatingException(RatingException ex) {
+        if ("Agendamento ou usuário não encontrado".equals(ex.getMessage())) {
+            ErrorResponse errorResponse = new ErrorResponse(
+                    HttpStatus.NOT_FOUND.value(),
+                    ex.getMessage(),
+                    System.currentTimeMillis());
+            return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+        }
+        if ("Parâmetros de entrada inválidos".equals(ex.getMessage())) {
+            ErrorResponse errorResponse = new ErrorResponse(
+                    HttpStatus.BAD_REQUEST.value(),
+                    ex.getMessage(),
+                    System.currentTimeMillis());
+            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        }
+        if ("Agendamento ainda não foi concluído (só posso avaliar depois de status ser encerrado)".equals(ex.getMessage())) {
+            ErrorResponse errorResponse = new ErrorResponse(
+                    HttpStatus.CONFLICT.value(),
+                    ex.getMessage(),
+                    System.currentTimeMillis());
+            return new ResponseEntity<>(errorResponse, HttpStatus.UNPROCESSABLE_ENTITY);
+        }
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                ex.getMessage(),
+                System.currentTimeMillis());
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Data
