@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import com.pointtils.pointtils.src.application.dto.requests.RatingPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.RatingRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.RatingResponseDTO;
 import com.pointtils.pointtils.src.application.mapper.RatingResponseMapper;
@@ -66,6 +67,19 @@ public class RatingService {
         return ratings.stream()
                 .map(rating -> ratingResponseMapper.toListResponseDTO(rating, userRepository.findById(rating.getUserId()).orElse(null)))
                 .toList();
+    }
+
+    public RatingResponseDTO patchRating(RatingPatchRequestDTO request, UUID ratingId) {
+        Rating rating = ratingRepository.findById(ratingId)
+                .orElseThrow(() -> new RatingException("Avaliação não encontrada"));
+        
+        rating.setStars(request.getStars());
+        if(request.getDescription() != null) {
+            rating.setDescription(request.getDescription());
+        }
+
+        ratingRepository.save(rating);
+        return ratingResponseMapper.toSingleResponseDTO(rating, userRepository.findById(rating.getUserId()).orElse(null));
     }
 
     private void updateInterpreterAverageRating(Appointment appointment) {
