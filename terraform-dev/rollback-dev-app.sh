@@ -47,6 +47,11 @@ echo "Parando containers de DESENVOLVIMENTO existentes..."
 docker stop pointtils-dev pointtils-db-dev 2>/dev/null || true
 docker rm pointtils-dev pointtils-db-dev 2>/dev/null || true
 
+# Remover forçadamente se ainda existirem
+echo "Removendo forçadamente se containers ainda existirem..."
+docker rm -f pointtils-dev 2>/dev/null || true
+docker rm -f pointtils-db-dev 2>/dev/null || true
+
 # Verificar e liberar portas em conflito
 echo "Verificando e liberando portas em conflito..."
 PORTS_TO_CHECK="5432 8080"
