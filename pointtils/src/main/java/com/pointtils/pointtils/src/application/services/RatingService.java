@@ -85,6 +85,17 @@ public class RatingService {
         return ratingResponseMapper.toSingleResponseDTO(rating, userRepository.findById(rating.getUserId()).orElse(null));
     }
 
+    public void deleteRating(UUID ratingId) {
+        Rating rating = ratingRepository.findById(ratingId)
+                .orElseThrow(() -> new RatingException("Avaliação não encontrada"));
+        
+        Appointment appointment = appointmentRepository.findById(rating.getAppointment().getId())
+                .orElseThrow(() -> new RatingException("Agendamento não encontrado"));
+
+        ratingRepository.delete(rating);
+        updateInterpreterAverageRating(appointment);
+    }
+
     private void updateInterpreterAverageRating(Appointment appointment) {
         List<Rating> ratings = ratingRepository.findByAppointment(appointment);
         BigDecimal totalStars = ratings.stream()
