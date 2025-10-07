@@ -2,6 +2,7 @@ package com.pointtils.pointtils.src.application.services;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
@@ -53,7 +54,18 @@ public class RatingService {
         ratingRepository.save(rating);
         updateInterpreterAverageRating(appointment);
 
-        return ratingResponseMapper.toResponseDTO(rating, user);
+        return ratingResponseMapper.toSingleResponseDTO(rating, user);
+    }
+
+    public List<RatingResponseDTO> getRatingsByInterpreterId(UUID interpreterId) {
+        User interpreter = userRepository.findById(interpreterId)
+                .orElseThrow(() -> new RatingException("Intérprete não encontrado"));
+
+        List<Rating> ratings = ratingRepository.findByInterpreterId(interpreter.getId());
+
+        return ratings.stream()
+                .map(rating -> ratingResponseMapper.toListResponseDTO(rating, userRepository.findById(rating.getUserId()).orElse(null)))
+                .toList();
     }
 
     private void updateInterpreterAverageRating(Appointment appointment) {

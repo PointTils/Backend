@@ -1,10 +1,15 @@
 package com.pointtils.pointtils.src.application.controllers;
 
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.pointtils.pointtils.src.application.dto.requests.RatingRequestDTO;
@@ -14,6 +19,7 @@ import com.pointtils.pointtils.src.application.services.RatingService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+
 
 
 @RestController
@@ -29,6 +35,13 @@ public class RatingController {
         RatingResponseDTO response = ratingService.createRating(request);
         ApiResponse<RatingResponseDTO> apiResponse = ApiResponse.success("Avaliação adicionada com sucesso", response);
         return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
+    }
+    
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<RatingResponseDTO>>> getAllRatingsByInterpreterId(@RequestParam UUID interpreterId) {
+        List<RatingResponseDTO> ratings = ratingService.getRatingsByInterpreterId(interpreterId);
+        ApiResponse<List<RatingResponseDTO>> apiResponse = ApiResponse.success("Avaliações obtidas com sucesso", ratings);
+        return ResponseEntity.ok(apiResponse);
     }
     
 }
