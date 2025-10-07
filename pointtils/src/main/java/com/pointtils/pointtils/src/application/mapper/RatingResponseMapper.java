@@ -13,12 +13,22 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class RatingResponseMapper {
     
-    public RatingResponseDTO toResponseDTO(Rating rating, User user) {
+    public RatingResponseDTO toSingleResponseDTO(Rating rating, User user) {
         return RatingResponseDTO.builder()
             .id(rating.getId())
             .stars(rating.getStars())
             .description(rating.getDescription())
             .appointmentId(rating.getAppointment().getId())
+            .user(toUserResponseDTO(user))
+            .build();
+    }
+
+    public RatingResponseDTO toListResponseDTO(Rating rating, User user) {
+        return RatingResponseDTO.builder()
+            .id(rating.getId())
+            .stars(rating.getStars())
+            .description(rating.getDescription())
+            .date(rating.getAppointment().getDate().toString())
             .user(toUserResponseDTO(user))
             .build();
     }
