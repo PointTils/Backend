@@ -3,21 +3,23 @@
 ## Arquitetura de Infraestrutura e Fluxo de Deploy
 
 ```mermaid
-graph TD
-    subgraph "GitHub Actions CI/CD"
+flowchart TD
+    %% GitHub Actions CI/CD Pipeline
+    subgraph CICD["GitHub Actions CI/CD"]
         A[Código-Fonte] -->|Push/PR| B[Pipeline CI/CD]
         B -->|Build| C[Testes Unitários]
         C -->|Sucesso| D[Build Docker Images]
         D -->|Tag e Push| E[AWS ECR]
     end
 
-    subgraph "AWS Cloud"
+    %% AWS Cloud Infrastructure
+    subgraph CLOUD["AWS Cloud"]
         E -->|Pull Images| F[EC2 Instance]
         
-        subgraph "EC2 Instance"
+        subgraph EC2["EC2 Instance"]
             F -->|Deploy Script| G[Docker Engine]
             
-            subgraph "Docker Engine"
+            subgraph DOCKER["Docker Engine"]
                 G -->|Run Container| H[Pointtils App Container]
                 G -->|Run Container| I[PostgreSQL DB Container]
                 H <-->|Network| I
@@ -27,14 +29,15 @@ graph TD
             H -->|Expose| K[Port 8080]
         end
         
-        subgraph "AWS S3"
+        subgraph S3["AWS S3"]
             L[S3 Bucket]
         end
         
         H <-->|API Calls| L
     end
 
-    subgraph "Terraform IaC"
+    %% Terraform Infrastructure as Code
+    subgraph TERRAFORM["Terraform IaC"]
         M[Terraform Code] -->|Plan & Apply| N[AWS Resources]
         N -->|Create/Configure| F
         N -->|Create/Configure| L
