@@ -98,7 +98,8 @@ public class EmailService {
      * @return true se o email foi enviado com sucesso, false caso contrário
      */
     public boolean sendWelcomeEmail(String email, String userName) {
-        String html = createWelcomeTemplate(userName);
+        String template = getTemplateByKey("WELCOME_EMAIL");
+        String html = processWelcomeTemplate(template, userName);
         EmailRequestDTO emailRequest = new EmailRequestDTO(
             email,
             "Bem-vindo(a) ao PointTils!",
@@ -116,7 +117,8 @@ public class EmailService {
      * @return true se o email foi enviado com sucesso, false caso contrário
      */
     public boolean sendPasswordResetEmail(String email, String userName, String resetToken) {
-        String html = createPasswordResetTemplate(userName, resetToken);
+        String template = getTemplateByKey("PASSWORD_RESET");
+        String html = processPasswordResetTemplate(template, userName, resetToken);
         EmailRequestDTO emailRequest = new EmailRequestDTO(
             email,
             "Recuperação de Senha - PointTils",
@@ -135,7 +137,8 @@ public class EmailService {
      * @return true se o email foi enviado com sucesso, false caso contrário
      */
     public boolean sendAppointmentConfirmationEmail(String email, String userName, String appointmentDate, String interpreterName) {
-        String html = createAppointmentConfirmationTemplate(userName, appointmentDate, interpreterName);
+        String template = getTemplateByKey("APPOINTMENT_CONFIRMATION");
+        String html = processAppointmentConfirmationTemplate(template, userName, appointmentDate, interpreterName);
         EmailRequestDTO emailRequest = new EmailRequestDTO(
             email,
             "Confirmação de Agendamento - PointTils",
@@ -193,420 +196,68 @@ public class EmailService {
      * @return Template padrão
      */
     private String getDefaultTemplate(String key) {
-        switch (key) {
-            case "PENDING_INTERPRETER_ADMIN":
-                return createDefaultInterpreterRegistrationTemplate();
-            default:
-                return "<html><body><h1>Template não encontrado</h1></body></html>";
+        log.error("Template com chave '{}' não encontrado no banco de dados. Verifique se a migration V12 foi executada.", key);
+        return "<html><body><h1>Template não encontrado</h1><p>Template com chave '" + key + "' não está disponível no banco de dados.</p></body></html>";
+    }
+
+    /**
+     * Processa template de boas-vindas
+     * @param template Template do banco
+     * @param userName Nome do usuário
+     * @return Template processado
+     */
+    private String processWelcomeTemplate(String template, String userName) {
+        if (template == null) {
+            return getDefaultTemplate("WELCOME_EMAIL");
         }
+        
+        return template
+                .replace("{{nome}}", userName != null ? userName : "")
+                .replace("{{ano}}", String.valueOf(Year.now().getValue()))
+                .replace("{{senderName}}", senderName);
     }
 
-    // ==================== Templates HTML ====================
-
-    private String createWelcomeTemplate(String userName) {
-        return String.format("""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            </head>
-            <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
-                <table width="100%%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px;">
-                    <tr>
-                        <td align="center">
-                            <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                                <!-- Header -->
-                                <tr>
-                                    <td style="background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%); padding: 40px 20px; text-align: center;">
-                                        <h1 style="color: #ffffff; margin: 0; font-size: 28px;">🎉 Bem-vindo(a)!</h1>
-                                    </td>
-                                </tr>
-                                
-                                <!-- Content -->
-                                <tr>
-                                    <td style="padding: 40px 30px;">
-                                        <h2 style="color: #333333; margin-top: 0;">Olá, %s!</h2>
-                                        <p style="color: #666666; line-height: 1.6; font-size: 16px;">
-                                            Estamos muito felizes em tê-lo(a) conosco! Sua conta foi criada com sucesso.
-                                        </p>
-                                        <p style="color: #666666; line-height: 1.6; font-size: 16px;">
-                                            Agora você pode aproveitar todos os recursos da nossa plataforma.
-                                        </p>
-                                        
-                                        <!-- Button -->
-                                        <table width="100%%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
-                                            <tr>
-                                                <td align="center">
-                                                    <a href="https://pointtils.com/login" 
-                                                       style="display: inline-block; background-color: #667eea; color: #ffffff; 
-                                                              padding: 14px 40px; text-decoration: none; border-radius: 5px; 
-                                                              font-weight: bold; font-size: 16px;">
-                                                        Acessar Plataforma
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                        </table>
-                                        
-                                        <p style="color: #999999; font-size: 14px; line-height: 1.6; margin-top: 30px;">
-                                            Caso tenha alguma dúvida, estamos à disposição para ajudar!
-                                        </p>
-                                    </td>
-                                </tr>
-                                
-                                <!-- Footer -->
-                                <tr>
-                                    <td style="background-color: #f8f9fa; padding: 20px 30px; text-align: center; border-top: 1px solid #e0e0e0;">
-                                        <p style="color: #999999; font-size: 12px; margin: 0;">
-                                            Este é um email automático, por favor não responda.<br>
-                                            © 2025 %s. Todos os direitos reservados.
-                                        </p>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-                </table>
-            </body>
-            </html>
-            """, userName, senderName);
+    /**
+     * Processa template de recuperação de senha
+     * @param template Template do banco
+     * @param userName Nome do usuário
+     * @param resetToken Token de recuperação
+     * @return Template processado
+     */
+    private String processPasswordResetTemplate(String template, String userName, String resetToken) {
+        if (template == null) {
+            return getDefaultTemplate("PASSWORD_RESET");
+        }
+        
+        return template
+                .replace("{{nome}}", userName != null ? userName : "")
+                .replace("{{resetToken}}", resetToken != null ? resetToken : "")
+                .replace("{{ano}}", String.valueOf(Year.now().getValue()))
+                .replace("{{senderName}}", senderName);
     }
 
-    private String createPasswordResetTemplate(String userName, String resetToken) {
-        return String.format("""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            </head>
-            <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
-                <table width="100%%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px;">
-                    <tr>
-                        <td align="center">
-                            <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                                <tr>
-                                    <td style="padding: 40px 30px;">
-                                        <h1 style="color: #333333; margin-top: 0;">🔑 Recuperação de Senha</h1>
-                                        <p style="color: #666666; font-size: 16px; line-height: 1.6;">
-                                            Olá, %s! Recebemos uma solicitação para redefinir a senha da sua conta.
-                                        </p>
-                                        <p style="color: #666666; font-size: 16px; line-height: 1.6;">
-                                            Use o código abaixo para redefinir sua senha:
-                                        </p>
-                                        
-                                        <!-- Code Box -->
-                                        <div style="background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%); 
-                                                    margin: 30px 0; padding: 20px; border-radius: 8px;">
-                                            <p style="color: #ffffff; font-size: 36px; font-weight: bold; 
-                                                      letter-spacing: 8px; margin: 0; font-family: 'Courier New', monospace;">
-                                                %s
-                                            </p>
-                                        </div>
-                                        
-                                        <p style="color: #999999; font-size: 14px; line-height: 1.6;">
-                                            ⏱️ Este código expira em <strong>1 hora</strong>
-                                        </p>
-                                        
-                                        <div style="margin-top: 30px; padding: 15px; background-color: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
-                                            <p style="color: #856404; font-size: 14px; margin: 0; line-height: 1.6;">
-                                                <strong>⚠️ Importante:</strong> Se você não solicitou a recuperação de senha, 
-                                                ignore este email. Sua senha permanecerá inalterada.
-                                            </p>
-                                        </div>
-                                    </td>
-                                </tr>
-                                
-                                <!-- Footer -->
-                                <tr>
-                                    <td style="background-color: #f8f9fa; padding: 20px 30px; text-align: center; border-top: 1px solid #e0e0e0;">
-                                        <p style="color: #999999; font-size: 12px; margin: 0;">
-                                            © 2025 %s. Todos os direitos reservados.
-                                        </p>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-                </table>
-            </body>
-            </html>
-            """, userName, resetToken, senderName);
+    /**
+     * Processa template de confirmação de agendamento
+     * @param template Template do banco
+     * @param userName Nome do usuário
+     * @param appointmentDate Data do agendamento
+     * @param interpreterName Nome do intérprete
+     * @return Template processado
+     */
+    private String processAppointmentConfirmationTemplate(String template, String userName, String appointmentDate, String interpreterName) {
+        if (template == null) {
+            return getDefaultTemplate("APPOINTMENT_CONFIRMATION");
+        }
+        
+        return template
+                .replace("{{nome}}", userName != null ? userName : "")
+                .replace("{{appointmentDate}}", appointmentDate != null ? appointmentDate : "")
+                .replace("{{interpreterName}}", interpreterName != null ? interpreterName : "")
+                .replace("{{ano}}", String.valueOf(Year.now().getValue()))
+                .replace("{{senderName}}", senderName);
     }
 
-    private String createAppointmentConfirmationTemplate(String userName, String appointmentDate, String interpreterName) {
-        return String.format("""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            </head>
-            <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
-                <table width="100%%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px;">
-                    <tr>
-                        <td align="center">
-                            <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                                <!-- Header -->
-                                <tr>
-                                    <td style="background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%); padding: 40px 20px; text-align: center;">
-                                        <h1 style="color: #ffffff; margin: 0; font-size: 28px;">✅ Agendamento Confirmado</h1>
-                                    </td>
-                                </tr>
-                                
-                                <!-- Content -->
-                                <tr>
-                                    <td style="padding: 40px 30px;">
-                                        <h2 style="color: #333333; margin-top: 0;">Olá, %s!</h2>
-                                        <p style="color: #666666; line-height: 1.6; font-size: 16px;">
-                                            Seu agendamento foi confirmado com sucesso!
-                                        </p>
-                                        
-                                        <!-- Appointment Details -->
-                                        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                                            <h3 style="color: #333333; margin-top: 0;">📅 Detalhes do Agendamento</h3>
-                                            <p style="color: #666666; margin: 10px 0;">
-                                                <strong>Data e Hora:</strong> %s
-                                            </p>
-                                            <p style="color: #666666; margin: 10px 0;">
-                                                <strong>Intérprete:</strong> %s
-                                            </p>
-                                        </div>
-                                        
-                                        <p style="color: #666666; line-height: 1.6; font-size: 16px;">
-                                            Lembre-se de estar disponível no horário agendado para sua sessão.
-                                        </p>
-                                        
-                                        <div style="margin-top: 30px; padding: 15px; background-color: #d4edda; border-left: 4px solid #28a745; border-radius: 4px;">
-                                            <p style="color: #155724; font-size: 14px; margin: 0; line-height: 1.6;">
-                                                <strong>💡 Dica:</strong> Recomendamos que você esteja em um ambiente tranquilo 
-                                                para melhor aproveitamento da sessão.
-                                            </p>
-                                        </div>
-                                    </td>
-                                </tr>
-                                
-                                <!-- Footer -->
-                                <tr>
-                                    <td style="background-color: #f8f9fa; padding: 20px 30px; text-align: center; border-top: 1px solid #e0e0e0;">
-                                        <p style="color: #999999; font-size: 12px; margin: 0;">
-                                            © 2025 %s. Todos os direitos reservados.
-                                        </p>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-                </table>
-            </body>
-            </html>
-            """, userName, appointmentDate, interpreterName, senderName);
-    }
-
-    private String createInterpreterRegistrationTemplate(String interpreterName, String cpf, String cnpj, String email, String phone, String acceptLink, String rejectLink) {
-        return String.format("""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            </head>
-            <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
-                <table width="100%%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px;">
-                    <tr>
-                        <td align="center">
-                            <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                                <!-- Header -->
-                                <tr>
-                                    <td style="background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%); padding: 40px 20px; text-align: center;">
-                                        <h1 style="color: #ffffff; margin: 0; font-size: 28px;">📋 Nova Solicitação de Cadastro</h1>
-                                    </td>
-                                </tr>
-                                
-                                <!-- Content -->
-                                <tr>
-                                    <td style="padding: 40px 30px;">
-                                        <h2 style="color: #333333; margin-top: 0;">Solicitação de Cadastro de Intérprete</h2>
-                                        <p style="color: #666666; line-height: 1.6; font-size: 16px;">
-                                            Um novo intérprete solicitou cadastro na plataforma PointTils.
-                                        </p>
-                                        
-                                        <!-- Interpreter Details -->
-                                        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                                            <h3 style="color: #333333; margin-top: 0;">👤 Dados do Intérprete</h3>
-                                            <p style="color: #666666; margin: 10px 0;">
-                                                <strong>Nome:</strong> %s
-                                            </p>
-                                            <p style="color: #666666; margin: 10px 0;">
-                                                <strong>CPF:</strong> %s
-                                            </p>
-                                            <p style="color: #666666; margin: 10px 0;">
-                                                <strong>CNPJ:</strong> %s
-                                            </p>
-                                            <p style="color: #666666; margin: 10px 0;">
-                                                <strong>Email:</strong> %s
-                                            </p>
-                                            <p style="color: #666666; margin: 10px 0;">
-                                                <strong>Telefone:</strong> %s
-                                            </p>
-                                        </div>
-                                        
-                                        <!-- Action Buttons -->
-                                        <table width="100%%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
-                                            <tr>
-                                                <td align="center">
-                                                    <table cellpadding="0" cellspacing="0">
-                                                        <tr>
-                                                            <td align="center" style="padding: 0 10px;">
-                                                                <a href="%s" 
-                                                                   style="display: inline-block; background-color: #28a745; color: #ffffff; 
-                                                                          padding: 12px 30px; text-decoration: none; border-radius: 5px; 
-                                                                          font-weight: bold; font-size: 16px;">
-                                                                    ✅ Aceitar
-                                                                </a>
-                                                            </td>
-                                                            <td align="center" style="padding: 0 10px;">
-                                                                <a href="%s" 
-                                                                   style="display: inline-block; background-color: #dc3545; color: #ffffff; 
-                                                                          padding: 12px 30px; text-decoration: none; border-radius: 5px; 
-                                                                          font-weight: bold; font-size: 16px;">
-                                                                    ❌ Recusar
-                                                                </a>
-                                                            </td>
-                                                        </tr>
-                                                    </table>
-                                                </td>
-                                            </tr>
-                                        </table>
-                                        
-                                        <div style="margin-top: 30px; padding: 15px; background-color: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
-                                            <p style="color: #856404; font-size: 14px; margin: 0; line-height: 1.6;">
-                                                <strong>⚠️ Atenção:</strong> Esta solicitação expira em <strong>7 dias</strong>. 
-                                                Após este período, será necessário que o intérprete solicite novamente.
-                                            </p>
-                                        </div>
-                                    </td>
-                                </tr>
-                                
-                                <!-- Footer -->
-                                <tr>
-                                    <td style="background-color: #f8f9fa; padding: 20px 30px; text-align: center; border-top: 1px solid #e0e0e0;">
-                                        <p style="color: #999999; font-size: 12px; margin: 0;">
-                                            © 2025 %s. Todos os direitos reservados.
-                                        </p>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-                </table>
-            </body>
-            </html>
-            """, interpreterName, cpf, cnpj, email, phone, acceptLink, rejectLink, senderName);
-    }
-
-    private String createDefaultInterpreterRegistrationTemplate() {
-        return """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            </head>
-            <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
-                <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px;">
-                    <tr>
-                        <td align="center">
-                            <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                                <!-- Header -->
-                                <tr>
-                                    <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center;">
-                                        <h1 style="color: #ffffff; margin: 0; font-size: 28px;">📋 Nova Solicitação de Cadastro</h1>
-                                    </td>
-                                </tr>
-                                
-                                <!-- Content -->
-                                <tr>
-                                    <td style="padding: 40px 30px;">
-                                        <h2 style="color: #333333; margin-top: 0;">Solicitação de Cadastro de Intérprete</h2>
-                                        <p style="color: #666666; line-height: 1.6; font-size: 16px;">
-                                            Um novo intérprete solicitou cadastro na plataforma PointTils.
-                                        </p>
-                                        
-                                        <!-- Interpreter Details -->
-                                        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                                            <h3 style="color: #333333; margin-top: 0;">👤 Dados do Intérprete</h3>
-                                            <p style="color: #666666; margin: 10px 0;">
-                                                <strong>Nome:</strong> [Nome do Intérprete]
-                                            </p>
-                                            <p style="color: #666666; margin: 10px 0;">
-                                                <strong>CPF:</strong> [CPF do Intérprete]
-                                            </p>
-                                            <p style="color: #666666; margin: 10px 0;">
-                                                <strong>CNPJ:</strong> [CNPJ do Intérprete]
-                                            </p>
-                                            <p style="color: #666666; margin: 10px 0;">
-                                                <strong>Email:</strong> [Email do Intérprete]
-                                            </p>
-                                            <p style="color: #666666; margin: 10px 0;">
-                                                <strong>Telefone:</strong> [Telefone do Intérprete]
-                                            </p>
-                                        </div>
-                                        
-                                        <!-- Action Buttons -->
-                                        <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
-                                            <tr>
-                                                <td align="center">
-                                                    <table cellpadding="0" cellspacing="0">
-                                                        <tr>
-                                                            <td align="center" style="padding: 0 10px;">
-                                                                <a href="[LINK_ACEITAR]" 
-                                                                   style="display: inline-block; background-color: #28a745; color: #ffffff; 
-                                                                          padding: 12px 30px; text-decoration: none; border-radius: 5px; 
-                                                                          font-weight: bold; font-size: 16px;">
-                                                                    ✅ Aceitar
-                                                                </a>
-                                                            </td>
-                                                            <td align="center" style="padding: 0 10px;">
-                                                                <a href="[LINK_RECUSAR]" 
-                                                                   style="display: inline-block; background-color: #dc3545; color: #ffffff; 
-                                                                          padding: 12px 30px; text-decoration: none; border-radius: 5px; 
-                                                                          font-weight: bold; font-size: 16px;">
-                                                                    ❌ Recusar
-                                                                </a>
-                                                            </td>
-                                                        </tr>
-                                                    </table>
-                                                </td>
-                                            </tr>
-                                        </table>
-                                        
-                                        <div style="margin-top: 30px; padding: 15px; background-color: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
-                                            <p style="color: #856404; font-size: 14px; margin: 0; line-height: 1.6;">
-                                                <strong>⚠️ Atenção:</strong> Esta solicitação expira em <strong>7 dias</strong>. 
-                                                Após este período, será necessário que o intérprete solicite novamente.
-                                            </p>
-                                        </div>
-                                    </td>
-                                </tr>
-                                
-                                <!-- Footer -->
-                                <tr>
-                                    <td style="background-color: #f8f9fa; padding: 20px 30px; text-align: center; border-top: 1px solid #e0e0e0;">
-                                        <p style="color: #999999; font-size: 12px; margin: 0;">
-                                            © 2025 PointTils. Todos os direitos reservados.
-                                        </p>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-                </table>
-            </body>
-            </html>
-            """;
-    }
-
+   
     /**
      * Envia email de feedback sobre cadastro para o intérprete
      * @param interpreterEmail Email do intérprete
@@ -644,7 +295,7 @@ public class EmailService {
     private String processTemplate(String template, String interpreterName, String cpf, String cnpj, 
                                   String email, String phone, String acceptLink, String rejectLink) {
         if (template == null) {
-            return createDefaultInterpreterRegistrationTemplate();
+            return getDefaultTemplate("PENDING_INTERPRETER_ADMIN");
         }
         
         // Substituir placeholders do template do banco
