@@ -2,6 +2,7 @@ package com.pointtils.pointtils.src.application.controllers;
 
 import com.pointtils.pointtils.src.application.dto.requests.EmailRequestDTO;
 import com.pointtils.pointtils.src.application.services.EmailService;
+import com.pointtils.pointtils.src.application.services.InterpreterService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -23,6 +25,7 @@ import java.util.Map;
 public class EmailController {
 
     private final EmailService emailService;
+    private final InterpreterService interpreterService;
 
     @PostMapping("/send")
     @Operation(summary = "Enviar email simples", description = "Envia um email simples para um destinatário")
@@ -129,70 +132,119 @@ public class EmailController {
         response.put("interpreterName", interpreterName);
         
         return ResponseEntity.ok(response);
-    }
+    }      
 
-    @GetMapping("/test")
-    @Operation(summary = "Teste de configuração de email", description = "Endpoint para testar a configuração do Brevo")
+    @GetMapping("/template/{key}")
+    @Operation(summary = "Buscar template por chave", description = "Retorna um template HTML armazenado no banco de dados")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Teste executado com sucesso"),
-        @ApiResponse(responseCode = "500", description = "Erro na configuração de email")
+        @ApiResponse(responseCode = "200", description = "Template encontrado com sucesso"),
+        @ApiResponse(responseCode = "404", description = "Template não encontrado"),
+        @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
-    public ResponseEntity<Map<String, Object>> testEmailConfiguration() {
-        String testEmail = "test@pointtils.com";
-        String testSubject = "Teste de Configuração - PointTils";
-        String testBody = "Este é um email de teste para verificar se a configuração do Brevo está funcionando corretamente.";
-        
-        EmailRequestDTO testRequest = new EmailRequestDTO(testEmail, testSubject, testBody, "PointTils Test");
-        boolean success = emailService.sendSimpleEmail(testRequest);
+    public ResponseEntity<Map<String, Object>> getTemplateByKey(@PathVariable String key) {
+        String template = emailService.getTemplateByKey(key);
         
         Map<String, Object> response = new HashMap<>();
-        response.put("success", success);
-        response.put("message", success ? "Teste de email executado com sucesso" : "Falha no teste de email");
-        response.put("testEmail", testEmail);
-        response.put("configuration", "Brevo SMTP");
+        response.put("key", key);
+        response.put("template", template);
+        response.put("found", !template.contains("Template não encontrado"));
+        response.put("message", !template.contains("Template não encontrado") ? 
+            "Template encontrado com sucesso" : "Template não encontrado, retornando padrão");
         
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/test-html")
-    @Operation(summary = "Teste de email HTML", description = "Endpoint para testar envio de emails HTML")
+    @PostMapping("/interpreter-registration-request")
+    @Operation(summary = "Enviar solicitação de cadastro de intérprete", description = "Envia email para administradores com solicitação de cadastro de intérprete")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Teste HTML executado com sucesso"),
-        @ApiResponse(responseCode = "500", description = "Erro na configuração de email")
+        @ApiResponse(responseCode = "200", description = "Email de solicitação enviado com sucesso"),
+        @ApiResponse(responseCode = "400", description = "Dados inválidos"),
+        @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
-    public ResponseEntity<Map<String, Object>> testHtmlEmail() {
-        String testEmail = "test@pointtils.com";
-        String testSubject = "Teste de Email HTML - PointTils";
-        String testHtml = """
-            <!DOCTYPE html>
-            <html>
-            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                <div style="max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
-                    <h1 style="color: #667eea;">✨ Email HTML Funcionando!</h1>
-                    <p>Se você está vendo este email formatado, significa que:</p>
-                    <ul style="background-color: white; padding: 20px; border-radius: 5px;">
-                        <li>✅ Conexão SMTP com Brevo estabelecida</li>
-                        <li>✅ Configuração do Spring Boot correta</li>
-                        <li>✅ Envio de emails HTML funcionando</li>
-                    </ul>
-                    <div style="margin: 20px 0; padding: 15px; background-color: #d4edda; border-left: 4px solid #28a745; border-radius: 4px;">
-                        <strong>🎉 Parabéns!</strong> Sua integração está 100%% operacional!
-                    </div>
-                </div>
-            </body>
-            </html>
-            """;
+    public ResponseEntity<Map<String, Object>> sendInterpreterRegistrationRequest(
+            @RequestParam String adminEmail,
+            @RequestParam String interpreterName,
+            @RequestParam String cpf,
+            @RequestParam String cnpj,
+            @RequestParam String email,
+            @RequestParam String phone,
+            @RequestParam String acceptLink,
+            @RequestParam String rejectLink) {
         
-        EmailRequestDTO testRequest = new EmailRequestDTO(testEmail, testSubject, testHtml, "PointTils Test");
-        boolean success = emailService.sendHtmlEmail(testRequest);
+        boolean success = emailService.sendInterpreterRegistrationRequestEmail(
+            adminEmail, interpreterName, cpf, cnpj, email, phone, acceptLink, rejectLink);
         
         Map<String, Object> response = new HashMap<>();
         response.put("success", success);
-        response.put("message", success ? "Teste de email HTML executado com sucesso" : "Falha no teste de email HTML");
-        response.put("testEmail", testEmail);
-        response.put("type", "HTML");
+        response.put("message", success ? "Email de solicitação enviado com sucesso" : "Falha ao enviar email de solicitação");
+        response.put("adminEmail", adminEmail);
+        response.put("interpreterName", interpreterName);
         
         return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/interpreter/{id}/approve")
+    @Operation(summary = "Aprovar cadastro de intérprete", description = "Aprova o cadastro de um intérprete e envia email de confirmação")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Cadastro aprovado com sucesso"),
+        @ApiResponse(responseCode = "404", description = "Intérprete não encontrado"),
+        @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+    })
+    public ResponseEntity<Map<String, Object>> approveInterpreter(@PathVariable String id) {
+        try {
+            UUID interpreterId = UUID.fromString(id);
+            boolean success = interpreterService.approveInterpreter(interpreterId);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", success);
+            response.put("message", success ? "Cadastro do intérprete aprovado com sucesso" : "Falha ao aprovar cadastro do intérprete");
+            response.put("interpreterId", id);
+            response.put("status", "ACTIVE");
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("Erro ao aprovar cadastro do intérprete {}: {}", id, e.getMessage());
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Erro ao aprovar cadastro do intérprete: " + e.getMessage());
+            response.put("interpreterId", id);
+            
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+    @PatchMapping("/interpreter/{id}/reject")
+    @Operation(summary = "Recusar cadastro de intérprete", description = "Recusa o cadastro de um intérprete e envia email de notificação")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Cadastro recusado com sucesso"),
+        @ApiResponse(responseCode = "404", description = "Intérprete não encontrado"),
+        @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+    })
+    public ResponseEntity<Map<String, Object>> rejectInterpreter(@PathVariable String id) {
+        try {
+            UUID interpreterId = UUID.fromString(id);
+            boolean success = interpreterService.rejectInterpreter(interpreterId);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", success);
+            response.put("message", success ? "Cadastro do intérprete recusado com sucesso" : "Falha ao recusar cadastro do intérprete");
+            response.put("interpreterId", id);
+            response.put("status", "INACTIVE");
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("Erro ao recusar cadastro do intérprete {}: {}", id, e.getMessage());
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Erro ao recusar cadastro do intérprete: " + e.getMessage());
+            response.put("interpreterId", id);
+            
+            return ResponseEntity.status(500).body(response);
+        }
     }
 
 }

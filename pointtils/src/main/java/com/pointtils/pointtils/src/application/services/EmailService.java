@@ -1,6 +1,8 @@
 package com.pointtils.pointtils.src.application.services;
 
 import com.pointtils.pointtils.src.application.dto.requests.EmailRequestDTO;
+import com.pointtils.pointtils.src.core.domain.entities.Parameters;
+import com.pointtils.pointtils.src.infrastructure.repositories.ParametersRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -11,12 +13,19 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.Year;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmailService {
 
     private final JavaMailSender mailSender;
+    private final ParametersRepository parametersRepository;
 
     @Value("${app.mail.from:noreply@pointtils.com}")
     private String emailFrom;
@@ -134,6 +143,62 @@ public class EmailService {
             senderName
         );
         return sendHtmlEmail(emailRequest);
+    }
+
+    /**
+     * Envia email de solicitação de cadastro de intérprete para administradores
+     * @param adminEmail Email do administrador
+     * @param interpreterName Nome do intérprete
+     * @param cpf CPF do intérprete
+     * @param cnpj CNPJ do intérprete
+     * @param email Email do intérprete
+     * @param phone Telefone do intérprete
+     * @param acceptLink Link para aceitar o cadastro
+     * @param rejectLink Link para recusar o cadastro
+     * @return true se o email foi enviado com sucesso, false caso contrário
+     */
+    public boolean sendInterpreterRegistrationRequestEmail(String adminEmail, String interpreterName, String cpf, String cnpj, String email, String phone, String acceptLink, String rejectLink) {
+        // Buscar template do banco de dados
+        String template = getTemplateByKey("PENDING_INTERPRETER_ADMIN");
+        
+        // Substituir placeholders do template
+        String html = processTemplate(template, interpreterName, cpf, cnpj, email, phone, acceptLink, rejectLink);
+        
+        EmailRequestDTO emailRequest = new EmailRequestDTO(
+            adminEmail,
+            "Nova Solicitação de Cadastro de Intérprete - PointTils",
+            html,
+            senderName
+        );
+        return sendHtmlEmail(emailRequest);
+    }
+
+    /**
+     * Busca template HTML do banco de dados
+     * @param key Chave do template
+     * @return Template HTML ou template padrão se não encontrado
+     */
+    public String getTemplateByKey(String key) {
+        Optional<Parameters> parameter = parametersRepository.findByKey(key);
+        if (parameter.isPresent()) {
+            return parameter.get().getValue();
+        }
+        log.warn("Template com chave '{}' não encontrado no banco de dados", key);
+        return getDefaultTemplate(key);
+    }
+
+    /**
+     * Retorna template padrão baseado na chave
+     * @param key Chave do template
+     * @return Template padrão
+     */
+    private String getDefaultTemplate(String key) {
+        switch (key) {
+            case "PENDING_INTERPRETER_ADMIN":
+                return createDefaultInterpreterRegistrationTemplate();
+            default:
+                return "<html><body><h1>Template não encontrado</h1></body></html>";
+        }
     }
 
     // ==================== Templates HTML ====================
@@ -336,5 +401,299 @@ public class EmailService {
             </body>
             </html>
             """, userName, appointmentDate, interpreterName, senderName);
+    }
+
+    private String createInterpreterRegistrationTemplate(String interpreterName, String cpf, String cnpj, String email, String phone, String acceptLink, String rejectLink) {
+        return String.format("""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+                <table width="100%%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px;">
+                    <tr>
+                        <td align="center">
+                            <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <!-- Header -->
+                                <tr>
+                                    <td style="background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%); padding: 40px 20px; text-align: center;">
+                                        <h1 style="color: #ffffff; margin: 0; font-size: 28px;">📋 Nova Solicitação de Cadastro</h1>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Content -->
+                                <tr>
+                                    <td style="padding: 40px 30px;">
+                                        <h2 style="color: #333333; margin-top: 0;">Solicitação de Cadastro de Intérprete</h2>
+                                        <p style="color: #666666; line-height: 1.6; font-size: 16px;">
+                                            Um novo intérprete solicitou cadastro na plataforma PointTils.
+                                        </p>
+                                        
+                                        <!-- Interpreter Details -->
+                                        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                                            <h3 style="color: #333333; margin-top: 0;">👤 Dados do Intérprete</h3>
+                                            <p style="color: #666666; margin: 10px 0;">
+                                                <strong>Nome:</strong> %s
+                                            </p>
+                                            <p style="color: #666666; margin: 10px 0;">
+                                                <strong>CPF:</strong> %s
+                                            </p>
+                                            <p style="color: #666666; margin: 10px 0;">
+                                                <strong>CNPJ:</strong> %s
+                                            </p>
+                                            <p style="color: #666666; margin: 10px 0;">
+                                                <strong>Email:</strong> %s
+                                            </p>
+                                            <p style="color: #666666; margin: 10px 0;">
+                                                <strong>Telefone:</strong> %s
+                                            </p>
+                                        </div>
+                                        
+                                        <!-- Action Buttons -->
+                                        <table width="100%%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
+                                            <tr>
+                                                <td align="center">
+                                                    <table cellpadding="0" cellspacing="0">
+                                                        <tr>
+                                                            <td align="center" style="padding: 0 10px;">
+                                                                <a href="%s" 
+                                                                   style="display: inline-block; background-color: #28a745; color: #ffffff; 
+                                                                          padding: 12px 30px; text-decoration: none; border-radius: 5px; 
+                                                                          font-weight: bold; font-size: 16px;">
+                                                                    ✅ Aceitar
+                                                                </a>
+                                                            </td>
+                                                            <td align="center" style="padding: 0 10px;">
+                                                                <a href="%s" 
+                                                                   style="display: inline-block; background-color: #dc3545; color: #ffffff; 
+                                                                          padding: 12px 30px; text-decoration: none; border-radius: 5px; 
+                                                                          font-weight: bold; font-size: 16px;">
+                                                                    ❌ Recusar
+                                                                </a>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        
+                                        <div style="margin-top: 30px; padding: 15px; background-color: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+                                            <p style="color: #856404; font-size: 14px; margin: 0; line-height: 1.6;">
+                                                <strong>⚠️ Atenção:</strong> Esta solicitação expira em <strong>7 dias</strong>. 
+                                                Após este período, será necessário que o intérprete solicite novamente.
+                                            </p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Footer -->
+                                <tr>
+                                    <td style="background-color: #f8f9fa; padding: 20px 30px; text-align: center; border-top: 1px solid #e0e0e0;">
+                                        <p style="color: #999999; font-size: 12px; margin: 0;">
+                                            © 2025 %s. Todos os direitos reservados.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </body>
+            </html>
+            """, interpreterName, cpf, cnpj, email, phone, acceptLink, rejectLink, senderName);
+    }
+
+    private String createDefaultInterpreterRegistrationTemplate() {
+        return """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+                <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px;">
+                    <tr>
+                        <td align="center">
+                            <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <!-- Header -->
+                                <tr>
+                                    <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center;">
+                                        <h1 style="color: #ffffff; margin: 0; font-size: 28px;">📋 Nova Solicitação de Cadastro</h1>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Content -->
+                                <tr>
+                                    <td style="padding: 40px 30px;">
+                                        <h2 style="color: #333333; margin-top: 0;">Solicitação de Cadastro de Intérprete</h2>
+                                        <p style="color: #666666; line-height: 1.6; font-size: 16px;">
+                                            Um novo intérprete solicitou cadastro na plataforma PointTils.
+                                        </p>
+                                        
+                                        <!-- Interpreter Details -->
+                                        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                                            <h3 style="color: #333333; margin-top: 0;">👤 Dados do Intérprete</h3>
+                                            <p style="color: #666666; margin: 10px 0;">
+                                                <strong>Nome:</strong> [Nome do Intérprete]
+                                            </p>
+                                            <p style="color: #666666; margin: 10px 0;">
+                                                <strong>CPF:</strong> [CPF do Intérprete]
+                                            </p>
+                                            <p style="color: #666666; margin: 10px 0;">
+                                                <strong>CNPJ:</strong> [CNPJ do Intérprete]
+                                            </p>
+                                            <p style="color: #666666; margin: 10px 0;">
+                                                <strong>Email:</strong> [Email do Intérprete]
+                                            </p>
+                                            <p style="color: #666666; margin: 10px 0;">
+                                                <strong>Telefone:</strong> [Telefone do Intérprete]
+                                            </p>
+                                        </div>
+                                        
+                                        <!-- Action Buttons -->
+                                        <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
+                                            <tr>
+                                                <td align="center">
+                                                    <table cellpadding="0" cellspacing="0">
+                                                        <tr>
+                                                            <td align="center" style="padding: 0 10px;">
+                                                                <a href="[LINK_ACEITAR]" 
+                                                                   style="display: inline-block; background-color: #28a745; color: #ffffff; 
+                                                                          padding: 12px 30px; text-decoration: none; border-radius: 5px; 
+                                                                          font-weight: bold; font-size: 16px;">
+                                                                    ✅ Aceitar
+                                                                </a>
+                                                            </td>
+                                                            <td align="center" style="padding: 0 10px;">
+                                                                <a href="[LINK_RECUSAR]" 
+                                                                   style="display: inline-block; background-color: #dc3545; color: #ffffff; 
+                                                                          padding: 12px 30px; text-decoration: none; border-radius: 5px; 
+                                                                          font-weight: bold; font-size: 16px;">
+                                                                    ❌ Recusar
+                                                                </a>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        
+                                        <div style="margin-top: 30px; padding: 15px; background-color: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+                                            <p style="color: #856404; font-size: 14px; margin: 0; line-height: 1.6;">
+                                                <strong>⚠️ Atenção:</strong> Esta solicitação expira em <strong>7 dias</strong>. 
+                                                Após este período, será necessário que o intérprete solicite novamente.
+                                            </p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Footer -->
+                                <tr>
+                                    <td style="background-color: #f8f9fa; padding: 20px 30px; text-align: center; border-top: 1px solid #e0e0e0;">
+                                        <p style="color: #999999; font-size: 12px; margin: 0;">
+                                            © 2025 PointTils. Todos os direitos reservados.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </body>
+            </html>
+            """;
+    }
+
+    /**
+     * Envia email de feedback sobre cadastro para o intérprete
+     * @param interpreterEmail Email do intérprete
+     * @param interpreterName Nome do intérprete
+     * @param approved true se o cadastro foi aprovado, false se foi negado
+     * @return true se o email foi enviado com sucesso, false caso contrário
+     */
+    public boolean sendInterpreterFeedbackEmail(String interpreterEmail, String interpreterName, boolean approved) {
+        String html = createInterpreterFeedbackTemplate(interpreterName, approved);
+        String subject = approved ? 
+            "Cadastro Aprovado - PointTils" : 
+            "Cadastro Não Aprovado - PointTils";
+        
+        EmailRequestDTO emailRequest = new EmailRequestDTO(
+            interpreterEmail,
+            subject,
+            html,
+            senderName
+        );
+        return sendHtmlEmail(emailRequest);
+    }
+
+    /**
+     * Processa o template HTML substituindo os placeholders pelos valores reais
+     * @param template Template HTML do banco de dados
+     * @param interpreterName Nome do intérprete
+     * @param cpf CPF do intérprete
+     * @param cnpj CNPJ do intérprete
+     * @param email Email do intérprete
+     * @param phone Telefone do intérprete
+     * @param acceptLink Link para aceitar o cadastro
+     * @param rejectLink Link para recusar o cadastro
+     * @return Template HTML processado
+     */
+    private String processTemplate(String template, String interpreterName, String cpf, String cnpj, 
+                                  String email, String phone, String acceptLink, String rejectLink) {
+        if (template == null) {
+            return createDefaultInterpreterRegistrationTemplate();
+        }
+        
+        // Substituir placeholders do template do banco
+        String processed = template
+                .replace("{{nome}}", interpreterName != null ? interpreterName : "")
+                .replace("{{cpf}}", cpf != null ? cpf : "")
+                .replace("{{cnpj}}", cnpj != null ? cnpj : "")
+                .replace("{{email}}", email != null ? email : "")
+                .replace("{{telefone}}", phone != null ? phone : "")
+                .replace("{link_api}", acceptLink != null ? acceptLink : "")
+                .replace("{link_api}", rejectLink != null ? rejectLink : "")
+                .replace("{{ano}}", String.valueOf(Year.now().getValue()));
+        
+        // Corrigir os links de aceitar/recusar (o template do banco usa o mesmo placeholder para ambos)
+        // Vamos substituir manualmente os links nos botões
+        processed = processed.replace(
+            "<a href=\"{link_api}\" target=\"_blank\" rel=\"noreferrer noopener\" style=\"background-color: #008000; color: #fff; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold;\">Aceitar</a>",
+            String.format("<a href=\"%s\" target=\"_blank\" rel=\"noreferrer noopener\" style=\"background-color: #008000; color: #fff; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold;\">Aceitar</a>", acceptLink)
+        );
+        
+        processed = processed.replace(
+            "<a href=\"{link_api}\" target=\"_blank\" rel=\"noreferrer noopener\" style=\"background-color: #FF0000; color: #fff; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold;\">Recusar</a>",
+            String.format("<a href=\"%s\" target=\"_blank\" rel=\"noreferrer noopener\" style=\"background-color: #FF0000; color: #fff; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold;\">Recusar</a>", rejectLink)
+        );
+        
+        return processed;
+    }
+
+    /**
+     * Cria template de feedback para o intérprete
+     * @param interpreterName Nome do intérprete
+     * @param approved true se o cadastro foi aprovado, false se foi negado
+     * @return Template HTML processado
+     */
+    private String createInterpreterFeedbackTemplate(String interpreterName, boolean approved) {
+        // Buscar template do banco de dados
+        String template = getTemplateByKey("PENDING_INTERPRETER");
+        
+        // Definir a mensagem de resposta baseada na aprovação
+        String respostaSolicitacao = approved ? 
+            "seu cadastro foi aprovado e você já pode acessar a plataforma" : 
+            "infelizmente seu cadastro não foi aprovado no momento";
+        
+        // Processar o template
+        String processed = template
+                .replace("{{nome}}", interpreterName != null ? interpreterName : "")
+                .replace("{{respostaSolicitacao}}", respostaSolicitacao)
+                .replace("{{ano}}", String.valueOf(Year.now().getValue()));
+        
+        return processed;
     }
 }
