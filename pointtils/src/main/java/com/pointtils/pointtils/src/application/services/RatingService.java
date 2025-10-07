@@ -30,8 +30,8 @@ public class RatingService {
     private final UserRepository userRepository;
     private final RatingResponseMapper ratingResponseMapper;
 
-    public RatingResponseDTO createRating(RatingRequestDTO ratingRequestDTO) {
-        Appointment appointment = appointmentRepository.findById(ratingRequestDTO.getAppointmentId())
+    public RatingResponseDTO createRating(RatingRequestDTO ratingRequestDTO, UUID appointmentId) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new RatingException("Agendamento ou usuário não encontrado"));
 
         User user = userRepository.findById(ratingRequestDTO.getUserId())

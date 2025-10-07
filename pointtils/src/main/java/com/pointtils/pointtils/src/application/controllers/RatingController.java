@@ -32,8 +32,9 @@ public class RatingController {
     private final RatingService ratingService;
 
     @PostMapping("/{appointmentId}")
-    public ResponseEntity<ApiResponse<RatingResponseDTO>> postRating(@RequestBody RatingRequestDTO request) {
-        RatingResponseDTO response = ratingService.createRating(request);
+    public ResponseEntity<ApiResponse<RatingResponseDTO>> postRating(@RequestBody RatingRequestDTO request, 
+            @PathVariable UUID appointmentId) {
+        RatingResponseDTO response = ratingService.createRating(request, appointmentId);
         ApiResponse<RatingResponseDTO> apiResponse = ApiResponse.success("Avaliação adicionada com sucesso", response);
         return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
     }

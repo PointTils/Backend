@@ -18,7 +18,6 @@ public class RatingResponseMapper {
             .id(rating.getId())
             .stars(rating.getStars())
             .description(rating.getDescription())
-            .appointmentId(rating.getAppointment().getId())
             .user(toUserResponseDTO(user))
             .build();
     }

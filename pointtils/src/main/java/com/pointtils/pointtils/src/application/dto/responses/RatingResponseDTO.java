@@ -16,7 +16,6 @@ public class RatingResponseDTO {
     private UUID id;
     private BigDecimal stars;
     private String description;
-    private UUID appointmentId;
     private String date;
     private RatingUserResponseDTO user;
 }
