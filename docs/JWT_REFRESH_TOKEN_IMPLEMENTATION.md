@@ -9,10 +9,18 @@ Esta documentação descreve a implementação do sistema de refresh token JWT n
 - **getRefreshExpirationTime()**: Retorna o tempo de expiração do refresh token
 - Suporte para configuração de tempo de expiração via propriedades
 
-### 2. Novos Endpoints
+### 2. Endpoints de Autenticação
 
-#### POST `/api/jwt-test/token`
-Gera um novo par de tokens (access + refresh)
+#### POST `/api/auth/login`
+Realiza login e retorna tokens de acesso
+
+**Request:**
+```json
+{
+  "email": "usuario@exemplo.com",
+  "password": "senha123"
+}
+```
 
 **Response:**
 ```json
@@ -23,7 +31,7 @@ Gera um novo par de tokens (access + refresh)
 }
 ```
 
-#### POST `/api/jwt-test/refresh`
+#### POST `/api/auth/refresh`
 Renova os tokens usando um refresh token válido
 
 **Request:**
@@ -39,6 +47,16 @@ Renova os tokens usando um refresh token válido
   "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "tokenType": "Bearer"
+}
+```
+
+#### POST `/api/auth/logout`
+Realiza logout e invalida o refresh token
+
+**Request:**
+```json
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
 ```
 
@@ -110,5 +128,3 @@ Testes implementados em `JwtRefreshTokenTest`:
    - `POST /api/jwt-test/token` para obter tokens
    - `POST /api/jwt-test/refresh` para renovar tokens
    - `GET /api/jwt-test/protegido` para testar autenticação
-
-

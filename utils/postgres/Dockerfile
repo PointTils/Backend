@@ -2,6 +2,16 @@
 # Baseado na imagem oficial do PostgreSQL
 FROM postgres:latest
 
+# Argumentos de build para variáveis de ambiente
+ARG POSTGRES_DB
+ARG POSTGRES_USER
+ARG POSTGRES_PASSWORD
+
+# Definir variáveis de ambiente
+ENV POSTGRES_DB=${POSTGRES_DB}
+ENV POSTGRES_USER=${POSTGRES_USER}
+ENV POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+
 # Pode adicionar configurações personalizadas aqui se necessário
 # Exemplo: COPY init.sql /docker-entrypoint-initdb.d/
 

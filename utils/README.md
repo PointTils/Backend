@@ -1,6 +1,6 @@
 # Utilitários Docker
 
-Esta pasta contém os Dockerfiles e configurações para serviços auxiliares do projeto.
+Esta pasta contém os Dockerfiles e configurações para serviços auxiliares do projeto. -justo
 
 ## Estrutura
 
