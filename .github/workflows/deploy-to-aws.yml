@@ -1,4 +1,4 @@
-name: Deploy to AWS
+name: Deploy to AWS - Updated
 
 on:
   pull_request:
@@ -14,99 +14,193 @@ permissions:
 
 env:
   ECR_REPOSITORY: pointtils
+  APP_IMAGE: backend-pointtils
+  DB_IMAGE: backend-pointtils-db
   APP_IMAGE_TAG: latest
   DB_IMAGE_TAG: latest
+  ENVIRONMENT: production
 
 jobs:
-  build-and-push-images:
-    name: Build and Push Docker Images
+  build-and-test:
+    name: Build, Test and Push Docker Images
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v2
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.AWS_REGION }}
+      - name: Cache Maven dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
 
-    - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
-      with:
-        mask-password: 'true'
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
 
-    - name: Check if ECR repository exists and create if needed
-      run: |
-        # Verificar e criar repositório da aplicação
-        exists=$(aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY }} 2>/dev/null || echo "false")
-        if [ "$exists" = "false" ]; then
-          echo "Creating ECR repository ${{ env.ECR_REPOSITORY }}"
-          aws ecr create-repository --repository-name ${{ env.ECR_REPOSITORY }} --image-tag-mutability MUTABLE --image-scanning-configuration scanOnPush=true
-        else
-          echo "ECR repository ${{ env.ECR_REPOSITORY }} already exists"
-        fi
-        
-        # Verificar e criar repositório do banco de dados
-        exists_db=$(aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY }}-db 2>/dev/null || echo "false")
-        if [ "$exists_db" = "false" ]; then
-          echo "Creating ECR repository ${{ env.ECR_REPOSITORY }}-db"
-          aws ecr create-repository --repository-name ${{ env.ECR_REPOSITORY }}-db --image-tag-mutability MUTABLE --image-scanning-configuration scanOnPush=true
-        else
-          echo "ECR repository ${{ env.ECR_REPOSITORY }}-db already exists"
-        fi
+      - name: Run unit tests
+        run: mvn clean test
+        working-directory: ./pointtils
 
-    - name: Build and push images with docker compose
-      id: build-images
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        IMAGE_TAG: ${{ github.sha }}
-        SPRING_DATASOURCE_URL: jdbc:postgresql://pointtils-db:5432/${{ secrets.DB_NAME || 'pointtils-db' }}
-        SPRING_DATASOURCE_USERNAME: ${{ secrets.DB_USERNAME }}
-        SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
-        SPRING_APPLICATION_NAME: pointtils
-        SERVER_PORT: 8080
-        JWT_SECRET: ${{ secrets.JWT_SECRET }}
-        JWT_EXPIRATION_TIME: 3600000
-        SPRING_JPA_HIBERNATE_DDL_AUTO: update
-        SPRING_JPA_SHOW_SQL: false
-        SPRINGDOC_API_DOCS_ENABLED: true
-        SPRINGDOC_SWAGGER_UI_ENABLED: true
-        SPRINGDOC_SWAGGER_UI_PATH: /swagger-ui.html
-        CLOUD_AWS_BUCKET_NAME: ${{ secrets.CLOUD_AWS_BUCKET_NAME }}
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_REGION: ${{ secrets.AWS_REGION }}
-        POSTGRES_DB: ${{ secrets.DB_NAME || 'pointtils-db' }}
-        POSTGRES_USER: ${{ secrets.DB_USERNAME }}
-        POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
-      run: |
-        # Construir imagens usando docker-compose.prod.yaml
-        docker compose -f docker-compose.prod.yaml build
-        
-        # Tag e push da imagem da aplicação (com senha mascarada)
-        echo "Tagging and pushing application image..."
-        docker tag pointtils $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
-        docker tag pointtils $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ env.APP_IMAGE_TAG }}
-        docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
-        docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ env.APP_IMAGE_TAG }}
-        echo "app_image=$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
-        
-        # Tag e push da imagem do banco de dados (com senha mascarada)
-        echo "Tagging and pushing database image..."
-        docker tag pointtils-db $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:$IMAGE_TAG
-        docker tag pointtils-db $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:${{ env.DB_IMAGE_TAG }}
-        docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:$IMAGE_TAG
-        docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:${{ env.DB_IMAGE_TAG }}
-        echo "db_image=$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:$IMAGE_TAG" >> $GITHUB_OUTPUT
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+        with:
+          mask-password: 'true'
+
+      - name: Check if ECR repository exists and create if needed
+        run: |
+          # Verificar e criar repositório da aplicação
+          exists=$(aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY }} 2>/dev/null || echo "false")
+          if [ "$exists" = "false" ]; then
+            echo "Creating ECR repository ${{ env.ECR_REPOSITORY }}"
+            aws ecr create-repository --repository-name ${{ env.ECR_REPOSITORY }} --image-tag-mutability MUTABLE --image-scanning-configuration scanOnPush=true
+          else
+            echo "ECR repository ${{ env.ECR_REPOSITORY }} already exists"
+          fi
+          
+          # Verificar e criar repositório do banco de dados
+          exists_db=$(aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY }}-db 2>/dev/null || echo "false")
+          if [ "$exists_db" = "false" ]; then
+            echo "Creating ECR repository ${{ env.ECR_REPOSITORY }}-db"
+            aws ecr create-repository --repository-name ${{ env.ECR_REPOSITORY }}-db --image-tag-mutability MUTABLE --image-scanning-configuration scanOnPush=true
+          else
+            echo "ECR repository ${{ env.ECR_REPOSITORY }}-db already exists"
+          fi
+
+      - name: Create .env file for docker-compose build
+        run: |
+          echo "Criando arquivo .env para docker-compose build..."
+          cat > .env << 'EOL'
+          APP_IMAGE=backend-pointtils
+          DB_IMAGE=backend-pointtils-db
+          SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-db:5432/pointtils-db
+          SPRING_DATASOURCE_USERNAME=pointtilsadmin
+          SPRING_DATASOURCE_PASSWORD=password
+          SPRING_APPLICATION_NAME=pointtils
+          SERVER_PORT=${{ vars.SERVER_PORT }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          JWT_EXPIRATION_TIME=${{ vars.JWT_EXPIRATION_TIME }}
+          JWT_REFRESH_EXPIRATION_TIME=${{ vars.JWT_REFRESH_EXPIRATION_TIME }}
+          SPRING_JPA_HIBERNATE_DDL_AUTO=validate
+          SPRING_JPA_SHOW_SQL=${{ vars.SPRING_JPA_SHOW_SQL }}
+          SPRING_FLYWAY_ENABLED=true
+          SPRING_FLYWAY_LOCATIONS=${{ vars.SPRING_FLYWAY_LOCATIONS }}
+          SPRING_FLYWAY_BASELINE_ON_MIGRATE=true
+          SPRING_FLYWAY_VALIDATE_ON_MIGRATE=true
+          SPRINGDOC_API_DOCS_ENABLED=${{ vars.SPRINGDOC_API_DOCS_ENABLED }}
+          SPRINGDOC_SWAGGER_UI_ENABLED=${{ vars.SPRINGDOC_SWAGGER_UI_ENABLED }}
+          SPRINGDOC_SWAGGER_UI_PATH=/swagger-ui.html
+          CLOUD_AWS_BUCKET_NAME=pointtils-api-tests-d9396dcc
+          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION=${{ secrets.AWS_REGION }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          DB_USERNAME=${{ secrets.DB_USERNAME }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          POSTGRES_DB=${{ secrets.DB_NAME }}
+          POSTGRES_USER=${{ secrets.DB_USERNAME }}
+          POSTGRES_PASSWORD=${{ secrets.DB_PASSWORD }}
+          EOL
+
+      - name: Build and push images with docker compose
+        id: build-images
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # Construir imagens usando docker compose com variáveis do .env
+          echo "Building images with docker compose using .env variables..."
+          echo "Using explicit .env file for build args..."
+          docker compose --env-file .env -f docker-compose.prod.yaml build --no-cache
+          
+          # Tag e push da imagem da aplicação - usando ls para ver o nome correto das imagens
+          echo "Listando imagens disponíveis para debug:"
+          docker images
+          
+          # Encontrar a imagem do aplicativo que acabamos de construir - usando o nome exato mostrado no output
+          # Specify exact image names to ensure the correct images are tagged
+          APP_IMAGE_NAME="${{ env.APP_IMAGE }}"
+          DB_IMAGE_NAME="${{ env.DB_IMAGE }}"
+          
+          # Find the application image ID - using both exact name and wildcard approach
+          APP_IMAGE_ID=$(docker images -q $APP_IMAGE_NAME 2>/dev/null || docker images -q "*${APP_IMAGE_NAME}*" 2>/dev/null || docker images | grep -E "$APP_IMAGE_NAME" | awk '{print $3}' | head -n1)
+          echo "Nome da imagem da aplicação: $APP_IMAGE_NAME"
+          echo "ID da imagem da aplicação: $APP_IMAGE_ID"
+          
+          # Verificar se a ID da imagem foi encontrada - não usar fallback automático
+          # para evitar mistura de imagens
+          if [ -z "$APP_IMAGE_ID" ]; then
+            echo "⚠️ ERRO: Não foi possível encontrar ID da imagem da aplicação!"
+            echo "Listando todas as imagens disponíveis:"
+            docker images
+            exit 1
+          fi
+          
+          echo "Tagging and pushing application image..."
+          # Verifica se temos tanto o ID quanto o nome da imagem para garantir tagging correto
+          if [ -n "$APP_IMAGE_ID" ]; then
+            echo "Usando ID da imagem para tagging: $APP_IMAGE_ID"
+            docker tag $APP_IMAGE_ID $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
+            docker tag $APP_IMAGE_ID $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ env.APP_IMAGE_TAG }}
+            docker tag $APP_IMAGE_ID $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:previous
+            docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
+            docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ env.APP_IMAGE_TAG }}
+            docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:previous
+            echo "app_image=$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ ERRO: Não foi possível encontrar a imagem da aplicação para tagging!"
+            exit 1
+          fi
+          
+          # Tag e push da imagem do banco de dados - encontrando ID da imagem
+          # Using a more robust approach to find the database image
+          DB_IMAGE_ID=$(docker images -q $DB_IMAGE_NAME 2>/dev/null || docker images -q "*${DB_IMAGE_NAME}*" 2>/dev/null || docker images | grep -E "$DB_IMAGE_NAME" | awk '{print $3}' | head -n1)
+          echo "Nome da imagem do banco: $DB_IMAGE_NAME"
+          echo "ID da imagem do banco: $DB_IMAGE_ID"
+          
+          # Verificar se a ID da imagem foi encontrada - não usar fallback automático 
+          # para evitar mistura de imagens
+          if [ -z "$DB_IMAGE_ID" ]; then
+            echo "⚠️ ERRO: Não foi possível encontrar ID da imagem do banco de dados!"
+            echo "Listando todas as imagens disponíveis:"
+            docker images
+            exit 1
+          fi
+          
+          echo "Tagging and pushing database image..."
+          # Verifica se temos o ID da imagem para garantir tagging correto
+          if [ -n "$DB_IMAGE_ID" ]; then
+            echo "Usando ID da imagem de banco para tagging: $DB_IMAGE_ID"
+            docker tag $DB_IMAGE_ID $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:$IMAGE_TAG
+            docker tag $DB_IMAGE_ID $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:${{ env.DB_IMAGE_TAG }}
+            docker tag $DB_IMAGE_ID $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:previous
+            docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:$IMAGE_TAG
+            docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:${{ env.DB_IMAGE_TAG }}
+            docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:previous
+            echo "db_image=$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ ERRO: Não foi possível encontrar a imagem do banco de dados para tagging!"
+            exit 1
+          fi
 
   deploy-infrastructure:
     name: Deploy Infrastructure
     runs-on: ubuntu-latest
-    needs: build-and-push-images
+    needs: build-and-test
     
     steps:
     - name: Checkout repository
@@ -129,6 +223,12 @@ jobs:
         # Criar chave SSH pública
         echo "${{ secrets.SSH_PUBLIC_KEY }}" > ./terraform/pointtils_key.pub
 
+    - name: Create Terraform backend resources
+      run: |
+        echo "Criando recursos de backend para Terraform de produção..."
+        chmod +x terraform/create-backend.sh
+        ./terraform/create-backend.sh "${{ secrets.AWS_REGION }}"
+
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
       with:
@@ -143,8 +243,8 @@ jobs:
         db_password    = "${{ secrets.DB_PASSWORD }}"
         db_name        = "${{ secrets.DB_NAME || 'pointtils-db' }}"
         jwt_secret     = "${{ secrets.JWT_SECRET }}"
-        app_image      = "${{ needs.build-and-push-images.outputs.app_image }}"
-        db_image       = "${{ needs.build-and-push-images.outputs.db_image }}"
+        app_image      = "${{ needs.build-and-test.outputs.app_image }}"
+        db_image       = "${{ needs.build-and-test.outputs.db_image }}"
         EOF
 
     - name: Terraform Init
@@ -251,14 +351,7 @@ jobs:
         echo "Executando script de deploy com parâmetros..."
         ssh -o StrictHostKeyChecking=no -i ./terraform/pointtils_key ubuntu@$HOST_IP "chmod +x /home/ubuntu/deploy-app.sh && /home/ubuntu/deploy-app.sh \
           '${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com' \
-          '${{ secrets.DB_USERNAME }}' \
-          '${{ secrets.DB_PASSWORD }}' \
-          '${{ secrets.DB_NAME || 'pointtils-db' }}' \
-          '${{ secrets.JWT_SECRET }}' \
-          '${{ secrets.AWS_REGION }}' \
-          '${{ secrets.CLOUD_AWS_BUCKET_NAME }}' \
-          '${{ secrets.AWS_ACCESS_KEY_ID }}' \
-          '${{ secrets.AWS_SECRET_ACCESS_KEY }}'"
+          '${{ secrets.AWS_REGION }}'"
         
         echo "✅ Deploy das imagens mais recentes concluído com sucesso!"
 
@@ -266,21 +359,59 @@ jobs:
       if: steps.terraform-outputs.outputs.app_ip != '127.0.0.1' && env.HOST_READY == 'true'
       run: |
         HOST_IP="${{ steps.terraform-outputs.outputs.app_ip }}"
-        echo "Realizando health check final na aplicação: http://$HOST_IP:8080/actuator/health"
+        echo "Realizando health check robusto na aplicação: http://$HOST_IP:8080/actuator/health"
         
         # Aguardar aplicação inicializar após deploy
+        echo "Aguardando 30 segundos para inicialização da aplicação..."
         sleep 30
         
-        for i in {1..10}; do
-          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://$HOST_IP:8080/actuator/health || echo "000")
+        HEALTH_CHECK_PASSED=false
+        for i in {1..15}; do
+          # Health check com timeout
+          RESPONSE=$(timeout 10 curl -s -o /dev/null -w "%{http_code}" http://$HOST_IP:8080/actuator/health 2>/dev/null || echo "000")
+          
           if [ "$RESPONSE" = "200" ]; then
-            echo "✅ Aplicação respondendo corretamente (HTTP 200)"
+            echo "✅ Health check SUCCESS (HTTP 200) - Aplicação respondendo corretamente"
+            HEALTH_CHECK_PASSED=true
             break
+          elif [ "$RESPONSE" = "503" ] || [ "$RESPONSE" = "502" ]; then
+            echo "Tentativa $i: Aplicação iniciando (HTTP $RESPONSE). Aguardando..."
+          elif [ "$RESPONSE" = "000" ]; then
+            echo "Tentativa $i: Aplicação não respondeu. Aguardando..."
           else
-            echo "Tentativa $i: Aplicação não respondeu (HTTP $RESPONSE). Aguardando..."
-            sleep 15
+            echo "Tentativa $i: Aplicação retornou HTTP $RESPONSE. Aguardando..."
           fi
+          
+          if [ $i -eq 15 ]; then
+            echo "❌ Health check FAILED após 15 tentativas"
+            echo "⚠️  Aplicação pode ter problemas de inicialização"
+            break
+          fi
+          
+          sleep 10
         done
+        
+        if [ "$HEALTH_CHECK_PASSED" = "false" ]; then
+          echo "🚨 Health check falhou - acionando rollback automático"
+          exit 1
+        fi
+
+    - name: Rollback on failure (Production)
+      if: failure() && steps.terraform-outputs.outputs.app_ip != '127.0.0.1' && env.HOST_READY == 'true'
+      run: |
+        HOST_IP="${{ steps.terraform-outputs.outputs.app_ip }}"
+        echo "🚨 Deploy de produção falhou! Iniciando rollback automático..."
+        
+        # Copiar script de rollback para a EC2 de produção
+        scp -o StrictHostKeyChecking=no -i ./terraform/pointtils_key terraform/rollback-app.sh ubuntu@$HOST_IP:/home/ubuntu/
+        
+        # Executar rollback na EC2 de produção
+        ssh -o StrictHostKeyChecking=no -i ./terraform/pointtils_key ubuntu@$HOST_IP "chmod +x /home/ubuntu/rollback-app.sh && /home/ubuntu/rollback-app.sh \
+          '${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com' \
+          '${{ secrets.AWS_REGION }}' \
+          'previous'"
+        
+        echo "⚠️ Rollback executado. Verifique o status da aplicação de produção manualmente."
 
     - name: Deployment Summary
       run: |

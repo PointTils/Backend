@@ -3,7 +3,9 @@ package com.pointtils.pointtils.src.application.controllers;
 import java.io.IOException;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,5 +33,14 @@ public class UserPicturePatchController {
         UserPicturePatchRequestDTO request = new UserPicturePatchRequestDTO(id, file);
         UserResponseDTO response = userService.updatePicture(request);
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Handler para quando o upload de fotos está desabilitado
+     */
+    @ExceptionHandler(UnsupportedOperationException.class)
+    public ResponseEntity<String> handleUnsupportedOperation(UnsupportedOperationException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(ex.getMessage());
     }
 }
