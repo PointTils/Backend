@@ -1,37 +1,57 @@
 # PointTils Backend
 
 ## Visão Geral
-Backend desenvolvido em Java Spring Boot para gerenciamento de End-points. Segue uma arquitetura limpa com separação clara de camadas.
+Backend desenvolvido em Java Spring Boot para uma plataforma de agendamento de intérpretes de libras. Segue uma arquitetura limpa com separação clara de camadas e implementa autenticação JWT, gerenciamento de migrações com Flyway, e CI/CD automatizado.
 
 ## Arquitetura
 ```
 ┌─────────────────────────────────────────────────┐
 │                    API REST                     │
+│ - Spring Boot 3.5.4                             │
+│ - Spring Security + JWT                         │
+│ - Swagger/OpenAPI                               │
 └─────────────────────────────────────────────────┘
                       │
                       ▼
 ┌─────────────────────────────────────────────────┐
 │                 Controllers (REST)              │
-│ - PointController                               │
+│ - AuthController (Login/Refresh)                │
+│ - UserController (Gestão de usuários)           │
+│ - AppointmentController (Agendamentos)          │
+│ - InterpreterController (Intérpretes)           │
+│ - EnterpriseController (Empresas)               │
+│ - SpecialtyController (Especialidades)          │
 └─────────────────────────────────────────────────┘
                       │
                       ▼
 ┌─────────────────────────────────────────────────┐
 │                    Services                     │
-│ - PointService                                  │
+│ - AuthService (Autenticação)                    │
+│ - UserService (Gestão de usuários)              │
+│ - AppointmentService (Agendamentos)             │
+│ - InterpreterService (Intérpretes)              │
+│ - EnterpriseService (Empresas)                  │
+│ - SpecialtyService (Especialidades)             │
 └─────────────────────────────────────────────────┘
                       │
                       ▼
 ┌─────────────────────────────────────────────────┐
 │                  Repositories                   │
-│ - PointRepository                               │
+│ - UserRepository                                │
+│ - AppointmentRepository                         │
+│ - InterpreterRepository                         │
+│ - EnterpriseRepository                          │
+│ - SpecialtyRepository                           │
 └─────────────────────────────────────────────────┘
                       │
                       ▼
 ┌─────────────────────────────────────────────────┐
 │                     Domain                      │
-│ - Point (Entidade)                              │
-│ - PointType (Enum)                              │
+│ - User (Usuário)                                │
+│ - Appointment (Agendamento)                     │
+│ - Interpreter (Intérprete)                      │
+│ - Enterprise (Empresa)                          │
+│ - Specialty (Especialidade)                     │
 └─────────────────────────────────────────────────┘
 ```
 

@@ -2,57 +2,73 @@
 
 ## Descrição do Fluxo
 
-O pipeline CI/CD foi configurado para automatizar o deploy da aplicação Pointtils na AWS sempre que houver um **pull request da branch `dev` para a branch `main`**.
+O pipeline CI/CD foi configurado para automatizar o deploy da aplicação Pointtils na AWS em dois ambientes: **desenvolvimento** e **produção**.
 
-## Trigger do Pipeline
+## Triggers dos Pipelines
 
-O workflow é acionado automaticamente quando:
-- **Pull Request**: Quando um PR da branch `dev` para `main` é fechado (merged)
-- **Push direto**: Para a branch `main` (caso necessário)
+### Desenvolvimento
+- **Push**: Para branches `dev` e `feature/*`
+- **Pull Request**: Fechado para branch `dev`
 - **Execução manual**: Através do GitHub Actions
 
-## Etapas do Pipeline
+### Produção
+- **Push**: Para branch `main`
+- **Pull Request**: Fechado para branch `main`
+- **Execução manual**: Através do GitHub Actions
 
-### 1. Build e Push das Imagens
+## Etapas dos Pipelines
 
-**Job**: `build-and-push-images`
+### 1. Build e Teste
+
+**Job**: `build-and-test`
 
 **Ações**:
 - ✅ Checkout do código
-- ✅ Configuração das credenciais AWS
+- ✅ Cache de dependências Maven
+- ✅ Setup JDK 17
+- ✅ Execução de testes unitários
+- ✅ Configuração de credenciais AWS
 - ✅ Login no Amazon ECR
-- ✅ **Construção das imagens usando `docker-compose.prod.yaml`**
+- ✅ Criação de arquivo .env para build
+- ✅ Build das imagens usando `docker-compose-dev.yaml`
 - ✅ Tag e push das imagens para o ECR:
-  - `pointtils:latest` (aplicação)
-  - `pointtils-db:latest` (banco de dados)
+  - `pointtils-dev:dev-latest` (aplicação)
+  - `pointtils-dev-db:dev-latest` (banco de dados)
 
 ### 2. Deploy da Infraestrutura
 
-**Job**: `deploy-infrastructure` (depende do job anterior)
+**Job**: `deploy-dev-infrastructure` (depende do job anterior)
 
 **Ações**:
 - ✅ Configuração do Terraform
+- ✅ Criação de arquivo terraform.tfvars
+- ✅ Criação de recursos de backend
 - ✅ Aplicação da infraestrutura na AWS:
   - VPC e subnets
   - Security Groups
-  - Instância EC2 (t2.medium)
+  - Instância EC2 (t2.medium para ambos os ambientes)
   - Elastic IP
   - S3 Bucket
   - ECR Repository
 - ✅ Deploy das imagens na EC2
 - ✅ Health check da aplicação
+- ✅ Rollback automático em caso de falha
 
 ## Arquivos Principais
 
-### Workflow
-- `.github/workflows/deploy-to-aws.yml` - Pipeline CI/CD
+### Workflows
+- `.github/workflows/deploy-to-dev.yml` - Pipeline de desenvolvimento
+- `.github/workflows/deploy-to-aws.yml` - Pipeline de produção
 
 ### Terraform
-- `terraform/main.tf` - Infraestrutura como código
+- `terraform/main.tf` - Infraestrutura como código (produção)
+- `terraform-dev/main.tf` - Infraestrutura como código (desenvolvimento)
 - `terraform/variables.tf` - Variáveis do Terraform
 
 ### Docker
+- `docker-compose.yaml` - Configuração unificada
 - `docker-compose.prod.yaml` - Configuração de produção
+- `docker-compose-dev.yaml` - Configuração de desenvolvimento
 - `pointtils/Dockerfile` - Imagem da aplicação
 - `utils/postgres/Dockerfile` - Imagem do banco
 
@@ -67,37 +83,55 @@ O workflow é acionado automaticamente quando:
 - `DB_PASSWORD`
 - `DB_NAME`
 - `JWT_SECRET`
-- `SSH_PRIVATE_KEY`
-- `SSH_PUBLIC_KEY`
 - `TF_API_TOKEN`
 
 ### Variáveis de Ambiente
-- `CLIENT_IBGE_STATE_URL` - Hardcoded na imagem
-- `CLIENT_IBGE_CITY_URL` - Hardcoded na imagem
-- Configurações Spring/JPA/Flyway
-- Configurações JWT
-- Configurações Swagger
+- `SERVER_PORT` - Porta da aplicação (8080)
+- `JWT_EXPIRATION_TIME` - Tempo de expiração do JWT
+- `SPRING_JPA_SHOW_SQL` - Mostrar SQL no console
+- `SPRING_FLYWAY_LOCATIONS` - Localização das migrations
+- `SPRINGDOC_API_DOCS_ENABLED` - Habilitar documentação OpenAPI
 
 ## Benefícios da Implementação
 
-1. **Automação completa**: Deploy automático após merge
-2. **Imagens otimizadas**: Uso do docker-compose.prod.yaml
+1. **Automação completa**: Deploy automático para desenvolvimento e produção
+2. **Ambientes isolados**: VPCs separadas para dev e prod
 3. **Infraestrutura como código**: Terraform para gerenciamento
 4. **Segurança**: Variáveis sensíveis em secrets
 5. **Monitoramento**: Health checks automáticos
-6. **Rollback fácil**: Imagens versionadas no ECR
+6. **Rollback automático**: Recuperação em caso de falha
+7. **Testes automatizados**: Execução de testes antes do deploy
 
 ## URLs da Aplicação
 
 Após o deploy bem-sucedido:
 - **Aplicação**: `http://<IP_EC2>:8080`
 - **Swagger UI**: `http://<IP_EC2>:8080/swagger-ui.html`
+- **Health Check**: `http://<IP_EC2>:8080/actuator/health`
 - **SSH**: `ssh ubuntu@<IP_EC2>`
+
+## Funcionalidades Implementadas
+
+### Migrations com Flyway
+- ✅ Controle de versão do banco de dados
+- ✅ 8 migrations implementadas (V1 a V8)
+- ✅ Execução automática na inicialização
+
+### Autenticação JWT
+- ✅ Sistema de login com tokens
+- ✅ Refresh tokens implementados
+- ✅ Configuração de expiração
+
+### Integração AWS
+- ✅ S3 para armazenamento
+- ✅ ECR para registry de imagens
+- ✅ IAM roles para acesso seguro
 
 ## Próximos Passos
 
 1. Configurar domínio customizado
 2. Implementar SSL/TLS
-3. Configurar monitoramento
+3. Configurar monitoramento com CloudWatch
 4. Implementar backup automático do banco
 5. Configurar auto-scaling
+6. Implementar CDN para assets estáticos
