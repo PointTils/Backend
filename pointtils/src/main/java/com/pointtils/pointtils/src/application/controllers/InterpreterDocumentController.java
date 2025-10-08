@@ -13,11 +13,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterDocumentRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.UserPicturePatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterDocumentResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.UserResponseDTO;
 import com.pointtils.pointtils.src.application.services.InterpreterDocumentService;
-import com.pointtils.pointtils.src.application.services.InterpreterService;
-import com.pointtils.pointtils.src.application.services.UserPicturePatchService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,14 +24,14 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class InterpreterDocumentController {
 
-     private final InterpreterDocumentService userService; 
+     private final InterpreterDocumentService interpreterDocumentService; 
 
     @PostMapping(value = "/{id}/document", consumes = "multipart/form-data")
-    public ResponseEntity<UserResponseDTO> saveDocument(
+    public ResponseEntity<InterpreterDocumentResponseDTO> saveDocument(
             @PathVariable UUID id,
             @RequestParam("file") MultipartFile file) throws IOException {
         InterpreterDocumentRequestDTO request = new InterpreterDocumentRequestDTO(id, file);
-        UserResponseDTO response = userService.saveDocument(request);
+        InterpreterDocumentResponseDTO response = interpreterDocumentService.saveDocument(request);
         return ResponseEntity.ok(response);
     }
 }
