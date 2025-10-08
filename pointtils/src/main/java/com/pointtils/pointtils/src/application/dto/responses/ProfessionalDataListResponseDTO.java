@@ -16,9 +16,5 @@ import java.math.BigDecimal;
 public class ProfessionalDataListResponseDTO {
 
     private BigDecimal rating;
-    @JsonProperty("min_value")
-    private BigDecimal minValue;
-    @JsonProperty("max_value")
-    private BigDecimal maxValue;
     private InterpreterModality modality;
 }

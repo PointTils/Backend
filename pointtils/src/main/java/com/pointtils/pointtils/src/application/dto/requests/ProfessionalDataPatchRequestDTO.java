@@ -22,14 +22,6 @@ public class ProfessionalDataPatchRequestDTO {
     @Size(min = 14, max = 14, message = "CNPJ deve ter exatamente 14 digitos")
     private String cnpj;
 
-    @DecimalMin(value = "0.0", message = "Valor mínimo precisa ser positivo")
-    @JsonProperty("min_value")
-    private BigDecimal minValue;
-
-    @DecimalMin(value = "0.0", message = "Valor máximo precisa ser positivo")
-    @JsonProperty("max_value")
-    private BigDecimal maxValue;
-
     private InterpreterModality modality;
 
     private String description;

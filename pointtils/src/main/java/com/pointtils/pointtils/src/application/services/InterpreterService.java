@@ -55,8 +55,6 @@ public class InterpreterService {
                 .cpf(request.getCpf())
                 .cnpj(Objects.nonNull(request.getProfessionalData()) ? request.getProfessionalData().getCnpj() : null)
                 .rating(BigDecimal.ZERO)
-                .minValue(BigDecimal.ZERO)
-                .maxValue(BigDecimal.ZERO)
                 .imageRights(false)
                 .modality(InterpreterModality.ALL)
                 .description("")
@@ -144,8 +142,6 @@ public class InterpreterService {
         if (dto != null && dto.getProfessionalData() != null) {
             var professionalData = dto.getProfessionalData();
             interpreter.setCnpj(professionalData.getCnpj());
-            interpreter.setMinValue(professionalData.getMinValue());
-            interpreter.setMaxValue(professionalData.getMaxValue());
             interpreter.setImageRights(professionalData.getImageRights());
             interpreter.setModality(professionalData.getModality());
             interpreter.setDescription(professionalData.getDescription());
@@ -193,12 +189,6 @@ public class InterpreterService {
         }
         if (dto.getCnpj() != null) {
             interpreter.setCnpj(dto.getCnpj());
-        }
-        if (dto.getMinValue() != null) {
-            interpreter.setMinValue(dto.getMinValue());
-        }
-        if (dto.getMaxValue() != null) {
-            interpreter.setMaxValue(dto.getMaxValue());
         }
         if (dto.getImageRights() != null) {
             interpreter.setImageRights(dto.getImageRights());
