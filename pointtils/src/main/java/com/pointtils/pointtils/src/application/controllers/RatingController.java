@@ -59,8 +59,8 @@ public class RatingController {
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Atualiza uma avaliação existente")
     public ResponseEntity<ApiResponse<RatingResponseDTO>> patchRating(@RequestBody RatingPatchRequestDTO request,
-            @PathVariable UUID ratingId) {
-        RatingResponseDTO response = ratingService.patchRating(request, ratingId);
+            @PathVariable UUID id) {
+        RatingResponseDTO response = ratingService.patchRating(request, id);
         ApiResponse<RatingResponseDTO> apiResponse = ApiResponse.success("Avaliação atualizada com sucesso", response);
         return ResponseEntity.ok(apiResponse);
     }
