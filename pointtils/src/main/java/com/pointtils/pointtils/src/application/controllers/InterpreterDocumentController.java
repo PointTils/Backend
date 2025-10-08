@@ -21,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("v1/users")
-@RequiredArgsConstructor
+@RequiredArgsConstructor 
 public class InterpreterDocumentController {
 
      private final InterpreterDocumentService interpreterDocumentService; 

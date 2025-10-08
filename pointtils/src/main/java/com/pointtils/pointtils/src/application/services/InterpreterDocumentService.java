@@ -6,9 +6,10 @@ import org.springframework.stereotype.Service;
 
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterDocumentRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterDocumentResponseDTO;
-import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
+import com.pointtils.pointtils.src.core.domain.entities.InterpreterDocuments;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
+import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterDocumentsRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -18,27 +19,36 @@ import lombok.RequiredArgsConstructor;
 public class InterpreterDocumentService {
 
     private final InterpreterRepository interpreterRepository;
+    private final InterpreterDocumentsRepository interpreterDocumentsRepository;
     private final S3Service s3Service;
 
     public InterpreterDocumentResponseDTO saveDocument(InterpreterDocumentRequestDTO request) throws IOException {
+        // Busca o intérprete pelo ID
         Interpreter interpreter = interpreterRepository.findById(request.getInterpreterId())
-                .orElseThrow(() -> new EntityNotFoundException("Interprete não encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Intérprete não encontrado"));
 
         // Verifica se o S3 está habilitado antes de tentar fazer upload
         if (!s3Service.isS3Enabled()) {
             throw new UnsupportedOperationException("Upload de documentos está desabilitado. Configure spring.cloud.aws.s3.enabled=true para habilitar o upload para S3.");
         }
 
-        String url = s3Service.uploadFile(request.getFile(), request.getInterpreterId().toString());
-        interpreter.setDocument(url);
+        // Faz o upload do arquivo para o S3
+        String documentUrl = s3Service.uploadFile(request.getFile(), "documents/" + request.getInterpreterId());
 
-        Interpreter savedInterpreter = interpreterRepository.save(interpreter);
+        // Cria uma nova instância de InterpreterDocuments
+        InterpreterDocuments document = new InterpreterDocuments();
+        document.setInterpreter(interpreter);
+        document.setDocument(documentUrl);
 
-        return InterpreterDocumentResponseDTO.fromEntity(savedInterpreter);
+        // Salva o documento no banco de dados
+        InterpreterDocuments savedDocument = interpreterDocumentsRepository.save(document);
+
+        // Retorna o DTO de resposta
+        return InterpreterDocumentResponseDTO.fromEntity(savedDocument);
     }
 
     /**
-     * Verifica se o serviço de upload de fotos está disponível
+     * Verifica se o serviço de upload de documentos está disponível
      */
     public boolean isDocumentUploadEnabled() {
         return s3Service.isS3Enabled();
