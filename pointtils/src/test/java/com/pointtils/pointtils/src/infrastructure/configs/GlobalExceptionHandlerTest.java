@@ -1,31 +1,33 @@
 package com.pointtils.pointtils.src.infrastructure.configs;
 
-import com.fasterxml.jackson.databind.exc.ValueInstantiationException;
-import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
-import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
-import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
-import com.pointtils.pointtils.src.core.domain.exceptions.ClientTimeoutException;
-import com.pointtils.pointtils.src.core.domain.exceptions.UserSpecialtyException;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.ConstraintViolationException;
+import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-import java.util.Set;
+import com.fasterxml.jackson.databind.exc.ValueInstantiationException;
+import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
+import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
+import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
+import com.pointtils.pointtils.src.core.domain.exceptions.ClientTimeoutException;
+import com.pointtils.pointtils.src.core.domain.exceptions.RatingException;
+import com.pointtils.pointtils.src.core.domain.exceptions.UserSpecialtyException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 
 class GlobalExceptionHandlerTest {
 
@@ -382,5 +384,61 @@ class GlobalExceptionHandlerTest {
         assertNotNull(response);
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertEquals("Ocorreu um erro inesperado. Tente novamente mais tarde.", response.getBody().getMessage());
+    }
+
+    @Test
+    void handleRatingException_ShouldReturnNotFound_WhenMessageIsAgendamentoOuUsuarioNaoEncontrado() {
+        // Arrange
+        RatingException ex = new RatingException("Agendamento ou usuário não encontrado");
+
+        // Act
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler.handleRatingException(ex);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertEquals("Agendamento ou usuário não encontrado", response.getBody().getMessage());
+    }
+
+    @Test
+    void handleRatingException_ShouldReturnBadRequest_WhenMessageIsParametrosDeEntradaInvalidos() {
+        // Arrange
+        RatingException ex = new RatingException("Parâmetros de entrada inválidos");
+
+        // Act
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler.handleRatingException(ex);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Parâmetros de entrada inválidos", response.getBody().getMessage());
+    }
+
+    @Test
+    void handleRatingException_ShouldReturnUnprocessableEntity_WhenMessageIsAgendamentoNaoConcluido() {
+        // Arrange
+        RatingException ex = new RatingException("Agendamento ainda não foi concluído (só posso avaliar depois de status ser encerrado)");
+
+        // Act
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler.handleRatingException(ex);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, response.getStatusCode());
+        assertEquals("Agendamento ainda não foi concluído (só posso avaliar depois de status ser encerrado)", response.getBody().getMessage());
+    }
+
+    @Test
+    void handleRatingException_ShouldReturnInternalServerError_WhenMessageIsUnknown() {
+        // Arrange
+        RatingException ex = new RatingException("Erro desconhecido");
+
+        // Act
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler.handleRatingException(ex);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertEquals("Erro desconhecido", response.getBody().getMessage());
     }
 }
