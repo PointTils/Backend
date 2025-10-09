@@ -27,7 +27,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class InterpreterDocumentController {
 
-     private final InterpreterDocumentService interpreterDocumentService; 
+    private final InterpreterDocumentService interpreterDocumentService;
 
     @PostMapping(value = "/{id}/document", consumes = "multipart/form-data")
     public ResponseEntity<InterpreterDocumentResponseDTO> saveDocument(
@@ -44,5 +44,16 @@ public class InterpreterDocumentController {
             @PathVariable UUID interpreterId) {
         List<InterpreterDocumentResponseDTO> documents = interpreterDocumentService.getDocumentsByInterpreter(interpreterId);
         return ResponseEntity.ok(documents);
+    }
+
+    @PatchMapping("/{id}/{documentId}")
+    @Operation(summary = "Atualiza um documento de um usuario")
+    public ResponseEntity<InterpreterDocumentResponseDTO> uploadDocument(
+            @PathVariable UUID id,
+            @PathVariable UUID documentId,
+            @RequestParam("file") MultipartFile file) throws IOException {
+        InterpreterDocumentRequestDTO request = new InterpreterDocumentRequestDTO(id, documentId, file);
+        InterpreterDocumentResponseDTO updatedDocument = interpreterDocumentService.updateDocument(request);
+        return ResponseEntity.ok(updatedDocument);
     }
 }
