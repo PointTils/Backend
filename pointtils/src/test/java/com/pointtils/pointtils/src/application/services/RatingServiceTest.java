@@ -35,6 +35,8 @@ import com.pointtils.pointtils.src.infrastructure.repositories.AppointmentReposi
 import com.pointtils.pointtils.src.infrastructure.repositories.RatingRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
 
+import jakarta.persistence.EntityNotFoundException;
+
 @ExtendWith(MockitoExtension.class)
 public class RatingServiceTest {
 
@@ -89,7 +91,7 @@ public class RatingServiceTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(ratingRepository.save(any(Rating.class))).thenReturn(rating);
         when(ratingResponseMapper.toSingleResponseDTO(any(), any())).thenReturn(mock(RatingResponseDTO.class));
-        when(ratingRepository.findByAppointment(any())).thenReturn(List.of(rating));
+        when(ratingRepository.findByInterpreterId(any())).thenReturn(List.of(rating));
         when(userRepository.save(any())).thenReturn(appointment.getInterpreter());
 
         RatingResponseDTO response = ratingService.createRating(dto, appointmentId);
@@ -106,7 +108,7 @@ public class RatingServiceTest {
 
         when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.empty());
 
-        RatingException ex = assertThrows(RatingException.class, () -> ratingService.createRating(dto, appointmentId));
+        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class, () -> ratingService.createRating(dto, appointmentId));
         assertTrue(ex.getMessage().contains("Agendamento ou usuário não encontrado"));
     }
 
@@ -118,7 +120,7 @@ public class RatingServiceTest {
         when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(appointment));
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        RatingException ex = assertThrows(RatingException.class, () -> ratingService.createRating(dto, appointmentId));
+        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class, () -> ratingService.createRating(dto, appointmentId));
         assertTrue(ex.getMessage().contains("Agendamento ou usuário não encontrado"));
     }
 
@@ -169,7 +171,7 @@ public class RatingServiceTest {
         UUID interpreterId = UUID.randomUUID();
         when(userRepository.findById(interpreterId)).thenReturn(Optional.empty());
 
-        RatingException ex = assertThrows(RatingException.class,
+        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class,
                 () -> ratingService.getRatingsByInterpreterId(interpreterId));
         assertTrue(ex.getMessage().contains("Intérprete não encontrado"));
     }
@@ -182,11 +184,10 @@ public class RatingServiceTest {
         patchDTO.setDescription("Updated");
 
         when(ratingRepository.findById(ratingId)).thenReturn(Optional.of(rating));
-        when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(appointment));
         when(ratingRepository.save(any())).thenReturn(rating);
         when(ratingResponseMapper.toSingleResponseDTO(any(), any())).thenReturn(mock(RatingResponseDTO.class));
         when(userRepository.findById(rating.getUserId())).thenReturn(Optional.of(user));
-        when(ratingRepository.findByAppointment(any())).thenReturn(List.of(rating));
+        when(ratingRepository.findByInterpreterId(any())).thenReturn(List.of(rating));
         when(userRepository.save(any())).thenReturn(appointment.getInterpreter());
 
         RatingResponseDTO response = ratingService.patchRating(patchDTO, ratingId);
@@ -204,20 +205,8 @@ public class RatingServiceTest {
 
         when(ratingRepository.findById(ratingId)).thenReturn(Optional.empty());
 
-        RatingException ex = assertThrows(RatingException.class, () -> ratingService.patchRating(patchDTO, ratingId));
+        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class, () -> ratingService.patchRating(patchDTO, ratingId));
         assertTrue(ex.getMessage().contains("Avaliação não encontrada"));
-    }
-
-    @Test
-    void patchRating_shouldThrowIfAppointmentNotFound() {
-        UUID ratingId = rating.getId();
-        RatingPatchRequestDTO patchDTO = new RatingPatchRequestDTO();
-
-        when(ratingRepository.findById(ratingId)).thenReturn(Optional.of(rating));
-        when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.empty());
-
-        RatingException ex = assertThrows(RatingException.class, () -> ratingService.patchRating(patchDTO, ratingId));
-        assertTrue(ex.getMessage().contains("Agendamento não encontrado"));
     }
 
     @Test
@@ -226,7 +215,7 @@ public class RatingServiceTest {
 
         when(ratingRepository.findById(ratingId)).thenReturn(Optional.of(rating));
         when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(appointment));
-        when(ratingRepository.findByAppointment(any())).thenReturn(List.of());
+        when(ratingRepository.findByInterpreterId(any())).thenReturn(List.of());
         when(userRepository.save(any())).thenReturn(appointment.getInterpreter());
 
         ratingService.deleteRating(ratingId);
@@ -240,7 +229,7 @@ public class RatingServiceTest {
         UUID ratingId = UUID.randomUUID();
         when(ratingRepository.findById(ratingId)).thenReturn(Optional.empty());
 
-        RatingException ex = assertThrows(RatingException.class, () -> ratingService.deleteRating(ratingId));
+        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class, () -> ratingService.deleteRating(ratingId));
         assertTrue(ex.getMessage().contains("Avaliação não encontrada"));
     }
 
@@ -250,7 +239,7 @@ public class RatingServiceTest {
         when(ratingRepository.findById(ratingId)).thenReturn(Optional.of(rating));
         when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.empty());
 
-        RatingException ex = assertThrows(RatingException.class, () -> ratingService.deleteRating(ratingId));
+        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class, () -> ratingService.deleteRating(ratingId));
         assertTrue(ex.getMessage().contains("Agendamento não encontrado"));
     }
 }

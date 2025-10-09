@@ -270,16 +270,6 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RatingException.class)
     public ResponseEntity<ErrorResponse> handleRatingException(RatingException ex) {
-        if ("Agendamento ou usuário não encontrado".equals(ex.getMessage())
-                || "Intérprete não encontrado".equals(ex.getMessage())
-                || "Avaliação não encontrada".equals(ex.getMessage())
-                || "Agendamento não encontrado".equals(ex.getMessage())) {
-            ErrorResponse errorResponse = new ErrorResponse(
-                    HttpStatus.NOT_FOUND.value(),
-                    ex.getMessage(),
-                    System.currentTimeMillis());
-            return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
-        }
         if ("Parâmetros de entrada inválidos".equals(ex.getMessage())) {
             ErrorResponse errorResponse = new ErrorResponse(
                     HttpStatus.BAD_REQUEST.value(),

@@ -11,6 +11,7 @@ import com.pointtils.pointtils.src.application.dto.requests.RatingRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.RatingResponseDTO;
 import com.pointtils.pointtils.src.application.mapper.RatingResponseMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Appointment;
+import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
 import com.pointtils.pointtils.src.core.domain.entities.Rating;
 import com.pointtils.pointtils.src.core.domain.entities.User;
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentStatus;
@@ -19,6 +20,7 @@ import com.pointtils.pointtils.src.infrastructure.repositories.AppointmentReposi
 import com.pointtils.pointtils.src.infrastructure.repositories.RatingRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -32,10 +34,10 @@ public class RatingService {
 
     public RatingResponseDTO createRating(RatingRequestDTO ratingRequestDTO, UUID appointmentId) {
         Appointment appointment = appointmentRepository.findById(appointmentId)
-                .orElseThrow(() -> new RatingException("Agendamento ou usuário não encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Agendamento ou usuário não encontrado"));
 
         User user = userRepository.findById(ratingRequestDTO.getUserId())
-                .orElseThrow(() -> new RatingException("Agendamento ou usuário não encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Agendamento ou usuário não encontrado"));
 
         
         if (!appointment.getUser().getId().equals(user.getId())) {
@@ -53,14 +55,14 @@ public class RatingService {
         rating.setUserId(user.getId());
 
         ratingRepository.save(rating);
-        updateInterpreterAverageRating(appointment);
+        updateInterpreterAverageRating(appointment.getInterpreter());
 
         return ratingResponseMapper.toSingleResponseDTO(rating, user);
     }
 
     public List<RatingResponseDTO> getRatingsByInterpreterId(UUID interpreterId) {
         User interpreter = userRepository.findById(interpreterId)
-                .orElseThrow(() -> new RatingException("Intérprete não encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Intérprete não encontrado"));
 
         List<Rating> ratings = ratingRepository.findByInterpreterId(interpreter.getId());
 
@@ -71,15 +73,19 @@ public class RatingService {
 
     public RatingResponseDTO patchRating(RatingPatchRequestDTO request, UUID ratingId) {
         Rating rating = ratingRepository.findById(ratingId)
-                .orElseThrow(() -> new RatingException("Avaliação não encontrada"));
+                .orElseThrow(() -> new EntityNotFoundException("Avaliação não encontrada"));
         
         rating.setStars(request.getStars());
         if(request.getDescription() != null) {
             rating.setDescription(request.getDescription());
         }
         
-        updateInterpreterAverageRating(appointmentRepository.findById(rating.getAppointment().getId())
-                .orElseThrow(() -> new RatingException("Agendamento não encontrado")));
+        Interpreter interpreter = rating.getAppointment().getInterpreter();
+
+        if (interpreter == null) {  
+            throw new EntityNotFoundException("Intérprete não encontrado");
+        }
+        updateInterpreterAverageRating(rating.getAppointment().getInterpreter());
 
         ratingRepository.save(rating);
         return ratingResponseMapper.toSingleResponseDTO(rating, userRepository.findById(rating.getUserId()).orElse(null));
@@ -87,17 +93,17 @@ public class RatingService {
 
     public void deleteRating(UUID ratingId) {
         Rating rating = ratingRepository.findById(ratingId)
-                .orElseThrow(() -> new RatingException("Avaliação não encontrada"));
+                .orElseThrow(() -> new EntityNotFoundException("Avaliação não encontrada"));
         
         Appointment appointment = appointmentRepository.findById(rating.getAppointment().getId())
-                .orElseThrow(() -> new RatingException("Agendamento não encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Agendamento não encontrado"));
 
         ratingRepository.delete(rating);
-        updateInterpreterAverageRating(appointment);
+        updateInterpreterAverageRating(appointment.getInterpreter());
     }
 
-    private void updateInterpreterAverageRating(Appointment appointment) {
-        List<Rating> ratings = ratingRepository.findByAppointment(appointment);
+    private void updateInterpreterAverageRating(Interpreter interpreter) {
+        List<Rating> ratings = ratingRepository.findByInterpreterId(interpreter.getId());
         BigDecimal totalStars = ratings.stream()
                 .map(Rating::getStars)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -107,7 +113,6 @@ public class RatingService {
         } else {
             averageStars = totalStars.divide(BigDecimal.valueOf(ratings.size()), BigDecimal.ROUND_HALF_UP);
         }
-        var interpreter = appointment.getInterpreter();
         interpreter.setRating(averageStars);
         userRepository.save(interpreter);
     }

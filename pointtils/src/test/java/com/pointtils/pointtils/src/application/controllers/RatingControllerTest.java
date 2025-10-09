@@ -35,6 +35,7 @@ import com.pointtils.pointtils.src.application.services.RatingService;
 import com.pointtils.pointtils.src.core.domain.exceptions.RatingException;
 
 import io.awspring.cloud.autoconfigure.s3.S3AutoConfiguration;
+import jakarta.persistence.EntityNotFoundException;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
@@ -161,7 +162,7 @@ class RatingControllerTest {
     @DisplayName("Deve retornar 404 quando agendamento ou usuário não for encontrado")
     void shouldReturnNotFoundWhenAppointmentOrUserNotFound() throws Exception {
         when(ratingService.createRating(any(RatingRequestDTO.class), eq(appointmentId)))
-                .thenThrow(new RatingException("Agendamento ou usuário não encontrado"));
+                .thenThrow(new EntityNotFoundException("Agendamento ou usuário não encontrado"));
 
         mockMvc.perform(post("/v1/ratings/{appointmentId}", appointmentId)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -175,7 +176,7 @@ class RatingControllerTest {
     @DisplayName("Deve retornar 404 quando o intérprete não for encontrado")
     void shouldReturnNotFoundWhenInterpreterNotFound() throws Exception {
         when(ratingService.getRatingsByInterpreterId(eq(userId)))
-                .thenThrow(new RatingException("Intérprete não encontrado"));
+                .thenThrow(new EntityNotFoundException("Intérprete não encontrado"));
 
         mockMvc.perform(get("/v1/ratings")
                 .param("interpreterId", userId.toString())

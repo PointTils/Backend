@@ -387,20 +387,6 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void handleRatingException_ShouldReturnNotFound_WhenMessageIsAgendamentoOuUsuarioNaoEncontrado() {
-        // Arrange
-        RatingException ex = new RatingException("Agendamento ou usuário não encontrado");
-
-        // Act
-        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler.handleRatingException(ex);
-
-        // Assert
-        assertNotNull(response);
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        assertEquals("Agendamento ou usuário não encontrado", response.getBody().getMessage());
-    }
-
-    @Test
     void handleRatingException_ShouldReturnBadRequest_WhenMessageIsParametrosDeEntradaInvalidos() {
         // Arrange
         RatingException ex = new RatingException("Parâmetros de entrada inválidos");
