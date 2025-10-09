@@ -1,8 +1,11 @@
 package com.pointtils.pointtils.src.application.services;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterDocumentRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterDocumentResponseDTO;
@@ -52,5 +55,20 @@ public class InterpreterDocumentService {
      */
     public boolean isDocumentUploadEnabled() {
         return s3Service.isS3Enabled();
+    }
+
+    @Transactional(readOnly = true)
+    public List<InterpreterDocumentResponseDTO> getDocumentsByInterpreter(UUID interpreterId) {
+        // Verifica se o intérprete existe
+        Interpreter interpreter = interpreterRepository.findById(interpreterId)
+                .orElseThrow(() -> new EntityNotFoundException("Intérprete não encontrado"));
+
+        // Busca os documentos associados ao intérprete
+        List<InterpreterDocuments> documents = interpreterDocumentsRepository.findByInterpreter(interpreter);
+
+        // Converte os documentos para DTOs
+        return documents.stream()
+                .map(InterpreterDocumentResponseDTO::fromEntity)
+                .toList();
     }
 }

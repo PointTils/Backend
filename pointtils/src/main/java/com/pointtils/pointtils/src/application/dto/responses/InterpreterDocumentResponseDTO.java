@@ -30,9 +30,9 @@ public class InterpreterDocumentResponseDTO {
         response.success = true;
         response.message = "Documento enviado com sucesso";
         response.data = new DocumentData(
-            document.getId(), // UUID do documento
-            document.getInterpreter().getId(), // UUID do intérprete
-            document.getDocument() // URL do documento
+            document.getId(),
+            document.getInterpreter().getId(), 
+            document.getDocument() 
         );
         return response;
     }
