@@ -3,6 +3,9 @@ package com.pointtils.pointtils.src.application.controllers;
 import com.pointtils.pointtils.src.application.dto.requests.EmailRequestDTO;
 import com.pointtils.pointtils.src.application.services.EmailService;
 import com.pointtils.pointtils.src.application.services.InterpreterService;
+import com.pointtils.pointtils.src.application.services.MemoryResetTokenService;
+import com.pointtils.pointtils.src.infrastructure.repositories.PersonRepository;
+import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -26,6 +29,9 @@ public class EmailController {
 
     private final EmailService emailService;
     private final InterpreterService interpreterService;
+    private final MemoryResetTokenService resetTokenService;
+    private final UserRepository userRepository;
+    private final PersonRepository personRepository;
 
     @PostMapping("/send")
     @Operation(summary = "Enviar email simples", description = "Envia um email simples para um destinatário")
@@ -90,22 +96,65 @@ public class EmailController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Email de recuperação enviado com sucesso"),
         @ApiResponse(responseCode = "400", description = "Email inválido"),
+        @ApiResponse(responseCode = "404", description = "Usuário não encontrado"),
         @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
-    public ResponseEntity<Map<String, Object>> sendPasswordResetEmail(
-            @PathVariable String email,
-            @RequestParam String userName,
-            @RequestParam String resetToken) {
-        
-        boolean success = emailService.sendPasswordResetEmail(email, userName, resetToken);
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", success);
-        response.put("message", success ? "Email de recuperação enviado com sucesso" : "Falha ao enviar email de recuperação");
-        response.put("to", email);
-        response.put("userName", userName);
-        
-        return ResponseEntity.ok(response);
+    public ResponseEntity<Map<String, Object>> sendPasswordResetEmail(@PathVariable String email) {
+        try {
+            log.info("=== INICIANDO ENVIO DE EMAIL DE RESET DE SENHA ===");
+            log.info("Email: {}", email);
+            
+            // Verificar se o usuário existe
+            log.info("Buscando usuário no banco...");
+            var user = userRepository.findByEmail(email);
+            if (user == null) {
+                log.warn("Usuário não encontrado para email: {}", email);
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "Usuário não encontrado");
+                response.put("to", email);
+                return ResponseEntity.status(404).body(response);
+            }
+            
+            log.info("Usuário encontrado: ID={}", user.getId());
+            
+            // Usar nome padrão temporariamente para testar
+            String userName = "Maria Souza";
+            log.info("Usando nome padrão: {}", userName);
+            
+            // Gerar reset token
+            log.info("Gerando token de reset...");
+            String resetToken = resetTokenService.generateResetToken(email);
+            log.info("Token gerado: {}", resetToken);
+            
+            // Enviar email
+            log.info("Enviando email...");
+            boolean success = emailService.sendPasswordResetEmail(email, userName, resetToken);
+            log.info("Email enviado com sucesso: {}", success);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", success);
+            response.put("message", success ? "Email de recuperação enviado com sucesso" : "Falha ao enviar email de recuperação");
+            response.put("to", email);
+            response.put("userName", userName);
+            
+            log.info("=== FINALIZANDO ENVIO DE EMAIL DE RESET DE SENHA ===");
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("=== ERRO CRÍTICO NO ENVIO DE EMAIL DE RESET DE SENHA ===");
+            log.error("Email: {}", email);
+            log.error("Mensagem de erro: {}", e.getMessage());
+            log.error("Stack trace completo:", e);
+            log.error("=== FIM DO ERRO CRÍTICO ===");
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Erro interno no servidor: " + e.getMessage());
+            response.put("to", email);
+            
+            return ResponseEntity.status(500).body(response);
+        }
     }
 
     @PostMapping("/appointment-confirmation/{email}")

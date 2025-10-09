@@ -12,12 +12,16 @@ import com.pointtils.pointtils.src.application.dto.requests.LoginRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.LoginResponseDTO;
 import com.pointtils.pointtils.src.application.dto.requests.RefreshTokenRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.RefreshTokenResponseDTO;
+import com.pointtils.pointtils.src.application.dto.requests.PasswordRecoveryRequestDTO;
 import com.pointtils.pointtils.src.application.services.AuthService;
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
 import com.pointtils.pointtils.src.infrastructure.configs.LoginAttemptService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/v1/auth")
@@ -78,6 +82,18 @@ public class AuthController {
         } else {
             return ResponseEntity.ok().build();
         }
+    }
+
+    @PostMapping("/recover-password")
+    @Operation(summary = "Recuperar senha usando token de recuperação")
+    public ResponseEntity<Map<String, Object>> recoverPassword(@RequestBody PasswordRecoveryRequestDTO request) {
+        boolean success = authService.resetPassword(request.getResetToken(), request.getNewPassword());
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", success);
+        response.put("message", success ? "Senha recuperada com sucesso" : "Falha ao recuperar senha");
+        
+        return ResponseEntity.ok(response);
     }
 
     private String getClientIP(HttpServletRequest request) {
