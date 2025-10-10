@@ -14,7 +14,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserPicturePatchRequestDTO {
+public class UserPicturePostRequestDTO {
 
     @NotNull(message = "O ID do usuário é obrigatório")
     @JsonProperty("user_id")
