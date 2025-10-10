@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterDocumentRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterDocumentResponseDTO;
@@ -25,23 +26,33 @@ public class InterpreterDocumentService {
     private final InterpreterDocumentsRepository interpreterDocumentsRepository;
     private final S3Service s3Service;
 
-    public InterpreterDocumentResponseDTO saveDocument(InterpreterDocumentRequestDTO request) throws IOException {
-        Interpreter interpreter = interpreterRepository.findById(request.getInterpreterId())
+    @Transactional
+    public List<InterpreterDocumentResponseDTO> saveDocuments(UUID interpreterId, List<MultipartFile> files) throws IOException {
+        Interpreter interpreter = interpreterRepository.findById(interpreterId)
                 .orElseThrow(() -> new EntityNotFoundException("Intérprete não encontrado"));
-
         if (!s3Service.isS3Enabled()) {
-            throw new UnsupportedOperationException("Upload de documentos está desabilitado. Configure spring.cloud.aws.s3.enabled=true para habilitar o upload para S3.");
+            throw new UnsupportedOperationException("Upload de documentos está desabilitado.");
         }
 
-        String documentUrl = s3Service.uploadFile(request.getFile(), "documents/" + request.getInterpreterId());
+        // Processa cada arquivo e salva no banco de dados
+        return files.stream().map(file -> {
+            // Faz o upload do arquivo para o S3
+            String documentUrl;
+            try {
+                documentUrl = s3Service.uploadFile(file, "documents/" + interpreterId);
+            } catch (IOException e) {
+                throw new RuntimeException("Erro ao fazer upload do arquivo: " + file.getOriginalFilename(), e);
+            }
 
-        InterpreterDocuments document = new InterpreterDocuments();
-        document.setInterpreter(interpreter);
-        document.setDocument(documentUrl);
+            // Cria uma nova instância de InterpreterDocuments
+            InterpreterDocuments document = new InterpreterDocuments();
+            document.setInterpreter(interpreter);
+            document.setDocument(documentUrl);
 
-        InterpreterDocuments savedDocument = interpreterDocumentsRepository.save(document);
+            InterpreterDocuments savedDocument = interpreterDocumentsRepository.save(document);
 
-        return InterpreterDocumentResponseDTO.fromEntity(savedDocument);
+            return InterpreterDocumentResponseDTO.fromEntity(savedDocument);
+        }).toList();
     }
 
     public boolean isDocumentUploadEnabled() {

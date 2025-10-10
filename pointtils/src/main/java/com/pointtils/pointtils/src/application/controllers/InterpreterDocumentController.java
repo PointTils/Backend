@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterDocumentRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchDocumentRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterDocumentResponseDTO;
-import com.pointtils.pointtils.src.application.dto.responses.UserResponseDTO;
 import com.pointtils.pointtils.src.application.services.InterpreterDocumentService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,14 +29,14 @@ public class InterpreterDocumentController {
 
     private final InterpreterDocumentService interpreterDocumentService;
 
-    @PostMapping(value = "/{id}/document", consumes = "multipart/form-data")
-    public ResponseEntity<InterpreterDocumentResponseDTO> saveDocument(
-            @PathVariable UUID id,
-            @RequestParam("file") MultipartFile file) throws IOException {
-        InterpreterDocumentRequestDTO request = new InterpreterDocumentRequestDTO(id, file);
-        InterpreterDocumentResponseDTO response = interpreterDocumentService.saveDocument(request);
-        return ResponseEntity.ok(response);
-    }
+    @PostMapping(value = "/{id}/documents", consumes = "multipart/form-data")
+    @Operation(summary = "Salva múltiplos documentos para um usuário")
+    public ResponseEntity<List<InterpreterDocumentResponseDTO>> saveDocuments(
+        @PathVariable UUID id,
+        @RequestParam("files") List<MultipartFile> files) throws IOException {
+    List<InterpreterDocumentResponseDTO> response = interpreterDocumentService.saveDocuments(id, files);
+    return ResponseEntity.ok(response);
+}
 
     @GetMapping("/{id}")
     @Operation(summary = "Busca todos os documentos de um usuario")
@@ -49,11 +49,12 @@ public class InterpreterDocumentController {
     @PatchMapping("/{id}/{documentId}")
     @Operation(summary = "Atualiza um documento de um usuario")
     public ResponseEntity<InterpreterDocumentResponseDTO> uploadDocument(
-            @PathVariable UUID id,
-            @PathVariable UUID documentId,
-            @RequestParam("file") MultipartFile file) throws IOException {
-        InterpreterDocumentRequestDTO request = new InterpreterDocumentRequestDTO(id, documentId, file);
-        InterpreterDocumentResponseDTO updatedDocument = interpreterDocumentService.updateDocument(request);
-        return ResponseEntity.ok(updatedDocument);
-    }
+        @PathVariable UUID id,
+        @PathVariable UUID documentId,
+        @RequestParam("file") MultipartFile file) throws IOException {
+    InterpreterPatchDocumentRequestDTO request = new InterpreterPatchDocumentRequestDTO(id, documentId, file);
+    InterpreterDocumentRequestDTO convertedRequest = new InterpreterDocumentRequestDTO(request.getInterpreterId(), request.getFile());
+    InterpreterDocumentResponseDTO updatedDocument = interpreterDocumentService.updateDocument(id, convertedRequest);
+    return ResponseEntity.ok(updatedDocument);
+}
 }
