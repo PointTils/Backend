@@ -9,7 +9,6 @@ import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponse
 import com.pointtils.pointtils.src.application.mapper.InterpreterResponseMapper;
 import com.pointtils.pointtils.src.application.mapper.LocationMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
-import com.pointtils.pointtils.src.core.domain.entities.enums.DayOfWeek;
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
@@ -24,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
@@ -75,16 +73,14 @@ public class InterpreterService {
         repository.save(interpreter);
     }
 
-    public List<InterpreterListResponseDTO> findAll(
-            String modality,
-            String gender,
-            String city,
-            String uf,
-            String neighborhood,
-            String specialty,
-            String availableDate,
-            String name) {
-
+    public List<InterpreterListResponseDTO> findAll(String modality,
+                                                    String gender,
+                                                    String city,
+                                                    String uf,
+                                                    String neighborhood,
+                                                    String specialty,
+                                                    String availableDate,
+                                                    String name) {
         InterpreterModality modalityEnum = null;
         if (modality != null) {
             modalityEnum = InterpreterModality.valueOf(modality.toUpperCase());
@@ -95,16 +91,9 @@ public class InterpreterService {
             genderEnum = Gender.valueOf(gender.toUpperCase());
         }
 
-        DayOfWeek dayOfWeek = null;
-        LocalTime requestedStart = null;
-        LocalTime requestedEnd = null;
-
+        LocalDateTime dateTime = null;
         if (availableDate != null) {
-            LocalDateTime dateTime = LocalDateTime.parse(availableDate,
-                    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
-            dayOfWeek = DayOfWeek.valueOf(dateTime.getDayOfWeek().name().substring(0, 3));
-            requestedStart = dateTime.toLocalTime();
-            requestedEnd = requestedStart.plusHours(1);
+            dateTime = LocalDateTime.parse(availableDate, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
         }
 
         List<UUID> specialtyList = null;
@@ -114,9 +103,8 @@ public class InterpreterService {
                     .toList();
         }
 
-        return repository.findAll(
-                        InterpreterSpecification.filter(modalityEnum, uf, city, neighborhood, specialtyList, genderEnum, dayOfWeek,
-                                requestedStart, requestedEnd, name))
+        return repository.findAll(InterpreterSpecification.filter(modalityEnum, uf, city, neighborhood, specialtyList,
+                        genderEnum, dateTime, name))
                 .stream()
                 .map(responseMapper::toListResponseDTO)
                 .toList();
