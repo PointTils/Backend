@@ -18,6 +18,11 @@ public class RestTemplateConfig {
         return new RestTemplate(buildClientHttpRequestFactory(ibgeTimeoutInMs));
     }
 
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate(buildClientHttpRequestFactory(5000));
+    }
+
     private ClientHttpRequestFactory buildClientHttpRequestFactory(Integer timeoutInMs) {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(timeoutInMs);
