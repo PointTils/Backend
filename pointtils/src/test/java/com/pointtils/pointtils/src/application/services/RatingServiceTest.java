@@ -1,26 +1,5 @@
 package com.pointtils.pointtils.src.application.services;
 
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import org.mockito.junit.jupiter.MockitoExtension;
-
 import com.pointtils.pointtils.src.application.dto.requests.RatingPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.RatingRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.RatingResponseDTO;
@@ -34,11 +13,30 @@ import com.pointtils.pointtils.src.core.domain.exceptions.RatingException;
 import com.pointtils.pointtils.src.infrastructure.repositories.AppointmentRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.RatingRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
-
 import jakarta.persistence.EntityNotFoundException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class RatingServiceTest {
+class RatingServiceTest {
 
     @Mock
     private RatingRepository ratingRepository;
@@ -77,7 +75,6 @@ public class RatingServiceTest {
         rating.setStars(BigDecimal.valueOf(4));
         rating.setDescription("Muito bom!");
         rating.setAppointment(appointment);
-        rating.setUserId(userId);
     }
 
     @Test
@@ -90,7 +87,7 @@ public class RatingServiceTest {
         when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(appointment));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(ratingRepository.save(any(Rating.class))).thenReturn(rating);
-        when(ratingResponseMapper.toSingleResponseDTO(any(), any())).thenReturn(mock(RatingResponseDTO.class));
+        when(ratingResponseMapper.toSingleResponseDTO(any())).thenReturn(mock(RatingResponseDTO.class));
         when(ratingRepository.findByInterpreterId(any())).thenReturn(List.of(rating));
         when(userRepository.save(any())).thenReturn(appointment.getInterpreter());
 
@@ -98,7 +95,7 @@ public class RatingServiceTest {
 
         assertNotNull(response);
         verify(ratingRepository).save(any(Rating.class));
-        verify(ratingResponseMapper).toSingleResponseDTO(any(), eq(user));
+        verify(ratingResponseMapper).toSingleResponseDTO(any());
     }
 
     @Test
@@ -157,8 +154,7 @@ public class RatingServiceTest {
 
         when(userRepository.findById(interpreterId)).thenReturn(Optional.of(interpreter));
         when(ratingRepository.findByInterpreterId(interpreterId)).thenReturn(List.of(rating));
-        when(userRepository.findById(rating.getUserId())).thenReturn(Optional.of(user));
-        when(ratingResponseMapper.toListResponseDTO(any(), any())).thenReturn(mock(RatingResponseDTO.class));
+        when(ratingResponseMapper.toListResponseDTO(any())).thenReturn(mock(RatingResponseDTO.class));
 
         List<RatingResponseDTO> result = ratingService.getRatingsByInterpreterId(interpreterId);
 
@@ -185,8 +181,7 @@ public class RatingServiceTest {
 
         when(ratingRepository.findById(ratingId)).thenReturn(Optional.of(rating));
         when(ratingRepository.save(any())).thenReturn(rating);
-        when(ratingResponseMapper.toSingleResponseDTO(any(), any())).thenReturn(mock(RatingResponseDTO.class));
-        when(userRepository.findById(rating.getUserId())).thenReturn(Optional.of(user));
+        when(ratingResponseMapper.toSingleResponseDTO(any())).thenReturn(mock(RatingResponseDTO.class));
         when(ratingRepository.findByInterpreterId(any())).thenReturn(List.of(rating));
         when(userRepository.save(any())).thenReturn(appointment.getInterpreter());
 

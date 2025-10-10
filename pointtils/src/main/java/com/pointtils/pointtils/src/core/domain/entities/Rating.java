@@ -1,10 +1,5 @@
 package com.pointtils.pointtils.src.core.domain.entities;
 
-import java.math.BigDecimal;
-import java.util.UUID;
-
-import org.hibernate.annotations.UuidGenerator;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -16,6 +11,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.UuidGenerator;
+
+import java.math.BigDecimal;
+import java.util.UUID;
 
 @Entity
 @Table(name = "rating")
@@ -40,7 +39,4 @@ public class Rating {
     @ManyToOne
     @JoinColumn(name = "appointment_id", nullable = false)
     private Appointment appointment;
-
-    @Column(name = "user_id", nullable = false, columnDefinition = "uuid")
-    private UUID userId;
 }
