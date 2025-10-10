@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class UserPicturePatchService {
+public class UserPicturePostService {
 
     private final UserRepository userRepository;
     private final S3Service s3Service;

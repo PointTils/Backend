@@ -15,16 +15,16 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.pointtils.pointtils.src.application.dto.requests.UserPicturePatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.UserResponseDTO;
-import com.pointtils.pointtils.src.application.services.UserPicturePatchService;
+import com.pointtils.pointtils.src.application.services.UserPicturePostService;
 
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("v1/users")
 @RequiredArgsConstructor
-public class UserPicturePatchController {
+public class UserPicturePostController {
 
-    private final UserPicturePatchService userService;
+    private final UserPicturePostService userService;
 
     @PostMapping(value = "/{id}/picture", consumes = "multipart/form-data")
     public ResponseEntity<UserResponseDTO> uploadPicture(
