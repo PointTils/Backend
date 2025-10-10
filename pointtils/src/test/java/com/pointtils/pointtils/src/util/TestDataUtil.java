@@ -94,8 +94,6 @@ public class TestDataUtil {
         request.setCpf("12345678901");
         request.setPicture("picture_url");
         request.setProfessionalData(new ProfessionalDataBasicRequestDTO("12345678000195",
-                new BigDecimal("100.00"),
-                new BigDecimal("500.00"),
                 true,
                 InterpreterModality.PERSONALLY,
                 "Intérprete experiente em LIBRAS"));

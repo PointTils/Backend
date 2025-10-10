@@ -21,7 +21,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import software.amazon.awssdk.services.s3.S3Client;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 

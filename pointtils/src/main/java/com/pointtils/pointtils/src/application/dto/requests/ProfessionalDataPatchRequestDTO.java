@@ -2,15 +2,12 @@ package com.pointtils.pointtils.src.application.dto.requests;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
-import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
 
 @Data
 @Builder
