@@ -19,4 +19,6 @@ public interface RatingRepository extends JpaRepository<Rating, UUID> {
     List<Rating> findByAppointment(Appointment appointment);
     
     List<Rating> findByAppointmentInterpreterIdOrderByStarsDesc(UUID interpreterId);
+
+    boolean existsByAppointment(Appointment appointment);
 }
