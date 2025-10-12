@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import sys
 import requests
@@ -29,6 +30,7 @@ HEADERS = {
 }
 
 GRAPHQL_URL = "https://api.github.com/graphql"
+BATCH_SIZE = 4
 
 def run_graphql(query, variables=None):
     response = requests.post(GRAPHQL_URL, json={"query": query, "variables": variables}, headers=HEADERS)
@@ -138,7 +140,8 @@ def get_project_items(project_id):
             continue
         if content.get("state") == "CLOSED":
             continue
-        if content.get("issueType", {}).get("name") != "Sub-Task":
+        issueType = content.get("issueType", {})
+        if issueType is not None and issueType.get("name") != "Sub-Task":
             continue
         filtered.append(item)
 
@@ -148,12 +151,19 @@ def get_project_items(project_id):
 def notify_discord(overdue_issues):
     if not overdue_issues:
         return
-    content = "**⚠️ Algumas tarefas tem como prazo de entrega o dia de hoje. Saberiam dizer quando conseguirão finalizar?**\n"
-    for issue in overdue_issues:
-        assignees = ", ".join(issue["assignees"]) if issue["assignees"] else "_ninguém atribuído_"
-        content += f"- [{issue['title']}]({issue['url']}) | Responsável(s): {assignees}\n"
-    response = requests.post(DISCORD_WEBHOOK_URL, json={"content": content})
-    response.raise_for_status()
+    for i in range(0, len(overdue_issues), BATCH_SIZE):
+        if i == 0:
+            content = "**⚠️ Algumas tarefas estão com o prazo de entrega atrasado. Saberiam dizer quando conseguirão finalizar?**\n"
+        else:
+            content = ""
+        for issue in overdue_issues[i:i+4]:
+            assignees = ", ".join(issue["assignees"]) if issue["assignees"] else "_ninguém atribuído_"
+            content += f"- [{issue['title']}]({issue['url']}) | Responsável(s): {assignees}\n"
+    
+        response = requests.post(DISCORD_WEBHOOK_URL, json={"content": content})
+        if (response.status_code < 200 or response.status_code >= 300):
+            logging.error("Error sending notification to Discord:", response.json())
+        response.raise_for_status()
 
 def validate_env():
     missing = []
