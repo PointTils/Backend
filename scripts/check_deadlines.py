@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import sys
 import requests
@@ -29,6 +30,7 @@ HEADERS = {
 }
 
 GRAPHQL_URL = "https://api.github.com/graphql"
+BATCH_SIZE = 4
 
 def run_graphql(query, variables=None):
     response = requests.post(GRAPHQL_URL, json={"query": query, "variables": variables}, headers=HEADERS)
@@ -149,7 +151,7 @@ def get_project_items(project_id):
 def notify_discord(overdue_issues):
     if not overdue_issues:
         return
-    for i in range(0, len(overdue_issues), 4):
+    for i in range(0, len(overdue_issues), BATCH_SIZE):
         if i == 0:
             content = "**⚠️ Algumas tarefas estão com o prazo de entrega atrasado. Saberiam dizer quando conseguirão finalizar?**\n"
         else:
@@ -160,7 +162,7 @@ def notify_discord(overdue_issues):
     
         response = requests.post(DISCORD_WEBHOOK_URL, json={"content": content})
         if (response.status_code < 200 or response.status_code >= 300):
-            print("Error sending notification to Discord:", response.json())
+            logging.error("Error sending notification to Discord:", response.json())
         response.raise_for_status()
 
 def validate_env():
