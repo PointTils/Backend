@@ -4,8 +4,7 @@ import com.pointtils.pointtils.src.application.dto.requests.EmailRequestDTO;
 import com.pointtils.pointtils.src.application.services.EmailService;
 import com.pointtils.pointtils.src.application.services.InterpreterService;
 import com.pointtils.pointtils.src.application.services.MemoryResetTokenService;
-import com.pointtils.pointtils.src.infrastructure.repositories.PersonRepository;
-import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
+import com.pointtils.pointtils.src.application.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -30,8 +29,7 @@ public class EmailController {
     private final EmailService emailService;
     private final InterpreterService interpreterService;
     private final MemoryResetTokenService resetTokenService;
-    private final UserRepository userRepository;
-    private final PersonRepository personRepository;
+    private final UserService userService;
 
     @PostMapping("/send")
     @Operation(summary = "Enviar email simples", description = "Envia um email simples para um destinatário")
@@ -106,7 +104,7 @@ public class EmailController {
             
             // Verificar se o usuário existe
             log.info("Buscando usuário no banco...");
-            var user = userRepository.findByEmail(email);
+            var user = userService.findByEmail(email);
             if (user == null) {
                 log.warn("Usuário não encontrado para email: {}", email);
                 Map<String, Object> response = new HashMap<>();
