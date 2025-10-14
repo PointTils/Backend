@@ -42,7 +42,7 @@ public class InterpreterService {
     private final InterpreterResponseMapper responseMapper;
     private final LocationMapper locationMapper;
     private final EmailService emailService;
-
+    
     @Value("${app.mail.admin:admin@pointtils.com}")
     private String adminEmail;
 
@@ -294,11 +294,13 @@ public class InterpreterService {
      * Envia email para o administrador com os dados de cadastro do intérprete
      * @param interpreter Intérprete cadastrado
      */
+    @Value("${app.api.base-url}")
+    private String apiBaseUrl;
+    
     private void sendInterpreterRegistrationEmail(Interpreter interpreter) {
         try {
-            // Links para aceitar/recusar o cadastro
-            String acceptLink = String.format("https://api.pointtils.com/v1/email/interpreter/%s/approve", interpreter.getId());
-            String rejectLink = String.format("https://api.pointtils.com/v1/email/interpreter/%s/reject", interpreter.getId());
+            String acceptLink = String.format("%s/v1/email/interpreter/%s/approve", apiBaseUrl, interpreter.getId());
+            String rejectLink = String.format("%s/v1/email/interpreter/%s/reject", apiBaseUrl, interpreter.getId());
             
             // Enviar email usando o template do banco de dados
             boolean emailSent = emailService.sendInterpreterRegistrationRequestEmail(
@@ -320,7 +322,6 @@ public class InterpreterService {
             
         } catch (Exception e) {
             log.error("Erro ao enviar email de solicitação de cadastro: {}", e.getMessage());
-            // Não lançar exceção para não interromper o fluxo de cadastro
         }
     }
 }
