@@ -2,7 +2,7 @@ package com.pointtils.pointtils.src.application.controllers;
 
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
-import com.pointtils.pointtils.src.application.dto.responses.ApiResponse;
+import com.pointtils.pointtils.src.application.dto.responses.ApiResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
 import com.pointtils.pointtils.src.application.services.InterpreterService;
@@ -39,18 +39,18 @@ public class InterpreterController {
 
     @PostMapping("/register")
     @Operation(summary = "Cadastra um usuário intérprete")
-    public ResponseEntity<ApiResponse<InterpreterResponseDTO>> createInterpreter(
+    public ResponseEntity<ApiResponseDTO<InterpreterResponseDTO>> createInterpreter(
             @Valid @RequestBody InterpreterBasicRequestDTO dto) {
         var interpreter = service.registerBasic(dto);
-        ApiResponse<InterpreterResponseDTO> response =
-                ApiResponse.success("Intérprete cadastrado com sucesso", interpreter);
+        ApiResponseDTO<InterpreterResponseDTO> response =
+                ApiResponseDTO.success("Intérprete cadastrado com sucesso", interpreter);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Busca todos os usuários intérprete")
-    public ResponseEntity<ApiResponse<List<InterpreterListResponseDTO>>> findAll(
+    public ResponseEntity<ApiResponseDTO<List<InterpreterListResponseDTO>>> findAll(
             @RequestParam(required = false) String modality,
             @RequestParam(required = false) String gender,
             @RequestParam(required = false) String city,
@@ -61,33 +61,33 @@ public class InterpreterController {
             @RequestParam(required = false, name = "available_date") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm") String availableDate) {
         List<InterpreterListResponseDTO> interpreters = service.findAll(modality, gender, city, uf, neighborhood,
                 specialty, availableDate, name);
-        return ResponseEntity.ok(ApiResponse.success("Intérpretes encontrados com sucesso", interpreters));
+        return ResponseEntity.ok(ApiResponseDTO.success("Intérpretes encontrados com sucesso", interpreters));
     }
 
     @GetMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Busca um usuário intérprete por ID")
-    public ResponseEntity<ApiResponse<InterpreterResponseDTO>> findById(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponseDTO<InterpreterResponseDTO>> findById(@PathVariable UUID id) {
         InterpreterResponseDTO interpreter = service.findById(id);
-        return ResponseEntity.ok(ApiResponse.success("Intérprete encontrado com sucesso", interpreter));
+        return ResponseEntity.ok(ApiResponseDTO.success("Intérprete encontrado com sucesso", interpreter));
     }
 
     @PatchMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Atualiza parcialmente um usuário intérprete por ID")
-    public ResponseEntity<ApiResponse<InterpreterResponseDTO>> patchInterpreter(@PathVariable UUID id,
+    public ResponseEntity<ApiResponseDTO<InterpreterResponseDTO>> patchInterpreter(@PathVariable UUID id,
                                                                                 @RequestBody @Valid InterpreterPatchRequestDTO dto) {
         InterpreterResponseDTO updated = service.updatePartial(id, dto);
-        return ResponseEntity.ok(ApiResponse.success("Intérprete atualizado com sucesso", updated));
+        return ResponseEntity.ok(ApiResponseDTO.success("Intérprete atualizado com sucesso", updated));
     }
 
     @PutMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Atualiza um usuário intérprete por ID")
-    public ResponseEntity<ApiResponse<InterpreterResponseDTO>> putInterpreter(@PathVariable UUID id,
+    public ResponseEntity<ApiResponseDTO<InterpreterResponseDTO>> putInterpreter(@PathVariable UUID id,
                                                                               @RequestBody @Valid InterpreterBasicRequestDTO dto) {
         InterpreterResponseDTO updated = service.updateComplete(id, dto);
-        return ResponseEntity.ok(ApiResponse.success("Intérprete atualizado com sucesso", updated));
+        return ResponseEntity.ok(ApiResponseDTO.success("Intérprete atualizado com sucesso", updated));
     }
 
     @DeleteMapping("/{id}")

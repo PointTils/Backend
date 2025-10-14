@@ -2,7 +2,7 @@ package com.pointtils.pointtils.src.application.controllers;
 
 import com.pointtils.pointtils.src.application.dto.requests.AppointmentPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.AppointmentRequestDTO;
-import com.pointtils.pointtils.src.application.dto.responses.ApiResponse;
+import com.pointtils.pointtils.src.application.dto.responses.ApiResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.AppointmentFilterResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.AppointmentResponseDTO;
 import com.pointtils.pointtils.src.application.services.AppointmentService;
@@ -39,34 +39,34 @@ public class AppointmentController {
 
     @PostMapping
     @Operation(summary = "Cria um novo agendamento")
-    public ResponseEntity<ApiResponse<AppointmentResponseDTO>> createAppointment(@Valid @RequestBody AppointmentRequestDTO dto) {
+    public ResponseEntity<ApiResponseDTO<AppointmentResponseDTO>> createAppointment(@Valid @RequestBody AppointmentRequestDTO dto) {
 
         AppointmentResponseDTO response = appointmentService.createAppointment(dto);
-        ApiResponse<AppointmentResponseDTO> apiResponse =
-                ApiResponse.success("Solicitação criada com sucesso", response);
+        ApiResponseDTO<AppointmentResponseDTO> apiResponse =
+                ApiResponseDTO.success("Solicitação criada com sucesso", response);
         return ResponseEntity.ok(apiResponse);
     }
 
     @GetMapping
     @Operation(summary = "Lista todos os agendamentos")
-    public ResponseEntity<ApiResponse<List<AppointmentResponseDTO>>> findAll() {
+    public ResponseEntity<ApiResponseDTO<List<AppointmentResponseDTO>>> findAll() {
         List<AppointmentResponseDTO> list = appointmentService.findAll();
-        return ResponseEntity.ok(ApiResponse.success("Solicitações encontradas com sucesso", list));
+        return ResponseEntity.ok(ApiResponseDTO.success("Solicitações encontradas com sucesso", list));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Busca agendamento por ID")
-    public ResponseEntity<ApiResponse<AppointmentResponseDTO>> findById(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponseDTO<AppointmentResponseDTO>> findById(@PathVariable UUID id) {
         AppointmentResponseDTO item = appointmentService.findById(id);
-        return ResponseEntity.ok(ApiResponse.success("Solicitação encontrada com sucesso", item));
+        return ResponseEntity.ok(ApiResponseDTO.success("Solicitação encontrada com sucesso", item));
     }
 
     @PatchMapping("/{id}")
     @Operation(summary = "Atualiza parcialmente um agendamento por ID")
-    public ResponseEntity<ApiResponse<AppointmentResponseDTO>> updatePartial(@PathVariable UUID id,
+    public ResponseEntity<ApiResponseDTO<AppointmentResponseDTO>> updatePartial(@PathVariable UUID id,
                                                                              @RequestBody @Valid AppointmentPatchRequestDTO dto) {
         AppointmentResponseDTO updated = appointmentService.updatePartial(id, dto);
-        return ResponseEntity.ok(ApiResponse.success("Solicitação atualizada com sucesso", updated));
+        return ResponseEntity.ok(ApiResponseDTO.success("Solicitação atualizada com sucesso", updated));
     }
 
     @DeleteMapping("/{id}")
@@ -78,7 +78,7 @@ public class AppointmentController {
 
     @GetMapping("/filter")
     @Operation(summary = "Busca agendamentos com filtros opcionais")
-    public ResponseEntity<ApiResponse<List<AppointmentFilterResponseDTO>>> searchAppointments(
+    public ResponseEntity<ApiResponseDTO<List<AppointmentFilterResponseDTO>>> searchAppointments(
             @RequestParam(required = false) UUID interpreterId,
             @RequestParam(required = false) UUID userId,
             @RequestParam(required = false) AppointmentStatus status,
@@ -91,7 +91,7 @@ public class AppointmentController {
         }
 
         List<AppointmentFilterResponseDTO> appointments = appointmentService.searchAppointments(interpreterId, userId, status, modality, from);
-        return ResponseEntity.ok(ApiResponse.success("Solicitações encontradas com sucesso", appointments));
+        return ResponseEntity.ok(ApiResponseDTO.success("Solicitações encontradas com sucesso", appointments));
     }
 
 }
