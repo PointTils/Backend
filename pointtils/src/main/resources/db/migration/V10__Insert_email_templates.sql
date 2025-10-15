@@ -56,9 +56,9 @@ INSERT INTO parameters (id, key, value) VALUES
                                 
                                 <p style="font-weight: bold; margin-top: 20px;">Por favor, analise os dados e escolha uma das opções:</p>
                                 <p>
-                                  <a href="{link_api}" target="_blank" rel="noreferrer noopener" style="background-color: #008000; color: #fff; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold;">Aceitar</a>
+                                  <a href="{{link_accept_api}}" target="_blank" rel="noreferrer noopener" style="background-color: #008000; color: #fff; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold;">Aceitar</a>
                                   &nbsp;
-                                  <a href="{link_api}" target="_blank" rel="noreferrer noopener" style="background-color: #FF0000; color: #fff; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold;">Recusar</a>
+                                  <a href="{{link_reject_api}}" target="_blank" rel="noreferrer noopener" style="background-color: #FF0000; color: #fff; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold;">Recusar</a>
                                 </p>
                                 
                                 <p>Caso aceite, o intérprete será habilitado para acessar o aplicativo. Em caso de recusa, ele será notificado automaticamente.</p>

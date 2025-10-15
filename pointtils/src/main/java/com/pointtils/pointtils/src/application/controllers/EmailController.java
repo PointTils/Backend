@@ -1,26 +1,11 @@
 package com.pointtils.pointtils.src.application.controllers;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.pointtils.pointtils.src.application.dto.requests.EmailRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ApiResponseDTO;
 import com.pointtils.pointtils.src.application.services.EmailService;
 import com.pointtils.pointtils.src.application.services.InterpreterService;
 import com.pointtils.pointtils.src.application.services.MemoryResetTokenService;
 import com.pointtils.pointtils.src.application.services.UserService;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -28,6 +13,19 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -113,8 +111,6 @@ public class EmailController {
         try {
             var userOptional = userService.findByEmail(email);
             if (userOptional == null) {
-                Map<String, Object> data = new HashMap<>();
-                data.put("to", email);
                 return ResponseEntity.status(404).body(ApiResponseDTO.error("Usuário não encontrado"));
             }
 
@@ -132,8 +128,6 @@ public class EmailController {
 
         } catch (Exception e) {
             log.error("Erro ao enviar email de reset de senha para {}: {}", email, e.getMessage(), e);
-            Map<String, Object> data = new HashMap<>();
-            data.put("to", email);
             return ResponseEntity.status(500).body(ApiResponseDTO.error("Erro interno no servidor"));
         }
     }
@@ -214,61 +208,61 @@ public class EmailController {
                 data));
     }
 
-    @PatchMapping("/interpreter/{id}/approve")
+    @GetMapping("/interpreter/{id}/approve")
     @Operation(summary = "Aprovar cadastro de intérprete", description = "Aprova o cadastro de um intérprete e envia email de confirmação")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Cadastro aprovado com sucesso"),
             @ApiResponse(responseCode = "404", description = "Intérprete não encontrado"),
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
-    public ResponseEntity<ApiResponseDTO<Map<String, Object>>> approveInterpreter(@PathVariable String id) {
+    public ResponseEntity<String> approveInterpreter(@PathVariable String id) {
         try {
             UUID interpreterId = UUID.fromString(id);
             boolean success = interpreterService.approveInterpreter(interpreterId);
 
-            Map<String, Object> data = new HashMap<>();
-            data.put("interpreterId", id);
-            data.put("status", "ACTIVE");
+            String responseMessage = success
+                    ? "Cadastro do intérprete aprovado com sucesso"
+                    : "Falha ao aprovar cadastro do intérprete";
 
-            return ResponseEntity.ok(ApiResponseDTO.success(
-                    success ? "Cadastro do intérprete aprovado com sucesso" : "Falha ao aprovar cadastro do intérprete",
-                    data));
+            return ResponseEntity.ok(buildHtmlResponseBody(responseMessage));
 
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(buildHtmlResponseBody(ex.getMessage()));
         } catch (Exception e) {
             log.error("Erro ao aprovar cadastro do intérprete {}: {}", id, e.getMessage(), e);
-            Map<String, Object> data = new HashMap<>();
-            data.put("interpreterId", id);
-
-            return ResponseEntity.status(500).body(ApiResponseDTO.error("Erro ao aprovar cadastro do intérprete"));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(buildHtmlResponseBody("Erro ao aprovar cadastro do intérprete"));
         }
     }
 
-    @PatchMapping("/interpreter/{id}/reject")
+    @GetMapping("/interpreter/{id}/reject")
     @Operation(summary = "Recusar cadastro de intérprete", description = "Recusa o cadastro de um intérprete e envia email de notificação")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Cadastro recusado com sucesso"),
             @ApiResponse(responseCode = "404", description = "Intérprete não encontrado"),
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
-    public ResponseEntity<ApiResponseDTO<Map<String, Object>>> rejectInterpreter(@PathVariable String id) {
+    public ResponseEntity<String> rejectInterpreter(@PathVariable String id) {
         try {
             UUID interpreterId = UUID.fromString(id);
             boolean success = interpreterService.rejectInterpreter(interpreterId);
 
-            Map<String, Object> data = new HashMap<>();
-            data.put("interpreterId", id);
-            data.put("status", "INACTIVE");
+            String responseMessage = success
+                    ? "Cadastro do intérprete recusado com sucesso"
+                    : "Falha ao recusar cadastro do intérprete";
 
-            return ResponseEntity.ok(ApiResponseDTO.success(
-                    success ? "Cadastro do intérprete recusado com sucesso" : "Falha ao recusar cadastro do intérprete",
-                    data));
+            return ResponseEntity.ok(buildHtmlResponseBody(responseMessage));
 
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(buildHtmlResponseBody(ex.getMessage()));
         } catch (Exception e) {
             log.error("Erro ao recusar cadastro do intérprete {}: {}", id, e.getMessage(), e);
-            Map<String, Object> data = new HashMap<>();
-            data.put("interpreterId", id);
-
-            return ResponseEntity.status(500).body(ApiResponseDTO.error("Erro ao recusar cadastro do intérprete"));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(buildHtmlResponseBody("Erro ao recusar cadastro do intérprete"));
         }
+    }
+
+    private String buildHtmlResponseBody(String message) {
+        return "<html><body>" + message + "</body></html>";
     }
 }

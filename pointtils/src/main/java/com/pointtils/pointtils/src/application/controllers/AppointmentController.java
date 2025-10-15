@@ -64,7 +64,7 @@ public class AppointmentController {
     @PatchMapping("/{id}")
     @Operation(summary = "Atualiza parcialmente um agendamento por ID")
     public ResponseEntity<ApiResponseDTO<AppointmentResponseDTO>> updatePartial(@PathVariable UUID id,
-                                                                             @RequestBody @Valid AppointmentPatchRequestDTO dto) {
+                                                                                @RequestBody @Valid AppointmentPatchRequestDTO dto) {
         AppointmentResponseDTO updated = appointmentService.updatePartial(id, dto);
         return ResponseEntity.ok(ApiResponseDTO.success("Solicitação atualizada com sucesso", updated));
     }
@@ -92,7 +92,7 @@ public class AppointmentController {
         }
 
         List<AppointmentFilterResponseDTO> appointments = appointmentService.searchAppointments(interpreterId, userId, status, modality, from, hasRating);
-        return ResponseEntity.ok(ApiResponse.success("Solicitações encontradas com sucesso", appointments));
+        return ResponseEntity.ok(ApiResponseDTO.success("Solicitações encontradas com sucesso", appointments));
     }
 
 }

@@ -297,27 +297,16 @@ public class EmailService {
         }
         
         // Substituir placeholders do template do banco
-        String processed = template
+
+        return template
                 .replace("{{nome}}", interpreterName != null ? interpreterName : "")
                 .replace("{{cpf}}", cpf != null ? cpf : "")
                 .replace("{{cnpj}}", cnpj != null ? cnpj : "")
                 .replace("{{email}}", email != null ? email : "")
                 .replace("{{telefone}}", phone != null ? phone : "")
+                .replace("{{link_accept_api}}", acceptLink != null ? acceptLink : "")
+                .replace("{{link_reject_api}}", rejectLink != null ? rejectLink : "")
                 .replace("{{ano}}", String.valueOf(Year.now().getValue()));
-        
-        // Corrigir os links de aceitar/recusar (o template do banco usa o mesmo placeholder para ambos)
-        // Vamos substituir manualmente os links nos botões
-        processed = processed.replace(
-            "<a href=\"{link_api}\" target=\"_blank\" rel=\"noreferrer noopener\" style=\"background-color: #008000; color: #fff; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold;\">Aceitar</a>",
-            String.format("<a href=\"%s\" target=\"_blank\" rel=\"noreferrer noopener\" style=\"background-color: #008000; color: #fff; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold;\">Aceitar</a>", acceptLink)
-        );
-        
-        processed = processed.replace(
-            "<a href=\"{link_api}\" target=\"_blank\" rel=\"noreferrer noopener\" style=\"background-color: #FF0000; color: #fff; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold;\">Recusar</a>",
-            String.format("<a href=\"%s\" target=\"_blank\" rel=\"noreferrer noopener\" style=\"background-color: #FF0000; color: #fff; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold;\">Recusar</a>", rejectLink)
-        );
-        
-        return processed;
     }
 
     /**
@@ -333,14 +322,12 @@ public class EmailService {
         // Definir a mensagem de resposta baseada na aprovação
         String respostaSolicitacao = approved ? 
             "seu cadastro foi aprovado e você já pode acessar a plataforma" : 
-            "infelizmente seu cadastro não foi aprovado no momento";
+            "infelizmente seu cadastro foi recusado por perfil não compatível";
         
         // Processar o template
-        String processed = template
+        return template
                 .replace("{{nome}}", interpreterName != null ? interpreterName : "")
                 .replace("{{respostaSolicitacao}}", respostaSolicitacao)
                 .replace("{{ano}}", String.valueOf(Year.now().getValue()));
-        
-        return processed;
     }
 }

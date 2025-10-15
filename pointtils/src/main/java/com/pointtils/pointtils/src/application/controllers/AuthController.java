@@ -1,27 +1,24 @@
 package com.pointtils.pointtils.src.application.controllers;
 
+import com.pointtils.pointtils.src.application.dto.requests.LoginRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.PasswordRecoveryRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.RefreshTokenRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.ApiResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.LoginResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.RefreshTokenResponseDTO;
+import com.pointtils.pointtils.src.application.services.AuthService;
+import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
+import com.pointtils.pointtils.src.infrastructure.configs.LoginAttemptService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.pointtils.pointtils.src.application.dto.requests.LoginRequestDTO;
-import com.pointtils.pointtils.src.application.dto.responses.ApiResponseDTO;
-import com.pointtils.pointtils.src.application.dto.responses.LoginResponseDTO;
-import com.pointtils.pointtils.src.application.dto.requests.RefreshTokenRequestDTO;
-import com.pointtils.pointtils.src.application.dto.responses.RefreshTokenResponseDTO;
-import com.pointtils.pointtils.src.application.dto.requests.PasswordRecoveryRequestDTO;
-import com.pointtils.pointtils.src.application.services.AuthService;
-import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
-import com.pointtils.pointtils.src.infrastructure.configs.LoginAttemptService;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -88,20 +85,20 @@ public class AuthController {
     }
 
     @PostMapping("/recover-password")
-@Operation(summary = "Recuperar senha usando token de recuperação")
-public ResponseEntity<ApiResponseDTO<Map<String, Object>>> recoverPassword(
-        @Valid @RequestBody PasswordRecoveryRequestDTO request) {
+    @Operation(summary = "Recuperar senha usando token de recuperação")
+    public ResponseEntity<ApiResponseDTO<Map<String, Object>>> recoverPassword(
+            @Valid @RequestBody PasswordRecoveryRequestDTO request) {
 
-    boolean success = authService.resetPassword(request.getResetToken(), request.getNewPassword());
+        boolean success = authService.resetPassword(request.getResetToken(), request.getNewPassword());
 
-    Map<String, Object> data = new HashMap<>();
-    data.put("resetToken", request.getResetToken());
+        Map<String, Object> data = new HashMap<>();
+        data.put("resetToken", request.getResetToken());
 
-    return ResponseEntity.ok(ApiResponseDTO.success(
-            success ? "Senha recuperada com sucesso" : "Falha ao recuperar senha",
-            data
-    ));
-}
+        return ResponseEntity.ok(ApiResponseDTO.success(
+                success ? "Senha recuperada com sucesso" : "Falha ao recuperar senha",
+                data
+        ));
+    }
 
 
     private String getClientIP(HttpServletRequest request) {

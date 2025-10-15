@@ -20,8 +20,11 @@ import org.springframework.http.ResponseEntity;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -51,12 +54,12 @@ class EmailControllerTest {
     void setUp() {
         testEmail = "user@example.com";
         testUserName = "João Silva";
-        
+
         emailRequestDTO = new EmailRequestDTO(
-            testEmail,
-            "Assunto Teste",
-            "Corpo do email teste",
-            "PointTils"
+                testEmail,
+                "Assunto Teste",
+                "Corpo do email teste",
+                "PointTils"
         );
     }
 
@@ -71,7 +74,7 @@ class EmailControllerTest {
         assertNotNull(response.getBody());
         assertTrue(response.getBody().isSuccess());
         assertEquals("Email enviado com sucesso", response.getBody().getMessage());
-        
+
         Map<String, Object> data = response.getBody().getData();
         assertEquals(testEmail, data.get("to"));
     }
@@ -87,7 +90,7 @@ class EmailControllerTest {
         assertNotNull(response.getBody());
         assertTrue(response.getBody().isSuccess());
         assertEquals("Falha ao enviar email", response.getBody().getMessage());
-        
+
         Map<String, Object> data = response.getBody().getData();
         assertEquals(testEmail, data.get("to"));
     }
@@ -103,7 +106,7 @@ class EmailControllerTest {
         assertNotNull(response.getBody());
         assertTrue(response.getBody().isSuccess());
         assertEquals("Email HTML enviado com sucesso", response.getBody().getMessage());
-        
+
         Map<String, Object> data = response.getBody().getData();
         assertEquals(testEmail, data.get("to"));
     }
@@ -119,7 +122,7 @@ class EmailControllerTest {
         assertNotNull(response.getBody());
         assertTrue(response.getBody().isSuccess());
         assertEquals("Falha ao enviar email HTML", response.getBody().getMessage());
-        
+
         Map<String, Object> data = response.getBody().getData();
         assertEquals(testEmail, data.get("to"));
     }
@@ -129,14 +132,14 @@ class EmailControllerTest {
     void deveEnviarEmailBoasVindasComSucesso() {
         when(emailService.sendWelcomeEmail(testEmail, testUserName)).thenReturn(true);
 
-        ResponseEntity<ApiResponseDTO<Map<String, Object>>> response = 
-            emailController.sendWelcomeEmail(testEmail, testUserName);
+        ResponseEntity<ApiResponseDTO<Map<String, Object>>> response =
+                emailController.sendWelcomeEmail(testEmail, testUserName);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertTrue(response.getBody().isSuccess());
         assertEquals("Email de boas-vindas enviado com sucesso", response.getBody().getMessage());
-        
+
         Map<String, Object> data = response.getBody().getData();
         assertEquals(testEmail, data.get("to"));
         assertEquals(testUserName, data.get("userName"));
@@ -148,21 +151,21 @@ class EmailControllerTest {
         Person user = new Person();
         user.setName(testUserName);
         user.setEmail(testEmail);
-        
+
         String resetToken = "reset-token-123";
-        
+
         when(userService.findByEmail(testEmail)).thenReturn(user);
         when(resetTokenService.generateResetToken(testEmail)).thenReturn(resetToken);
         when(emailService.sendPasswordResetEmail(testEmail, testUserName, resetToken)).thenReturn(true);
 
-        ResponseEntity<ApiResponseDTO<Map<String, Object>>> response = 
-            emailController.sendPasswordResetEmail(testEmail);
+        ResponseEntity<ApiResponseDTO<Map<String, Object>>> response =
+                emailController.sendPasswordResetEmail(testEmail);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertTrue(response.getBody().isSuccess());
         assertEquals("Email de recuperação enviado com sucesso", response.getBody().getMessage());
-        
+
         Map<String, Object> data = response.getBody().getData();
         assertEquals(testEmail, data.get("to"));
         assertEquals(testUserName, data.get("userName"));
@@ -173,8 +176,8 @@ class EmailControllerTest {
     void deveRetornarErro404QuandoUsuarioNaoEncontradoParaResetSenha() {
         when(userService.findByEmail(testEmail)).thenReturn(null);
 
-        ResponseEntity<ApiResponseDTO<Map<String, Object>>> response = 
-            emailController.sendPasswordResetEmail(testEmail);
+        ResponseEntity<ApiResponseDTO<Map<String, Object>>> response =
+                emailController.sendPasswordResetEmail(testEmail);
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -187,8 +190,8 @@ class EmailControllerTest {
     void deveRetornarErro500QuandoExcecaoOcorrerNoResetSenha() {
         when(userService.findByEmail(testEmail)).thenThrow(new RuntimeException("Erro no banco"));
 
-        ResponseEntity<ApiResponseDTO<Map<String, Object>>> response = 
-            emailController.sendPasswordResetEmail(testEmail);
+        ResponseEntity<ApiResponseDTO<Map<String, Object>>> response =
+                emailController.sendPasswordResetEmail(testEmail);
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -201,17 +204,17 @@ class EmailControllerTest {
     void deveBuscarTemplatePorChaveComSucesso() {
         String templateKey = "WELCOME_EMAIL";
         String templateContent = "<html><body>Template de boas-vindas</body></html>";
-        
+
         when(emailService.getTemplateByKey(templateKey)).thenReturn(templateContent);
 
-        ResponseEntity<ApiResponseDTO<Map<String, Object>>> response = 
-            emailController.getTemplateByKey(templateKey);
+        ResponseEntity<ApiResponseDTO<Map<String, Object>>> response =
+                emailController.getTemplateByKey(templateKey);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertTrue(response.getBody().isSuccess());
         assertEquals("Template encontrado com sucesso", response.getBody().getMessage());
-        
+
         Map<String, Object> data = response.getBody().getData();
         assertEquals(templateKey, data.get("key"));
         assertEquals(templateContent, data.get("template"));
@@ -221,73 +224,57 @@ class EmailControllerTest {
     @DisplayName("Deve aprovar cadastro de intérprete com sucesso")
     void deveAprovarCadastroInterpreteComSucesso() {
         String interpreterId = UUID.randomUUID().toString();
-        
+
         when(interpreterService.approveInterpreter(any(UUID.class))).thenReturn(true);
 
-        ResponseEntity<ApiResponseDTO<Map<String, Object>>> response = 
-            emailController.approveInterpreter(interpreterId);
+        ResponseEntity<String> response = emailController.approveInterpreter(interpreterId);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertTrue(response.getBody().isSuccess());
-        assertEquals("Cadastro do intérprete aprovado com sucesso", response.getBody().getMessage());
-        
-        Map<String, Object> data = response.getBody().getData();
-        assertEquals(interpreterId, data.get("interpreterId"));
-        assertEquals("ACTIVE", data.get("status"));
+        assertEquals("<html><body>Cadastro do intérprete aprovado com sucesso</body></html>", response.getBody());
     }
 
     @Test
     @DisplayName("Deve retornar erro 500 quando exceção ocorrer na aprovação")
     void deveRetornarErro500QuandoExcecaoOcorrerNaAprovacao() {
         String interpreterId = UUID.randomUUID().toString();
-        
+
         when(interpreterService.approveInterpreter(any(UUID.class)))
                 .thenThrow(new RuntimeException("Erro no banco"));
 
-        ResponseEntity<ApiResponseDTO<Map<String, Object>>> response = 
-            emailController.approveInterpreter(interpreterId);
+        ResponseEntity<String> response = emailController.approveInterpreter(interpreterId);
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertFalse(response.getBody().isSuccess());
-        assertEquals("Erro ao aprovar cadastro do intérprete", response.getBody().getMessage());
+        assertEquals("<html><body>Erro ao aprovar cadastro do intérprete</body></html>", response.getBody());
     }
 
     @Test
     @DisplayName("Deve recusar cadastro de intérprete com sucesso")
     void deveRecusarCadastroInterpreteComSucesso() {
         String interpreterId = UUID.randomUUID().toString();
-        
+
         when(interpreterService.rejectInterpreter(any(UUID.class))).thenReturn(true);
 
-        ResponseEntity<ApiResponseDTO<Map<String, Object>>> response = 
-            emailController.rejectInterpreter(interpreterId);
+        ResponseEntity<String> response = emailController.rejectInterpreter(interpreterId);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertTrue(response.getBody().isSuccess());
-        assertEquals("Cadastro do intérprete recusado com sucesso", response.getBody().getMessage());
-        
-        Map<String, Object> data = response.getBody().getData();
-        assertEquals(interpreterId, data.get("interpreterId"));
-        assertEquals("INACTIVE", data.get("status"));
+        assertEquals("<html><body>Cadastro do intérprete recusado com sucesso</body></html>", response.getBody());
     }
 
     @Test
     @DisplayName("Deve retornar erro 500 quando exceção ocorrer na rejeição")
     void deveRetornarErro500QuandoExcecaoOcorrerNaRejeicao() {
         String interpreterId = UUID.randomUUID().toString();
-        
+
         when(interpreterService.rejectInterpreter(any(UUID.class)))
                 .thenThrow(new RuntimeException("Erro no banco"));
 
-        ResponseEntity<ApiResponseDTO<Map<String, Object>>> response = 
-            emailController.rejectInterpreter(interpreterId);
+        ResponseEntity<String> response = emailController.rejectInterpreter(interpreterId);
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertFalse(response.getBody().isSuccess());
-        assertEquals("Erro ao recusar cadastro do intérprete", response.getBody().getMessage());
+        assertEquals("<html><body>Erro ao recusar cadastro do intérprete</body></html>", response.getBody());
     }
 }

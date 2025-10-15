@@ -42,7 +42,7 @@ public class InterpreterService {
     private final InterpreterResponseMapper responseMapper;
     private final LocationMapper locationMapper;
     private final EmailService emailService;
-    
+
     @Value("${app.mail.admin:admin@pointtils.com}")
     private String adminEmail;
 
@@ -66,10 +66,10 @@ public class InterpreterService {
                 .build();
 
         Interpreter savedInterpreter = repository.save(interpreter);
-        
+
         // Enviar email para o administrador após cadastro
         sendInterpreterRegistrationEmail(savedInterpreter);
-        
+
         return responseMapper.toResponseDTO(savedInterpreter);
     }
 
@@ -224,26 +224,33 @@ public class InterpreterService {
     public boolean approveInterpreter(UUID id) {
         try {
             Interpreter interpreter = findInterpreterById(id);
+            if (interpreter.getStatus() != UserStatus.PENDING) {
+                throw new IllegalArgumentException("Cadastro do intérprete já foi verificado anteriormente");
+            }
+
             interpreter.setStatus(UserStatus.ACTIVE);
             repository.save(interpreter);
-            
+
             // Enviar email de feedback para o intérprete
             boolean emailSent = emailService.sendInterpreterFeedbackEmail(
                 interpreter.getEmail(),
                 interpreter.getName(),
                 true // approved
             );
-            
+
             if (emailSent) {
                 log.info("Cadastro do intérprete {} aprovado e email enviado com sucesso", interpreter.getName());
             } else {
                 log.warn("Cadastro do intérprete {} aprovado, mas falha ao enviar email", interpreter.getName());
             }
-            
+
             return true;
-            
+
         } catch (Exception e) {
             log.error("Erro ao aprovar cadastro do intérprete {}: {}", id, e.getMessage());
+            if (e instanceof IllegalArgumentException) {
+                throw e;
+            }
             return false;
         }
     }
@@ -256,26 +263,33 @@ public class InterpreterService {
     public boolean rejectInterpreter(UUID id) {
         try {
             Interpreter interpreter = findInterpreterById(id);
+            if (interpreter.getStatus() != UserStatus.PENDING) {
+                throw new IllegalArgumentException("Cadastro do intérprete já foi verificado anteriormente");
+            }
+
             interpreter.setStatus(UserStatus.INACTIVE);
             repository.save(interpreter);
-            
+
             // Enviar email de feedback para o intérprete
             boolean emailSent = emailService.sendInterpreterFeedbackEmail(
                 interpreter.getEmail(),
                 interpreter.getName(),
                 false // not approved
             );
-            
+
             if (emailSent) {
                 log.info("Cadastro do intérprete {} recusado e email enviado com sucesso", interpreter.getName());
             } else {
                 log.warn("Cadastro do intérprete {} recusado, mas falha ao enviar email", interpreter.getName());
             }
-            
+
             return true;
-            
+
         } catch (Exception e) {
             log.error("Erro ao recusar cadastro do intérprete {}: {}", id, e.getMessage());
+            if (e instanceof IllegalArgumentException) {
+                throw e;
+            }
             return false;
         }
     }
@@ -286,12 +300,12 @@ public class InterpreterService {
      */
     @Value("${app.api.base-url}")
     private String apiBaseUrl;
-    
+
     private void sendInterpreterRegistrationEmail(Interpreter interpreter) {
         try {
             String acceptLink = String.format("%s/v1/email/interpreter/%s/approve", apiBaseUrl, interpreter.getId());
             String rejectLink = String.format("%s/v1/email/interpreter/%s/reject", apiBaseUrl, interpreter.getId());
-            
+
             // Enviar email usando o template do banco de dados
             boolean emailSent = emailService.sendInterpreterRegistrationRequestEmail(
                 adminEmail,
@@ -303,13 +317,13 @@ public class InterpreterService {
                 acceptLink,
                 rejectLink
             );
-            
+
             if (emailSent) {
                 log.info("Email de solicitação de cadastro enviado com sucesso para: {}", adminEmail);
             } else {
                 log.error("Falha ao enviar email de solicitação de cadastro para: {}", adminEmail);
             }
-            
+
         } catch (Exception e) {
             log.error("Erro ao enviar email de solicitação de cadastro: {}", e.getMessage());
         }
