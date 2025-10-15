@@ -1,4 +1,4 @@
--- Migration: V12__Add_additional_email_templates.sql
+-- Migration: V13__Add_additional_email_templates.sql
 -- Descrição: Adiciona templates de email para boas-vindas, recuperação de senha e confirmação de agendamento
 
 -- Template de Boas-Vindas
