@@ -9,8 +9,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-
 @Data
 @Builder
 @NoArgsConstructor
@@ -20,10 +18,6 @@ public class ProfessionalDataBasicRequestDTO {
     @Pattern(regexp = "^\\d{14}$", message = "CNPJ precisa ter 14 dígitos")
     @Size(min = 14, max = 14, message = "CNPJ deve ter exatamente 14 digitos")
     private String cnpj;
-    @JsonProperty("min_value")
-    private BigDecimal minValue;
-    @JsonProperty("max_value")
-    private BigDecimal maxValue;
     @JsonProperty("image_rights")
     private Boolean imageRights;
     private InterpreterModality modality;

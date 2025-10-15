@@ -10,6 +10,7 @@ import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentModalit
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentStatus;
 import com.pointtils.pointtils.src.infrastructure.repositories.AppointmentRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
+import com.pointtils.pointtils.src.infrastructure.repositories.RatingRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ public class AppointmentService {
     private final AppointmentRepository appointmentRepository;
     private final InterpreterRepository interpreterRepository;
     private final UserRepository userRepository;
+    private final RatingRepository ratingRepository;
     private final AppointmentMapper appointmentMapper;
 
     public AppointmentResponseDTO createAppointment(AppointmentRequestDTO dto) {
@@ -92,7 +94,7 @@ public class AppointmentService {
     }
 
     /*Testar! */
-    public List<AppointmentFilterResponseDTO> searchAppointments(UUID interpreterId, UUID userId, AppointmentStatus status, AppointmentModality modality, LocalDateTime fromDateTime) {
+    public List<AppointmentFilterResponseDTO> searchAppointments(UUID interpreterId, UUID userId, AppointmentStatus status, AppointmentModality modality, LocalDateTime fromDateTime, Boolean hasRating) {
         List<Appointment> appointments = appointmentRepository.findAll();
 
         return appointments.stream()
@@ -101,6 +103,7 @@ public class AppointmentService {
                 .filter(appointment -> status == null || appointment.getStatus().equals(status))
                 .filter(appointment -> modality == null || appointment.getModality().equals(modality))
                 .filter(appointment -> fromDateTime == null || isAfterDateTime(appointment, fromDateTime))
+                .filter(appointment -> hasRating == null || hasRatingAssigned(appointment, hasRating))
                 .map(appointment -> {
                     if (interpreterId != null) {
                         return appointmentMapper.toFilterResponseDTO(appointment, appointment.getUser());
@@ -109,6 +112,11 @@ public class AppointmentService {
                     }
                 })
                 .toList();
+    }
+
+    private boolean hasRatingAssigned(Appointment appointment, Boolean hasRating) {
+        boolean ratingExists = ratingRepository.existsByAppointment(appointment);
+        return hasRating == ratingExists;
     }
 
     private boolean isAfterDateTime(Appointment appointment, LocalDateTime fromDateTime) {

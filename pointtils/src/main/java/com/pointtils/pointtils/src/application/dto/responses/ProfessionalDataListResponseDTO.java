@@ -1,6 +1,5 @@
 package com.pointtils.pointtils.src.application.dto.responses;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,9 +15,5 @@ import java.math.BigDecimal;
 public class ProfessionalDataListResponseDTO {
 
     private BigDecimal rating;
-    @JsonProperty("min_value")
-    private BigDecimal minValue;
-    @JsonProperty("max_value")
-    private BigDecimal maxValue;
     private InterpreterModality modality;
 }
