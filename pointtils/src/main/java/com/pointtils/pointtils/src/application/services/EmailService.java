@@ -1,18 +1,21 @@
 package com.pointtils.pointtils.src.application.services;
 
-import com.pointtils.pointtils.src.application.dto.requests.EmailRequestDTO;
-import com.pointtils.pointtils.src.core.domain.entities.Parameters;
-import com.pointtils.pointtils.src.infrastructure.repositories.ParametersRepository;
-import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.time.Year;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import java.time.Year;
-import java.util.Optional;
+
+import com.pointtils.pointtils.src.application.dto.requests.EmailRequestDTO;
+import com.pointtils.pointtils.src.core.domain.entities.Parameters;
+import com.pointtils.pointtils.src.infrastructure.repositories.ParametersRepository;
+
+import jakarta.mail.internet.MimeMessage;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -38,7 +41,7 @@ public class EmailService {
             log.error("EmailRequestDTO não pode ser nulo");
             return false;
         }
-        
+
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(emailFrom);
@@ -51,7 +54,7 @@ public class EmailService {
             return true;
             
         } catch (Exception e) {
-            log.error("Erro ao enviar email para {}: {}", emailRequest.getTo(), e.getMessage());
+            log.error("Erro ao enviar email para {}: {}", emailRequest.getTo(), e.getMessage(), e);
             return false;
         }
     }
@@ -300,8 +303,6 @@ public class EmailService {
                 .replace("{{cnpj}}", cnpj != null ? cnpj : "")
                 .replace("{{email}}", email != null ? email : "")
                 .replace("{{telefone}}", phone != null ? phone : "")
-                .replace("{link_api}", acceptLink != null ? acceptLink : "")
-                .replace("{link_api}", rejectLink != null ? rejectLink : "")
                 .replace("{{ano}}", String.valueOf(Year.now().getValue()));
         
         // Corrigir os links de aceitar/recusar (o template do banco usa o mesmo placeholder para ambos)
