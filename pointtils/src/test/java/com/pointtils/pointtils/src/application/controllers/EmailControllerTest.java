@@ -32,16 +32,16 @@ import static org.mockito.Mockito.when;
 @DisplayName("Testes Unitários do EmailController")
 class EmailControllerTest {
 
-    @Spy
+    @Mock
     private EmailService emailService;
 
-    @Spy
+    @Mock
     private InterpreterService interpreterService;
 
-    @Spy
+    @Mock
     private MemoryResetTokenService resetTokenService;
 
-    @Spy
+    @Mock
     private UserService userService;
 
     @InjectMocks
