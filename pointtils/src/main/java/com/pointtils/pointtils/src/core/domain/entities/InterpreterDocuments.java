@@ -33,7 +33,6 @@ public class InterpreterDocuments {
     @JoinColumn(name = "interpreter_id", nullable = false)
     private Interpreter interpreter;
 
-    @ManyToOne
     @Column(name = "document", columnDefinition = "TEXT", nullable = false)
     private String document;
 }

@@ -2,6 +2,7 @@ package com.pointtils.pointtils.src.application.dto.responses;
 
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.pointtils.pointtils.src.core.domain.entities.InterpreterDocuments;
 
 import lombok.AllArgsConstructor;
@@ -21,7 +22,10 @@ public class InterpreterDocumentResponseDTO {
     @NoArgsConstructor
     public static class DocumentData {
         private UUID id;
+
+        @JsonProperty("interpreter_id")
         private UUID interpreterId;
+
         private String document;
     }
 
@@ -31,8 +35,8 @@ public class InterpreterDocumentResponseDTO {
         response.message = "Documento enviado com sucesso";
         response.data = new DocumentData(
             document.getId(),
-            document.getInterpreter().getId(), 
-            document.getDocument() 
+            document.getInterpreter().getId(),
+            document.getDocument()
         );
         return response;
     }

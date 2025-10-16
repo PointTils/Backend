@@ -8,7 +8,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -19,7 +18,7 @@ public class InterpreterDocumentRequestDTO {
 
     @NotNull(message = "O ID do usuário é obrigatório")
     @JsonProperty("user_id")
-    private UUID interpreterId;
+    private UUID interpreter_Id;
 
     @NotNull(message = "O documento é obrigatório")
     private MultipartFile file;

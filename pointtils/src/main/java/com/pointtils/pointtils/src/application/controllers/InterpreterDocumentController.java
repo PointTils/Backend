@@ -23,13 +23,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("v1/users/interpreter-documents/")
+@RequestMapping("/v1/interpreter-documents/")
 @RequiredArgsConstructor
 public class InterpreterDocumentController {
 
     private final InterpreterDocumentService interpreterDocumentService;
 
-    @PostMapping(value = "/{id}/documents", consumes = "multipart/form-data")
+    @PostMapping(value = "/{id}/", consumes = "multipart/form-data")
     @Operation(summary = "Salva múltiplos documentos para um usuário")
     public ResponseEntity<List<InterpreterDocumentResponseDTO>> saveDocuments(
         @PathVariable UUID id,
@@ -41,7 +41,7 @@ public class InterpreterDocumentController {
     @GetMapping("/{id}")
     @Operation(summary = "Busca todos os documentos de um usuario")
     public ResponseEntity<List<InterpreterDocumentResponseDTO>> getDocumentsByInterpreter(
-            @PathVariable UUID interpreterId) {
+            @PathVariable ("id") UUID interpreterId) {
         List<InterpreterDocumentResponseDTO> documents = interpreterDocumentService.getDocumentsByInterpreter(interpreterId);
         return ResponseEntity.ok(documents);
     }
@@ -54,7 +54,7 @@ public class InterpreterDocumentController {
         @RequestParam("file") MultipartFile file) throws IOException {
     InterpreterPatchDocumentRequestDTO request = new InterpreterPatchDocumentRequestDTO(id, documentId, file);
     InterpreterDocumentRequestDTO convertedRequest = new InterpreterDocumentRequestDTO(request.getInterpreterId(), request.getFile());
-    InterpreterDocumentResponseDTO updatedDocument = interpreterDocumentService.updateDocument(id, convertedRequest);
+    InterpreterDocumentResponseDTO updatedDocument = interpreterDocumentService.updateDocument(documentId, convertedRequest);
     return ResponseEntity.ok(updatedDocument);
 }
 }

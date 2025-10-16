@@ -76,14 +76,14 @@ public class InterpreterDocumentService {
         InterpreterDocuments existingDocument = interpreterDocumentsRepository.findById(documentId)
                 .orElseThrow(() -> new EntityNotFoundException("Documento não encontrado"));
 
-        Interpreter interpreter = interpreterRepository.findById(request.getInterpreterId())
+        Interpreter interpreter = interpreterRepository.findById(request.getInterpreter_Id())
                 .orElseThrow(() -> new EntityNotFoundException("Intérprete não encontrado"));
 
         if (!s3Service.isS3Enabled()) {
             throw new UnsupportedOperationException("Upload de documentos está desabilitado. Configure spring.cloud.aws.s3.enabled=true para habilitar o upload para S3.");
         }
 
-        String updatedDocumentUrl = s3Service.uploadFile(request.getFile(), "documents/" + request.getInterpreterId());
+        String updatedDocumentUrl = s3Service.uploadFile(request.getFile(), "documents/" + request.getInterpreter_Id());
 
         existingDocument.setInterpreter(interpreter);
         existingDocument.setDocument(updatedDocumentUrl);
