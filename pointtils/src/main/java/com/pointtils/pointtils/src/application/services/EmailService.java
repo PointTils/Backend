@@ -189,6 +189,18 @@ public class EmailService {
     }
 
     /**
+     * Constrói HTML a ser acessado pelo administrador ao clicar na aprovacao ou rejeicao do cadastro
+     * @param emailResponse mensagem de retorno a ser enviada para o admin
+     * @return string com o HTML construído
+     */
+    public String getAdminRegistrationFeedbackHtml(String emailResponse) {
+        String emailTemplate = getTemplateByKey("ADMIN_FEEDBACK");
+        return emailTemplate
+                .replace("{{message}}", emailResponse)
+                .replace("{{ano}}", String.valueOf(Year.now().getValue()));
+    }
+
+    /**
      * Retorna template padrão baseado na chave
      * @param key Chave do template
      * @return Template padrão
@@ -322,7 +334,7 @@ public class EmailService {
         // Definir a mensagem de resposta baseada na aprovação
         String respostaSolicitacao = approved ? 
             "seu cadastro foi aprovado e você já pode acessar a plataforma" : 
-            "infelizmente seu cadastro foi recusado por perfil não compatível";
+            "seu cadastro foi recusado por perfil não compatível";
         
         // Processar o template
         return template

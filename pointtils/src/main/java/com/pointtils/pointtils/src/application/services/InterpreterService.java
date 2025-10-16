@@ -225,7 +225,7 @@ public class InterpreterService {
         try {
             Interpreter interpreter = findInterpreterById(id);
             if (interpreter.getStatus() != UserStatus.PENDING) {
-                throw new IllegalArgumentException("Cadastro do intérprete já foi verificado anteriormente");
+                throw new IllegalArgumentException("Cadastro do intérprete já foi verificado anteriormente.");
             }
 
             interpreter.setStatus(UserStatus.ACTIVE);
@@ -264,7 +264,7 @@ public class InterpreterService {
         try {
             Interpreter interpreter = findInterpreterById(id);
             if (interpreter.getStatus() != UserStatus.PENDING) {
-                throw new IllegalArgumentException("Cadastro do intérprete já foi verificado anteriormente");
+                throw new IllegalArgumentException("Cadastro do intérprete já foi verificado anteriormente.");
             }
 
             interpreter.setStatus(UserStatus.INACTIVE);

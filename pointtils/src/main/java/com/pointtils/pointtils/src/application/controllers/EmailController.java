@@ -221,17 +221,18 @@ public class EmailController {
             boolean success = interpreterService.approveInterpreter(interpreterId);
 
             String responseMessage = success
-                    ? "Cadastro do intérprete aprovado com sucesso"
-                    : "Falha ao aprovar cadastro do intérprete";
+                    ? "Cadastro do intérprete aprovado com sucesso."
+                    : "Falha ao aprovar cadastro do intérprete.";
 
-            return ResponseEntity.ok(buildHtmlResponseBody(responseMessage));
+            return ResponseEntity.ok(emailService.getAdminRegistrationFeedbackHtml(responseMessage));
 
         } catch (IllegalArgumentException ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(buildHtmlResponseBody(ex.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(emailService.getAdminRegistrationFeedbackHtml(ex.getMessage()));
         } catch (Exception e) {
             log.error("Erro ao aprovar cadastro do intérprete {}: {}", id, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(buildHtmlResponseBody("Erro ao aprovar cadastro do intérprete"));
+                    .body(emailService.getAdminRegistrationFeedbackHtml("Erro ao aprovar cadastro do intérprete."));
         }
     }
 
@@ -248,21 +249,18 @@ public class EmailController {
             boolean success = interpreterService.rejectInterpreter(interpreterId);
 
             String responseMessage = success
-                    ? "Cadastro do intérprete recusado com sucesso"
-                    : "Falha ao recusar cadastro do intérprete";
+                    ? "Cadastro do intérprete recusado com sucesso."
+                    : "Falha ao recusar cadastro do intérprete.";
 
-            return ResponseEntity.ok(buildHtmlResponseBody(responseMessage));
+            return ResponseEntity.ok(emailService.getAdminRegistrationFeedbackHtml(responseMessage));
 
         } catch (IllegalArgumentException ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(buildHtmlResponseBody(ex.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(emailService.getAdminRegistrationFeedbackHtml(ex.getMessage()));
         } catch (Exception e) {
             log.error("Erro ao recusar cadastro do intérprete {}: {}", id, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(buildHtmlResponseBody("Erro ao recusar cadastro do intérprete"));
+                    .body(emailService.getAdminRegistrationFeedbackHtml("Erro ao recusar cadastro do intérprete."));
         }
-    }
-
-    private String buildHtmlResponseBody(String message) {
-        return "<html><body>" + message + "</body></html>";
     }
 }
