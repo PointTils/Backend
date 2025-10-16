@@ -226,12 +226,14 @@ class EmailControllerTest {
         String interpreterId = UUID.randomUUID().toString();
 
         when(interpreterService.approveInterpreter(any(UUID.class))).thenReturn(true);
+        when(emailService.getAdminRegistrationFeedbackHtml("Cadastro do intérprete aprovado com sucesso."))
+                .thenReturn("<html><body>Cadastro do intérprete aprovado com sucesso.</body></html>");
 
         ResponseEntity<String> response = emailController.approveInterpreter(interpreterId);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals("<html><body>Cadastro do intérprete aprovado com sucesso</body></html>", response.getBody());
+        assertEquals("<html><body>Cadastro do intérprete aprovado com sucesso.</body></html>", response.getBody());
     }
 
     @Test
@@ -241,12 +243,14 @@ class EmailControllerTest {
 
         when(interpreterService.approveInterpreter(any(UUID.class)))
                 .thenThrow(new RuntimeException("Erro no banco"));
+        when(emailService.getAdminRegistrationFeedbackHtml("Erro ao aprovar cadastro do intérprete."))
+                .thenReturn("<html><body>Erro ao aprovar cadastro do intérprete.</body></html>");
 
         ResponseEntity<String> response = emailController.approveInterpreter(interpreterId);
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals("<html><body>Erro ao aprovar cadastro do intérprete</body></html>", response.getBody());
+        assertEquals("<html><body>Erro ao aprovar cadastro do intérprete.</body></html>", response.getBody());
     }
 
     @Test
@@ -255,12 +259,14 @@ class EmailControllerTest {
         String interpreterId = UUID.randomUUID().toString();
 
         when(interpreterService.rejectInterpreter(any(UUID.class))).thenReturn(true);
+        when(emailService.getAdminRegistrationFeedbackHtml("Cadastro do intérprete recusado com sucesso."))
+                .thenReturn("<html><body>Cadastro do intérprete recusado com sucesso.</body></html>");
 
         ResponseEntity<String> response = emailController.rejectInterpreter(interpreterId);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals("<html><body>Cadastro do intérprete recusado com sucesso</body></html>", response.getBody());
+        assertEquals("<html><body>Cadastro do intérprete recusado com sucesso.</body></html>", response.getBody());
     }
 
     @Test
@@ -270,11 +276,13 @@ class EmailControllerTest {
 
         when(interpreterService.rejectInterpreter(any(UUID.class)))
                 .thenThrow(new RuntimeException("Erro no banco"));
+        when(emailService.getAdminRegistrationFeedbackHtml("Erro ao recusar cadastro do intérprete."))
+                .thenReturn("<html><body>Erro ao recusar cadastro do intérprete.</body></html>");
 
         ResponseEntity<String> response = emailController.rejectInterpreter(interpreterId);
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals("<html><body>Erro ao recusar cadastro do intérprete</body></html>", response.getBody());
+        assertEquals("<html><body>Erro ao recusar cadastro do intérprete.</body></html>", response.getBody());
     }
 }
