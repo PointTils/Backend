@@ -9,6 +9,8 @@ import com.pointtils.pointtils.src.application.services.AppointmentService;
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentModality;
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentStatus;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -23,7 +25,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -38,14 +39,39 @@ public class AppointmentController {
     private final AppointmentService appointmentService;
 
     @PostMapping
-    @Operation(summary = "Cria um novo agendamento")
-    public ResponseEntity<ApiResponseDTO<AppointmentResponseDTO>> createAppointment(@Valid @RequestBody AppointmentRequestDTO dto) {
-
-        AppointmentResponseDTO response = appointmentService.createAppointment(dto);
-        ApiResponseDTO<AppointmentResponseDTO> apiResponse =
-                ApiResponseDTO.success("Solicitação criada com sucesso", response);
-        return ResponseEntity.ok(apiResponse);
+@Operation(
+    summary = "Cria um novo agendamento",
+    description = "Cria uma nova solicitação de agendamento no sistema",
+    requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+        description = "Dados necessários para criar um novo agendamento",
+        required = true,
+        content = @Content(
+            schema = @Schema(implementation = AppointmentRequestDTO.class)
+        )
+    ),
+    responses = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "Agendamento criado com sucesso",
+            content = @Content(schema = @Schema(implementation = AppointmentResponseDTO.class))
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400",
+            description = "Dados inválidos"
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "Não autorizado"
+        )
     }
+)
+public ResponseEntity<ApiResponseDTO<AppointmentResponseDTO>> createAppointment(
+        @Valid @RequestBody AppointmentRequestDTO dto) {
+
+    AppointmentResponseDTO response = appointmentService.createAppointment(dto);
+    return ResponseEntity.ok(ApiResponseDTO.success("Solicitação criada com sucesso", response));
+}
+
 
     @GetMapping
     @Operation(summary = "Lista todos os agendamentos")
