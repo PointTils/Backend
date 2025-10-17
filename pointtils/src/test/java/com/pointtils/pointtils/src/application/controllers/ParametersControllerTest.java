@@ -6,7 +6,9 @@ import com.pointtils.pointtils.src.application.dto.requests.ParametersPatchReque
 import com.pointtils.pointtils.src.application.dto.responses.ParametersResponseDTO;
 import com.pointtils.pointtils.src.infrastructure.configs.GlobalExceptionHandler;
 import com.pointtils.pointtils.src.application.services.ParametersService;
-import com.pointtils.pointtils.src.domain.entities.Parameters;
+import com.pointtils.pointtils.src.core.domain.entities.Parameters;
+
+
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
