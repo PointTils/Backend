@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pointtils.pointtils.src.application.dto.requests.ParametersBasicRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.ParametersPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ParametersResponseDTO;
-import com.pointtils.pointtils.src.application.exceptions.GlobalExceptionHandler;
+import com.pointtils.pointtils.src.infrastructure.configs.GlobalExceptionHandler;
 import com.pointtils.pointtils.src.application.services.ParametersService;
 import com.pointtils.pointtils.src.domain.entities.Parameters;
 
@@ -23,6 +23,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import com.pointtils.pointtils.src.infrastructure.configs.GlobalExceptionHandler;
+
 
 import java.util.List;
 import java.util.UUID;
@@ -58,6 +60,7 @@ class ParametersControllerTest {
     private Parameters parameters;
     private UUID parametersId;
 
+    @BeforeEach
     void setUp() {
         parametersId = UUID.randomUUID();
         parameters = new Parameters("Test Parameters");
