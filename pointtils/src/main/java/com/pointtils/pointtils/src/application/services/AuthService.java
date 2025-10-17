@@ -9,11 +9,14 @@ import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
 import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
 import com.pointtils.pointtils.src.infrastructure.configs.MemoryBlacklistService;
+import com.pointtils.pointtils.src.application.services.MemoryResetTokenService;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -22,6 +25,7 @@ public class AuthService {
     private final JwtService jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
     private final MemoryBlacklistService memoryBlacklistService;
+    private final MemoryResetTokenService resetTokenService;
 
     public LoginResponseDTO login(String email, String password) {
 
@@ -124,6 +128,58 @@ public class AuthService {
         memoryBlacklistService.addToBlacklist(refreshToken);
 
         return true;
+    }
+
+    /**
+     * Redefine a senha do usuário usando um token de recuperação
+     * @param resetToken Token de recuperação
+     * @param newPassword Nova senha
+     * @return true se a senha foi redefinida com sucesso, false caso contrário
+     */
+    public boolean resetPassword(String resetToken, String newPassword) {
+        if (resetToken == null || resetToken.isBlank()) {
+            throw new AuthenticationException("Token de recuperação não fornecido");
+        }
+        if (newPassword == null || newPassword.isBlank()) {
+            throw new AuthenticationException("Nova senha não fornecida");
+        }
+
+        // Validar formato da senha
+        if (!newPassword.matches("^[a-zA-Z0-9!@#$%^&*()_+=-]{6,}$")) {
+            throw new AuthenticationException("Formato de senha inválida");
+        }
+
+        // Validar o reset token
+        String email = resetTokenService.validateResetToken(resetToken);
+        if (email == null) {
+            throw new AuthenticationException("Token de recuperação inválido ou expirado");
+        }
+
+        // Buscar usuário
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            throw new AuthenticationException("Usuário não encontrado");
+        }
+
+        if (UserStatus.INACTIVE.equals(user.getStatus())) {
+            throw new AuthenticationException("Usuário inativo");
+        }
+
+        try {
+            // Atualizar senha
+            user.setPassword(passwordEncoder.encode(newPassword));
+            userRepository.save(user);
+
+            // Invalidar o token após uso bem-sucedido
+            resetTokenService.invalidateResetToken(resetToken);
+
+            log.info("Senha redefinida com sucesso para o usuário: {}", email);
+            return true;
+
+        } catch (Exception e) {
+            log.error("Erro ao redefinir senha para o usuário {}: {}", email, e.getMessage());
+            throw new AuthenticationException("Erro ao redefinir senha: " + e.getMessage());
+        }
     }
 
 

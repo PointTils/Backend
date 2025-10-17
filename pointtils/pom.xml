@@ -76,13 +76,17 @@
 			<artifactId>h2</artifactId>
 			<scope>test</scope>
 		</dependency>
-        <dependency>
+		<dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
 		</dependency>
 		<dependency>
             <groupId>io.jsonwebtoken</groupId>
@@ -151,6 +155,16 @@
               <artifactId>lombok</artifactId>
             </exclude>
           </excludes>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <argLine>-Xmx512m -XX:MaxMetaspaceSize=256m</argLine>
+          <forkCount>1</forkCount>
+          <reuseForks>false</reuseForks>
+          <parallel>none</parallel>
         </configuration>
       </plugin>
       <plugin>

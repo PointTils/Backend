@@ -1,7 +1,7 @@
 package com.pointtils.pointtils.src.application.controllers;
 
 import com.pointtils.pointtils.src.application.dto.requests.UpdateSpecialtyRequestDTO;
-import com.pointtils.pointtils.src.application.dto.responses.ApiResponse;
+import com.pointtils.pointtils.src.application.dto.responses.ApiResponseDTO;
 import com.pointtils.pointtils.src.application.services.SpecialtyService;
 import com.pointtils.pointtils.src.core.domain.entities.Specialty;
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,47 +35,47 @@ public class SpecialtyController {
 
     @GetMapping
     @Operation(summary = "Obtém todas as especialidades")
-    public ResponseEntity<ApiResponse<List<Specialty>>> getAllSpecialties() {
+    public ResponseEntity<ApiResponseDTO<List<Specialty>>> getAllSpecialties() {
         List<Specialty> specialties = specialtyService.getAllSpecialties();
-        return ResponseEntity.ok(ApiResponse.success("Especialidades encontradas com sucesso", specialties));
+        return ResponseEntity.ok(ApiResponseDTO.success("Especialidades encontradas com sucesso", specialties));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Busca uma especialidades por ID")
-    public ResponseEntity<ApiResponse<Specialty>> getSpecialtyById(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponseDTO<Specialty>> getSpecialtyById(@PathVariable UUID id) {
         Specialty specialty = specialtyService.getSpecialtyById(id);
-        return ResponseEntity.ok(ApiResponse.success("Especialidade encontrada com sucesso", specialty));
+        return ResponseEntity.ok(ApiResponseDTO.success("Especialidade encontrada com sucesso", specialty));
     }
 
     @GetMapping("/search")
     @Operation(summary = "Busca especialidades por nome")
-    public ResponseEntity<ApiResponse<List<Specialty>>> searchSpecialtiesByName(@RequestParam String name) {
+    public ResponseEntity<ApiResponseDTO<List<Specialty>>> searchSpecialtiesByName(@RequestParam String name) {
         List<Specialty> specialties = specialtyService.searchSpecialtiesByName(name);
-        return ResponseEntity.ok(ApiResponse.success("Especialidades encontradas com sucesso", specialties));
+        return ResponseEntity.ok(ApiResponseDTO.success("Especialidades encontradas com sucesso", specialties));
     }
 
     @PostMapping
     @Operation(summary = "Cria uma especialidade")
-    public ResponseEntity<ApiResponse<Specialty>> createSpecialty(@RequestParam String name) {
+    public ResponseEntity<ApiResponseDTO<Specialty>> createSpecialty(@RequestParam String name) {
         Specialty specialty = specialtyService.createSpecialty(name);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Especialidade criada com sucesso", specialty));
+                .body(ApiResponseDTO.success("Especialidade criada com sucesso", specialty));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Atualiza uma especialidade por ID")
-    public ResponseEntity<ApiResponse<Specialty>> updateSpecialty(@PathVariable UUID id, @RequestParam String name) {
+    public ResponseEntity<ApiResponseDTO<Specialty>> updateSpecialty(@PathVariable UUID id, @RequestParam String name) {
         Specialty specialty = specialtyService.updateSpecialty(id, name);
-        return ResponseEntity.ok(ApiResponse.success("Especialidade atualizada com sucesso", specialty));
+        return ResponseEntity.ok(ApiResponseDTO.success("Especialidade atualizada com sucesso", specialty));
     }
 
     @PatchMapping("/{id}")
     @Operation(summary = "Atualiza parcialmente uma especialidade por ID")
-    public ResponseEntity<ApiResponse<Specialty>> partialUpdateSpecialty(
+    public ResponseEntity<ApiResponseDTO<Specialty>> partialUpdateSpecialty(
             @PathVariable UUID id,
             @RequestBody UpdateSpecialtyRequestDTO request) {
         Specialty specialty = specialtyService.partialUpdateSpecialty(id, request.getName());
-        return ResponseEntity.ok(ApiResponse.success("Especialidade atualizada com sucesso", specialty));
+        return ResponseEntity.ok(ApiResponseDTO.success("Especialidade atualizada com sucesso", specialty));
     }
 
     @DeleteMapping("/{id}")

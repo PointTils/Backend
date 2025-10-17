@@ -60,8 +60,6 @@ class InterpreterResponseMapperTest {
                 .cpf("12345678901")
                 .cnpj("12345678000199")
                 .rating(BigDecimal.valueOf(4.5))
-                .minValue(BigDecimal.valueOf(100))
-                .maxValue(BigDecimal.valueOf(200))
                 .modality(InterpreterModality.ONLINE)
                 .description("Experienced interpreter")
                 .imageRights(true)
@@ -100,8 +98,6 @@ class InterpreterResponseMapperTest {
                 .id(id)
                 .name("John Doe")
                 .rating(BigDecimal.valueOf(4.5))
-                .minValue(BigDecimal.valueOf(100))
-                .maxValue(BigDecimal.valueOf(200))
                 .modality(InterpreterModality.ONLINE)
                 .picture("profile.jpg")
                 .locations(locations)
@@ -114,8 +110,6 @@ class InterpreterResponseMapperTest {
         assertThat(listResponseDTO.getId()).isEqualTo(id);
         assertThat(listResponseDTO.getName()).isEqualTo("John Doe");
         assertThat(listResponseDTO.getProfessionalData().getRating()).isEqualTo(BigDecimal.valueOf(4.5));
-        assertThat(listResponseDTO.getProfessionalData().getMinValue()).isEqualTo(BigDecimal.valueOf(100));
-        assertThat(listResponseDTO.getProfessionalData().getMaxValue()).isEqualTo(BigDecimal.valueOf(200));
         assertThat(listResponseDTO.getProfessionalData().getModality()).isEqualTo(InterpreterModality.ONLINE);
         assertThat(listResponseDTO.getPicture()).isEqualTo("profile.jpg");
         assertThat(listResponseDTO.getLocations()).hasSize(1);

@@ -41,12 +41,6 @@ public class Interpreter extends Person {
 
     private BigDecimal rating;
 
-    @Column(name = "min_value")
-    private BigDecimal minValue;
-
-    @Column(name = "max_value")
-    private BigDecimal maxValue;
-
     @Column(name = "image_rights")
     private Boolean imageRights;
 
