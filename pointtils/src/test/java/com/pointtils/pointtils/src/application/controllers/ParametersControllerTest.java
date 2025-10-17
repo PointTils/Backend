@@ -112,6 +112,7 @@ class ParametersControllerTest {
                 .andExpect(jsonPath("$.data.id").value(parametersId.toString()))
                 .andExpect(jsonPath("$.data.key").value("Test Key"))
                 .andExpect(jsonPath("$.data.value").value("Test Value"));
+    }
 
     @Test
     @DisplayName("Deve atualizar um Parameters com sucesso")
@@ -130,7 +131,7 @@ class ParametersControllerTest {
                 .andExpect(jsonPath("$.data.id").value(parametersId.toString()))
                 .andExpect(jsonPath("$.data.key").value("Test Key"))
                 .andExpect(jsonPath("$.data.value").value("Updated Value"));
-
+    }
     @Test
     @DisplayName("Deve deletar um Parameters com sucesso")
     void deleteSucess() throws Exception{
@@ -138,4 +139,5 @@ class ParametersControllerTest {
         mockMvc.perform(delete("/v1/parameters/{id}", parametersId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
+    }
 }
