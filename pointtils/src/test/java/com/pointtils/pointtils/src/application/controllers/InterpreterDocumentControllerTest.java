@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
@@ -205,7 +206,7 @@ class InterpreterDocumentControllerTest {
                 .thenThrow(new UnsupportedOperationException("Upload de documentos está desabilitado."));
 
         // Act & Assert
-        UnsupportedOperationException exception = org.junit.jupiter.api.Assertions.assertThrows(UnsupportedOperationException.class, () -> {
+        UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class, () -> {
             interpreterDocumentController.saveDocuments(interpreterId, List.of(file));
         });
         assertEquals("Upload de documentos está desabilitado.", exception.getMessage());
@@ -227,7 +228,7 @@ class InterpreterDocumentControllerTest {
                 .thenThrow(new UnsupportedOperationException("Upload de documentos está desabilitado."));
 
         // Act & Assert
-        UnsupportedOperationException exception = org.junit.jupiter.api.Assertions.assertThrows(UnsupportedOperationException.class, () -> {
+        UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class, () -> {
             interpreterDocumentController.uploadDocument(interpreterId, documentId, file);
         });
         assertEquals("Upload de documentos está desabilitado.", exception.getMessage());
@@ -242,7 +243,7 @@ class InterpreterDocumentControllerTest {
                 .thenThrow(new EntityNotFoundException("Intérprete não encontrado"));
 
         // Act & Assert
-        EntityNotFoundException exception = org.junit.jupiter.api.Assertions.assertThrows(EntityNotFoundException.class, () -> {
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
             interpreterDocumentController.getDocumentsByInterpreter(interpreterId);
         });
         assertEquals("Intérprete não encontrado", exception.getMessage());
@@ -264,7 +265,7 @@ class InterpreterDocumentControllerTest {
                 .thenThrow(new EntityNotFoundException("Documento não encontrado"));
 
         // Act & Assert
-        EntityNotFoundException exception = org.junit.jupiter.api.Assertions.assertThrows(EntityNotFoundException.class, () -> {
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
             interpreterDocumentController.uploadDocument(interpreterId, documentId, file);
         });
         assertEquals("Documento não encontrado", exception.getMessage());
@@ -285,7 +286,7 @@ class InterpreterDocumentControllerTest {
                 .thenThrow(new EntityNotFoundException("Intérprete não encontrado"));
 
         // Act & Assert
-        EntityNotFoundException exception = org.junit.jupiter.api.Assertions.assertThrows(EntityNotFoundException.class, () -> {
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
             interpreterDocumentController.saveDocuments(interpreterId, List.of(file));
         });
         assertEquals("Intérprete não encontrado", exception.getMessage());
