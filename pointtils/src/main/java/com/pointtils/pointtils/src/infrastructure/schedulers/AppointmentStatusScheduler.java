@@ -1,20 +1,20 @@
 package com.pointtils.pointtils.src.infrastructure.schedulers;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.pointtils.pointtils.src.infrastructure.repositories.AppointmentRepository;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class AppointmentStatusScheduler {
 
-    @Autowired
-    private AppointmentRepository appointmentRepository;
+    private final AppointmentRepository appointmentRepository;
 
     @Scheduled(fixedRate = 1800000) // Executa a cada 30 minutos (30 * 60 * 1000 ms)
     @Transactional
