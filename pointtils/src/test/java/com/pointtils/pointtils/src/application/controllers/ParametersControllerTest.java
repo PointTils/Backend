@@ -25,8 +25,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import com.pointtils.pointtils.src.infrastructure.configs.GlobalExceptionHandler;
-
 
 import java.util.List;
 import java.util.UUID;
@@ -74,10 +72,14 @@ class ParametersControllerTest {
     }
     @Test
     @DisplayName("Deve cadastrar um Parameters com sucesso")
-    void createSucess() throws Exception{
+    void createSuccess() throws Exception{
 
         ParametersBasicRequestDTO dto = new ParametersBasicRequestDTO("Test Key", "Test Value");
-        ParametersResponseDTO responseDTO = new ParametersResponseDTO(parametersId, "Test Key", "Test Value");
+        ParametersResponseDTO responseDTO = ParametersResponseDTO.builder()
+                .id(parametersId)
+                .key("Test Key")
+                .value("Test Value")
+                .build();
 
         when(parametersService.create(any(ParametersBasicRequestDTO.class))).thenReturn(responseDTO);
 
@@ -96,9 +98,14 @@ class ParametersControllerTest {
 
     @Test
     @DisplayName("Deve listar todos os Parameters com sucesso")
-    void findAllSucess() throws Exception{
+    void findAllSuccess() throws Exception{
     
-        ParametersResponseDTO responseDTO = new ParametersResponseDTO();
+        ParametersResponseDTO responseDTO = ParametersResponseDTO.builder()
+                .id(parametersId)
+                .key("Test Key")
+                .value("Test Value")
+                .build();
+
         when(parametersService.findAll()).thenReturn(List.of(responseDTO));
 
         mockMvc.perform(get("/v1/parameters")
@@ -113,9 +120,13 @@ class ParametersControllerTest {
 
     @Test
     @DisplayName("Deve buscar um Parameters por key com sucesso")
-    void findByKeySucess() throws Exception{
+    void findByKeySuccess() throws Exception{
         String key = "Test Key";
-        ParametersResponseDTO responseDTO = new ParametersResponseDTO(parametersId, key, "Test Value");
+        ParametersResponseDTO responseDTO = ParametersResponseDTO.builder()
+                .id(parametersId)
+                .key("Test Key")
+                .value("Test Value")
+                .build();
 
         when(parametersService.findByKey(key)).thenReturn(responseDTO);
 
@@ -131,9 +142,13 @@ class ParametersControllerTest {
 
     @Test
     @DisplayName("Deve atualizar um Parameters com sucesso")
-    void putSucess() throws Exception{
-        ParametersPatchRequestDTO dto = new ParametersPatchRequestDTO("Updated Value");
-        ParametersResponseDTO responseDTO = new ParametersResponseDTO(parametersId, "Test Key", "Updated Value");
+    void putSuccess() throws Exception{
+        ParametersPatchRequestDTO dto = new ParametersPatchRequestDTO("Teste key","Updated Value");
+        ParametersResponseDTO responseDTO = ParametersResponseDTO.builder()
+                .id(parametersId)
+                .key("Test Key")
+                .value("Updated Value")
+                .build();
 
         when(parametersService.put(any(UUID.class), any(ParametersPatchRequestDTO.class))).thenReturn(responseDTO);
 
@@ -149,7 +164,7 @@ class ParametersControllerTest {
     }
     @Test
     @DisplayName("Deve deletar um Parameters com sucesso")
-    void deleteSucess() throws Exception{
+    void deleteSuccess() throws Exception{
         doNothing().when(parametersService).delete(parametersId);
         mockMvc.perform(delete("/v1/parameters/{id}", parametersId)
                         .contentType(MediaType.APPLICATION_JSON))
