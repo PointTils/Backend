@@ -5,48 +5,42 @@ import com.pointtils.pointtils.src.application.dto.requests.ParametersBasicReque
 import com.pointtils.pointtils.src.application.dto.requests.ParametersPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ParametersResponseDTO;
 import com.pointtils.pointtils.src.infrastructure.configs.GlobalExceptionHandler;
+import io.awspring.cloud.autoconfigure.s3.S3AutoConfiguration;
 import com.pointtils.pointtils.src.application.services.ParametersService;
 import com.pointtils.pointtils.src.core.domain.entities.Parameters;
-
-
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
 import java.util.List;
 import java.util.UUID;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
-
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
 @SpringBootTest
-@AutoConfigureMockMvc(addFilters = false)
+@AutoConfigureMockMvc
+@EnableAutoConfiguration(exclude = S3AutoConfiguration.class)
 @ActiveProfiles("test")
-class ParametersControllerTest {
-
+public class ParametersControllerTest {
+        
+    @Autowired
     private MockMvc mockMvc;
 
     @Mock
@@ -55,7 +49,8 @@ class ParametersControllerTest {
     @InjectMocks
     private ParametersController parametersController;
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private Parameters parameters;
     private UUID parametersId;
@@ -112,7 +107,7 @@ class ParametersControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Parâmetros listados com sucesso"))
+                .andExpect(jsonPath("$.message").value("Parâmetros encontrados com sucesso"))
                 .andExpect(jsonPath("$.data[0].id").value(parametersId.toString()))
                 .andExpect(jsonPath("$.data[0].key").value("Test Key"))
                 .andExpect(jsonPath("$.data[0].value").value("Test Value"));
