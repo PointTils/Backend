@@ -4,7 +4,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.pointtils.pointtils.src.core.domain.entities.Parameters;
 import com.pointtils.pointtils.src.infrastructure.repositories.AppointmentRepository;
+import com.pointtils.pointtils.src.infrastructure.repositories.ParametersRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,8 +17,11 @@ import lombok.extern.slf4j.Slf4j;
 public class AppointmentStatusScheduler {
 
     private final AppointmentRepository appointmentRepository;
+    private final ParametersRepository parametersRepository;
 
-    @Scheduled(fixedRate = 1800000) // Executa a cada 30 minutos (30 * 60 * 1000 ms)
+    private static final String SCHEDULER_INTERVAL_KEY = "appointment_status_scheduler_interval";
+
+    @Scheduled(fixedDelayString = "#{@appointmentStatusScheduler.getFixedRateMs()}")
     @Transactional
     public void updateExpiredAppointments() {
         try {
@@ -38,5 +43,11 @@ public class AppointmentStatusScheduler {
         } catch (Exception e) {
             log.error("Error updating expired appointments", e);
         }
+    }
+
+    public String getFixedRateMs() {
+        return parametersRepository.findByKey(SCHEDULER_INTERVAL_KEY)
+                .map(Parameters::getValue)
+                .orElse("1800000"); 
     }
 }
