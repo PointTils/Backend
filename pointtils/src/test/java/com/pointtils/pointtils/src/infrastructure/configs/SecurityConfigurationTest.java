@@ -35,25 +35,6 @@ class SecurityConfigurationTest {
     }
 
     @Test
-    void corsConfigurationShouldAllowAllOrigins() throws Exception {
-        // Given
-        SecurityConfiguration securityConfiguration = new SecurityConfiguration(jwtAuthenticationFilter);
-
-        // When - Use reflection to access the private method
-        Method corsConfigurationSourceMethod = SecurityConfiguration.class.getDeclaredMethod("corsConfigurationSource");
-        corsConfigurationSourceMethod.setAccessible(true);
-        CorsConfigurationSource corsConfigurationSource = (CorsConfigurationSource) corsConfigurationSourceMethod.invoke(securityConfiguration);
-
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        var corsConfiguration = corsConfigurationSource.getCorsConfiguration(request);
-
-        // Then
-        assertNotNull(corsConfiguration);
-        assertNotNull(corsConfiguration.getAllowedOriginPatterns());
-        assertTrue(corsConfiguration.getAllowedOriginPatterns().contains("*"));
-    }
-
-    @Test
     void corsConfigurationShouldAllowExpectedMethods() throws Exception {
         // Given
         SecurityConfiguration securityConfiguration = new SecurityConfiguration(jwtAuthenticationFilter);

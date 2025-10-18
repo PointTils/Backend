@@ -1,7 +1,7 @@
 package com.pointtils.pointtils.src.application.controllers;
 
 import com.pointtils.pointtils.src.application.dto.requests.AppointmentRequestDTO;
-import com.pointtils.pointtils.src.application.dto.responses.ApiResponse;
+import com.pointtils.pointtils.src.application.dto.responses.ApiResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.AppointmentResponseDTO;
 import com.pointtils.pointtils.src.application.services.AppointmentService;
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentModality;
@@ -161,13 +161,13 @@ class AppointmentControllerTest {
                 .thenReturn(appointmentResponseDTO);
 
         appointmentRequestDTO.setModality(AppointmentModality.ONLINE);
-        ResponseEntity<ApiResponse<AppointmentResponseDTO>> response1 =
+        ResponseEntity<ApiResponseDTO<AppointmentResponseDTO>> response1 =
                 appointmentController.createAppointment(appointmentRequestDTO);
 
         assertEquals(HttpStatus.OK, response1.getStatusCode());
 
         appointmentRequestDTO.setModality(AppointmentModality.PERSONALLY);
-        ResponseEntity<ApiResponse<AppointmentResponseDTO>> response2 =
+        ResponseEntity<ApiResponseDTO<AppointmentResponseDTO>> response2 =
                 appointmentController.createAppointment(appointmentRequestDTO);
 
         assertEquals(HttpStatus.OK, response2.getStatusCode());
