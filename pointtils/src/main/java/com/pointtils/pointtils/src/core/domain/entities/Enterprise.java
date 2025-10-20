@@ -29,14 +29,6 @@ public class Enterprise extends User {
     @Column(unique = true, length = 14)
     private String cnpj;
 
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt; // Or Date
-
-    @UpdateTimestamp
-    @Column(name = "modified_at", nullable = false)
-    private LocalDateTime modifiedAt; // Or Date
-
     @Override
     public String getDisplayName() {
         return corporateReason;
