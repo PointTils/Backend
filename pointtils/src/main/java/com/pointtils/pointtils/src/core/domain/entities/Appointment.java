@@ -94,7 +94,7 @@ public class Appointment {
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt; // Or Date
+    private LocalDateTime createdAt;
 
     @UpdateTimestamp
     @Column(name = "modified_at", nullable = false)
