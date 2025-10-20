@@ -49,13 +49,6 @@ public class Person extends User {
     @Column(unique = true, length = 11)
     private String cpf;
 
-     @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt; 
-
-    @UpdateTimestamp
-    @Column(name = "modified_at", nullable = false)
-    private LocalDateTime modifiedAt; 
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @lombok.Builder.Default
