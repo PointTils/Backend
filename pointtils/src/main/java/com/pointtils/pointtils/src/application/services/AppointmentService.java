@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -94,24 +95,29 @@ public class AppointmentService {
     }
 
     /*Testar! */
-    public List<AppointmentFilterResponseDTO> searchAppointments(UUID interpreterId, UUID userId, AppointmentStatus status, AppointmentModality modality, LocalDateTime fromDateTime, Boolean hasRating) {
+    public List<AppointmentFilterResponseDTO> searchAppointments(UUID interpreterId, UUID userId, AppointmentStatus status, 
+                                                                    AppointmentModality modality, LocalDateTime fromDateTime, Boolean hasRating, int dayLimit) {
         List<Appointment> appointments = appointmentRepository.findAll();
 
         return appointments.stream()
-                .filter(appointment -> interpreterId == null || appointment.getInterpreter().getId().equals(interpreterId))
-                .filter(appointment -> userId == null || appointment.getUser().getId().equals(userId))
-                .filter(appointment -> status == null || appointment.getStatus().equals(status))
-                .filter(appointment -> modality == null || appointment.getModality().equals(modality))
-                .filter(appointment -> fromDateTime == null || isAfterDateTime(appointment, fromDateTime))
-                .filter(appointment -> hasRating == null || hasRatingAssigned(appointment, hasRating))
-                .map(appointment -> {
-                    if (interpreterId != null) {
-                        return appointmentMapper.toFilterResponseDTO(appointment, appointment.getUser());
-                    } else {
-                        return appointmentMapper.toFilterResponseDTO(appointment, appointment.getInterpreter());
-                    }
-                })
-                .toList();
+            .filter(appointment -> interpreterId == null || appointment.getInterpreter().getId().equals(interpreterId))
+            .filter(appointment -> userId == null || appointment.getUser().getId().equals(userId))
+            .filter(appointment -> status == null || appointment.getStatus().equals(status))
+            .filter(appointment -> modality == null || appointment.getModality().equals(modality))
+            .filter(appointment -> fromDateTime == null || isAfterDateTime(appointment, fromDateTime))
+            .filter(appointment -> hasRating == null || hasRatingAssigned(appointment, hasRating))
+            .filter(appointment -> dayLimit == -1 || isBeforeDateLimit(appointment, dayLimit))
+            .sorted(Comparator.comparing(
+                    (Appointment appointment) -> LocalDateTime.of(appointment.getDate(), appointment.getStartTime())
+                ).reversed())
+            .map(appointment -> {
+                if (interpreterId != null) {
+                    return appointmentMapper.toFilterResponseDTO(appointment, appointment.getUser());
+                } else {
+                    return appointmentMapper.toFilterResponseDTO(appointment, appointment.getInterpreter());
+                }
+            })
+        .toList();
     }
 
     private boolean hasRatingAssigned(Appointment appointment, Boolean hasRating) {
@@ -122,5 +128,11 @@ public class AppointmentService {
     private boolean isAfterDateTime(Appointment appointment, LocalDateTime fromDateTime) {
         LocalDateTime appointmentDateTime = LocalDateTime.of(appointment.getDate(), appointment.getStartTime());
         return appointmentDateTime.isAfter(fromDateTime);
+    }
+
+    private boolean isBeforeDateLimit(Appointment appointment, int dayLimit) {
+        LocalDateTime appointmentDateTime = LocalDateTime.of(appointment.getDate(), appointment.getEndTime());
+        LocalDateTime limitDateTime = appointmentDateTime.plusDays(dayLimit);
+        return LocalDateTime.now().isBefore(limitDateTime);
     }
 }

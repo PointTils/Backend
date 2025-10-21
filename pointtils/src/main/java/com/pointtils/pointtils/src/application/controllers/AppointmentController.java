@@ -8,6 +8,8 @@ import com.pointtils.pointtils.src.application.dto.responses.AppointmentResponse
 import com.pointtils.pointtils.src.application.services.AppointmentService;
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentModality;
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentStatus;
+
+import io.micrometer.common.util.StringUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -84,14 +86,15 @@ public class AppointmentController {
             @RequestParam(required = false) AppointmentStatus status,
             @RequestParam(required = false) AppointmentModality modality,
             @RequestParam(required = false) String fromDateTime,
-            @RequestParam(required = false) Boolean hasRating) {
+            @RequestParam(required = false) Boolean hasRating,
+            @RequestParam(required = false, defaultValue = "-1") Integer dayLimit) {
 
         LocalDateTime from = null;
-        if (fromDateTime != null && !fromDateTime.trim().isEmpty()) {
+        if (StringUtils.isNotBlank(fromDateTime)) {
             from = LocalDateTime.parse(fromDateTime);
         }
 
-        List<AppointmentFilterResponseDTO> appointments = appointmentService.searchAppointments(interpreterId, userId, status, modality, from, hasRating);
+        List<AppointmentFilterResponseDTO> appointments = appointmentService.searchAppointments(interpreterId, userId, status, modality, from, hasRating, dayLimit);
         return ResponseEntity.ok(ApiResponseDTO.success("Solicitações encontradas com sucesso", appointments));
     }
 

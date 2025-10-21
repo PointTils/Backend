@@ -31,17 +31,9 @@ public class RatingService {
     private final UserRepository userRepository;
     private final RatingResponseMapper ratingResponseMapper;
 
-    public RatingResponseDTO createRating(RatingRequestDTO ratingRequestDTO, UUID appointmentId) {
-        Appointment appointment = appointmentRepository.findById(appointmentId)
+    public RatingResponseDTO createRating(RatingRequestDTO ratingRequestDTO) {
+        Appointment appointment = appointmentRepository.findById(ratingRequestDTO.getAppointmentId())
                 .orElseThrow(() -> new EntityNotFoundException("Agendamento ou usuário não encontrado"));
-
-        User user = userRepository.findById(ratingRequestDTO.getUserId())
-                .orElseThrow(() -> new EntityNotFoundException("Agendamento ou usuário não encontrado"));
-
-
-        if (!appointment.getUser().getId().equals(user.getId())) {
-            throw new RatingException("Parâmetros de entrada inválidos");
-        }
 
         if (appointment.getStatus() != AppointmentStatus.COMPLETED) {
             throw new RatingException("Agendamento ainda não foi concluído (só posso avaliar depois de status ser encerrado)");
