@@ -32,15 +32,16 @@ class InterpreterDocumentServiceTest {
     private InterpreterRepository interpreterRepository;
     private InterpreterDocumentsRepository interpreterDocumentsRepository;
     private S3Service s3Service;
+    private EmailService emailService;
     private InterpreterDocumentService interpreterDocumentService;
-
     @BeforeEach
     void setUp() {
         interpreterRepository = mock(InterpreterRepository.class);
         interpreterDocumentsRepository = mock(InterpreterDocumentsRepository.class);
         s3Service = mock(S3Service.class);
+        emailService = mock(EmailService.class);
         interpreterDocumentService = new InterpreterDocumentService(interpreterRepository,
-                interpreterDocumentsRepository, s3Service);
+                interpreterDocumentsRepository, s3Service, emailService);
     }
 
     @Test
