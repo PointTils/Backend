@@ -78,8 +78,6 @@ class InterpreterServiceTest {
         assertEquals("MALE", interpreterArgumentCaptor.getValue().getGender().name());
         assertEquals("1990-01-01", interpreterArgumentCaptor.getValue().getBirthday().toString());
         assertEquals(BigDecimal.ZERO, interpreterArgumentCaptor.getValue().getRating());
-        assertEquals(BigDecimal.ZERO, interpreterArgumentCaptor.getValue().getMinValue());
-        assertEquals(BigDecimal.ZERO, interpreterArgumentCaptor.getValue().getMaxValue());
         assertEquals("", interpreterArgumentCaptor.getValue().getDescription());
         assertEquals("ALL", interpreterArgumentCaptor.getValue().getModality().name());
         assertFalse(interpreterArgumentCaptor.getValue().getImageRights());
@@ -225,8 +223,6 @@ class InterpreterServiceTest {
         assertEquals(Gender.FEMALE, interpreterArgumentCaptor.getValue().getGender());
         assertEquals("98765432000196", interpreterArgumentCaptor.getValue().getCnpj());
         assertEquals(InterpreterModality.ONLINE, interpreterArgumentCaptor.getValue().getModality());
-        assertEquals(250, interpreterArgumentCaptor.getValue().getMinValue().doubleValue());
-        assertEquals(500, interpreterArgumentCaptor.getValue().getMaxValue().doubleValue());
         assertEquals("Teste", interpreterArgumentCaptor.getValue().getDescription());
         assertFalse(interpreterArgumentCaptor.getValue().getImageRights());
         assertThat(interpreterArgumentCaptor.getValue().getLocations())

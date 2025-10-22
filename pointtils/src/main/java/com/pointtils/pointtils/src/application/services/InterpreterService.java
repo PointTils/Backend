@@ -9,7 +9,6 @@ import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponse
 import com.pointtils.pointtils.src.application.mapper.InterpreterResponseMapper;
 import com.pointtils.pointtils.src.application.mapper.LocationMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
-import com.pointtils.pointtils.src.core.domain.entities.enums.DayOfWeek;
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
@@ -18,13 +17,14 @@ import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterReposi
 import com.pointtils.pointtils.src.infrastructure.repositories.spec.InterpreterSpecification;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
@@ -34,12 +34,17 @@ import java.util.UUID;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class InterpreterService {
 
     private final InterpreterRepository repository;
     private final PasswordEncoder passwordEncoder;
     private final InterpreterResponseMapper responseMapper;
     private final LocationMapper locationMapper;
+    private final EmailService emailService;
+
+    @Value("${app.mail.admin:admin@pointtils.com}")
+    private String adminEmail;
 
     public InterpreterResponseDTO registerBasic(InterpreterBasicRequestDTO request) {
         Interpreter interpreter = Interpreter.builder()
@@ -55,14 +60,16 @@ public class InterpreterService {
                 .cpf(request.getCpf())
                 .cnpj(Objects.nonNull(request.getProfessionalData()) ? request.getProfessionalData().getCnpj() : null)
                 .rating(BigDecimal.ZERO)
-                .minValue(BigDecimal.ZERO)
-                .maxValue(BigDecimal.ZERO)
                 .imageRights(false)
                 .modality(InterpreterModality.ALL)
                 .description("")
                 .build();
 
         Interpreter savedInterpreter = repository.save(interpreter);
+
+        // Enviar email para o administrador após cadastro
+        sendInterpreterRegistrationEmail(savedInterpreter);
+
         return responseMapper.toResponseDTO(savedInterpreter);
     }
 
@@ -77,16 +84,14 @@ public class InterpreterService {
         repository.save(interpreter);
     }
 
-    public List<InterpreterListResponseDTO> findAll(
-            String modality,
-            String gender,
-            String city,
-            String uf,
-            String neighborhood,
-            String specialty,
-            String availableDate,
-            String name) {
-
+    public List<InterpreterListResponseDTO> findAll(String modality,
+                                                    String gender,
+                                                    String city,
+                                                    String uf,
+                                                    String neighborhood,
+                                                    String specialty,
+                                                    String availableDate,
+                                                    String name) {
         InterpreterModality modalityEnum = null;
         if (modality != null) {
             modalityEnum = InterpreterModality.valueOf(modality.toUpperCase());
@@ -97,16 +102,9 @@ public class InterpreterService {
             genderEnum = Gender.valueOf(gender.toUpperCase());
         }
 
-        DayOfWeek dayOfWeek = null;
-        LocalTime requestedStart = null;
-        LocalTime requestedEnd = null;
-
+        LocalDateTime dateTime = null;
         if (availableDate != null) {
-            LocalDateTime dateTime = LocalDateTime.parse(availableDate,
-                    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
-            dayOfWeek = DayOfWeek.valueOf(dateTime.getDayOfWeek().name().substring(0, 3));
-            requestedStart = dateTime.toLocalTime();
-            requestedEnd = requestedStart.plusHours(1);
+            dateTime = LocalDateTime.parse(availableDate, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
         }
 
         List<UUID> specialtyList = null;
@@ -116,9 +114,8 @@ public class InterpreterService {
                     .toList();
         }
 
-        return repository.findAll(
-                        InterpreterSpecification.filter(modalityEnum, uf, city, neighborhood, specialtyList, genderEnum, dayOfWeek,
-                                requestedStart, requestedEnd, name))
+        return repository.findAll(InterpreterSpecification.filter(modalityEnum, uf, city, neighborhood, specialtyList,
+                        genderEnum, dateTime, name))
                 .stream()
                 .map(responseMapper::toListResponseDTO)
                 .toList();
@@ -144,8 +141,6 @@ public class InterpreterService {
         if (dto != null && dto.getProfessionalData() != null) {
             var professionalData = dto.getProfessionalData();
             interpreter.setCnpj(professionalData.getCnpj());
-            interpreter.setMinValue(professionalData.getMinValue());
-            interpreter.setMaxValue(professionalData.getMaxValue());
             interpreter.setImageRights(professionalData.getImageRights());
             interpreter.setModality(professionalData.getModality());
             interpreter.setDescription(professionalData.getDescription());
@@ -194,12 +189,6 @@ public class InterpreterService {
         if (dto.getCnpj() != null) {
             interpreter.setCnpj(dto.getCnpj());
         }
-        if (dto.getMinValue() != null) {
-            interpreter.setMinValue(dto.getMinValue());
-        }
-        if (dto.getMaxValue() != null) {
-            interpreter.setMaxValue(dto.getMaxValue());
-        }
         if (dto.getImageRights() != null) {
             interpreter.setImageRights(dto.getImageRights());
         }
@@ -225,5 +214,118 @@ public class InterpreterService {
     private Interpreter findInterpreterById(UUID id) {
         return repository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Intérprete não encontrado"));
+    }
+
+    /**
+     * Aprova o cadastro de um intérprete
+     * @param id ID do intérprete
+     * @return true se o cadastro foi aprovado com sucesso, false caso contrário
+     */
+    public boolean approveInterpreter(UUID id) {
+        try {
+            Interpreter interpreter = findInterpreterById(id);
+            if (interpreter.getStatus() != UserStatus.PENDING) {
+                throw new IllegalArgumentException("Cadastro do intérprete já foi verificado anteriormente.");
+            }
+
+            interpreter.setStatus(UserStatus.ACTIVE);
+            repository.save(interpreter);
+
+            // Enviar email de feedback para o intérprete
+            boolean emailSent = emailService.sendInterpreterFeedbackEmail(
+                interpreter.getEmail(),
+                interpreter.getName(),
+                true // approved
+            );
+
+            if (emailSent) {
+                log.info("Cadastro do intérprete {} aprovado e email enviado com sucesso", interpreter.getName());
+            } else {
+                log.warn("Cadastro do intérprete {} aprovado, mas falha ao enviar email", interpreter.getName());
+            }
+
+            return true;
+
+        } catch (Exception e) {
+            log.error("Erro ao aprovar cadastro do intérprete {}: {}", id, e.getMessage());
+            if (e instanceof IllegalArgumentException) {
+                throw e;
+            }
+            return false;
+        }
+    }
+
+    /**
+     * Recusa o cadastro de um intérprete
+     * @param id ID do intérprete
+     * @return true se o cadastro foi recusado com sucesso, false caso contrário
+     */
+    public boolean rejectInterpreter(UUID id) {
+        try {
+            Interpreter interpreter = findInterpreterById(id);
+            if (interpreter.getStatus() != UserStatus.PENDING) {
+                throw new IllegalArgumentException("Cadastro do intérprete já foi verificado anteriormente.");
+            }
+
+            interpreter.setStatus(UserStatus.INACTIVE);
+            repository.save(interpreter);
+
+            // Enviar email de feedback para o intérprete
+            boolean emailSent = emailService.sendInterpreterFeedbackEmail(
+                interpreter.getEmail(),
+                interpreter.getName(),
+                false // not approved
+            );
+
+            if (emailSent) {
+                log.info("Cadastro do intérprete {} recusado e email enviado com sucesso", interpreter.getName());
+            } else {
+                log.warn("Cadastro do intérprete {} recusado, mas falha ao enviar email", interpreter.getName());
+            }
+
+            return true;
+
+        } catch (Exception e) {
+            log.error("Erro ao recusar cadastro do intérprete {}: {}", id, e.getMessage());
+            if (e instanceof IllegalArgumentException) {
+                throw e;
+            }
+            return false;
+        }
+    }
+
+    /**
+     * Envia email para o administrador com os dados de cadastro do intérprete
+     * @param interpreter Intérprete cadastrado
+     */
+    @Value("${app.api.base-url}")
+    private String apiBaseUrl;
+
+    private void sendInterpreterRegistrationEmail(Interpreter interpreter) {
+        try {
+            String acceptLink = String.format("%s/v1/email/interpreter/%s/approve", apiBaseUrl, interpreter.getId());
+            String rejectLink = String.format("%s/v1/email/interpreter/%s/reject", apiBaseUrl, interpreter.getId());
+
+            // Enviar email usando o template do banco de dados
+            boolean emailSent = emailService.sendInterpreterRegistrationRequestEmail(
+                adminEmail,
+                interpreter.getName(),
+                interpreter.getCpf(),
+                interpreter.getCnpj(),
+                interpreter.getEmail(),
+                interpreter.getPhone(),
+                acceptLink,
+                rejectLink
+            );
+
+            if (emailSent) {
+                log.info("Email de solicitação de cadastro enviado com sucesso para: {}", adminEmail);
+            } else {
+                log.error("Falha ao enviar email de solicitação de cadastro para: {}", adminEmail);
+            }
+
+        } catch (Exception e) {
+            log.error("Erro ao enviar email de solicitação de cadastro: {}", e.getMessage());
+        }
     }
 }
