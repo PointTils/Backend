@@ -119,7 +119,7 @@ class InterpreterDocumentControllerTest {
                 .thenReturn(responseDTO);
 
         // Act
-        ResponseEntity<InterpreterDocumentResponseDTO> response = interpreterDocumentController.uploadDocument(interpreterId, documentId, file);
+        ResponseEntity<InterpreterDocumentResponseDTO> response = interpreterDocumentController.updateDocument(interpreterId, documentId, file);
 
         // Assert
         assertEquals(200, response.getStatusCodeValue());
@@ -167,7 +167,7 @@ class InterpreterDocumentControllerTest {
 
         // Act & Assert
         try {
-            interpreterDocumentController.uploadDocument(interpreterId, documentId, file);
+            interpreterDocumentController.updateDocument(interpreterId, documentId, file);
         } catch (IOException e) {
             assertEquals("Erro ao atualizar documento", e.getMessage());
         }
@@ -229,7 +229,7 @@ class InterpreterDocumentControllerTest {
 
         // Act & Assert
         UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class, () -> {
-            interpreterDocumentController.uploadDocument(interpreterId, documentId, file);
+            interpreterDocumentController.updateDocument(interpreterId, documentId, file);
         });
         assertEquals("Upload de documentos está desabilitado.", exception.getMessage());
     }
@@ -266,7 +266,7 @@ class InterpreterDocumentControllerTest {
 
         // Act & Assert
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
-            interpreterDocumentController.uploadDocument(interpreterId, documentId, file);
+            interpreterDocumentController.updateDocument(interpreterId, documentId, file);
         });
         assertEquals("Documento não encontrado", exception.getMessage());
     }
