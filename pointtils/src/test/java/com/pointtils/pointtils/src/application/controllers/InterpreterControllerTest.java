@@ -21,7 +21,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import software.amazon.awssdk.services.s3.S3Client;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -137,8 +136,6 @@ class InterpreterControllerTest {
 
         ProfessionalDataPatchRequestDTO professionalData = ProfessionalDataPatchRequestDTO.builder()
                 .cnpj("12345678000195")
-                .minValue(new BigDecimal("100.00"))
-                .maxValue(new BigDecimal("500.00"))
                 .imageRights(true)
                 .modality(InterpreterModality.PERSONALLY)
                 .description("Intérprete experiente em LIBRAS")
@@ -159,8 +156,6 @@ class InterpreterControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Intérprete atualizado com sucesso"))
                 .andExpect(jsonPath("$.data.professional_data.cnpj").value("12345678000195"))
-                .andExpect(jsonPath("$.data.professional_data.min_value").value(100.00))
-                .andExpect(jsonPath("$.data.professional_data.max_value").value(500.00))
                 .andExpect(jsonPath("$.data.professional_data.image_rights").value(true))
                 .andExpect(jsonPath("$.data.professional_data.modality").value("PERSONALLY"))
                 .andExpect(jsonPath("$.data.professional_data.description")

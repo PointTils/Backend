@@ -2,7 +2,7 @@ package com.pointtils.pointtils.src.application.controllers;
 
 import com.pointtils.pointtils.src.application.dto.requests.EnterprisePatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.EnterpriseRequestDTO;
-import com.pointtils.pointtils.src.application.dto.responses.ApiResponse;
+import com.pointtils.pointtils.src.application.dto.responses.ApiResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.EnterpriseResponseDTO;
 import com.pointtils.pointtils.src.application.services.EnterpriseService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,35 +33,35 @@ public class EnterpriseController {
 
     @PostMapping("/register")
     @Operation(summary = "Cadastra um usuário empresa")
-    public ResponseEntity<ApiResponse<EnterpriseResponseDTO>> createUser(@Valid @RequestBody EnterpriseRequestDTO dto) {
+    public ResponseEntity<ApiResponseDTO<EnterpriseResponseDTO>> createUser(@Valid @RequestBody EnterpriseRequestDTO dto) {
         EnterpriseResponseDTO created = service.registerEnterprise(dto);
-        ApiResponse<EnterpriseResponseDTO> response = new ApiResponse<>(true, "Empresa cadastrada com sucesso", created);
+        ApiResponseDTO<EnterpriseResponseDTO> response = new ApiResponseDTO<>(true, "Empresa cadastrada com sucesso", created);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping()
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Busca todos os usuários empresa")
-    public ResponseEntity<ApiResponse<List<EnterpriseResponseDTO>>> findAll() {
+    public ResponseEntity<ApiResponseDTO<List<EnterpriseResponseDTO>>> findAll() {
         List<EnterpriseResponseDTO> enterpriseList = service.findAll();
-        return ResponseEntity.ok(ApiResponse.success("Empresas encontradas com sucesso", enterpriseList));
+        return ResponseEntity.ok(ApiResponseDTO.success("Empresas encontradas com sucesso", enterpriseList));
     }
 
     @GetMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Busca um usuário empresa por ID")
-    public ResponseEntity<ApiResponse<EnterpriseResponseDTO>> findById(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponseDTO<EnterpriseResponseDTO>> findById(@PathVariable UUID id) {
         EnterpriseResponseDTO enterprise = service.findById(id);
-        return ResponseEntity.ok(ApiResponse.success("Empresa encontrada com sucesso", enterprise));
+        return ResponseEntity.ok(ApiResponseDTO.success("Empresa encontrada com sucesso", enterprise));
     }
 
     @PatchMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Atualiza um usuário empresa por ID")
-    public ResponseEntity<ApiResponse<EnterpriseResponseDTO>> updateUser(@PathVariable UUID id,
+    public ResponseEntity<ApiResponseDTO<EnterpriseResponseDTO>> updateUser(@PathVariable UUID id,
                                                                          @RequestBody @Valid EnterprisePatchRequestDTO dto) {
         EnterpriseResponseDTO updated = service.patchEnterprise(id, dto);
-        return ResponseEntity.ok(ApiResponse.success("Empresa atualizada com sucesso", updated));
+        return ResponseEntity.ok(ApiResponseDTO.success("Empresa atualizada com sucesso", updated));
     }
 
     @DeleteMapping("/{id}")

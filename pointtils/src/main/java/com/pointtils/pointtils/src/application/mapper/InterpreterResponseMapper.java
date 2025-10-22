@@ -67,8 +67,6 @@ public class InterpreterResponseMapper {
         return ProfessionalDataResponseDTO.builder()
                 .cnpj(interpreter.getCnpj())
                 .rating(interpreter.getRating() != null ? interpreter.getRating() : BigDecimal.ZERO)
-                .minValue(interpreter.getMinValue())
-                .maxValue(interpreter.getMaxValue())
                 .modality(interpreter.getModality())
                 .description(interpreter.getDescription())
                 .imageRights(interpreter.getImageRights())
@@ -78,8 +76,6 @@ public class InterpreterResponseMapper {
     private ProfessionalDataListResponseDTO toProfessionalDataListResponseDTO(Interpreter interpreter) {
         return ProfessionalDataListResponseDTO.builder()
                 .rating(interpreter.getRating() != null ? interpreter.getRating() : BigDecimal.ZERO)
-                .minValue(interpreter.getMinValue())
-                .maxValue(interpreter.getMaxValue())
                 .modality(interpreter.getModality())
                 .build();
     }

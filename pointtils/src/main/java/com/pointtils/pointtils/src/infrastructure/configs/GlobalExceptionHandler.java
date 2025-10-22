@@ -22,6 +22,7 @@ import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModalit
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
 import com.pointtils.pointtils.src.core.domain.exceptions.ClientTimeoutException;
 import com.pointtils.pointtils.src.core.domain.exceptions.DuplicateResourceException;
+import com.pointtils.pointtils.src.core.domain.exceptions.RatingException;
 import com.pointtils.pointtils.src.core.domain.exceptions.UserSpecialtyException;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -73,7 +74,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
-        if (ex.getMessage().contains("duplicate key") && StringUtils.containsAny(ex.getMessage(), "person", "user", "enterprise")) {
+        if (ex.getMessage().contains("duplicate key")
+                && StringUtils.containsAny(ex.getMessage(), "person", "user", "enterprise")) {
             ErrorResponse errorResponse = new ErrorResponse(
                     HttpStatus.CONFLICT.value(),
                     "Já existe um usuário cadastrado com estes dados",
@@ -164,7 +166,8 @@ public class GlobalExceptionHandler {
                     System.currentTimeMillis());
             return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
         }
-        if ("Refresh token inválido ou expirado".equals(message) || "Access token inválido ou expirado".equals(message)) {
+        if ("Refresh token inválido ou expirado".equals(message)
+                || "Access token inválido ou expirado".equals(message)) {
             ErrorResponse errorResponse = new ErrorResponse(
                     HttpStatus.UNAUTHORIZED.value(),
                     message,
@@ -197,33 +200,30 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
-	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
-	public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
-		String paramName = ex.getName();
-		Class<?> requiredType = ex.getRequiredType();
-		
-		String message;
-		if (requiredType != null && UUID.class.equals(requiredType)) {
-			message = "UUID inválido";
-        }
-        else if (requiredType != null && InterpreterModality.class.equals(requiredType)) {
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        String paramName = ex.getName();
+        Class<?> requiredType = ex.getRequiredType();
+
+        String message;
+        if (requiredType != null && UUID.class.equals(requiredType)) {
+            message = "UUID inválido";
+        } else if (requiredType != null && InterpreterModality.class.equals(requiredType)) {
             message = "Modalidade inválida";
-        }
-        else if (requiredType != null && Gender.class.equals(requiredType)) {
+        } else if (requiredType != null && Gender.class.equals(requiredType)) {
             message = "Gênero inválido";
-        }
-         else {
+        } else {
             message = String.format("Valor inválido para parâmetro '%s'", paramName);
         }
-            
-            ErrorResponse errorResponse = new ErrorResponse(
-				HttpStatus.BAD_REQUEST.value(),
-				message,
-				System.currentTimeMillis());
-		return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-	}
-	
-	@ExceptionHandler(DuplicateResourceException.class)
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                message,
+                System.currentTimeMillis());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(DuplicateResourceException.class)
     public ResponseEntity<ErrorResponse> handleDuplicateResource(DuplicateResourceException ex) {
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.CONFLICT.value(),
@@ -237,7 +237,8 @@ public class GlobalExceptionHandler {
         List<String> errors = new ArrayList<>();
 
         boolean hasRequiredFieldErrors = ex.getBindingResult().getFieldErrors().stream()
-                .anyMatch(error -> "NotBlank".equals(error.getCode()) || "NotNull".equals(error.getCode()) || "NotEmpty".equals(error.getCode()));
+                .anyMatch(error -> "NotBlank".equals(error.getCode()) || "NotNull".equals(error.getCode())
+                        || "NotEmpty".equals(error.getCode()));
 
         boolean hasFormatErrors = !hasRequiredFieldErrors && ex.getBindingResult().getFieldErrors().stream()
                 .anyMatch(error -> "Pattern".equals(error.getCode()) || "Email".equals(error.getCode()));
@@ -265,6 +266,30 @@ public class GlobalExceptionHandler {
             return handleIllegalArgumentException(cause);
         }
         return handleGlobalException(ex);
+    }
+
+    @ExceptionHandler(RatingException.class)
+    public ResponseEntity<ErrorResponse> handleRatingException(RatingException ex) {
+        if ("Parâmetros de entrada inválidos".equals(ex.getMessage())) {
+            ErrorResponse errorResponse = new ErrorResponse(
+                    HttpStatus.BAD_REQUEST.value(),
+                    ex.getMessage(),
+                    System.currentTimeMillis());
+            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        }
+        if ("Agendamento ainda não foi concluído (só posso avaliar depois de status ser encerrado)"
+                .equals(ex.getMessage())) {
+            ErrorResponse errorResponse = new ErrorResponse(
+                    HttpStatus.CONFLICT.value(),
+                    ex.getMessage(),
+                    System.currentTimeMillis());
+            return new ResponseEntity<>(errorResponse, HttpStatus.UNPROCESSABLE_ENTITY);
+        }
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                ex.getMessage(),
+                System.currentTimeMillis());
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Data

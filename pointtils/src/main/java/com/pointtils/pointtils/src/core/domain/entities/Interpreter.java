@@ -41,12 +41,6 @@ public class Interpreter extends Person {
 
     private BigDecimal rating;
 
-    @Column(name = "min_value")
-    private BigDecimal minValue;
-
-    @Column(name = "max_value")
-    private BigDecimal maxValue;
-
     @Column(name = "image_rights")
     private Boolean imageRights;
 
@@ -63,4 +57,7 @@ public class Interpreter extends Person {
     @lombok.Builder.Default
     @OneToMany(mappedBy = "interpreter", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Schedule> schedules = new HashSet<>();
+
+    @OneToMany(mappedBy = "interpreter", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<InterpreterDocuments> documents = new HashSet<>();
 }
