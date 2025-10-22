@@ -2,7 +2,7 @@ package com.pointtils.pointtils.src.application.controllers;
 
 import com.pointtils.pointtils.src.application.dto.requests.ParametersBasicRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.ParametersPatchRequestDTO;
-import com.pointtils.pointtils.src.application.dto.responses.ApiResponse;
+import com.pointtils.pointtils.src.application.dto.responses.ApiResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ParametersResponseDTO;
 import com.pointtils.pointtils.src.application.services.ParametersService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,9 +27,9 @@ public class ParametersController {
 	@PostMapping()
 	@SecurityRequirement(name = "bearerAuth")
 	@Operation(summary = "Cadastra um novo parâmetro")
-	public ResponseEntity<ApiResponse<ParametersResponseDTO>> create (@Valid @RequestBody ParametersBasicRequestDTO dto) {
+	public ResponseEntity<ApiResponseDTO<ParametersResponseDTO>> create (@Valid @RequestBody ParametersBasicRequestDTO dto) {
 		ParametersResponseDTO created = service.create(dto);
-		ApiResponse<ParametersResponseDTO> response = new ApiResponse<>(true, "Parâmetro cadastrado com sucesso", created);
+		ApiResponseDTO<ParametersResponseDTO> response = ApiResponseDTO.success("Parâmetro cadastrado com sucesso", created);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 		
 	}
@@ -37,9 +37,9 @@ public class ParametersController {
 	@GetMapping()
 	@SecurityRequirement(name = "bearerAuth")
 	@Operation(summary = "Busca todos os parâmetros da aplicação")
-	public ResponseEntity<ApiResponse<List<ParametersResponseDTO>>> findAll() {
+	public ResponseEntity<ApiResponseDTO<List<ParametersResponseDTO>>> findAll() {
 		List<ParametersResponseDTO> list = service.findAll();
-		ApiResponse<List<ParametersResponseDTO>> response = new ApiResponse<>(true, "Parâmetros encontrados com sucesso", list);
+		ApiResponseDTO<List<ParametersResponseDTO>> response = new ApiResponseDTO<>(true, "Parâmetros encontrados com sucesso", list);
 		return ResponseEntity.ok(response);
 		
 	}
@@ -47,9 +47,9 @@ public class ParametersController {
 	@GetMapping("/{key}")
 	@SecurityRequirement(name = "bearerAuth")
 	@Operation(summary = "Busca um parâmetro por chave")
-	public ResponseEntity<ApiResponse<ParametersResponseDTO>> findByKey(@PathVariable String key) {
+	public ResponseEntity<ApiResponseDTO<ParametersResponseDTO>> findByKey(@PathVariable String key) {
 		ParametersResponseDTO parameters = service.findByKey(key);
-		ApiResponse<ParametersResponseDTO> response = new ApiResponse<>(true, "Parâmetro encontrado com sucesso", parameters);
+		ApiResponseDTO<ParametersResponseDTO> response = new ApiResponseDTO<>(true, "Parâmetro encontrado com sucesso", parameters);
 		return ResponseEntity.ok(response);
 		
 	}
@@ -57,9 +57,9 @@ public class ParametersController {
 	@PutMapping("/{id}")
 	@SecurityRequirement(name = "bearerAuth")
 	@Operation(summary = "Atualiza um parâmetro por ID")
-	public ResponseEntity<ApiResponse<ParametersResponseDTO>> put(@PathVariable UUID id, @Valid @RequestBody ParametersPatchRequestDTO dto) {
+	public ResponseEntity<ApiResponseDTO<ParametersResponseDTO>> put(@PathVariable UUID id, @Valid @RequestBody ParametersPatchRequestDTO dto) {
 		ParametersResponseDTO patched = service.put(id, dto);
-		ApiResponse<ParametersResponseDTO> response = new ApiResponse<>(true, "Parâmetro atualizado com sucesso", patched);
+		ApiResponseDTO<ParametersResponseDTO> response = new ApiResponseDTO<>(true, "Parâmetro atualizado com sucesso", patched);
 		return ResponseEntity.ok(response);
 		
 	}
