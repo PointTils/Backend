@@ -60,7 +60,7 @@ public class InterpreterDocumentService {
             InterpreterDocuments savedDocument = interpreterDocumentsRepository.save(document);
 
             // Enviar email para o administrador após cadastro
-            sendInterpreterRegistrationEmail(interpreter);
+            sendInterpreterRegistrationEmail(interpreter, files);
 
             return InterpreterDocumentResponseDTO.fromEntity(savedDocument);
         }).toList();
@@ -114,7 +114,7 @@ public class InterpreterDocumentService {
     @Value("${app.api.base-url}")
     private String apiBaseUrl;
 
-    private void sendInterpreterRegistrationEmail(Interpreter interpreter) {
+    private void sendInterpreterRegistrationEmail(Interpreter interpreter, List<MultipartFile> files) {
         try {
             String acceptLink = String.format("%s/v1/email/interpreter/%s/approve", apiBaseUrl, interpreter.getId());
             String rejectLink = String.format("%s/v1/email/interpreter/%s/reject", apiBaseUrl, interpreter.getId());
@@ -128,7 +128,8 @@ public class InterpreterDocumentService {
                     interpreter.getEmail(),
                     interpreter.getPhone(),
                     acceptLink,
-                    rejectLink);
+                    rejectLink,
+                    files);
 
             if (emailSent) {
                 log.info("Email de solicitação de cadastro enviado com sucesso para: {}", adminEmail);

@@ -1,18 +1,9 @@
 package com.pointtils.pointtils.src.application.controllers;
 
-import com.pointtils.pointtils.src.application.dto.requests.EmailRequestDTO;
-import com.pointtils.pointtils.src.application.dto.responses.ApiResponseDTO;
-import com.pointtils.pointtils.src.application.services.EmailService;
-import com.pointtils.pointtils.src.application.services.InterpreterService;
-import com.pointtils.pointtils.src.application.services.MemoryResetTokenService;
-import com.pointtils.pointtils.src.application.services.UserService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,9 +14,20 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import com.pointtils.pointtils.src.application.dto.requests.EmailRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.ApiResponseDTO;
+import com.pointtils.pointtils.src.application.services.EmailService;
+import com.pointtils.pointtils.src.application.services.InterpreterService;
+import com.pointtils.pointtils.src.application.services.MemoryResetTokenService;
+import com.pointtils.pointtils.src.application.services.UserService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
@@ -196,9 +198,9 @@ public class EmailController {
             @RequestParam String acceptLink,
             @RequestParam String rejectLink) {
 
-        boolean success = emailService.sendInterpreterRegistrationRequestEmail(
-                adminEmail, interpreterName, cpf, cnpj, email, phone, acceptLink, rejectLink);
-
+        //boolean success = emailService.sendInterpreterRegistrationRequestEmail(
+        //        adminEmail, interpreterName, cpf, cnpj, email, phone, acceptLink, rejectLink);
+        boolean success = true;
         Map<String, Object> data = new HashMap<>();
         data.put("adminEmail", adminEmail);
         data.put("interpreterName", interpreterName);

@@ -27,6 +27,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.pointtils.pointtils.src.application.dto.requests.EmailRequestDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
@@ -141,8 +142,11 @@ class EmailServiceTest {
         byte[] attachment1 = "Conteúdo do anexo 1".getBytes();
         byte[] attachment2 = "Conteúdo do anexo 2".getBytes();
         List<byte[]> attachments = List.of(attachment1, attachment2);
+        String attachmentName1 = "anexo1.txt";
+        String attachmentName2 = "anexo2.txt";
+        List<String> attachmentNames = List.of(attachmentName1, attachmentName2);
 
-        boolean result = emailService.sendEmailWithAttachments(emailRequestDTO, attachments);
+        boolean result = emailService.sendEmailWithAttachments(emailRequestDTO, attachments, attachmentNames);
 
         assertTrue(result);
         verify(mailSender).createMimeMessage();
@@ -243,6 +247,7 @@ class EmailServiceTest {
     void deveEnviarEmailSolicitacaoCadastroInterpreteComSucesso() throws Exception {
         String interpreterTemplate = "<html><body><h1>Nova solicitação</h1><p>Nome: {{nome}}</p><p>CPF: {{cpf}}</p><p>CNPJ: {{cnpj}}</p><p>Email: {{email}}</p><p>Telefone: {{telefone}}</p><a href=\"{link_api}\">Aceitar</a><a href=\"{link_api}\">Recusar</a></body></html>";
         Parameters parameter = new Parameters();
+        List<MultipartFile> files = List.of();
         parameter.setKey("PENDING_INTERPRETER_ADMIN");
         parameter.setValue(interpreterTemplate);
 
@@ -256,7 +261,7 @@ class EmailServiceTest {
         
         boolean result = emailService.sendInterpreterRegistrationRequestEmail(
                 "admin@pointtils.com", "João Intérprete", "123.456.789-00", "12.345.678/0001-90",
-                "joao@example.com", "(11) 99999-9999", "http://accept-link", "http://reject-link");
+                "joao@example.com", "(11) 99999-9999", "http://accept-link", "http://reject-link", files);
 
         assertTrue(result);
         verify(parametersRepository).findByKey("PENDING_INTERPRETER_ADMIN");
@@ -420,6 +425,7 @@ class EmailServiceTest {
     void deveProcessarLinksAceitarRecusarCorretamenteNoTemplateInterprete() {
         String template = "<p>Nome: {{nome}}</p><a href=\"{link_api}\" style=\"background-color: #008000;\">Aceitar</a><a href=\"{link_api}\" style=\"background-color: #FF0000;\">Recusar</a>";
         Parameters parameter = new Parameters();
+        List<MultipartFile> files = List.of();
         parameter.setKey("PENDING_INTERPRETER_ADMIN");
         parameter.setValue(template);
 
@@ -432,7 +438,7 @@ class EmailServiceTest {
         when(interpreterRepository.findByCpf(anyString())).thenReturn(new Interpreter());
 
         boolean result = emailService.sendInterpreterRegistrationRequestEmail(
-                "admin@pointtils.com", "João", "123", "456", "email", "phone", "http://accept", "http://reject");
+                "admin@pointtils.com", "João", "123", "456", "email", "phone", "http://accept", "http://reject", files);
 
         assertTrue(result);
         verify(parametersRepository).findByKey("PENDING_INTERPRETER_ADMIN");

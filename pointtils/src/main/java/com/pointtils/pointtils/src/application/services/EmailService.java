@@ -4,7 +4,6 @@ import java.time.Year;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
@@ -12,12 +11,10 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.pointtils.pointtils.src.application.dto.requests.EmailRequestDTO;
-import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
-import com.pointtils.pointtils.src.core.domain.entities.InterpreterDocuments;
 import com.pointtils.pointtils.src.core.domain.entities.Parameters;
-import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.ParametersRepository;
 
 import jakarta.mail.internet.MimeMessage;
@@ -31,8 +28,6 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
     private final ParametersRepository parametersRepository;
-    private final InterpreterRepository interpreterRepository;
-    private final S3Service s3service;
 
     @Value("${app.mail.from:noreply@pointtils.com}")
     private String emailFrom;
@@ -100,7 +95,7 @@ public class EmailService {
         }
     }
 
-    public boolean sendEmailWithAttachments(EmailRequestDTO emailRequest, List<byte[]> attachments) {
+    public boolean sendEmailWithAttachments(EmailRequestDTO emailRequest, List<byte[]> attachments, List<String> attachmentNames) {
         if (emailRequest == null) {
             log.error("EmailRequestDTO não pode ser nulo");
             return false;
@@ -119,7 +114,7 @@ public class EmailService {
             if (attachments != null) {
                 for (int i = 0; i < attachments.size(); i++) {
                     byte[] attachment = attachments.get(i);
-                    helper.addAttachment("anexo-" + (i + 1), new ByteArrayResource(attachment));
+                    helper.addAttachment(attachmentNames.get(i), new ByteArrayResource(attachment));
                 }
             }
 
@@ -202,29 +197,24 @@ public class EmailService {
      * @param phone           Telefone do intérprete
      * @param acceptLink      Link para aceitar o cadastro
      * @param rejectLink      Link para recusar o cadastro
+     * @param files           Lista de documentos anexados
      * @return true se o email foi enviado com sucesso, false caso contrário
      */
     public boolean sendInterpreterRegistrationRequestEmail(String adminEmail, String interpreterName, String cpf,
-            String cnpj, String email, String phone, String acceptLink, String rejectLink) {
+            String cnpj, String email, String phone, String acceptLink, String rejectLink, List<MultipartFile> files) {
         // Buscar template do banco de dados
         String template = getTemplateByKey("PENDING_INTERPRETER_ADMIN");
-        Interpreter interpreter = interpreterRepository.findByCpf(cpf);
-        if (interpreter == null) {
-            log.error("Intérprete com CPF '{}' não encontrado para envio de email de solicitação de cadastro", cpf);
-            return false;
-        }
-
-        Set<InterpreterDocuments> documents = interpreter.getDocuments();
-
+        
         List<byte[]> attachmentList = new ArrayList<>();
+        List<String> attachmentNames = new ArrayList<>();
 
-        for (InterpreterDocuments document : documents) {
-            String documentUrl = document.getDocument();
+        for (MultipartFile file : files) {
             try {
-                byte[] documentBytes = s3service.getFile(documentUrl);
+                byte[] documentBytes = file.getBytes();
+                attachmentNames.add(file.getOriginalFilename());
                 attachmentList.add(documentBytes);
             } catch (Exception e) {
-                log.error("Erro ao baixar documento '{}' do intérprete '{}': {}", documentUrl, interpreterName,
+                log.error("Erro ao baixar documento '{}' do intérprete '{}': {}", file.getName(), interpreterName,
                         e.getMessage());
             }
         }
@@ -238,7 +228,7 @@ public class EmailService {
                 "Nova Solicitação de Cadastro de Intérprete - PointTils",
                 html,
                 senderName);
-        return sendEmailWithAttachments(emailRequest, attachmentList);
+        return sendEmailWithAttachments(emailRequest, attachmentList, attachmentNames);
     }
 
     /**
