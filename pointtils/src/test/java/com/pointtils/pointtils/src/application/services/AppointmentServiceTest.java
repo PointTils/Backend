@@ -290,7 +290,7 @@ class AppointmentServiceTest {
         LocalDateTime fromDateTime = LocalDateTime.now();
 
         List<AppointmentFilterResponseDTO> result = appointmentService.searchAppointments(
-            interpreterId, userId, AppointmentStatus.PENDING, AppointmentModality.ONLINE, fromDateTime, true);
+            interpreterId, userId, AppointmentStatus.PENDING, AppointmentModality.ONLINE, fromDateTime, true, -1);
 
         assertNotNull(result);
         verify(appointmentRepository).findAll();
@@ -303,7 +303,7 @@ class AppointmentServiceTest {
         when(appointmentRepository.findAll()).thenReturn(appointments);
 
         List<AppointmentFilterResponseDTO> result = appointmentService.searchAppointments(
-            null, null, null, null, null, null);
+            null, null, null, null, null, null, -1);
 
         assertNotNull(result);
         assertEquals(1, result.size());
@@ -433,7 +433,7 @@ class AppointmentServiceTest {
         when(appointmentRepository.findAll()).thenReturn(appointments);
 
         List<AppointmentFilterResponseDTO> result = appointmentService.searchAppointments(
-                interpreterId, null, null, null, null, null);
+                interpreterId, null, null, null, null, null, -1);
 
         assertNotNull(result);
         assertEquals(1, result.size()); // Só deve retornar o mockAppointment
@@ -466,7 +466,7 @@ class AppointmentServiceTest {
         when(appointmentRepository.findAll()).thenReturn(appointments);
 
         List<AppointmentFilterResponseDTO> result = appointmentService.searchAppointments(
-                null, userId, null, null, null, null);
+                null, userId, null, null, null, null, -1);
 
         assertNotNull(result);
         assertEquals(1, result.size()); // Só deve retornar o mockAppointment
@@ -490,7 +490,7 @@ class AppointmentServiceTest {
         when(appointmentRepository.findAll()).thenReturn(appointments);
 
         List<AppointmentFilterResponseDTO> result = appointmentService.searchAppointments(
-                null, null, AppointmentStatus.PENDING, null, null, null);
+                null, null, AppointmentStatus.PENDING, null, null, null, -1);
 
         assertNotNull(result);
         assertEquals(1, result.size()); // Só deve retornar o mockAppointment (PENDING)
@@ -514,7 +514,7 @@ class AppointmentServiceTest {
         when(appointmentRepository.findAll()).thenReturn(appointments);
 
         List<AppointmentFilterResponseDTO> result = appointmentService.searchAppointments(
-                null, null, null, AppointmentModality.ONLINE, null, null);
+                null, null, null, AppointmentModality.ONLINE, null, null, -1);
 
         assertNotNull(result);
         assertEquals(1, result.size()); // Só deve retornar o mockAppointment (ONLINE)
@@ -541,7 +541,7 @@ class AppointmentServiceTest {
         LocalDateTime fromDateTime = LocalDateTime.now(); // Filtro para appointments após agora
 
         List<AppointmentFilterResponseDTO> result = appointmentService.searchAppointments(
-                null, null, null, null, fromDateTime, null);
+                null, null, null, null, fromDateTime, null, -1);
 
         assertNotNull(result);
         assertEquals(1, result.size()); // Só deve retornar o mockAppointment (futuro)
@@ -556,7 +556,7 @@ class AppointmentServiceTest {
 
         UUID nonExistentId = UUID.randomUUID();
         List<AppointmentFilterResponseDTO> result = appointmentService.searchAppointments(
-                nonExistentId, null, null, null, null, null);
+                nonExistentId, null, null, null, null, null, -1);
 
         assertNotNull(result);
         assertEquals(0, result.size());
@@ -571,7 +571,7 @@ class AppointmentServiceTest {
         when(ratingRepository.existsByAppointment(mockAppointment)).thenReturn(true);
 
         List<AppointmentFilterResponseDTO> result = appointmentService.searchAppointments(
-                null, null, null, null, null, true);
+                null, null, null, null, null, true, -1);
 
         assertNotNull(result);
         assertEquals(1, result.size());
@@ -586,7 +586,7 @@ class AppointmentServiceTest {
         when(ratingRepository.existsByAppointment(mockAppointment)).thenReturn(false);
 
         List<AppointmentFilterResponseDTO> result = appointmentService.searchAppointments(
-                null, null, null, null, null, false);
+                null, null, null, null, null, false, -1);
 
         assertNotNull(result);
         assertEquals(1, result.size());
