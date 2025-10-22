@@ -1,16 +1,8 @@
 package com.pointtils.pointtils.src.application.controllers;
 
-import com.pointtils.pointtils.src.application.dto.requests.PersonCreationRequestDTO;
-import com.pointtils.pointtils.src.application.dto.PersonDTO;
-import com.pointtils.pointtils.src.application.dto.requests.PersonPatchRequestDTO;
-import com.pointtils.pointtils.src.application.dto.responses.ApiResponseDTO;
-import com.pointtils.pointtils.src.application.dto.responses.PersonResponseDTO;
-import com.pointtils.pointtils.src.application.services.PersonService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -22,9 +14,24 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.HttpClientErrorException.BadRequest;
 
-import java.util.List;
-import java.util.UUID;
+import com.pointtils.pointtils.src.application.dto.PersonDTO;
+import com.pointtils.pointtils.src.application.dto.requests.PersonCreationRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.PersonPatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.ApiResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.PersonResponseDTO;
+import com.pointtils.pointtils.src.application.services.PersonService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 
 @RestController
 @RequestMapping("/v1/person")
@@ -34,7 +41,25 @@ public class PersonController {
     private final PersonService service;
 
     @PostMapping("/register")
-    @Operation(summary = "Cadastra um usuário surdo")
+    @Operation(
+            summary = "Cadastra um usuário surdo",
+            description = "Registra um novo usuário surdo no sistema"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Usuário surdo cadastrado com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiResponseDTO.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Dados de cadastro inválidos",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = BadRequest.class))),
+            @ApiResponse(responseCode = "409", description = "Email já cadastrado",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiResponseDTO.class))),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = InternalError.class)))
+    })
     public ResponseEntity<ApiResponseDTO<PersonResponseDTO>> createUser(@Valid @RequestBody PersonCreationRequestDTO dto) {
         PersonResponseDTO created = service.registerPerson(dto);
         ApiResponseDTO<PersonResponseDTO> response = ApiResponseDTO.success("Usuário surdo cadastrado com sucesso", created);
@@ -43,7 +68,22 @@ public class PersonController {
 
     @GetMapping
     @SecurityRequirement(name = "bearerAuth")
-    @Operation(summary = "Busca todos os usuários surdos")
+    @Operation(
+            summary = "Busca todos os usuários surdos",
+            description = "Retorna lista de todos os usuários surdos cadastrados"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Usuários surdos encontrados com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiResponseDTO.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido ou ausente",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = BadRequest.class))),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = InternalError.class)))
+    })
     public ResponseEntity<ApiResponseDTO<List<PersonResponseDTO>>> findAll() {
         List<PersonResponseDTO> personUsers = service.findAll();
         ApiResponseDTO<List<PersonResponseDTO>> response =
@@ -53,7 +93,28 @@ public class PersonController {
 
     @GetMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
-    @Operation(summary = "Busca um usuário surdo por ID")
+    @Operation(
+            summary = "Busca um usuário surdo por ID",
+            description = "Retorna os dados de um usuário surdo específico pelo seu ID"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Usuário surdo encontrado com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiResponseDTO.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "ID inválido",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = BadRequest.class))),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido ou ausente",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = BadRequest.class))),
+            @ApiResponse(responseCode = "404", description = "Usuário surdo não encontrado",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiResponseDTO.class))),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = InternalError.class)))
+    })
     public ResponseEntity<ApiResponseDTO<PersonResponseDTO>> findById(@PathVariable UUID id) {
         PersonResponseDTO person = service.findById(id);
         return ResponseEntity.ok(ApiResponseDTO.success("Usuário surdo encontrado com sucesso", person));
@@ -61,7 +122,28 @@ public class PersonController {
 
     @PatchMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
-    @Operation(summary = "Atualiza parcialmente um usuário surdo por ID")
+    @Operation(
+            summary = "Atualiza parcialmente um usuário surdo por ID",
+            description = "Atualiza campos específicos de um usuário surdo"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Usuário surdo atualizado com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiResponseDTO.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Dados de atualização inválidos",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = BadRequest.class))),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido ou ausente",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = BadRequest.class))),
+            @ApiResponse(responseCode = "404", description = "Usuário surdo não encontrado",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiResponseDTO.class))),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = InternalError.class)))
+    })
     public ResponseEntity<ApiResponseDTO<PersonResponseDTO>> updateUser(@PathVariable UUID id,
                                                              @RequestBody @Valid PersonPatchRequestDTO dto) {
         PersonResponseDTO updated = service.updatePartial(id, dto);
@@ -70,7 +152,28 @@ public class PersonController {
 
     @PutMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
-    @Operation(summary = "Atualiza um usuário surdo por ID")
+    @Operation(
+            summary = "Atualiza completamente um usuário surdo por ID",
+            description = "Substitui todos os dados de um usuário surdo"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Usuário surdo atualizado com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiResponseDTO.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Dados de atualização inválidos",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = BadRequest.class))),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido ou ausente",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = BadRequest.class))),
+            @ApiResponse(responseCode = "404", description = "Usuário surdo não encontrado",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiResponseDTO.class))),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = InternalError.class)))
+    })
     public ResponseEntity<ApiResponseDTO<PersonResponseDTO>> updateComplete(@PathVariable UUID id,
                                                                  @RequestBody @Valid PersonDTO dto) {
         PersonResponseDTO updated = service.updateComplete(id, dto);
@@ -79,7 +182,25 @@ public class PersonController {
 
     @DeleteMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
-    @Operation(summary = "Deleta um usuário surdo por ID")
+    @Operation(
+            summary = "Deleta um usuário surdo por ID",
+            description = "Remove permanentemente um usuário surdo do sistema"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Usuário surdo deletado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "ID inválido",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = BadRequest.class))),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido ou ausente",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = BadRequest.class))),
+            @ApiResponse(responseCode = "404", description = "Usuário surdo não encontrado",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiResponseDTO.class))),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = InternalError.class)))
+    })
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
