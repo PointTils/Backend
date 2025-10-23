@@ -3,7 +3,7 @@ package com.pointtils.pointtils.src.application.controllers;
 import com.pointtils.pointtils.src.application.dto.requests.ScheduleListRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.SchedulePatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.ScheduleRequestDTO;
-import com.pointtils.pointtils.src.application.dto.responses.ApiResponse;
+import com.pointtils.pointtils.src.application.dto.responses.ApiResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.AvailableTimeSlotsResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.PaginatedScheduleResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ScheduleResponseDTO;
@@ -42,52 +42,52 @@ public class ScheduleController {
 
     @PostMapping("/register")
     @Operation(summary = "Cadastra um horário para um intérprete")
-    public ResponseEntity<ApiResponse<ScheduleResponseDTO>> registerSchedule(@Valid @RequestBody ScheduleRequestDTO dto) {
+    public ResponseEntity<ApiResponseDTO<ScheduleResponseDTO>> registerSchedule(@Valid @RequestBody ScheduleRequestDTO dto) {
         ScheduleResponseDTO created = service.registerSchedule(dto);
-        ApiResponse<ScheduleResponseDTO> response = new ApiResponse<>(true, "Horário cadastrado com sucesso", created);
+        ApiResponseDTO<ScheduleResponseDTO> response = new ApiResponseDTO<>(true, "Horário cadastrado com sucesso", created);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/{scheduleId}")
     @Operation(summary = "Obtém detalhes de um horário específico")
-    public ResponseEntity<ApiResponse<ScheduleResponseDTO>> getScheduleById(@PathVariable UUID scheduleId) {
+    public ResponseEntity<ApiResponseDTO<ScheduleResponseDTO>> getScheduleById(@PathVariable UUID scheduleId) {
         ScheduleResponseDTO schedule = service.findById(scheduleId);
-        ApiResponse<ScheduleResponseDTO> response = new ApiResponse<>(true, "Detalhes do horário obtidos com sucesso", schedule);
+        ApiResponseDTO<ScheduleResponseDTO> response = new ApiResponseDTO<>(true, "Detalhes do horário obtidos com sucesso", schedule);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping()
     @Operation(summary = "Lista todos os horários cadastrados com paginação")
-    public ResponseEntity<ApiResponse<PaginatedScheduleResponseDTO>> listSchedules(@Valid @ModelAttribute ScheduleListRequestDTO query) {
+    public ResponseEntity<ApiResponseDTO<PaginatedScheduleResponseDTO>> listSchedules(@Valid @ModelAttribute ScheduleListRequestDTO query) {
         Pageable pageable = PageRequest.of(query.getPage(), query.getSize());
         PaginatedScheduleResponseDTO schedules = service.findAll(query, pageable);
-        ApiResponse<PaginatedScheduleResponseDTO> response = new ApiResponse<>(true, "Horários obtidos com sucesso", schedules);
+        ApiResponseDTO<PaginatedScheduleResponseDTO> response = new ApiResponseDTO<>(true, "Horários obtidos com sucesso", schedules);
         return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/{scheduleId}")
     @Operation(summary = "Atualiza dados de um horário de disponibilidade")
-    public ResponseEntity<ApiResponse<ScheduleResponseDTO>> updateSchedule(@PathVariable UUID scheduleId, @Valid @RequestBody SchedulePatchRequestDTO dto) {
+    public ResponseEntity<ApiResponseDTO<ScheduleResponseDTO>> updateSchedule(@PathVariable UUID scheduleId, @Valid @RequestBody SchedulePatchRequestDTO dto) {
         ScheduleResponseDTO updated = service.updateSchedule(scheduleId, dto);
-        ApiResponse<ScheduleResponseDTO> response = new ApiResponse<>(true, "Horário atualizado com sucesso", updated);
+        ApiResponseDTO<ScheduleResponseDTO> response = new ApiResponseDTO<>(true, "Horário atualizado com sucesso", updated);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{scheduleId}")
     @Operation(summary = "Exclui um horário de disponibilidade")
-    public ResponseEntity<ApiResponse<Void>> deleteSchedule(@PathVariable UUID scheduleId) {
+    public ResponseEntity<ApiResponseDTO<Void>> deleteSchedule(@PathVariable UUID scheduleId) {
         service.deleteById(scheduleId);
-        ApiResponse<Void> response = new ApiResponse<>(true, "Horário excluído com sucesso", null);
+        ApiResponseDTO<Void> response = new ApiResponseDTO<>(true, "Horário excluído com sucesso", null);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/available")
     @Operation(summary = "Lista todos os intervalos de horários disponíveis cadastrados")
-    public ResponseEntity<ApiResponse<List<AvailableTimeSlotsResponseDTO>>> listAvailableSchedules(@RequestParam UUID interpreterId,
+    public ResponseEntity<ApiResponseDTO<List<AvailableTimeSlotsResponseDTO>>> listAvailableSchedules(@RequestParam UUID interpreterId,
                                                                                                    @RequestParam LocalDate dateFrom,
                                                                                                    @RequestParam LocalDate dateTo) {
         List<AvailableTimeSlotsResponseDTO> availableTimeSlots = service.findAvailableSchedules(interpreterId, dateFrom, dateTo);
-        ApiResponse<List<AvailableTimeSlotsResponseDTO>> response = new ApiResponse<>(true, "Horários disponíveis obtidos com sucesso", availableTimeSlots);
+        ApiResponseDTO<List<AvailableTimeSlotsResponseDTO>> response = new ApiResponseDTO<>(true, "Horários disponíveis obtidos com sucesso", availableTimeSlots);
         return ResponseEntity.ok(response);
     }
 }

@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import org.springframework.stereotype.Service;
 
-import com.pointtils.pointtils.src.application.dto.requests.UserPicturePatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.UserPicturePostRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.UserResponseDTO;
 import com.pointtils.pointtils.src.core.domain.entities.User;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
@@ -14,12 +14,12 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class UserPicturePatchService {
+public class UserPicturePostService {
 
     private final UserRepository userRepository;
     private final S3Service s3Service;
 
-    public UserResponseDTO updatePicture(UserPicturePatchRequestDTO request) throws IOException {
+    public UserResponseDTO updatePicture(UserPicturePostRequestDTO request) throws IOException {
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
 

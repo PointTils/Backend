@@ -94,8 +94,6 @@ public class TestDataUtil {
         request.setCpf("12345678901");
         request.setPicture("picture_url");
         request.setProfessionalData(new ProfessionalDataBasicRequestDTO("12345678000195",
-                new BigDecimal("100.00"),
-                new BigDecimal("500.00"),
                 true,
                 InterpreterModality.PERSONALLY,
                 "Intérprete experiente em LIBRAS"));
@@ -106,8 +104,6 @@ public class TestDataUtil {
         ProfessionalDataResponseDTO professionalInfo = ProfessionalDataResponseDTO.builder()
                 .cnpj(null)
                 .rating(new BigDecimal("0.0"))
-                .minValue(new BigDecimal("0.0"))
-                .maxValue(new BigDecimal("0.0"))
                 .imageRights(false)
                 .modality(null)
                 .description(null)
@@ -134,8 +130,6 @@ public class TestDataUtil {
     public static InterpreterListResponseDTO createInterpreterListResponse() {
         ProfessionalDataListResponseDTO professionalInfo = ProfessionalDataListResponseDTO.builder()
                 .rating(new BigDecimal("0.0"))
-                .minValue(new BigDecimal("100.00"))
-                .maxValue(new BigDecimal("500.00"))
                 .modality(InterpreterModality.PERSONALLY)
                 .build();
 
@@ -152,8 +146,6 @@ public class TestDataUtil {
         ProfessionalDataResponseDTO professionalInfo = ProfessionalDataResponseDTO.builder()
                 .cnpj("12345678000195")
                 .rating(new BigDecimal("0.0"))
-                .minValue(new BigDecimal("100.00"))
-                .maxValue(new BigDecimal("500.00"))
                 .imageRights(true)
                 .modality(InterpreterModality.PERSONALLY)
                 .description("Intérprete experiente em LIBRAS")
@@ -200,8 +192,6 @@ public class TestDataUtil {
         professionalData.setCnpj("98765432000196");
         professionalData.setDescription("Teste");
         professionalData.setImageRights(Boolean.FALSE);
-        professionalData.setMinValue(BigDecimal.valueOf(250));
-        professionalData.setMaxValue(BigDecimal.valueOf(500));
         professionalData.setModality(InterpreterModality.ONLINE);
         return professionalData;
     }

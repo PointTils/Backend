@@ -1,25 +1,57 @@
-# Guia de Deploy Corrigido - Pointtils
+# Guia de Deploy - Pointtils
 
-Este guia descreve os passos para fazer deploy da aplicação Pointtils com a nova abordagem usando containers Docker para o PostgreSQL.
+Este guia descreve os passos para fazer deploy da aplicação Pointtils usando CI/CD automatizado com GitHub Actions e Terraform.
 
-## Problemas Identificados no Deploy Anterior
+## Arquitetura de Deploy
 
-1. **PostgreSQL local não funcionando**: O PostgreSQL instalado localmente na EC2 não estava iniciando corretamente
-2. **Configuração de rede**: Problemas de configuração para aceitar conexões externas
-3. **Falta de validação**: Script não verificava se o PostgreSQL realmente estava rodando
+### Ambientes Implementados
 
-## Nova Abordagem Implementada
+1. **Desenvolvimento (dev)**: 
+   - Trigger: Push para branches `dev` e `feature/*`
+   - Instância EC2: `t2.medium`
+   - VPC: `10.1.0.0/16`
+   - ECR: `pointtils-dev`
 
-✅ **Usar PostgreSQL em Container Docker**: Mais consistente com a arquitetura Docker da aplicação
-✅ **Script de user_data corrigido**: Com validações e tratamento de erros
-✅ **Configuração simplificada**: Remove a complexidade de configurar PostgreSQL local
+2. **Produção (main)**:
+   - Trigger: Push para `main` e PRs fechados
+   - Instância EC2: `t2.medium` 
+   - VPC: `10.0.0.0/16`
+   - ECR: `pointtils`
 
-## Passos para o Deploy
+## Deploy Automatizado via CI/CD
+
+### Para Desenvolvimento
+
+O deploy para desenvolvimento é totalmente automatizado:
+
+1. **Push para branch `dev` ou `feature/*`**
+2. **GitHub Actions executa**:
+   - Build e testes da aplicação
+   - Push das imagens para ECR
+   - Deploy da infraestrutura com Terraform
+   - Deploy das imagens na EC2
+   - Health check automático
+
+### Para Produção
+
+1. **Merge para branch `main`**
+2. **GitHub Actions executa**:
+   - Build e testes da aplicação
+   - Push das imagens para ECR
+   - Deploy da infraestrutura com Terraform
+   - Deploy das imagens na EC2
+   - Health check automático
+
+## Deploy Manual (Se Necessário)
 
 ### 1. Preparação do Ambiente
 
 ```bash
+# Para produção
 cd terraform/
+
+# Para desenvolvimento  
+cd terraform-dev/
 
 # Verificar/atualizar as variáveis no terraform.tfvars
 nano terraform.tfvars
@@ -44,32 +76,35 @@ Após a execução do Terraform, conecte-se na EC2:
 
 ```bash
 # Conectar na instância EC2 (substitua pelo IP correto)
-ssh -i /caminho/para/sua/chave.pem ubuntu@<IP_DA_EC2>
+ssh -i ssh-key-dev/pointtils-dev-key.pem ubuntu@<IP_DA_EC2>
 ```
 
 ### 4. Comandos de Verificação na EC2
 
 ```bash
 # Verificar se os containers estão rodando
-sudo docker-compose -f /home/ubuntu/Backend/docker-compose.prod.yaml ps
+sudo docker-compose -f /home/ubuntu/pointtils/docker-compose.yaml ps
 
 # Verificar logs da aplicação
-sudo docker-compose -f /home/ubuntu/Backend/docker-compose.prod.yaml logs pointtils
+sudo docker-compose -f /home/ubuntu/pointtils/docker-compose.yaml logs pointtils
 
 # Verificar logs do banco de dados
-sudo docker-compose -f /home/ubuntu/Backend/docker-compose.prod.yaml logs pointtils-db
+sudo docker-compose -f /home/ubuntu/pointtils/docker-compose.yaml logs pointtils-db
 
 # Testar conexão com a aplicação
 curl http://localhost:8080/actuator/health
 ```
 
-### 5. Script de Deploy Automatizado
+### 5. Scripts de Deploy Automatizado
 
-Um script de deploy automatizado está disponível em `/home/ubuntu/deploy-app.sh`:
+Scripts disponíveis para deploy manual:
 
 ```bash
-# Executar o script de deploy (útil para redeploys)
-/home/ubuntu/deploy-app.sh
+# Para produção
+./terraform/deploy-app.sh
+
+# Para desenvolvimento
+./terraform-dev/deploy-dev-app.sh
 ```
 
 ## Estrutura da Nova Solução

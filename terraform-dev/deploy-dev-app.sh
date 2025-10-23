@@ -42,8 +42,13 @@ docker network create pointtils-dev-network 2>/dev/null || true
 
 # Parar e remover containers existentes de DESENVOLVIMENTO
 echo "Parando containers de DESENVOLVIMENTO existentes..."
-docker stop pointtils-dev pointtils-dev-db 2>/dev/null || true
-docker rm pointtils-dev pointtils-dev-db 2>/dev/null || true
+docker stop pointtils-dev pointtils-db-dev 2>/dev/null || true
+docker rm pointtils-dev pointtils-db-dev 2>/dev/null || true
+
+# Remover forçadamente se ainda existirem
+echo "Removendo forçadamente se containers ainda existirem..."
+docker rm -f pointtils-dev 2>/dev/null || true
+docker rm -f pointtils-db-dev 2>/dev/null || true
 
 # Criar volume se não existir
 echo "Criando volume postgres_dev_data se não existir..."

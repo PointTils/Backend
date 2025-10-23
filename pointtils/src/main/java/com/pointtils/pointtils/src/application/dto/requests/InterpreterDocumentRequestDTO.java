@@ -14,12 +14,12 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserPicturePatchRequestDTO {
+public class InterpreterDocumentRequestDTO {
 
     @NotNull(message = "O ID do usuário é obrigatório")
     @JsonProperty("user_id")
-    private UUID userId;
+    private UUID interpreter_Id;
 
-    @NotNull(message = "O arquivo da imagem é obrigatório")
+    @NotNull(message = "O documento é obrigatório")
     private MultipartFile file;
 }
