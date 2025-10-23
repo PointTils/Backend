@@ -358,10 +358,10 @@ data "template_file" "user_data" {
               EOF
 }
 
-# Instância EC2 para a aplicação Pointtils (Conforme orçamento: t2.medium em Ohio)
+# Instância EC2 para a aplicação Pointtils (Alterado para t2.micro para economia)
 resource "aws_instance" "pointtils_app" {
   ami                    = "ami-0a59f0e26c55590e9" # Ubuntu 22.04 LTS para us-east-2 (Ohio)
-  instance_type          = "t2.medium"
+  instance_type          = "t2.micro"
   key_name               = aws_key_pair.pointtils_key.key_name
   vpc_security_group_ids = [aws_security_group.app_sg.id]
   subnet_id              = aws_subnet.public_subnet_1.id
