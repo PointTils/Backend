@@ -318,7 +318,7 @@ data "template_file" "user_data" {
                   ports:
                     - "5432:5432"
                   volumes:
-                    - postgres_data:/var/lib/postgresql/data
+                    - postgres_data:/var/lib/postgresql
                   networks:
                     - pointtils-network
                   healthcheck:
