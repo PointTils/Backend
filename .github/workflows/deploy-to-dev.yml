@@ -161,12 +161,21 @@ jobs:
           if [ -n "$APP_IMAGE_ID" ]; then
             echo "Usando ID da imagem para tagging: $APP_IMAGE_ID"
             # Use env.ECR_REPOSITORY (pointtils-dev) instead of secrets.ECR_REPOSITORY (pointtils)
+            
+            # PRIMEIRO: Salvar a imagem atual como "previous" ANTES de sobrescrever com a nova
+            echo "Salvando imagem atual como previous..."
+            docker pull $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ env.APP_IMAGE_TAG }} || echo "Imagem atual não encontrada, pulando backup"
+            docker tag $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ env.APP_IMAGE_TAG }} $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:previous || echo "Não foi possível salvar imagem anterior"
+            
+            # DEPOIS: Tag e push da NOVA imagem
             docker tag $APP_IMAGE_ID $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
             docker tag $APP_IMAGE_ID $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ env.APP_IMAGE_TAG }}
-            docker tag $APP_IMAGE_ID $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:previous
             docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
             docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ env.APP_IMAGE_TAG }}
-            docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:previous
+            
+            # FINALMENTE: Push da imagem "previous" (se existir)
+            docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:previous || echo "Não foi possível fazer push da imagem previous"
+            
             echo "app_image=$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
           else
             echo "⚠️ ERRO: Não foi possível encontrar a imagem da aplicação para tagging!"
@@ -193,12 +202,21 @@ jobs:
           if [ -n "$DB_IMAGE_ID" ]; then
             echo "Usando ID da imagem de banco para tagging: $DB_IMAGE_ID"
             # Use env.ECR_REPOSITORY (pointtils-dev) instead of secrets.ECR_REPOSITORY (pointtils)
+            
+            # PRIMEIRO: Salvar a imagem atual como "previous" ANTES de sobrescrever com a nova
+            echo "Salvando imagem atual do banco como previous..."
+            docker pull $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:${{ env.DB_IMAGE_TAG }} || echo "Imagem atual do banco não encontrada, pulando backup"
+            docker tag $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:${{ env.DB_IMAGE_TAG }} $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:previous || echo "Não foi possível salvar imagem anterior do banco"
+            
+            # DEPOIS: Tag e push da NOVA imagem
             docker tag $DB_IMAGE_ID $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:$IMAGE_TAG
             docker tag $DB_IMAGE_ID $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:${{ env.DB_IMAGE_TAG }}
-            docker tag $DB_IMAGE_ID $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:previous
             docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:$IMAGE_TAG
             docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:${{ env.DB_IMAGE_TAG }}
-            docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:previous
+            
+            # FINALMENTE: Push da imagem "previous" (se existir)
+            docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:previous || echo "Não foi possível fazer push da imagem previous do banco"
+            
             echo "db_image=$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-db:$IMAGE_TAG" >> $GITHUB_OUTPUT
           else
             echo "⚠️ ERRO: Não foi possível encontrar a imagem do banco de dados para tagging!"
