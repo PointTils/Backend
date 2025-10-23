@@ -137,6 +137,11 @@ resource "aws_iam_role" "ec2_role" {
   tags = {
     Name = "pointtils-ec2-role"
   }
+  
+  # Ignorar erros se o role já existir
+  lifecycle {
+    ignore_changes = all
+  }
 }
 
 # Policy para a instância EC2 acessar o ECR
@@ -196,6 +201,11 @@ resource "aws_iam_instance_profile" "ec2_profile" {
 resource "aws_key_pair" "pointtils_key" {
   key_name   = "pointtils_key"
   public_key = file("${path.module}/pointtils_key.pub")
+  
+  # Ignorar erros se a chave já existir
+  lifecycle {
+    ignore_changes = all
+  }
 }
 
 # Script de inicialização para a instância EC2
