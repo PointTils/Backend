@@ -120,6 +120,13 @@ jobs:
           POSTGRES_DB=${{ secrets.DB_NAME }}
           POSTGRES_USER=${{ secrets.DB_USERNAME }}
           POSTGRES_PASSWORD=${{ secrets.DB_PASSWORD }}
+          BREVO_SMTP_PASSWORD=${{ secrets.BREVO_SMTP_PASSWORD }}
+          BREVO_SMTP_HOST=${{ vars.BREVO_SMTP_HOST }}
+          BREVO_SMTP_PORT=${{ vars.BREVO_SMTP_PORT }}
+          BREVO_SMTP_USERNAME=${{ vars.BREVO_SMTP_USERNAME }}
+          BREVO_SENDER_EMAIL=${{ vars.BREVO_SENDER_EMAIL }}
+          BREVO_SENDER_NAME=${{ vars.BREVO_SENDER_NAME }}
+          ADMIN_EMAIL=${{ vars.ADMIN_EMAIL }}
           EOL
 
       - name: Build and push images with docker compose
