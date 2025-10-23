@@ -371,6 +371,11 @@ resource "aws_instance" "pointtils_app" {
   tags = {
     Name = "pointtils-app"
   }
+
+  # Forçar substituição quando instance_type mudar
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # Elastic IP para a instância EC2
