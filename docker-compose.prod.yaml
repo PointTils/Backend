@@ -26,6 +26,11 @@ services:
         AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
         AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
         AWS_REGION: ${AWS_REGION}
+        EMAIL_HOST: ${EMAIL_HOST}
+        EMAIL_PORT: ${EMAIL_PORT}
+        EMAIL_USERNAME: ${EMAIL_USERNAME}
+        EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+        EMAIL_FROM: ${EMAIL_FROM}
     image: ${APP_IMAGE:-backend-pointtils}
     container_name: pointtils
     environment:
@@ -51,6 +56,11 @@ services:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_REGION=${AWS_REGION}
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_PORT=${EMAIL_PORT}
+      - EMAIL_USERNAME=${EMAIL_USERNAME}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+      - EMAIL_FROM=${EMAIL_FROM}
     ports:
       - "${SERVER_PORT}:${SERVER_PORT}"
     depends_on:
