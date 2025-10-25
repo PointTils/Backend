@@ -59,51 +59,25 @@ public interface ScheduleRepository extends JpaRepository<Schedule, UUID>, JpaSp
                     ) = n.dow
                 WHERE interpreter_id = :interpreterId
             ),
-            time_slots AS (
-                -- Slots iniciando em hora cheia
+            available_slots AS (
                 SELECT
-                    sd.schedule_id,
                     sd.interpreter_id,
-                    sd.day,
                     sd.selected_date,
-                    generate_series(
+                    gs.slot_start::time AS slot_start,
+                    (gs.slot_start + interval '30 minutes')::time AS slot_end
+                FROM schedule_days sd,
+                     LATERAL generate_series(
                         '2000-01-01'::timestamp + sd.start_time,
-                        '2000-01-01'::timestamp + sd.end_time - interval '1 hour',
-                        interval '1 hour'
-                    ) AS slot_start
-                FROM schedule_days sd
-
-                UNION ALL
-
-                -- Slots iniciando em meia hora
-                SELECT
-                    sd.schedule_id,
-                    sd.interpreter_id,
-                    sd.day,
-                    sd.selected_date,
-                    generate_series(
-                        '2000-01-01'::timestamp + sd.start_time + interval '30 minutes',
-                        '2000-01-01'::timestamp + sd.end_time - interval '30 minutes' - interval '1 hour',
-                        interval '1 hour'
-                    ) AS slot_start
-                FROM schedule_days sd
-            ),
-            slots_with_end AS (
-                SELECT
-                    *,
-                    slot_start + interval '1 hour' AS slot_end
-                FROM time_slots
-            ),
-            filtered_slots AS (
-                SELECT sw.*
-                FROM slots_with_end sw
+                        '2000-01-01'::timestamp + sd.end_time - interval '30 minutes',
+                        interval '30 minutes'
+                     ) AS gs(slot_start)
                 WHERE NOT EXISTS (
                     SELECT 1
                     FROM appointment a
-                    WHERE a.interpreter_id = sw.interpreter_id
-                      AND a.date = sw.selected_date
-                      AND ('2000-01-01'::timestamp + a.start_time) < sw.slot_end
-                      AND ('2000-01-01'::timestamp + a.end_time) > sw.slot_start
+                    WHERE a.interpreter_id = sd.interpreter_id
+                      AND a.date = sd.selected_date
+                      AND ('2000-01-01'::timestamp + a.start_time) < gs.slot_start + interval '30 minutes'
+                      AND ('2000-01-01'::timestamp + a.end_time) > gs.slot_start
                 )
             )
             SELECT
@@ -111,7 +85,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, UUID>, JpaSp
                 selected_date::date,
                 slot_start::time AS startTime,
                 slot_end::time AS endTime
-            FROM filtered_slots
+            FROM available_slots
             ORDER BY interpreter_id, selected_date, slot_start
             """, nativeQuery = true)
     List<Object[]> findAvailableTimeSlots(@Param("interpreterId") UUID interpreterId,

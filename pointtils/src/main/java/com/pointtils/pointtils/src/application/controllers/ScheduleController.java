@@ -84,8 +84,8 @@ public class ScheduleController {
     @GetMapping("/available")
     @Operation(summary = "Lista todos os intervalos de horários disponíveis cadastrados")
     public ResponseEntity<ApiResponseDTO<List<AvailableTimeSlotsResponseDTO>>> listAvailableSchedules(@RequestParam UUID interpreterId,
-                                                                                                   @RequestParam LocalDate dateFrom,
-                                                                                                   @RequestParam LocalDate dateTo) {
+                                                                                                      @RequestParam LocalDate dateFrom,
+                                                                                                      @RequestParam LocalDate dateTo) {
         List<AvailableTimeSlotsResponseDTO> availableTimeSlots = service.findAvailableSchedules(interpreterId, dateFrom, dateTo);
         ApiResponseDTO<List<AvailableTimeSlotsResponseDTO>> response = new ApiResponseDTO<>(true, "Horários disponíveis obtidos com sucesso", availableTimeSlots);
         return ResponseEntity.ok(response);
