@@ -16,7 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -96,7 +95,7 @@ class InterpreterDocumentControllerTest {
     }
 
     @Test
-    void shouldUpdateDocumentSuccessfully() throws IOException {
+    void shouldUpdateDocumentSuccessfully() {
         // Arrange
         UUID interpreterId = UUID.randomUUID();
         UUID documentId = UUID.randomUUID();

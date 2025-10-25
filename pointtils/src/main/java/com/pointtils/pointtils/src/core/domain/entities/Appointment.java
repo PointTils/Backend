@@ -91,7 +91,7 @@ public class Appointment {
 
 
     public Appointment(String uf, String city, AppointmentModality modality, LocalDate date, String description,
-                       AppointmentStatus status, Interpreter interpreterId, User userId, LocalTime starTime, LocalTime endTime){
+                       AppointmentStatus status, Interpreter interpreterId, User userId, LocalTime startTime, LocalTime endTime){
         this.uf = uf;
         this.city = city;
         this.modality = modality;
@@ -100,7 +100,7 @@ public class Appointment {
         this.status = status;
         this.interpreter = interpreterId;
         this.user = userId;
-        this.startTime = starTime;
+        this.startTime = startTime;
         this.endTime = endTime;
     }
 }

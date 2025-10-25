@@ -16,7 +16,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class InterpreterDocumentRequestDTO {
 
-    @NotNull(message = "O ID do usuário é obrigatório")
+    @NotNull(message = "O ID do intérprete é obrigatório")
     @JsonProperty("interpreter_id")
     private UUID interpreterId;
 
