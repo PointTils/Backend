@@ -1,0 +1,27 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alerts.yml"
+  - "recording_rules.yml"
+
+scrape_configs:
+  # Prometheus próprio
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # PointTils Application
+  - job_name: 'pointtils'
+    static_configs:
+      - targets: ['pointtils:8080']
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 15s
+
+  # PostgreSQL (se expuser métricas via postgres_exporter)
+  - job_name: 'postgresql'
+    static_configs:
+      - targets: ['pointtils-db:5432']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
