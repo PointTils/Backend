@@ -38,7 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @EnableAutoConfiguration(exclude = S3AutoConfiguration.class)
 @ActiveProfiles("test")
-public class ParametersControllerTest {
+class ParametersControllerTest {
         
     @Autowired
     private MockMvc mockMvc;

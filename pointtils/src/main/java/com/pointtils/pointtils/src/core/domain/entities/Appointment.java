@@ -90,15 +90,16 @@ public class Appointment {
     private LocalTime endTime;
 
 
-    public Appointment(String uf, String city, AppointmentModality modality, LocalDate date, String description, AppointmentStatus status, Interpreter interpreter_id, User user_id, LocalTime starTime, LocalTime endTime){
+    public Appointment(String uf, String city, AppointmentModality modality, LocalDate date, String description,
+                       AppointmentStatus status, Interpreter interpreterId, User userId, LocalTime starTime, LocalTime endTime){
         this.uf = uf;
         this.city = city;
         this.modality = modality;
         this.date = date;
         this.description = description;
         this.status = status;
-        this.interpreter = interpreter_id;
-        this.user = user_id;
+        this.interpreter = interpreterId;
+        this.user = userId;
         this.startTime = starTime;
         this.endTime = endTime;
     }

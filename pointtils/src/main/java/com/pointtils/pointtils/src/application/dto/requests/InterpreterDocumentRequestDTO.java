@@ -17,8 +17,8 @@ import java.util.UUID;
 public class InterpreterDocumentRequestDTO {
 
     @NotNull(message = "O ID do usuário é obrigatório")
-    @JsonProperty("user_id")
-    private UUID interpreter_Id;
+    @JsonProperty("interpreter_id")
+    private UUID interpreterId;
 
     @NotNull(message = "O documento é obrigatório")
     private MultipartFile file;

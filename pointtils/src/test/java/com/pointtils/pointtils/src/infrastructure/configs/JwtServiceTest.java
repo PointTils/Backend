@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Date;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -182,17 +184,14 @@ class JwtServiceTest {
     }
 
     @Test
-    void shouldGenerateDifferentTokensForSameSubject() {
+    void shouldGenerateDifferentTokensForSameSubject() throws InterruptedException {
         // Given
         String subject = "testuser";
+        CountDownLatch latch = new CountDownLatch(1);
 
         // When
         String token1 = jwtService.generateToken(subject);
-        try {
-            Thread.sleep(1000); // 1 second delay to ensure different issuedAt times
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        latch.await(1, TimeUnit.SECONDS); // Wait for 1 second
         String token2 = jwtService.generateToken(subject);
 
         // Then
