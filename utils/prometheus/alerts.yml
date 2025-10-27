@@ -7,6 +7,7 @@ groups:
         for: 1m
         labels:
           severity: critical
+          alert_group: pointtils_alerts
         annotations:
           summary: "Serviço {{ $labels.job }} está offline"
           description: "O serviço {{ $labels.job }} está offline há mais de 1 minuto"
@@ -17,6 +18,7 @@ groups:
         for: 5m
         labels:
           severity: warning
+          alert_group: pointtils_alerts
         annotations:
           summary: "Tempo de resposta alto para {{ $labels.job }}"
           description: "O tempo de resposta do serviço {{ $labels.job }} está acima de 2 segundos"
@@ -27,6 +29,7 @@ groups:
         for: 5m
         labels:
           severity: warning
+          alert_group: pointtils_alerts
         annotations:
           summary: "Uso de memória alto para {{ $labels.job }}"
           description: "O uso de memória do serviço {{ $labels.job }} está acima de 80%"
@@ -37,6 +40,7 @@ groups:
         for: 5m
         labels:
           severity: warning
+          alert_group: pointtils_alerts
         annotations:
           summary: "Uso de CPU alto para {{ $labels.job }}"
           description: "O uso de CPU do serviço {{ $labels.job }} está acima de 80%"
@@ -47,6 +51,7 @@ groups:
         for: 5m
         labels:
           severity: warning
+          alert_group: pointtils_alerts
         annotations:
           summary: "Muitas conexões de banco para {{ $labels.job }}"
           description: "O serviço {{ $labels.job }} está usando mais de 80% das conexões disponíveis"
@@ -57,6 +62,7 @@ groups:
         for: 2m
         labels:
           severity: critical
+          alert_group: pointtils_alerts
         annotations:
           summary: "Taxa de erro alta para {{ $labels.job }}"
           description: "O serviço {{ $labels.job }} está retornando muitos erros 5xx"
@@ -67,6 +73,7 @@ groups:
         for: 5m
         labels:
           severity: warning
+          alert_group: pointtils_alerts
         annotations:
           summary: "Garbage collection frequente para {{ $labels.job }}"
           description: "O serviço {{ $labels.job }} está fazendo garbage collection muito frequentemente"
@@ -77,6 +84,7 @@ groups:
         for: 1m
         labels:
           severity: warning
+          alert_group: pointtils_alerts
         annotations:
           summary: "Garbage collection longo para {{ $labels.job }}"
           description: "O garbage collection do serviço {{ $labels.job }} está demorando mais de 1 segundo"
@@ -88,6 +96,7 @@ groups:
         labels:
           severity: critical
           service: pointtils
+          alert_group: pointtils_alerts
         annotations:
           summary: "Serviço PointTils está offline"
           description: "O serviço principal PointTils está offline"
@@ -98,6 +107,7 @@ groups:
         labels:
           severity: critical
           service: postgresql
+          alert_group: pointtils_alerts
         annotations:
           summary: "Banco de dados PostgreSQL está offline"
           description: "O banco de dados PostgreSQL está offline"

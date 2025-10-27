@@ -62,9 +62,7 @@ services:
       - "3000:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-    volumes:
-      - grafana_data:/var/lib/grafana
+      - GF_SECURITY_ADMIN_PASSWORD=admin123456
     networks:
       - pointtils-network
     depends_on:
@@ -127,7 +125,6 @@ volumes:
   sonarqube_extensions:
   sonarqube_logs:
   prometheus_data:
-  grafana_data:
 
 networks:
   pointtils-network:

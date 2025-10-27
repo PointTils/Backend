@@ -4,6 +4,9 @@ FROM grafana/grafana:latest
 COPY grafana.ini /etc/grafana/grafana.ini
 COPY provisioning /etc/grafana/provisioning
 
+# Copiar dashboard para diretório de dashboards
+COPY provisioning/dashboards/pointtils_dashboard.json /var/lib/grafana/dashboards/pointtils_dashboard.json
+
 # Expor porta padrão do Grafana
 EXPOSE 3000
 
