@@ -13,7 +13,7 @@ groups:
 
       # Alerta para tempo de resposta alto
       - alert: HighResponseTime
-        expr: http_server_requests_seconds_max > 2
+        expr: http_server_requests_seconds_max{job="pointtils"} > 2
         for: 5m
         labels:
           severity: warning
@@ -23,7 +23,7 @@ groups:
 
       # Alerta para uso de memória alto
       - alert: HighMemoryUsage
-        expr: (jvm_memory_used_bytes / jvm_memory_max_bytes) > 0.8
+        expr: (jvm_memory_used_bytes{job="pointtils"} / jvm_memory_max_bytes{job="pointtils"}) > 0.8
         for: 5m
         labels:
           severity: warning
@@ -33,7 +33,7 @@ groups:
 
       # Alerta para uso de CPU alto
       - alert: HighCPUUsage
-        expr: process_cpu_usage > 0.8
+        expr: process_cpu_usage{job="pointtils"} > 0.8
         for: 5m
         labels:
           severity: warning
@@ -43,7 +43,7 @@ groups:
 
       # Alerta para muitas conexões de banco de dados
       - alert: HighDatabaseConnections
-        expr: hikaricp_connections_active / hikaricp_connections_max > 0.8
+        expr: hikaricp_connections_active{job="pointtils"} / hikaricp_connections_max{job="pointtils"} > 0.8
         for: 5m
         labels:
           severity: warning
@@ -53,7 +53,7 @@ groups:
 
       # Alerta para erro rate alto
       - alert: HighErrorRate
-        expr: rate(http_server_requests_seconds_count{status=~"5.."}[5m]) > 0.1
+        expr: rate(http_server_requests_seconds_count{job="pointtils",status=~"5.."}[5m]) > 0.1
         for: 2m
         labels:
           severity: critical
@@ -63,7 +63,7 @@ groups:
 
       # Alerta para garbage collection frequente
       - alert: FrequentGarbageCollection
-        expr: rate(jvm_gc_collection_seconds_count[5m]) > 10
+        expr: rate(jvm_gc_collection_seconds_count{job="pointtils"}[5m]) > 10
         for: 5m
         labels:
           severity: warning
@@ -73,7 +73,7 @@ groups:
 
       # Alerta para tempo de garbage collection alto
       - alert: LongGarbageCollection
-        expr: jvm_gc_collection_seconds_sum > 1
+        expr: jvm_gc_collection_seconds_sum{job="pointtils"} > 1
         for: 1m
         labels:
           severity: warning
