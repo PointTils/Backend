@@ -54,7 +54,9 @@ services:
 
   # Grafana para visualização de métricas local
   grafana:
-    image: grafana/grafana:latest
+    build:
+      context: ./utils/grafana
+      dockerfile: Dockerfile
     container_name: grafana
     ports:
       - "3000:3000"

@@ -90,7 +90,9 @@ services:
 
   # Grafana para visualização de métricas em desenvolvimento
   grafana-dev:
-    image: grafana/grafana:latest
+    build:
+      context: ./utils/grafana
+      dockerfile: Dockerfile
     container_name: grafana-dev
     ports:
       - "3001:3000"
@@ -133,6 +135,7 @@ services:
 volumes:
   postgres_dev_data:
   prometheus_dev_data:
+  grafana_dev_data:
 
 networks:
   pointtils-dev-network:

@@ -20,8 +20,9 @@ scrape_configs:
     scrape_interval: 15s
 
   # PostgreSQL (se expuser métricas via postgres_exporter)
-  - job_name: 'postgresql'
-    static_configs:
-      - targets: ['pointtils-db:5432']
-    metrics_path: '/metrics'
-    scrape_interval: 30s
+  # Temporarily disabled - PostgreSQL doesn't have metrics endpoint
+  # - job_name: 'postgresql'
+  #   static_configs:
+  #     - targets: ['pointtils-db:5432']
+  #   metrics_path: '/metrics'
+  #   scrape_interval: 30s
