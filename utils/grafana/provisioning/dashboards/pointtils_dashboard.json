@@ -1,407 +1,502 @@
 {
-  "dashboard": {
-    "id": null,
-    "title": "PointTils Application Dashboard",
-    "tags": ["pointtils", "spring-boot", "java", "monitoring"],
-    "timezone": "browser",
-    "panels": [
-      {
-        "id": 1,
-        "title": "Status da Aplicação",
-        "type": "stat",
-        "targets": [
-          {
-            "expr": "up{job=\"pointtils\"}",
-            "legendFormat": "Status",
-            "refId": "A"
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "color": {
-              "mode": "thresholds"
-            },
-            "mappings": [
+  "title": "PointTils - Dashboard de Performance",
+  "tags": ["pointtils", "spring-boot", "java", "monitoring", "performance"],
+  "timezone": "browser",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Status da Aplicação",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "up{job=\"pointtils\"}",
+          "legendFormat": "Status",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "1": {
+                  "text": "Online"
+                },
+                "0": {
+                  "text": "Offline"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "steps": [
               {
-                "options": {
-                  "1": {
-                    "text": "Online"
-                  },
-                  "0": {
-                    "text": "Offline"
-                  }
-                },
-                "type": "value"
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
               }
-            ],
-            "thresholds": {
-              "steps": [
-                {
-                  "color": "red",
-                  "value": null
-                },
-                {
-                  "color": "green",
-                  "value": 1
-                }
-              ]
-            }
+            ]
           }
-        },
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 0,
-          "y": 0
         }
       },
-      {
-        "id": 2,
-        "title": "Uso de CPU",
-        "type": "gauge",
-        "targets": [
-          {
-            "expr": "process_cpu_usage{job=\"pointtils\"} * 100",
-            "legendFormat": "CPU Usage",
-            "refId": "A"
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "unit": "percent",
-            "min": 0,
-            "max": 100,
-            "thresholds": {
-              "steps": [
-                {
-                  "color": "green",
-                  "value": null
-                },
-                {
-                  "color": "yellow",
-                  "value": 70
-                },
-                {
-                  "color": "red",
-                  "value": 90
-                }
-              ]
-            }
-          }
-        },
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 12,
-          "y": 0
-        }
-      },
-      {
-        "id": 3,
-        "title": "Uso de Memória JVM",
-        "type": "gauge",
-        "targets": [
-          {
-            "expr": "(jvm_memory_used_bytes{job=\"pointtils\", area=\"heap\"} / jvm_memory_max_bytes{job=\"pointtils\", area=\"heap\"}) * 100",
-            "legendFormat": "Heap Memory",
-            "refId": "A"
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "unit": "percent",
-            "min": 0,
-            "max": 100,
-            "thresholds": {
-              "steps": [
-                {
-                  "color": "green",
-                  "value": null
-                },
-                {
-                  "color": "yellow",
-                  "value": 70
-                },
-                {
-                  "color": "red",
-                  "value": 90
-                }
-              ]
-            }
-          }
-        },
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 0,
-          "y": 8
-        }
-      },
-      {
-        "id": 4,
-        "title": "Requisições HTTP por Segundo",
-        "type": "stat",
-        "targets": [
-          {
-            "expr": "rate(http_server_requests_seconds_count{job=\"pointtils\"}[1m])",
-            "legendFormat": "Requests/s",
-            "refId": "A"
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "unit": "reqps",
-            "color": {
-              "mode": "palette-classic"
-            }
-          }
-        },
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 12,
-          "y": 8
-        }
-      },
-      {
-        "id": 5,
-        "title": "Tempo de Resposta HTTP",
-        "type": "timeseries",
-        "targets": [
-          {
-            "expr": "rate(http_server_requests_seconds_sum{job=\"pointtils\"}[1m]) / rate(http_server_requests_seconds_count{job=\"pointtils\"}[1m])",
-            "legendFormat": "Avg Response Time",
-            "refId": "A"
-          },
-          {
-            "expr": "http_server_requests_seconds_max{job=\"pointtils\"}",
-            "legendFormat": "Max Response Time",
-            "refId": "B"
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "unit": "s",
-            "color": {
-              "mode": "palette-classic"
-            }
-          }
-        },
-        "gridPos": {
-          "h": 8,
-          "w": 24,
-          "x": 0,
-          "y": 16
-        }
-      },
-      {
-        "id": 6,
-        "title": "Conexões do Banco de Dados",
-        "type": "timeseries",
-        "targets": [
-          {
-            "expr": "hikaricp_connections_active{job=\"pointtils\"}",
-            "legendFormat": "Active Connections",
-            "refId": "A"
-          },
-          {
-            "expr": "hikaricp_connections_idle{job=\"pointtils\"}",
-            "legendFormat": "Idle Connections",
-            "refId": "B"
-          },
-          {
-            "expr": "hikaricp_connections_max{job=\"pointtils\"}",
-            "legendFormat": "Max Connections",
-            "refId": "C"
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "unit": "short",
-            "color": {
-              "mode": "palette-classic"
-            }
-          }
-        },
-        "gridPos": {
-          "h": 8,
-          "w": 24,
-          "x": 0,
-          "y": 24
-        }
-      },
-      {
-        "id": 7,
-        "title": "Garbage Collection",
-        "type": "timeseries",
-        "targets": [
-          {
-            "expr": "rate(jvm_gc_pause_seconds_count{job=\"pointtils\"}[5m])",
-            "legendFormat": "GC Rate",
-            "refId": "A"
-          },
-          {
-            "expr": "jvm_gc_pause_seconds_sum{job=\"pointtils\"}",
-            "legendFormat": "Total GC Time",
-            "refId": "B"
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "unit": "s",
-            "color": {
-              "mode": "palette-classic"
-            }
-          }
-        },
-        "gridPos": {
-          "h": 8,
-          "w": 24,
-          "x": 0,
-          "y": 32
-        }
-      },
-      {
-        "id": 8,
-        "title": "Status dos Endpoints HTTP",
-        "type": "timeseries",
-        "targets": [
-          {
-            "expr": "rate(http_server_requests_seconds_count{job=\"pointtils\", status=~\"2..\"}[1m])",
-            "legendFormat": "2xx Success",
-            "refId": "A"
-          },
-          {
-            "expr": "rate(http_server_requests_seconds_count{job=\"pointtils\", status=~\"4..\"}[1m])",
-            "legendFormat": "4xx Client Errors",
-            "refId": "B"
-          },
-          {
-            "expr": "rate(http_server_requests_seconds_count{job=\"pointtils\", status=~\"5..\"}[1m])",
-            "legendFormat": "5xx Server Errors",
-            "refId": "C"
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "unit": "reqps",
-            "color": {
-              "mode": "palette-classic"
-            }
-          }
-        },
-        "gridPos": {
-          "h": 8,
-          "w": 24,
-          "x": 0,
-          "y": 40
-        }
-      },
-      {
-        "id": 9,
-        "title": "Threads da JVM",
-        "type": "timeseries",
-        "targets": [
-          {
-            "expr": "jvm_threads_live_threads{job=\"pointtils\"}",
-            "legendFormat": "Live Threads",
-            "refId": "A"
-          },
-          {
-            "expr": "jvm_threads_daemon_threads{job=\"pointtils\"}",
-            "legendFormat": "Daemon Threads",
-            "refId": "B"
-          },
-          {
-            "expr": "jvm_threads_peak_threads{job=\"pointtils\"}",
-            "legendFormat": "Peak Threads",
-            "refId": "C"
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "unit": "short",
-            "color": {
-              "mode": "palette-classic"
-            }
-          }
-        },
-        "gridPos": {
-          "h": 8,
-          "w": 24,
-          "x": 0,
-          "y": 48
-        }
-      },
-      {
-        "id": 10,
-        "title": "Classes Carregadas",
-        "type": "stat",
-        "targets": [
-          {
-            "expr": "jvm_classes_loaded_classes{job=\"pointtils\"}",
-            "legendFormat": "Loaded Classes",
-            "refId": "A"
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "unit": "short",
-            "color": {
-              "mode": "continuous-BlPu"
-            }
-          }
-        },
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 0,
-          "y": 56
-        }
-      },
-      {
-        "id": 11,
-        "title": "Uso de Memória por Área",
-        "type": "timeseries",
-        "targets": [
-          {
-            "expr": "jvm_memory_used_bytes{job=\"pointtils\", area=\"heap\"}",
-            "legendFormat": "Heap Memory",
-            "refId": "A"
-          },
-          {
-            "expr": "jvm_memory_used_bytes{job=\"pointtils\", area=\"nonheap\"}",
-            "legendFormat": "Non-Heap Memory",
-            "refId": "B"
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "unit": "bytes",
-            "color": {
-              "mode": "palette-classic"
-            }
-          }
-        },
-        "gridPos": {
-          "h": 8,
-          "w": 24,
-          "x": 12,
-          "y": 56
-        }
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 0
       }
-    ],
-    "time": {
-      "from": "now-1h",
-      "to": "now"
     },
-    "timepicker": {},
-    "templating": {
-      "list": []
+    {
+      "id": 2,
+      "title": "Utilização de CPU",
+      "type": "gauge",
+      "targets": [
+        {
+          "expr": "process_cpu_usage{job=\"pointtils\"} * 100",
+          "legendFormat": "CPU Usage",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      }
     },
-    "refresh": "10s",
-    "schemaVersion": 36,
-    "version": 1,
-    "uid": "pointtils-dashboard"
-  }
+    {
+      "id": 3,
+      "title": "Utilização de Memória JVM",
+      "type": "gauge",
+      "targets": [
+        {
+          "expr": "(jvm_memory_used_bytes{job=\"pointtils\", area=\"heap\"} / jvm_memory_max_bytes{job=\"pointtils\", area=\"heap\"}) * 100",
+          "legendFormat": "Heap Memory",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      }
+    },
+    {
+      "id": 4,
+      "title": "Vazão (Requisições/s)",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "rate(http_server_requests_seconds_count{job=\"pointtils\"}[1m])",
+          "legendFormat": "Requests/s",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "color": {
+            "mode": "palette-classic"
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      }
+    },
+    {
+      "id": 5,
+      "title": "Tempo de Resposta HTTP (ms)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(http_server_requests_seconds_sum{job=\"pointtils\"}[1m]) / rate(http_server_requests_seconds_count{job=\"pointtils\"}[1m]) * 1000",
+          "legendFormat": "Avg Response Time",
+          "refId": "A"
+        },
+        {
+          "expr": "http_server_requests_seconds_max{job=\"pointtils\"} * 1000",
+          "legendFormat": "Max Response Time",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "color": {
+            "mode": "palette-classic"
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      }
+    },
+    {
+      "id": 6,
+      "title": "Tempo de Atendimento por Endpoint",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(http_server_requests_seconds_sum{job=\"pointtils\", uri=~\"/api/.*\"}[1m]) / rate(http_server_requests_seconds_count{job=\"pointtils\", uri=~\"/api/.*\"}[1m]) * 1000",
+          "legendFormat": "{{uri}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "color": {
+            "mode": "palette-classic"
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      }
+    },
+    {
+      "id": 7,
+      "title": "População do Sistema - Threads",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "jvm_threads_live_threads{job=\"pointtils\"}",
+          "legendFormat": "Live Threads",
+          "refId": "A"
+        },
+        {
+          "expr": "jvm_threads_daemon_threads{job=\"pointtils\"}",
+          "legendFormat": "Daemon Threads",
+          "refId": "B"
+        },
+        {
+          "expr": "jvm_threads_peak_threads{job=\"pointtils\"}",
+          "legendFormat": "Peak Threads",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      }
+    },
+    {
+      "id": 8,
+      "title": "Conexões do Banco de Dados",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "hikaricp_connections_active{job=\"pointtils\"}",
+          "legendFormat": "Active Connections",
+          "refId": "A"
+        },
+        {
+          "expr": "hikaricp_connections_idle{job=\"pointtils\"}",
+          "legendFormat": "Idle Connections",
+          "refId": "B"
+        },
+        {
+          "expr": "hikaricp_connections_max{job=\"pointtils\"}",
+          "legendFormat": "Max Connections",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      }
+    },
+    {
+      "id": 9,
+      "title": "Status dos Endpoints HTTP",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(http_server_requests_seconds_count{job=\"pointtils\", status=~\"2..\"}[1m])",
+          "legendFormat": "2xx Success",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(http_server_requests_seconds_count{job=\"pointtils\", status=~\"4..\"}[1m])",
+          "legendFormat": "4xx Client Errors",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(http_server_requests_seconds_count{job=\"pointtils\", status=~\"5..\"}[1m])",
+          "legendFormat": "5xx Server Errors",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "color": {
+            "mode": "palette-classic"
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      }
+    },
+    {
+      "id": 10,
+      "title": "Garbage Collection",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(jvm_gc_pause_seconds_count{job=\"pointtils\"}[5m])",
+          "legendFormat": "GC Rate",
+          "refId": "A"
+        },
+        {
+          "expr": "jvm_gc_pause_seconds_sum{job=\"pointtils\"}",
+          "legendFormat": "Total GC Time",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      }
+    },
+    {
+      "id": 11,
+      "title": "Uso de Memória por Área",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "jvm_memory_used_bytes{job=\"pointtils\", area=\"heap\"}",
+          "legendFormat": "Heap Memory",
+          "refId": "A"
+        },
+        {
+          "expr": "jvm_memory_used_bytes{job=\"pointtils\", area=\"nonheap\"}",
+          "legendFormat": "Non-Heap Memory",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "color": {
+            "mode": "palette-classic"
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      }
+    },
+    {
+      "id": 12,
+      "title": "Classes Carregadas",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "jvm_classes_loaded_classes{job=\"pointtils\"}",
+          "legendFormat": "Loaded Classes",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "continuous-BlPu"
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 32
+      }
+    },
+    {
+      "id": 13,
+      "title": "Latência do Banco de Dados",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "hikaricp_connections_creation_seconds{job=\"pointtils\"}",
+          "legendFormat": "Connection Creation Time",
+          "refId": "A"
+        },
+        {
+          "expr": "hikaricp_connections_acquire_seconds{job=\"pointtils\"}",
+          "legendFormat": "Connection Acquire Time",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 40
+      }
+    },
+    {
+      "id": 14,
+      "title": "Taxa de Erro (%)",
+      "type": "gauge",
+      "targets": [
+        {
+          "expr": "(rate(http_server_requests_seconds_count{job=\"pointtils\", status=~\"4..|5..\"}[5m]) / rate(http_server_requests_seconds_count{job=\"pointtils\"}[5m])) * 100",
+          "legendFormat": "Error Rate",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 40
+      }
+    }
+  ],
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "templating": {
+    "list": []
+  },
+  "refresh": "10s",
+  "schemaVersion": 36,
+  "version": 1,
+  "uid": "pointtils-dashboard"
 }
