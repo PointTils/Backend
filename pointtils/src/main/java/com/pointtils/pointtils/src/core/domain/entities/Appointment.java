@@ -99,19 +99,4 @@ public class Appointment {
     @UpdateTimestamp
     @Column(name = "modified_at", nullable = false)
     private LocalDateTime modifiedAt; 
-
-
-    public Appointment(String uf, String city, AppointmentModality modality, LocalDate date, String description,
-                       AppointmentStatus status, Interpreter interpreterId, User userId, LocalTime startTime, LocalTime endTime){
-        this.uf = uf;
-        this.city = city;
-        this.modality = modality;
-        this.date = date;
-        this.description = description;
-        this.status = status;
-        this.interpreter = interpreterId;
-        this.user = userId;
-        this.startTime = startTime;
-        this.endTime = endTime;
-    }
 }

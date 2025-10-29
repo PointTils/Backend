@@ -57,7 +57,7 @@ public class Schedule {
     @Column(name = "end_time", nullable = false)
     private LocalTime endTime;
 
-     @CreationTimestamp
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt; 
 
