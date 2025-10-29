@@ -48,7 +48,4 @@ ALTER TABLE appointment
 ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 ADD COLUMN modified_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
--- Adiciona as colunas na tabela correspondente à entidade Person
-ALTER TABLE person
-ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-ADD COLUMN modified_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+-- Removido: As colunas 'created_at' e 'modified_at' já existem na tabela 'user_account' devido à estratégia de herança JPA.
