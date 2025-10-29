@@ -31,8 +31,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 
 @ExtendWith(MockitoExtension.class)
 class UserSpecialtyControllerTest {
@@ -222,4 +224,40 @@ class UserSpecialtyControllerTest {
 
         verify(userSpecialtyService).removeUserSpecialties(userId, List.of(specialtyId));
     }
+
+  @Test
+void updateUserSpecialty_ShouldUpdateSpecialtySuccessfully() throws Exception {
+    UUID userSpecialtyId = UUID.randomUUID();
+    UUID newSpecialtyId = UUID.randomUUID();
+
+    when(userSpecialtyService.updateUserSpecialty(userSpecialtyId, userId, newSpecialtyId))
+        .thenReturn(userSpecialty);
+
+    mockMvc.perform(patch("/v1/users/{userId}/specialties/{userSpecialtyId}", userId, userSpecialtyId)
+            .param("newSpecialtyId", newSpecialtyId.toString()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(userSpecialty.getId().toString()));
+
+    verify(userSpecialtyService).updateUserSpecialty(userSpecialtyId, userId, newSpecialtyId);
+}
+
+
+@Test
+void updateUserSpecialty_WhenUserSpecialtyNotFound_ShouldReturnNotFound() throws Exception {
+    // Arrange
+    UUID userSpecialtyId = UUID.randomUUID();
+    UUID newSpecialtyId = UUID.randomUUID();
+
+    when(userSpecialtyService.updateUserSpecialty(userSpecialtyId, userId, newSpecialtyId))
+            .thenThrow(new EntityNotFoundException("User specialty not found"));
+
+    // Act & Assert
+    mockMvc.perform(patch("/v1/users/{userId}/specialties/{userSpecialtyId}", userId, userSpecialtyId)
+                    .param("newSpecialtyId", newSpecialtyId.toString()))
+            .andExpect(status().isNotFound());
+
+    verify(userSpecialtyService).updateUserSpecialty(userSpecialtyId, userId, newSpecialtyId);
+}
+
+
 }
