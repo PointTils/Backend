@@ -61,7 +61,7 @@ docker run -d \
   --hostname pointtils-db-dev \
   --network pointtils-dev-network \
   -p 5432:5432 \
-  -v postgres_dev_data:/var/lib/postgresql/data \
+  -v postgres_dev_data:/var/lib/postgresql \
   --restart unless-stopped \
   $DB_IMAGE
 

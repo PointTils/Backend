@@ -26,6 +26,13 @@ services:
         AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
         AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
         AWS_REGION: ${AWS_REGION}
+        BREVO_SMTP_PASSWORD: ${BREVO_SMTP_PASSWORD}
+        BREVO_SMTP_HOST: ${BREVO_SMTP_HOST}
+        BREVO_SMTP_PORT: ${BREVO_SMTP_PORT}
+        BREVO_SMTP_USERNAME: ${BREVO_SMTP_USERNAME}
+        BREVO_SENDER_EMAIL: ${BREVO_SENDER_EMAIL}
+        BREVO_SENDER_NAME: ${BREVO_SENDER_NAME}
+        ADMIN_EMAIL: ${ADMIN_EMAIL}
     image: ${APP_IMAGE:-backend-pointtils-dev}
     container_name: pointtils-dev
     environment:
@@ -51,6 +58,13 @@ services:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_REGION=${AWS_REGION}
+      - BREVO_SMTP_PASSWORD=${BREVO_SMTP_PASSWORD}
+      - BREVO_SMTP_HOST=${BREVO_SMTP_HOST}
+      - BREVO_SMTP_PORT=${BREVO_SMTP_PORT}
+      - BREVO_SMTP_USERNAME=${BREVO_SMTP_USERNAME}
+      - BREVO_SENDER_EMAIL=${BREVO_SENDER_EMAIL}
+      - BREVO_SENDER_NAME=${BREVO_SENDER_NAME}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
     ports:
       - "8080:8080"
     depends_on:
@@ -73,7 +87,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_dev_data:/var/lib/postgresql/data
+      - postgres_dev_data:/var/lib/postgresql
     networks:
       - pointtils-dev-network
     healthcheck:
