@@ -181,6 +181,7 @@ public class EmailController {
                 data));
     }
 
+    @Deprecated
     @PostMapping("/interpreter-registration-request")
     @Operation(summary = "Enviar solicitação de cadastro de intérprete", description = "Envia email para administradores com solicitação de cadastro de intérprete")
     @ApiResponses(value = {
@@ -188,26 +189,9 @@ public class EmailController {
             @ApiResponse(responseCode = "400", description = "Dados inválidos"),
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
-    public ResponseEntity<ApiResponseDTO<Map<String, Object>>> sendInterpreterRegistrationRequest(
-            @RequestParam String adminEmail,
-            @RequestParam String interpreterName,
-            @RequestParam String cpf,
-            @RequestParam String cnpj,
-            @RequestParam String email,
-            @RequestParam String phone,
-            @RequestParam String acceptLink,
-            @RequestParam String rejectLink) {
-
-        //boolean success = emailService.sendInterpreterRegistrationRequestEmail(
-        //        adminEmail, interpreterName, cpf, cnpj, email, phone, acceptLink, rejectLink);
-        boolean success = true;
-        Map<String, Object> data = new HashMap<>();
-        data.put("adminEmail", adminEmail);
-        data.put("interpreterName", interpreterName);
-
-        return ResponseEntity.ok(ApiResponseDTO.success(
-                success ? "Email de solicitação enviado com sucesso" : "Falha ao enviar email de solicitação",
-                data));
+    public ResponseEntity<ApiResponseDTO<Void>> sendInterpreterRegistrationRequest() {
+        return ResponseEntity.status(HttpStatus.GONE).body(ApiResponseDTO.error(
+                "Este endpoint está obsoleto. Use o endpoint /interpreter-documents/ para acessar o recurso."));
     }
 
     @GetMapping("/interpreter/{id}/approve")
