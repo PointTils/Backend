@@ -536,4 +536,43 @@ class EmailServiceTest {
         assertTrue(result);
         verify(mailSender).send(any(MimeMessage.class));
     }
+
+    @Test
+    @DisplayName("Deve lidar com exceção ao enviar email com anexos")
+    void deveLidarComExcecaoAoEnviarEmailComAnexos() {
+        MimeMessage mimeMessage = new MimeMessage((Session) null);
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doThrow(new RuntimeException("Erro ao enviar email")).when(mailSender).send(any(MimeMessage.class));
+        byte[] attachment = "Conteúdo do anexo".getBytes();
+        List<byte[]> attachments = List.of(attachment);
+        List<String> attachmentNames = List.of("anexo.txt");
+        boolean result = emailService.sendEmailWithAttachments(emailRequestDTO, attachments, attachmentNames);
+        assertFalse(result);
+        verify(mailSender).createMimeMessage();
+        verify(mailSender).send(any(MimeMessage.class));
+    }
+
+    @Test
+    @DisplayName("Deve retornar false ao enviar email com anexos quando emailRequestDTO for nulo")
+    void deveRetornarFalseAoEnviarEmailComAnexosQuandoEmailRequestDTOForNulo() {
+        byte[] attachment = "Conteúdo do anexo".getBytes();
+        List<byte[]> attachments = List.of(attachment);
+        List<String> attachmentNames = List.of("anexo.txt");
+        boolean result = emailService.sendEmailWithAttachments(null, attachments, attachmentNames);
+        assertFalse(result);
+        verify(mailSender, never()).createMimeMessage();
+        verify(mailSender, never()).send(any(MimeMessage.class));
+    }
+
+    @Test
+    @DisplayName("Deve retornar false ao enviar email com anexos quando ocorrer exceção")
+    void deveRetornarFalseAoEnviarEmailComAnexosQuandoOcorrerExcecao() {
+        MimeMessage mimeMessage = new MimeMessage((Session) null);
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doThrow(new RuntimeException("Erro ao enviar email")).when(mailSender).send(any(MimeMessage.class));
+        boolean result = emailService.sendEmailWithAttachments(emailRequestDTO, null, null);
+        assertFalse(result);
+        verify(mailSender).createMimeMessage();
+        verify(mailSender).send(any(MimeMessage.class));
+    }
 }
