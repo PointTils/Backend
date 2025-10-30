@@ -30,7 +30,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.pointtils.pointtils.src.application.dto.requests.EmailRequestDTO;
-import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
 import com.pointtils.pointtils.src.core.domain.entities.Parameters;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.ParametersRepository;
@@ -256,8 +255,6 @@ class EmailServiceTest {
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
         doNothing().when(mailSender).send(any(MimeMessage.class));
-
-        when(interpreterRepository.findByCpf(anyString())).thenReturn(new Interpreter());
         
         boolean result = emailService.sendInterpreterRegistrationRequestEmail(
                 "admin@pointtils.com", "João Intérprete", "123.456.789-00", "12.345.678/0001-90",
@@ -434,8 +431,6 @@ class EmailServiceTest {
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
         doNothing().when(mailSender).send(any(MimeMessage.class));
-
-        when(interpreterRepository.findByCpf(anyString())).thenReturn(new Interpreter());
 
         boolean result = emailService.sendInterpreterRegistrationRequestEmail(
                 "admin@pointtils.com", "João", "123", "456", "email", "phone", "http://accept", "http://reject", files);

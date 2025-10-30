@@ -13,6 +13,7 @@ import com.pointtils.pointtils.src.application.dto.requests.InterpreterDocumentR
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterDocumentResponseDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
 import com.pointtils.pointtils.src.core.domain.entities.InterpreterDocuments;
+import com.pointtils.pointtils.src.core.domain.exceptions.FileUploadException;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterDocumentsRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
 
