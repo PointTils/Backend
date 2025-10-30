@@ -18,12 +18,15 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.springframework.web.multipart.MultipartFile;
 
+import software.amazon.awssdk.awscore.exception.AwsErrorDetails;
+import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 class S3ServiceTest {
 
@@ -123,5 +126,39 @@ class S3ServiceTest {
         assertNotNull(result);
         assertEquals(new String(expectedBytes), new String(result));
         verify(s3Client, times(1)).getObject(any(GetObjectRequest.class), eq(ResponseTransformer.toBytes()));
+    }
+
+    @Test
+    void shouldThrowIOExceptionWhenGetFileFails() throws IOException {
+        // Arrange
+        String key = "some-key";
+
+        when(s3Client.getObject(any(GetObjectRequest.class), eq(ResponseTransformer.toBytes())))
+                .thenThrow(new RuntimeException("S3 error"));
+        // Act & Assert
+        IOException exception = assertThrows(IOException.class, () -> {
+            s3Service.getFile(key);
+        });
+        assertEquals("Falha inesperada ao baixar arquivo do S3", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowIOExceptionWhenS3ExceptionOccurs() throws IOException {
+        // Arrange
+        String key = "some-key";
+        AwsServiceException s3Exception = S3Exception
+                .builder()
+                .awsErrorDetails(AwsErrorDetails.builder()
+                        .errorMessage("Not Found")
+                        .build())
+                .build();
+
+        when(s3Client.getObject(any(GetObjectRequest.class), eq(ResponseTransformer.toBytes())))
+                .thenThrow(s3Exception);
+        // Act & Assert
+        IOException exception = assertThrows(IOException.class, () -> {
+            s3Service.getFile(key);
+        });
+        assertEquals("Erro ao obter arquivo do S3: Not Found", exception.getMessage());
     }
 }
