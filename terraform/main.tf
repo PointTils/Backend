@@ -137,6 +137,11 @@ resource "aws_iam_role" "ec2_role" {
   tags = {
     Name = "pointtils-ec2-role"
   }
+  
+  # Ignorar erros se o role já existir
+  lifecycle {
+    ignore_changes = all
+  }
 }
 
 # Policy para a instância EC2 acessar o ECR
@@ -196,6 +201,11 @@ resource "aws_iam_instance_profile" "ec2_profile" {
 resource "aws_key_pair" "pointtils_key" {
   key_name   = "pointtils_key"
   public_key = file("${path.module}/pointtils_key.pub")
+  
+  # Ignorar erros se a chave já existir
+  lifecycle {
+    ignore_changes = all
+  }
 }
 
 # Script de inicialização para a instância EC2
@@ -308,7 +318,7 @@ data "template_file" "user_data" {
                   ports:
                     - "5432:5432"
                   volumes:
-                    - postgres_data:/var/lib/postgresql/data
+                    - postgres_data:/var/lib/postgresql
                   networks:
                     - pointtils-network
                   healthcheck:
@@ -348,10 +358,10 @@ data "template_file" "user_data" {
               EOF
 }
 
-# Instância EC2 para a aplicação Pointtils (Conforme orçamento: t2.medium em Ohio)
+# Instância EC2 para a aplicação Pointtils (Alterado para t2.micro para economia)
 resource "aws_instance" "pointtils_app" {
   ami                    = "ami-0a59f0e26c55590e9" # Ubuntu 22.04 LTS para us-east-2 (Ohio)
-  instance_type          = "t2.medium"
+  instance_type          = "t2.micro"
   key_name               = aws_key_pair.pointtils_key.key_name
   vpc_security_group_ids = [aws_security_group.app_sg.id]
   subnet_id              = aws_subnet.public_subnet_1.id

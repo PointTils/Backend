@@ -34,10 +34,8 @@ public class InterpreterDocumentService {
     private String adminEmail;
 
     @Transactional
-    public List<InterpreterDocumentResponseDTO> saveDocuments(UUID interpreterId, List<MultipartFile> files)
-            throws IOException {
-        Interpreter interpreter = interpreterRepository.findById(interpreterId)
-                .orElseThrow(() -> new EntityNotFoundException("Intérprete não encontrado"));
+    public List<InterpreterDocumentResponseDTO> saveDocuments(UUID interpreterId, List<MultipartFile> files) {
+        Interpreter interpreter = getInterpreterById(interpreterId);
         if (!s3Service.isS3Enabled()) {
             throw new UnsupportedOperationException("Upload de documentos está desabilitado.");
         }
@@ -49,7 +47,7 @@ public class InterpreterDocumentService {
             try {
                 documentUrl = s3Service.uploadFile(file, "documents/" + interpreterId);
             } catch (IOException e) {
-                throw new RuntimeException("Erro ao fazer upload do arquivo: " + file.getOriginalFilename(), e);
+                throw new FileUploadException(file.getOriginalFilename(), e);
             }
 
             // Cria uma nova instância de InterpreterDocuments
@@ -72,8 +70,7 @@ public class InterpreterDocumentService {
 
     @Transactional(readOnly = true)
     public List<InterpreterDocumentResponseDTO> getDocumentsByInterpreter(UUID interpreterId) {
-        Interpreter interpreter = interpreterRepository.findById(interpreterId)
-                .orElseThrow(() -> new EntityNotFoundException("Intérprete não encontrado"));
+        Interpreter interpreter = getInterpreterById(interpreterId);
 
         List<InterpreterDocuments> documents = interpreterDocumentsRepository.findByInterpreter(interpreter);
 
@@ -83,27 +80,33 @@ public class InterpreterDocumentService {
     }
 
     @Transactional
-    public InterpreterDocumentResponseDTO updateDocument(UUID documentId, InterpreterDocumentRequestDTO request)
-            throws IOException {
+    public InterpreterDocumentResponseDTO updateDocument(UUID documentId, InterpreterDocumentRequestDTO request) {
         InterpreterDocuments existingDocument = interpreterDocumentsRepository.findById(documentId)
                 .orElseThrow(() -> new EntityNotFoundException("Documento não encontrado"));
 
-        Interpreter interpreter = interpreterRepository.findById(request.getInterpreter_Id())
-                .orElseThrow(() -> new EntityNotFoundException("Intérprete não encontrado"));
+        Interpreter interpreter = getInterpreterById(request.getInterpreterId());
 
         if (!s3Service.isS3Enabled()) {
             throw new UnsupportedOperationException(
                     "Upload de documentos está desabilitado. Configure spring.cloud.aws.s3.enabled=true para habilitar o upload para S3.");
         }
 
-        String updatedDocumentUrl = s3Service.uploadFile(request.getFile(), "documents/" + request.getInterpreter_Id());
+        try {
+            String updatedDocumentUrl = s3Service.uploadFile(request.getFile(), "documents/" + request.getInterpreterId());
 
-        existingDocument.setInterpreter(interpreter);
-        existingDocument.setDocument(updatedDocumentUrl);
+            existingDocument.setInterpreter(interpreter);
+            existingDocument.setDocument(updatedDocumentUrl);
 
-        InterpreterDocuments updatedDocument = interpreterDocumentsRepository.save(existingDocument);
+            InterpreterDocuments updatedDocument = interpreterDocumentsRepository.save(existingDocument);
+            return InterpreterDocumentResponseDTO.fromEntity(updatedDocument);
+        } catch (IOException e) {
+            throw new FileUploadException(request.getFile().getOriginalFilename(), e);
+        }
+    }
 
-        return InterpreterDocumentResponseDTO.fromEntity(updatedDocument);
+    private Interpreter getInterpreterById(UUID interpreterId) {
+        return interpreterRepository.findById(interpreterId)
+                .orElseThrow(() -> new EntityNotFoundException("Intérprete não encontrado"));
     }
 
     /**

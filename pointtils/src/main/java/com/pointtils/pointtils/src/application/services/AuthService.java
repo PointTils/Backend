@@ -9,7 +9,6 @@ import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
 import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
 import com.pointtils.pointtils.src.infrastructure.configs.MemoryBlacklistService;
-import com.pointtils.pointtils.src.application.services.MemoryResetTokenService;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +19,8 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+
+    private static final String USER_NOT_FOUND_MESSAGE = "Usuário não encontrado";
 
     private final UserRepository userRepository;
     private final JwtService jwtTokenProvider;
@@ -46,7 +47,7 @@ public class AuthService {
 
         User user = userRepository.findByEmail(email);
         if (user == null) {
-            throw new AuthenticationException("Usuário não encontrado");
+            throw new AuthenticationException(USER_NOT_FOUND_MESSAGE);
         }
 
         if (UserStatus.INACTIVE.equals(user.getStatus())) {
@@ -97,7 +98,7 @@ public class AuthService {
         String email = jwtTokenProvider.getEmailFromToken(token);
         User user = userRepository.findByEmail(email);
         if (user == null) {
-            throw new AuthenticationException("Usuário não encontrado");
+            throw new AuthenticationException(USER_NOT_FOUND_MESSAGE);
         }
 
         String accessToken = jwtTokenProvider.generateToken(user.getEmail());
@@ -132,7 +133,8 @@ public class AuthService {
 
     /**
      * Redefine a senha do usuário usando um token de recuperação
-     * @param resetToken Token de recuperação
+     *
+     * @param resetToken  Token de recuperação
      * @param newPassword Nova senha
      * @return true se a senha foi redefinida com sucesso, false caso contrário
      */
@@ -158,7 +160,7 @@ public class AuthService {
         // Buscar usuário
         User user = userRepository.findByEmail(email);
         if (user == null) {
-            throw new AuthenticationException("Usuário não encontrado");
+            throw new AuthenticationException(USER_NOT_FOUND_MESSAGE);
         }
 
         if (UserStatus.INACTIVE.equals(user.getStatus())) {
