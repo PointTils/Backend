@@ -237,4 +237,24 @@ class RatingServiceTest {
         EntityNotFoundException ex = assertThrows(EntityNotFoundException.class, () -> ratingService.deleteRating(ratingId));
         assertTrue(ex.getMessage().contains("Agendamento não encontrado"));
     }
+
+    @Test
+    void patchRating_deveLancarEntityNotFoundException_quandoInterpreterForNull() {
+        UUID ratingId = UUID.randomUUID();
+        RatingPatchRequestDTO request = new RatingPatchRequestDTO();
+        request.setStars(BigDecimal.valueOf(5));
+
+        Rating rating = new Rating();
+        Appointment appointment = new Appointment();
+        appointment.setInterpreter(null);
+        rating.setAppointment(appointment);
+
+        when(ratingRepository.findById(ratingId)).thenReturn(Optional.of(rating));
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
+            ratingService.patchRating(request, ratingId);
+        });
+
+        assert (exception.getMessage().equals("Intérprete não encontrado"));
+    }
 }

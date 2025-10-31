@@ -403,4 +403,31 @@ class EmailControllerTest {
         assertEquals("Invalid UUID string: " + invalidId, response.getBody());
     }
 
+    @Test
+    void approveInterpreter_falhaAoAprovar_deveRetornarMensagemFalha() {
+        String id = UUID.randomUUID().toString();
+
+        when(interpreterService.approveInterpreter(UUID.fromString(id))).thenReturn(false);
+        when(emailService.getAdminRegistrationFeedbackHtml("Falha ao aprovar cadastro do intérprete."))
+                .thenReturn("HTML_FALHA_APROVAR");
+
+        ResponseEntity<String> response = emailController.approveInterpreter(id);
+
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals("HTML_FALHA_APROVAR", response.getBody());
+    }
+
+    @Test
+    void rejectInterpreter_falhaAoRecusar_deveRetornarMensagemFalha() {
+        String id = UUID.randomUUID().toString();
+
+        when(interpreterService.rejectInterpreter(UUID.fromString(id))).thenReturn(false);
+        when(emailService.getAdminRegistrationFeedbackHtml("Falha ao recusar cadastro do intérprete."))
+                .thenReturn("HTML_FALHA_RECUSAR");
+
+        ResponseEntity<String> response = emailController.rejectInterpreter(id);
+
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals("HTML_FALHA_RECUSAR", response.getBody());
+    }
 }
