@@ -350,4 +350,96 @@ void deveRetornarTemplateNaoEncontrado() {
     assertTrue(response.getBody().isSuccess());
     assertEquals("Template não encontrado", response.getBody().getMessage());
 }
+
+@Test
+@DisplayName("Deve enviar solicitação de cadastro de intérprete com sucesso")
+void deveEnviarSolicitacaoCadastroInterpreteComSucesso() {
+    String adminEmail = "admin@example.com";
+    String interpreterName = "Carlos Silva";
+    String cpf = "12345678900";
+    String cnpj = "12345678000199";
+    String email = "carlos@example.com";
+    String phone = "51999999999";
+    String acceptLink = "http://accept-link";
+    String rejectLink = "http://reject-link";
+
+    when(emailService.sendInterpreterRegistrationRequestEmail(
+            adminEmail, interpreterName, cpf, cnpj, email, phone, acceptLink, rejectLink))
+            .thenReturn(true);
+
+    ResponseEntity<ApiResponseDTO<Map<String, Object>>> response =
+            emailController.sendInterpreterRegistrationRequest(
+                    adminEmail, interpreterName, cpf, cnpj, email, phone, acceptLink, rejectLink);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertNotNull(response.getBody());
+    assertTrue(response.getBody().isSuccess());
+    assertEquals("Email de solicitação enviado com sucesso", response.getBody().getMessage());
+
+    Map<String, Object> data = response.getBody().getData();
+    assertEquals(adminEmail, data.get("adminEmail"));
+    assertEquals(interpreterName, data.get("interpreterName"));
+}
+
+@Test
+@DisplayName("Deve retornar mensagem de falha quando envio de solicitação de cadastro falhar")
+void deveRetornarFalhaQuandoEnvioSolicitacaoCadastroFalhar() {
+    String adminEmail = "admin@example.com";
+    String interpreterName = "Carlos Silva";
+    String cpf = "12345678900";
+    String cnpj = "12345678000199";
+    String email = "carlos@example.com";
+    String phone = "51999999999";
+    String acceptLink = "http://accept-link";
+    String rejectLink = "http://reject-link";
+
+    when(emailService.sendInterpreterRegistrationRequestEmail(
+            adminEmail, interpreterName, cpf, cnpj, email, phone, acceptLink, rejectLink))
+            .thenReturn(false);
+
+    ResponseEntity<ApiResponseDTO<Map<String, Object>>> response =
+            emailController.sendInterpreterRegistrationRequest(
+                    adminEmail, interpreterName, cpf, cnpj, email, phone, acceptLink, rejectLink);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertNotNull(response.getBody());
+    assertTrue(response.getBody().isSuccess());
+    assertEquals("Falha ao enviar email de solicitação", response.getBody().getMessage());
+
+    Map<String, Object> data = response.getBody().getData();
+    assertEquals(adminEmail, data.get("adminEmail"));
+    assertEquals(interpreterName, data.get("interpreterName"));
+}
+
+@Test
+@DisplayName("Deve retornar 400 Bad Request quando UUID inválido na aprovação do intérprete")
+void deveRetornar400QuandoUUIDInvalidoNaAprovacao() {
+    String invalidId = "invalid-uuid";
+
+    when(emailService.getAdminRegistrationFeedbackHtml(any(String.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+    ResponseEntity<String> response = emailController.approveInterpreter(invalidId);
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    assertNotNull(response.getBody());
+    assertEquals("Invalid UUID string: " + invalidId, response.getBody());
+}
+
+@Test
+@DisplayName("Deve retornar 400 Bad Request quando UUID inválido na rejeição do intérprete")
+void deveRetornar400QuandoUUIDInvalidoNaRejeicao() {
+    String invalidId = "invalid-uuid";
+
+    when(emailService.getAdminRegistrationFeedbackHtml(any(String.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+    ResponseEntity<String> response = emailController.rejectInterpreter(invalidId);
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    assertNotNull(response.getBody());
+    assertEquals("Invalid UUID string: " + invalidId, response.getBody());
+}
+
+
 }
