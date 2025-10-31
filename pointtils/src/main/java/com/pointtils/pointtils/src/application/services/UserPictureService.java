@@ -1,6 +1,7 @@
 package com.pointtils.pointtils.src.application.services;
 
 import java.io.IOException;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
@@ -14,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class UserPicturePostService {
+public class UserPictureService {
 
     private final UserRepository userRepository;
     private final S3Service s3Service;
@@ -23,7 +24,6 @@ public class UserPicturePostService {
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
 
-        // Verifica se o S3 está habilitado antes de tentar fazer upload
         if (!s3Service.isS3Enabled()) {
             throw new UnsupportedOperationException("Upload de fotos está desabilitado. Configure spring.cloud.aws.s3.enabled=true para habilitar o upload para S3.");
         }
@@ -41,5 +41,22 @@ public class UserPicturePostService {
      */
     public boolean isPictureUploadEnabled() {
         return s3Service.isS3Enabled();
+    }
+
+    public void deletePicture(UUID id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
+        
+        if (user.getPicture() != null && !user.getPicture().isEmpty()) {
+            try {
+                s3Service.deleteFile(user.getPicture());
+            } catch (RuntimeException e) {
+                // Ignora erros do S3 (incluindo UnsupportedOperationException) e continua com a atualização do banco
+                // Isso permite que a foto seja removida do banco mesmo se S3 estiver desabilitado ou falhar
+            }
+        }
+        
+        user.setPicture(null);
+        userRepository.save(user);
     }
 }
