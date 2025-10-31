@@ -33,6 +33,7 @@ services:
         BREVO_SENDER_EMAIL: ${BREVO_SENDER_EMAIL}
         BREVO_SENDER_NAME: ${BREVO_SENDER_NAME}
         ADMIN_EMAIL: ${ADMIN_EMAIL}
+        API_BASE_URL: ${API_BASE_URL}
     image: ${APP_IMAGE:-backend-pointtils}
     container_name: pointtils
     environment:
@@ -65,6 +66,7 @@ services:
       - BREVO_SENDER_EMAIL=${BREVO_SENDER_EMAIL}
       - BREVO_SENDER_NAME=${BREVO_SENDER_NAME}
       - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - API_BASE_URL=${API_BASE_URL}
     ports:
       - "${SERVER_PORT}:${SERVER_PORT}"
     depends_on:
