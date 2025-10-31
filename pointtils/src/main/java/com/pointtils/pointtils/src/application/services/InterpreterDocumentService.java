@@ -33,6 +33,8 @@ public class InterpreterDocumentService {
 
     @Value("${app.mail.admin:admin@pointtils.com}")
     private String adminEmail;
+    @Value("${app.api.base-url}")
+    private String apiBaseUrl;
 
     @Transactional
     public List<InterpreterDocumentResponseDTO> saveDocuments(UUID interpreterId, List<MultipartFile> files) {
@@ -115,9 +117,6 @@ public class InterpreterDocumentService {
      * 
      * @param interpreter Intérprete cadastrado
      */
-    @Value("${app.api.base-url}")
-    private String apiBaseUrl;
-
     private void sendInterpreterRegistrationEmail(Interpreter interpreter, List<MultipartFile> files) {
         try {
             String acceptLink = String.format("%s/v1/email/interpreter/%s/approve", apiBaseUrl, interpreter.getId());

@@ -33,7 +33,6 @@ services:
         BREVO_SENDER_EMAIL: ${BREVO_SENDER_EMAIL}
         BREVO_SENDER_NAME: ${BREVO_SENDER_NAME}
         ADMIN_EMAIL: ${ADMIN_EMAIL}
-        API_BASE_URL: ${API_BASE_URL}
     image: ${APP_IMAGE:-backend-pointtils-dev}
     container_name: pointtils-dev
     environment:
@@ -66,7 +65,7 @@ services:
       - BREVO_SENDER_EMAIL=${BREVO_SENDER_EMAIL}
       - BREVO_SENDER_NAME=${BREVO_SENDER_NAME}
       - ADMIN_EMAIL=${ADMIN_EMAIL}
-      - API_BASE_URL=${API_BASE_URL}
+      - API_BASE_URL=http://ec2-3-13-243-58.us-east-2.compute.amazonaws.com:8080
     ports:
       - "8080:8080"
     depends_on:
@@ -99,7 +98,6 @@ services:
       retries: 3
       start_period: 40s
     restart: unless-stopped
-
 
 volumes:
   postgres_dev_data:
