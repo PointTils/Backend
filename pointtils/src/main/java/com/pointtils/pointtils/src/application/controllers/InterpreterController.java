@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.HttpClientErrorException.BadRequest;
 
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
@@ -52,17 +51,11 @@ public class InterpreterController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Intérprete cadastrado com sucesso",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ApiResponseDTO.class))
+                            schema = @Schema(implementation = InterpreterResponseDTO.class))
             ),
-            @ApiResponse(responseCode = "400", description = "Dados de cadastro inválidos",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BadRequest.class))),
-            @ApiResponse(responseCode = "409", description = "Email já cadastrado",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ApiResponseDTO.class))),
-            @ApiResponse(responseCode = "500", description = "Erro interno no servidor",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = InternalError.class)))
+            @ApiResponse(responseCode = "400", description = "Dados de cadastro inválido"),
+            @ApiResponse(responseCode = "409", description = "Email já cadastrado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     public ResponseEntity<ApiResponseDTO<InterpreterResponseDTO>> createInterpreter(
             @Valid @RequestBody InterpreterBasicRequestDTO dto) {

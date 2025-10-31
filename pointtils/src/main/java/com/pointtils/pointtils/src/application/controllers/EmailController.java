@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.HttpClientErrorException.BadRequest;
 
 import com.pointtils.pointtils.src.application.dto.requests.EmailRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ApiResponseDTO;
@@ -60,10 +59,8 @@ public class EmailController {
                 content = @Content(mediaType = "application/json",
                         schema = @Schema(implementation = ApiResponseDTO.class))
         ),
-        @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content(mediaType = "application/json",
-                schema = @Schema(implementation = BadRequest.class))),
-        @ApiResponse(responseCode = "500", description = "Erro interno no servidor", content = @Content(mediaType = "application/json",
-                schema = @Schema(implementation = InternalError.class))),
+        @ApiResponse(responseCode = "400", description = "Dados inválidos"),
+        @ApiResponse(responseCode = "500", description = "Erro interno no servidor"),
 })
 public ResponseEntity<ApiResponseDTO<Map<String, Object>>> sendEmail(
                 @Valid @RequestBody EmailRequestDTO emailRequest) {
@@ -93,12 +90,8 @@ public ResponseEntity<ApiResponseDTO<Map<String, Object>>> sendEmail(
                 content = @Content(mediaType = "application/json",
                         schema = @Schema(implementation = ApiResponseDTO.class))
         ),
-        @ApiResponse(responseCode = "400", description = "Dados inválidos", 
-                content = @Content(mediaType = "application/json",
-                        schema = @Schema(implementation = BadRequest.class))),
-        @ApiResponse(responseCode = "500", description = "Erro interno no servidor", 
-                content = @Content(mediaType = "application/json",
-                        schema = @Schema(implementation = InternalError.class)))
+        @ApiResponse(responseCode = "400", description = "Dados inválidos"),
+        @ApiResponse(responseCode = "500", description = "Erro interno no servidor"),
 })
         public ResponseEntity<ApiResponseDTO<Map<String, Object>>> sendHtmlEmail(
                 @Valid @RequestBody EmailRequestDTO emailRequest) {
@@ -127,12 +120,8 @@ public ResponseEntity<ApiResponseDTO<Map<String, Object>>> sendEmail(
                 content = @Content(mediaType = "application/json",
                         schema = @Schema(implementation = ApiResponseDTO.class))
         ),
-        @ApiResponse(responseCode = "400", description = "Email inválido", 
-                content = @Content(mediaType = "application/json",
-                        schema = @Schema(implementation = BadRequest.class))),
-        @ApiResponse(responseCode = "500", description = "Erro interno no servidor", 
-                content = @Content(mediaType = "application/json",
-                        schema = @Schema(implementation = InternalError.class)))
+        @ApiResponse(responseCode = "400", description = "Dados inválidos"),
+        @ApiResponse(responseCode = "500", description = "Erro interno no servidor"),
 })
     public ResponseEntity<ApiResponseDTO<Map<String, Object>>> sendWelcomeEmail(
         @PathVariable String email,
@@ -162,15 +151,9 @@ public ResponseEntity<ApiResponseDTO<Map<String, Object>>> sendEmail(
                 content = @Content(mediaType = "application/json",
                         schema = @Schema(implementation = ApiResponseDTO.class))
         ),
-        @ApiResponse(responseCode = "400", description = "Email inválido", 
-                content = @Content(mediaType = "application/json",
-                        schema = @Schema(implementation = BadRequest.class))),
-        @ApiResponse(responseCode = "404", description = "Usuário não encontrado", 
-                content = @Content(mediaType = "application/json",
-                        schema = @Schema(implementation = ApiResponseDTO.class))),
-        @ApiResponse(responseCode = "500", description = "Erro interno no servidor", 
-                content = @Content(mediaType = "application/json",
-                        schema = @Schema(implementation = InternalError.class)))
+        @ApiResponse(responseCode = "400", description = "Dados inválidos"),
+        @ApiResponse(responseCode = "404", description = "Usuário não encontrado"),
+        @ApiResponse(responseCode = "500", description = "Erro interno no servidor"),
 })
     public ResponseEntity<ApiResponseDTO<Map<String, Object>>> sendPasswordResetEmail(@PathVariable String email) {
         try {
@@ -213,12 +196,8 @@ public ResponseEntity<ApiResponseDTO<Map<String, Object>>> sendEmail(
                 content = @Content(mediaType = "application/json",
                         schema = @Schema(implementation = ApiResponseDTO.class))
         ),
-        @ApiResponse(responseCode = "400", description = "Email inválido", 
-                content = @Content(mediaType = "application/json",
-                        schema = @Schema(implementation = BadRequest.class))),
-        @ApiResponse(responseCode = "500", description = "Erro interno no servidor", 
-                content = @Content(mediaType = "application/json",
-                        schema = @Schema(implementation = InternalError.class)))
+        @ApiResponse(responseCode = "400", description = "Dados inválidos"),
+        @ApiResponse(responseCode = "500", description = "Erro interno no servidor"),
 })
     public ResponseEntity<ApiResponseDTO<Map<String, Object>>> sendAppointmentConfirmationEmail(
             @PathVariable String email,
@@ -253,12 +232,8 @@ public ResponseEntity<ApiResponseDTO<Map<String, Object>>> sendEmail(
                 content = @Content(mediaType = "application/json",
                         schema = @Schema(implementation = ApiResponseDTO.class))
         ),
-        @ApiResponse(responseCode = "404", description = "Template não encontrado", 
-                content = @Content(mediaType = "application/json",
-                        schema = @Schema(implementation = ApiResponseDTO.class))),
-        @ApiResponse(responseCode = "500", description = "Erro interno no servidor", 
-                content = @Content(mediaType = "application/json",
-                        schema = @Schema(implementation = InternalError.class)))
+        @ApiResponse(responseCode = "404", description = "Template não encontrado"),
+        @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
 })
     public ResponseEntity<ApiResponseDTO<Map<String, Object>>> getTemplateByKey(@PathVariable String key) {
         String template = emailService.getTemplateByKey(key);
@@ -293,12 +268,8 @@ public ResponseEntity<ApiResponseDTO<Map<String, Object>>> sendEmail(
                 content = @Content(mediaType = "application/json",
                         schema = @Schema(implementation = ApiResponseDTO.class))
         ),
-        @ApiResponse(responseCode = "400", description = "Dados inválidos", 
-                content = @Content(mediaType = "application/json",
-                        schema = @Schema(implementation = BadRequest.class))),
-        @ApiResponse(responseCode = "500", description = "Erro interno no servidor", 
-                content = @Content(mediaType = "application/json",
-                        schema = @Schema(implementation = InternalError.class)))
+        @ApiResponse(responseCode = "400", description = "Dados inválidos"),
+        @ApiResponse(responseCode = "500", description = "Erro interno no servidor"),
 })
     public ResponseEntity<ApiResponseDTO<Map<String, Object>>> sendInterpreterRegistrationRequest(
         @RequestParam String adminEmail,

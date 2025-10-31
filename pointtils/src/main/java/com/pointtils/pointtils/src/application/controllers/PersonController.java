@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.HttpClientErrorException.BadRequest;
 
 import com.pointtils.pointtils.src.application.dto.PersonDTO;
 import com.pointtils.pointtils.src.application.dto.requests.PersonCreationRequestDTO;
@@ -24,6 +23,7 @@ import com.pointtils.pointtils.src.application.dto.responses.PersonResponseDTO;
 import com.pointtils.pointtils.src.application.services.PersonService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -48,17 +48,11 @@ public class PersonController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Usuário surdo cadastrado com sucesso",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ApiResponseDTO.class))
+                            schema = @Schema(implementation = PersonResponseDTO.class))
             ),
-            @ApiResponse(responseCode = "400", description = "Dados de cadastro inválidos",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BadRequest.class))),
-            @ApiResponse(responseCode = "409", description = "Email já cadastrado",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ApiResponseDTO.class))),
-            @ApiResponse(responseCode = "500", description = "Erro interno no servidor",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = InternalError.class)))
+            @ApiResponse(responseCode = "400", description = "Dados de cadastro inválidos"),
+            @ApiResponse(responseCode = "409", description = "Email já cadastrado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     public ResponseEntity<ApiResponseDTO<PersonResponseDTO>> createUser(@Valid @RequestBody PersonCreationRequestDTO dto) {
         PersonResponseDTO created = service.registerPerson(dto);
@@ -75,14 +69,10 @@ public class PersonController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Usuários surdos encontrados com sucesso",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ApiResponseDTO.class))
+                            array = @ArraySchema(schema = @Schema(implementation = PersonResponseDTO.class)))
             ),
-            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido ou ausente",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BadRequest.class))),
-            @ApiResponse(responseCode = "500", description = "Erro interno no servidor",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = InternalError.class)))
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     public ResponseEntity<ApiResponseDTO<List<PersonResponseDTO>>> findAll() {
         List<PersonResponseDTO> personUsers = service.findAll();
@@ -100,20 +90,12 @@ public class PersonController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Usuário surdo encontrado com sucesso",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ApiResponseDTO.class))
+                            schema = @Schema(implementation = PersonResponseDTO.class))
             ),
-            @ApiResponse(responseCode = "400", description = "ID inválido",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BadRequest.class))),
-            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido ou ausente",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BadRequest.class))),
-            @ApiResponse(responseCode = "404", description = "Usuário surdo não encontrado",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ApiResponseDTO.class))),
-            @ApiResponse(responseCode = "500", description = "Erro interno no servidor",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = InternalError.class)))
+            @ApiResponse(responseCode = "400", description = "ID inválido"),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
+            @ApiResponse(responseCode = "404", description = "Usuário surdo não encontrado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     public ResponseEntity<ApiResponseDTO<PersonResponseDTO>> findById(@PathVariable UUID id) {
         PersonResponseDTO person = service.findById(id);
@@ -129,20 +111,12 @@ public class PersonController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Usuário surdo atualizado com sucesso",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ApiResponseDTO.class))
+                            schema = @Schema(implementation = PersonResponseDTO.class))
             ),
-            @ApiResponse(responseCode = "400", description = "Dados de atualização inválidos",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BadRequest.class))),
-            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido ou ausente",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BadRequest.class))),
-            @ApiResponse(responseCode = "404", description = "Usuário surdo não encontrado",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ApiResponseDTO.class))),
-            @ApiResponse(responseCode = "500", description = "Erro interno no servidor",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = InternalError.class)))
+            @ApiResponse(responseCode = "400", description = "Dados de atualização inválidos"),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
+            @ApiResponse(responseCode = "404", description = "Usuário surdo não encontrado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     public ResponseEntity<ApiResponseDTO<PersonResponseDTO>> updateUser(@PathVariable UUID id,
                                                              @RequestBody @Valid PersonPatchRequestDTO dto) {
@@ -159,20 +133,12 @@ public class PersonController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Usuário surdo atualizado com sucesso",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ApiResponseDTO.class))
+                            schema = @Schema(implementation = PersonResponseDTO.class))
             ),
-            @ApiResponse(responseCode = "400", description = "Dados de atualização inválidos",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BadRequest.class))),
-            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido ou ausente",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BadRequest.class))),
-            @ApiResponse(responseCode = "404", description = "Usuário surdo não encontrado",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ApiResponseDTO.class))),
-            @ApiResponse(responseCode = "500", description = "Erro interno no servidor",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = InternalError.class)))
+            @ApiResponse(responseCode = "400", description = "Dados de atualização inváidos"),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
+            @ApiResponse(responseCode = "404", description = "Usuário surdo não encontrado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     public ResponseEntity<ApiResponseDTO<PersonResponseDTO>> updateComplete(@PathVariable UUID id,
                                                                  @RequestBody @Valid PersonDTO dto) {
@@ -188,18 +154,10 @@ public class PersonController {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Usuário surdo deletado com sucesso"),
-            @ApiResponse(responseCode = "400", description = "ID inválido",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BadRequest.class))),
-            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido ou ausente",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BadRequest.class))),
-            @ApiResponse(responseCode = "404", description = "Usuário surdo não encontrado",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ApiResponseDTO.class))),
-            @ApiResponse(responseCode = "500", description = "Erro interno no servidor",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = InternalError.class)))
+            @ApiResponse(responseCode = "400", description = "ID inváido"),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
+            @ApiResponse(responseCode = "404", description = "Usuário surdo não encontrado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         service.delete(id);

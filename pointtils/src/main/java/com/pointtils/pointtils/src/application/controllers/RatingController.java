@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.HttpClientErrorException.BadRequest;
 
 import com.pointtils.pointtils.src.application.dto.requests.RatingPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.RatingRequestDTO;
@@ -49,20 +48,12 @@ public class RatingController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Avaliação criada com sucesso",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ApiResponseDTO.class))
+                            schema = @Schema(implementation = RatingResponseDTO.class))
             ),
-            @ApiResponse(responseCode = "400", description = "Dados da avaliação inválidos",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BadRequest.class))),
-            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido ou ausente",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BadRequest.class))),
-            @ApiResponse(responseCode = "404", description = "Agendamento não encontrado",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ApiResponseDTO.class))),
-            @ApiResponse(responseCode = "500", description = "Erro interno no servidor",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = InternalError.class)))
+            @ApiResponse(responseCode = "400", description = "Dados da avaliação inválidos"),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
+            @ApiResponse(responseCode = "404", description = "Agendamento não encontrado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     public ResponseEntity<ApiResponseDTO<RatingResponseDTO>> postRating(@Valid @RequestBody RatingRequestDTO request,
                                                                         @PathVariable UUID appointmentId) {

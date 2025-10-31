@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.HttpClientErrorException.BadRequest;
 
 import com.pointtils.pointtils.src.application.dto.requests.ScheduleListRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.SchedulePatchRequestDTO;
@@ -53,22 +52,14 @@ public class ScheduleController {
             description = "Registra um novo horário de disponibilidade para um intérprete"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Horário cadastrado com sucesso",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ApiResponseDTO.class))
-            ),
-            @ApiResponse(responseCode = "400", description = "Dados do horário inválidos",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BadRequest.class))),
-            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido ou ausente",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BadRequest.class))),
-            @ApiResponse(responseCode = "409", description = "Conflito de horário",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ApiResponseDTO.class))),
-            @ApiResponse(responseCode = "500", description = "Erro interno no servidor",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = InternalError.class)))
+        @ApiResponse(responseCode = "201", description = "Horário cadastrado com sucesso",
+            content = @Content(mediaType = "application/json",
+                schema = @Schema(implementation = ScheduleResponseDTO.class))
+        ),
+        @ApiResponse(responseCode = "400", description = "Dados do horário inválido"),
+        @ApiResponse(responseCode = "401", description = "Token de autenticação inváido"),
+        @ApiResponse(responseCode = "409", description = "Conflito de horário"),
+        @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     public ResponseEntity<ApiResponseDTO<ScheduleResponseDTO>> registerSchedule(@Valid @RequestBody ScheduleRequestDTO dto) {
         ScheduleResponseDTO created = service.registerSchedule(dto);

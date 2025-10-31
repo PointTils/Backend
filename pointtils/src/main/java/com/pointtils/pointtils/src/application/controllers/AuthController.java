@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.HttpClientErrorException.BadRequest;
 
 import com.pointtils.pointtils.src.application.dto.requests.LoginRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.PasswordRecoveryRequestDTO;
@@ -50,15 +49,9 @@ public class AuthController {
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = LoginResponseDTO.class))
             ),
-            @ApiResponse(responseCode = "400", description = "Dados de login inválidos",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BadRequest.class))),
-            @ApiResponse(responseCode = "401", description = "Credenciais inválidas ou muitas tentativas de login",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = AuthenticationException.class))),
-            @ApiResponse(responseCode = "500", description = "Erro interno no servidor",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = InternalError.class)))
+            @ApiResponse(responseCode = "400", description = "Dados de login inválidos"),
+            @ApiResponse(responseCode = "401", description = "Credenciais inválidos"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     public ResponseEntity<LoginResponseDTO> login(@Valid @RequestBody LoginRequestDTO loginRequest, HttpServletRequest httpRequest) {
         String clientIp = getClientIP(httpRequest);
@@ -87,15 +80,9 @@ public class AuthController {
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = RefreshTokenResponseDTO.class))
             ),
-            @ApiResponse(responseCode = "400", description = "Refresh token não fornecido ou inválido",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BadRequest.class))),
-            @ApiResponse(responseCode = "401", description = "Refresh token expirado ou inválido",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = AuthenticationException.class))),
-            @ApiResponse(responseCode = "500", description = "Erro interno no servidor",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = InternalError.class)))
+            @ApiResponse(responseCode = "400", description = "Refresh token não fornecido"),
+            @ApiResponse(responseCode = "401", description = "Refresh token expirado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     public ResponseEntity<RefreshTokenResponseDTO> refreshToken(@Valid @RequestBody RefreshTokenRequestDTO request) {
         if (request.getRefreshToken() == null || request.getRefreshToken().isBlank()) {
@@ -113,15 +100,9 @@ public class AuthController {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Logout realizado com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Tokens não fornecidos ou inválidos",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BadRequest.class))),
-            @ApiResponse(responseCode = "401", description = "Token de acesso ou refresh token inválido",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = AuthenticationException.class))),
-            @ApiResponse(responseCode = "500", description = "Erro interno no servidor",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = InternalError.class)))
+            @ApiResponse(responseCode = "400", description = "Tokens não fornecidos"),
+            @ApiResponse(responseCode = "401", description = "Tokens de acesso ou refresh token inválido"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     public ResponseEntity logout(@Valid @RequestBody RefreshTokenRequestDTO refreshToken, HttpServletRequest httpRequest) {
         String header = httpRequest.getHeader("Authorization");
@@ -152,15 +133,9 @@ public class AuthController {
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ApiResponseDTO.class))
             ),
-            @ApiResponse(responseCode = "400", description = "Token de recuperação ou nova senha inválidos",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BadRequest.class))),
-            @ApiResponse(responseCode = "401", description = "Token de recuperação expirado ou inválido",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = AuthenticationException.class))),
-            @ApiResponse(responseCode = "500", description = "Erro interno no servidor",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = InternalError.class)))
+            @ApiResponse(responseCode = "400", description = "Token de recuperação ou nova senha inválida"),
+            @ApiResponse(responseCode = "401", description = "Token de recuperação expirado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     public ResponseEntity<ApiResponseDTO<Map<String, Object>>> recoverPassword(
             @Valid @RequestBody PasswordRecoveryRequestDTO request) {
