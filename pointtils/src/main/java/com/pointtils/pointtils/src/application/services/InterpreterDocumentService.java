@@ -1,5 +1,14 @@
 package com.pointtils.pointtils.src.application.services;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterDocumentRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterDocumentResponseDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
@@ -7,23 +16,23 @@ import com.pointtils.pointtils.src.core.domain.entities.InterpreterDocuments;
 import com.pointtils.pointtils.src.core.domain.exceptions.FileUploadException;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterDocumentsRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
+
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class InterpreterDocumentService {
 
     private final InterpreterRepository interpreterRepository;
     private final InterpreterDocumentsRepository interpreterDocumentsRepository;
     private final S3Service s3Service;
+    private final EmailService emailService;
+
+    @Value("${app.mail.admin:admin@pointtils.com}")
+    private String adminEmail;
 
     @Transactional
     public List<InterpreterDocumentResponseDTO> saveDocuments(UUID interpreterId, List<MultipartFile> files) {
@@ -48,6 +57,9 @@ public class InterpreterDocumentService {
             document.setDocument(documentUrl);
 
             InterpreterDocuments savedDocument = interpreterDocumentsRepository.save(document);
+
+            // Enviar email para o administrador após cadastro
+            sendInterpreterRegistrationEmail(interpreter, files);
 
             return InterpreterDocumentResponseDTO.fromEntity(savedDocument);
         }).toList();
@@ -76,7 +88,8 @@ public class InterpreterDocumentService {
         Interpreter interpreter = getInterpreterById(request.getInterpreterId());
 
         if (!s3Service.isS3Enabled()) {
-            throw new UnsupportedOperationException("Upload de documentos está desabilitado. Configure spring.cloud.aws.s3.enabled=true para habilitar o upload para S3.");
+            throw new UnsupportedOperationException(
+                    "Upload de documentos está desabilitado. Configure spring.cloud.aws.s3.enabled=true para habilitar o upload para S3.");
         }
 
         try {
@@ -95,5 +108,41 @@ public class InterpreterDocumentService {
     private Interpreter getInterpreterById(UUID interpreterId) {
         return interpreterRepository.findById(interpreterId)
                 .orElseThrow(() -> new EntityNotFoundException("Intérprete não encontrado"));
+    }
+
+    /**
+     * Envia email para o administrador com os dados de cadastro do intérprete
+     * 
+     * @param interpreter Intérprete cadastrado
+     */
+    @Value("${app.api.base-url}")
+    private String apiBaseUrl;
+
+    private void sendInterpreterRegistrationEmail(Interpreter interpreter, List<MultipartFile> files) {
+        try {
+            String acceptLink = String.format("%s/v1/email/interpreter/%s/approve", apiBaseUrl, interpreter.getId());
+            String rejectLink = String.format("%s/v1/email/interpreter/%s/reject", apiBaseUrl, interpreter.getId());
+
+            // Enviar email usando o template do banco de dados
+            boolean emailSent = emailService.sendInterpreterRegistrationRequestEmail(
+                    adminEmail,
+                    interpreter.getName(),
+                    interpreter.getCpf(),
+                    interpreter.getCnpj(),
+                    interpreter.getEmail(),
+                    interpreter.getPhone(),
+                    acceptLink,
+                    rejectLink,
+                    files);
+
+            if (emailSent) {
+                log.info("Email de solicitação de cadastro enviado com sucesso para: {}", adminEmail);
+            } else {
+                log.error("Falha ao enviar email de solicitação de cadastro para: {}", adminEmail);
+            }
+
+        } catch (Exception e) {
+            log.error("Erro ao enviar email de solicitação de cadastro: {}", e.getMessage());
+        }
     }
 }

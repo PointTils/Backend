@@ -1,5 +1,25 @@
 package com.pointtils.pointtils.src.application.controllers;
 
+import java.util.Map;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
 import com.pointtils.pointtils.src.application.dto.requests.EmailRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ApiResponseDTO;
 import com.pointtils.pointtils.src.application.services.EmailService;
@@ -7,26 +27,6 @@ import com.pointtils.pointtils.src.application.services.InterpreterService;
 import com.pointtils.pointtils.src.application.services.MemoryResetTokenService;
 import com.pointtils.pointtils.src.application.services.UserService;
 import com.pointtils.pointtils.src.core.domain.entities.Person;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Spy;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-
-import java.util.Map;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Testes Unitários do EmailController")
@@ -285,5 +285,19 @@ class EmailControllerTest {
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("<html><body>Erro ao recusar cadastro do intérprete.</body></html>", response.getBody());
+    }
+
+    @Test
+    void shouldReturnGoneResponseWhenDeprecatedEndpointIsCalled() {
+        ResponseEntity<ApiResponseDTO<Void>> response = emailController.sendInterpreterRegistrationRequest();
+
+        assertEquals(HttpStatus.GONE, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertFalse(response.getBody().isSuccess());
+        assertEquals(
+                "Este endpoint está obsoleto. Use o endpoint /interpreter-documents/ para acessar o recurso.",
+                response.getBody().getMessage()
+        );
+        assertNull(response.getBody().getData());
     }
 }
