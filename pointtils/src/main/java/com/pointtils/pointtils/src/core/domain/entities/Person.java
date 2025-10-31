@@ -1,15 +1,10 @@
 package com.pointtils.pointtils.src.core.domain.entities;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.type.SqlTypes;
-
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 
 import jakarta.persistence.CascadeType;

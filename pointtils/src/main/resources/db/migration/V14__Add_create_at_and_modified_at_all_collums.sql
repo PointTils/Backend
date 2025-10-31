@@ -3,16 +3,6 @@ ALTER TABLE user_account
 ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 ADD COLUMN modified_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
--- Adiciona as colunas na tabela correspondente à entidade Interpreter
-ALTER TABLE interpreter
-ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-ADD COLUMN modified_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
-
--- Adiciona as colunas na tabela correspondente à entidade Enterprise
-ALTER TABLE enterprise
-ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-ADD COLUMN modified_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
-
 -- Adiciona as colunas na tabela correspondente à entidade Specialty
 ALTER TABLE specialties
 ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -48,4 +38,9 @@ ALTER TABLE appointment
 ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 ADD COLUMN modified_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
--- Removido: As colunas 'created_at' e 'modified_at' já existem na tabela 'user_account' devido à estratégia de herança JPA.
+-- Adiciona as colunas na tabela correspondente à entidade Rating
+
+ALTER TABLE rating
+ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ADD COLUMN modified_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+

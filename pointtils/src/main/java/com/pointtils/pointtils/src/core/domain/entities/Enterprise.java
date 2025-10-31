@@ -1,10 +1,5 @@
 package com.pointtils.pointtils.src.core.domain.entities;
 
-import java.time.LocalDateTime;
-
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
 
 import jakarta.persistence.Column;
