@@ -1,5 +1,6 @@
 package com.pointtils.pointtils.src.core.domain.entities;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
@@ -15,6 +16,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 
 @Entity
@@ -39,6 +42,14 @@ public class UserSpecialty {
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+     @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt; 
+
+    @UpdateTimestamp
+    @Column(name = "modified_at", nullable = false)
+    private LocalDateTime modifiedAt; 
     
     public UserSpecialty(Specialty specialty, User user) {
         this.specialty = specialty;
