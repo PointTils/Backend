@@ -7,8 +7,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import software.amazon.awssdk.core.ResponseBytes;
+import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 @Service
 public class S3Service {
@@ -18,8 +23,8 @@ public class S3Service {
     private final boolean s3Enabled;
 
     public S3Service(@Value("${cloud.aws.bucket-name:pointtils-api-tests-d9396dcc}") String bucketName,
-                     @Value("${spring.cloud.aws.s3.enabled:false}") boolean s3Enabled,
-                     S3Client s3Client) {
+            @Value("${spring.cloud.aws.s3.enabled:false}") boolean s3Enabled,
+            S3Client s3Client) {
         this.s3Client = s3Client;
         this.bucketName = bucketName;
         this.s3Enabled = s3Enabled;
@@ -28,7 +33,8 @@ public class S3Service {
     public String uploadFile(MultipartFile file, String userId) throws IOException {
         // Se S3 está desabilitado, retorna null ou lança exceção
         if (!s3Enabled || s3Client == null) {
-            throw new UnsupportedOperationException("Upload de arquivos para S3 está desabilitado. Configure spring.cloud.aws.s3.enabled=true para habilitar.");
+            throw new UnsupportedOperationException(
+                    "Upload de arquivos para S3 está desabilitado. Configure spring.cloud.aws.s3.enabled=true para habilitar.");
         }
 
         String key = "users/" + userId + "/" + Instant.now().toEpochMilli() + "-" + file.getOriginalFilename();
@@ -42,6 +48,33 @@ public class S3Service {
         s3Client.putObject(putObjectRequest, software.amazon.awssdk.core.sync.RequestBody.fromBytes(file.getBytes()));
 
         return String.format("https://%s.s3.amazonaws.com/%s", bucketName, key);
+    }
+
+    /**
+     * Baixa um arquivo do S3 pelo key (o mesmo key retornado em uploadFile).
+     * Retorna os bytes do objeto ou lança IOException em caso de falha.
+     */
+    public byte[] getFile(String key) throws IOException {
+        if (!isS3Enabled()) {
+            throw new UnsupportedOperationException(
+                    "Download de arquivos do S3 está desabilitado. Configure spring.cloud.aws.s3.enabled=true para habilitar.");
+        }
+
+        try {
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(key)
+                    .build();
+
+            ResponseBytes<GetObjectResponse> objectBytes = s3Client
+                    .getObject(getObjectRequest, ResponseTransformer.toBytes());
+
+            return objectBytes.asByteArray();
+        } catch (S3Exception e) {
+            throw new IOException("Erro ao obter arquivo do S3: " + e.awsErrorDetails().errorMessage(), e);
+        } catch (Exception e) {
+            throw new IOException("Falha inesperada ao baixar arquivo do S3", e);
+        }
     }
 
     /**

@@ -14,6 +14,8 @@ import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModalit
 @Repository
 public interface InterpreterRepository extends JpaRepository<Interpreter, UUID>, JpaSpecificationExecutor<Interpreter> {
 
+    Interpreter findByCpf(String cpf);
+
     List<Interpreter> findByModality(InterpreterModality modality);
 
     List<Interpreter> findByRatingGreaterThanEqual(BigDecimal rating);
