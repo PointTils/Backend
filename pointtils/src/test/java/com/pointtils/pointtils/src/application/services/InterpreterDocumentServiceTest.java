@@ -8,9 +8,10 @@ import com.pointtils.pointtils.src.core.domain.exceptions.FileUploadException;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterDocumentsRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
 import jakarta.persistence.EntityNotFoundException;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
@@ -42,8 +43,18 @@ class InterpreterDocumentServiceTest {
     private InterpreterDocumentsRepository interpreterDocumentsRepository;
     @Mock
     private S3Service s3Service;
-    @InjectMocks
+    private EmailService emailService;
     private InterpreterDocumentService interpreterDocumentService;
+
+    @BeforeEach
+    void setUp() {
+        interpreterRepository = mock(InterpreterRepository.class);
+        interpreterDocumentsRepository = mock(InterpreterDocumentsRepository.class);
+        s3Service = mock(S3Service.class);
+        emailService = mock(EmailService.class);
+        interpreterDocumentService = new InterpreterDocumentService(interpreterRepository,
+                interpreterDocumentsRepository, s3Service, emailService);
+    }
 
     @Test
     void shouldSaveDocumentsSuccessfully() throws IOException {
