@@ -16,7 +16,6 @@ import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
 import jakarta.persistence.EntityNotFoundException;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -27,8 +26,6 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.util.ReflectionTestUtils;
-
 import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -49,8 +46,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -70,12 +65,6 @@ class InterpreterServiceTest {
         private LocationMapper locationMapper = new LocationMapper();
         @InjectMocks
         private InterpreterService service;
-
-        @BeforeEach
-        void setup() {
-                ReflectionTestUtils.setField(service, "adminEmail", "admin@pointtils.com");
-                ReflectionTestUtils.setField(service, "apiBaseUrl", "http://localhost:8080");
-        }
 
         @Test
         void shouldRegisterNewInterpreter() {
@@ -359,8 +348,6 @@ class InterpreterServiceTest {
                 verify(repository).save(captor.capture());
                 assertEquals(id, captor.getValue().getId());
                 assertEquals(UserStatus.ACTIVE, captor.getValue().getStatus());
-
-                verify(emailService).sendInterpreterFeedbackEmail("joao@email.com", "João", true);
         }
 
         @Test
@@ -388,8 +375,6 @@ class InterpreterServiceTest {
                 verify(repository).save(captor.capture());
                 assertEquals(id, captor.getValue().getId());
                 assertEquals(UserStatus.ACTIVE, captor.getValue().getStatus());
-
-                verify(emailService).sendInterpreterFeedbackEmail("maria@email.com", "Maria", true);
         }
 
         @Test
@@ -430,8 +415,6 @@ class InterpreterServiceTest {
                 verify(repository).save(captor.capture());
                 assertEquals(id, captor.getValue().getId());
                 assertEquals(UserStatus.INACTIVE, captor.getValue().getStatus());
-
-                verify(emailService).sendInterpreterFeedbackEmail("jose@email.com", "José", false);
         }
 
         @Test
@@ -459,8 +442,6 @@ class InterpreterServiceTest {
                 verify(repository).save(captor.capture());
                 assertEquals(id, captor.getValue().getId());
                 assertEquals(UserStatus.INACTIVE, captor.getValue().getStatus());
-
-                verify(emailService).sendInterpreterFeedbackEmail("ana@email.com", "Ana", false);
         }
 
         @Test
@@ -508,7 +489,6 @@ class InterpreterServiceTest {
                 assertFalse(result);
                 assertEquals(UserStatus.ACTIVE, interpreter.getStatus());
                 verify(repository).save(interpreter);
-                verify(emailService).sendInterpreterFeedbackEmail("joao@example.com", "João", true);
         }
 
         @Test
@@ -543,7 +523,6 @@ class InterpreterServiceTest {
                 assertFalse(result);
                 assertEquals(UserStatus.INACTIVE, interpreter.getStatus());
                 verify(repository).save(interpreter);
-                verify(emailService).sendInterpreterFeedbackEmail("maria@example.com", "Maria", false);
         }
 
         @Test
@@ -555,28 +534,7 @@ class InterpreterServiceTest {
                 when(responseMapper.toResponseDTO(any())).thenReturn(new InterpreterResponseDTO());
                 when(passwordEncoder.encode(request.getPassword())).thenReturn("encoded");
 
-                when(emailService.sendInterpreterRegistrationRequestEmail(
-                                eq("admin@pointtils.com"),
-                                eq(request.getName()),
-                                eq(request.getCpf()),
-                                eq(request.getProfessionalData().getCnpj()),
-                                eq(request.getEmail()),
-                                eq(request.getPhone()),
-                                anyString(),
-                                anyString())).thenReturn(true);
-
                 assertDoesNotThrow(() -> service.registerBasic(request));
-
-                Interpreter saved = interpreterCaptor.getValue();
-                verify(emailService).sendInterpreterRegistrationRequestEmail(
-                                eq("admin@pointtils.com"),
-                                eq(saved.getName()),
-                                eq(saved.getCpf()),
-                                eq(saved.getCnpj()),
-                                eq(saved.getEmail()),
-                                eq(saved.getPhone()),
-                                anyString(),
-                                anyString());
         }
 
         @Test
@@ -588,28 +546,7 @@ class InterpreterServiceTest {
                 when(responseMapper.toResponseDTO(any())).thenReturn(new InterpreterResponseDTO());
                 when(passwordEncoder.encode(request.getPassword())).thenReturn("encoded");
 
-                when(emailService.sendInterpreterRegistrationRequestEmail(
-                                eq("admin@pointtils.com"),
-                                eq(request.getName()),
-                                eq(request.getCpf()),
-                                eq(request.getProfessionalData().getCnpj()),
-                                eq(request.getEmail()),
-                                eq(request.getPhone()),
-                                anyString(),
-                                anyString())).thenReturn(false);
-
                 assertDoesNotThrow(() -> service.registerBasic(request));
-
-                Interpreter saved = interpreterCaptor.getValue();
-                verify(emailService).sendInterpreterRegistrationRequestEmail(
-                                eq("admin@pointtils.com"),
-                                eq(saved.getName()),
-                                eq(saved.getCpf()),
-                                eq(saved.getCnpj()),
-                                eq(saved.getEmail()),
-                                eq(saved.getPhone()),
-                                anyString(),
-                                anyString());
         }
 
         @Test
@@ -621,27 +558,7 @@ class InterpreterServiceTest {
                 when(responseMapper.toResponseDTO(any())).thenReturn(new InterpreterResponseDTO());
                 when(passwordEncoder.encode(request.getPassword())).thenReturn("encoded");
 
-                when(emailService.sendInterpreterRegistrationRequestEmail(
-                                eq("admin@pointtils.com"),
-                                eq(request.getName()),
-                                eq(request.getCpf()),
-                                eq(request.getProfessionalData().getCnpj()),
-                                eq(request.getEmail()),
-                                eq(request.getPhone()),
-                                anyString(),
-                                anyString())).thenThrow(new RuntimeException("SMTP error"));
-
                 assertDoesNotThrow(() -> service.registerBasic(request));
-
-                Interpreter saved = interpreterCaptor.getValue();
-                verify(emailService).sendInterpreterRegistrationRequestEmail(
-                                eq("admin@pointtils.com"),
-                                eq(saved.getName()),
-                                eq(saved.getCpf()),
-                                eq(saved.getCnpj()),
-                                eq(saved.getEmail()),
-                                eq(saved.getPhone()),
-                                anyString(),
-                                anyString());
         }
+
 }
