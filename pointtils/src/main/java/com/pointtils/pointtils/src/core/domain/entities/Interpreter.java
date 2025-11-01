@@ -20,6 +20,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -53,6 +54,7 @@ public class Interpreter extends Person {
 
     @Column(columnDefinition = "TEXT")
     private String description;
+
 
     @lombok.Builder.Default
     @OneToMany(mappedBy = "interpreter", cascade = CascadeType.ALL, orphanRemoval = true)
