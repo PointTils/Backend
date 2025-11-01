@@ -5,6 +5,7 @@ import com.pointtils.pointtils.src.application.dto.requests.RatingRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.RatingResponseDTO;
 import com.pointtils.pointtils.src.application.mapper.RatingResponseMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Appointment;
+import com.pointtils.pointtils.src.core.domain.entities.Enterprise;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
 import com.pointtils.pointtils.src.core.domain.entities.Person;
 import com.pointtils.pointtils.src.core.domain.entities.Rating;
@@ -52,6 +53,7 @@ class RatingServiceTest {
 
     private UUID appointmentId;
     private UUID userId;
+    private UUID interpreterId;
     private Appointment appointment;
     private Person user;
     private Rating rating;
@@ -61,6 +63,7 @@ class RatingServiceTest {
     void setup() {
         appointmentId = UUID.randomUUID();
         userId = UUID.randomUUID();
+        interpreterId = UUID.randomUUID();
         user = new Person();
         user.setId(userId);
 
@@ -80,18 +83,21 @@ class RatingServiceTest {
     @Test
     void createRating_shouldCreateAndReturnResponse() {
         RatingRequestDTO dto = new RatingRequestDTO();
-        dto.setUserId(userId);
+        dto.setAppointmentId(appointmentId);
         dto.setStars(BigDecimal.valueOf(5));
-        dto.setDescription("Excellent");
+        dto.setDescription("Ótimo!");
 
         when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(appointment));
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        when(userRepository.findById(appointment.getUser().getId())).thenReturn(Optional.of(appointment.getUser()));
+        when(userRepository.findById(appointment.getInterpreter().getId()))
+                .thenReturn(Optional.of(appointment.getInterpreter()));
+
         when(ratingRepository.save(any(Rating.class))).thenReturn(rating);
         when(ratingResponseMapper.toSingleResponseDTO(any())).thenReturn(mock(RatingResponseDTO.class));
         when(ratingRepository.findByInterpreterId(any())).thenReturn(List.of(rating));
-        when(userRepository.save(any())).thenReturn(appointment.getInterpreter());
 
-        RatingResponseDTO response = ratingService.createRating(dto, appointmentId);
+        RatingResponseDTO response = ratingService.createRating(dto);
 
         assertNotNull(response);
         verify(ratingRepository).save(any(Rating.class));
@@ -101,49 +107,82 @@ class RatingServiceTest {
     @Test
     void createRating_shouldThrowIfAppointmentNotFound() {
         RatingRequestDTO dto = new RatingRequestDTO();
-        dto.setUserId(userId);
+        dto.setAppointmentId(appointmentId);
 
         when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.empty());
 
-        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class, () -> ratingService.createRating(dto, appointmentId));
-        assertTrue(ex.getMessage().contains("Agendamento ou usuário não encontrado"));
+        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class,
+                () -> ratingService.createRating(dto));
+        assertTrue(ex.getMessage().contains("Agendamento não encontrado"));
     }
 
     @Test
-    void createRating_shouldThrowIfUserNotFound() {
+    void createRating_shouldThrowIfAppointmentPointsToNonExistingPerson() {
         RatingRequestDTO dto = new RatingRequestDTO();
-        dto.setUserId(userId);
+        dto.setAppointmentId(appointmentId);
+
+        Person person = Person.builder().id(userId).build();
+        appointment.setUser(person);
 
         when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(appointment));
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class, () -> ratingService.createRating(dto, appointmentId));
-        assertTrue(ex.getMessage().contains("Agendamento ou usuário não encontrado"));
+        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class,
+                () -> ratingService.createRating(dto));
+        assertTrue(ex.getMessage().contains("Usuário do agendamento não encontrado"));
     }
 
     @Test
-    void createRating_shouldThrowIfUserDoesNotMatchAppointment() {
+    void createRating_shouldThrowIfAppointmentPointsToNonExistingEnterprise() {
         RatingRequestDTO dto = new RatingRequestDTO();
-        dto.setUserId(UUID.randomUUID());
+        dto.setAppointmentId(appointmentId);
+
+        Enterprise enterprise = Enterprise.builder().id(userId).build();
+        appointment.setUser(enterprise);
 
         when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(appointment));
-        when(userRepository.findById(dto.getUserId())).thenReturn(Optional.of(new Person()));
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        RatingException ex = assertThrows(RatingException.class, () -> ratingService.createRating(dto, appointmentId));
-        assertTrue(ex.getMessage().contains("Parâmetros de entrada inválidos"));
+        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class,
+                () -> ratingService.createRating(dto));
+        assertTrue(ex.getMessage().contains("Usuário do agendamento não encontrado"));
+    }
+
+    @Test
+    void createRating_shouldThrowIfInterpreterNotFound() {
+        RatingRequestDTO dto = new RatingRequestDTO();
+        dto.setAppointmentId(appointmentId);
+
+        Person person = Person.builder()
+                .id(userId)
+                .build();
+        appointment.setUser(person);
+
+        Interpreter interpreter = Interpreter.builder()
+                .id(interpreterId)
+                .build();
+        appointment.setInterpreter(interpreter);
+
+        when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(appointment));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(person));
+        when(userRepository.findById(interpreterId)).thenReturn(Optional.empty());
+
+        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class,
+                () -> ratingService.createRating(dto));
+
+        assertTrue(ex.getMessage().contains("Intérprete do agendamento não encontrado"));
     }
 
     @Test
     void createRating_shouldThrowIfAppointmentNotCompleted() {
         appointment.setStatus(AppointmentStatus.PENDING);
         RatingRequestDTO dto = new RatingRequestDTO();
-        dto.setUserId(userId);
+        dto.setAppointmentId(appointmentId);
 
         when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(appointment));
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
-        RatingException ex = assertThrows(RatingException.class, () -> ratingService.createRating(dto, appointmentId));
-        assertTrue(ex.getMessage().contains("Agendamento ainda não foi concluído"));
+        RatingException ex = assertThrows(RatingException.class, () -> ratingService.createRating(dto));
+        assertTrue(ex.getMessage().contains("Agendamento não concluído"));
     }
 
     @Test
@@ -200,7 +239,8 @@ class RatingServiceTest {
 
         when(ratingRepository.findById(ratingId)).thenReturn(Optional.empty());
 
-        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class, () -> ratingService.patchRating(patchDTO, ratingId));
+        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class,
+                () -> ratingService.patchRating(patchDTO, ratingId));
         assertTrue(ex.getMessage().contains("Avaliação não encontrada"));
     }
 
@@ -224,7 +264,8 @@ class RatingServiceTest {
         UUID ratingId = UUID.randomUUID();
         when(ratingRepository.findById(ratingId)).thenReturn(Optional.empty());
 
-        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class, () -> ratingService.deleteRating(ratingId));
+        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class,
+                () -> ratingService.deleteRating(ratingId));
         assertTrue(ex.getMessage().contains("Avaliação não encontrada"));
     }
 
@@ -234,7 +275,8 @@ class RatingServiceTest {
         when(ratingRepository.findById(ratingId)).thenReturn(Optional.of(rating));
         when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.empty());
 
-        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class, () -> ratingService.deleteRating(ratingId));
+        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class,
+                () -> ratingService.deleteRating(ratingId));
         assertTrue(ex.getMessage().contains("Agendamento não encontrado"));
     }
 }

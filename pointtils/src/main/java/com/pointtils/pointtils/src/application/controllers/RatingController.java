@@ -32,12 +32,11 @@ public class RatingController {
 
     private final RatingService ratingService;
 
-    @PostMapping("/{appointmentId}")
+    @PostMapping
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Adiciona uma avaliação a um agendamento")
-    public ResponseEntity<ApiResponseDTO<RatingResponseDTO>> postRating(@RequestBody RatingRequestDTO request,
-                                                                        @PathVariable UUID appointmentId) {
-        RatingResponseDTO response = ratingService.createRating(request, appointmentId);
+    public ResponseEntity<ApiResponseDTO<RatingResponseDTO>> postRating(@RequestBody RatingRequestDTO request) {
+        RatingResponseDTO response = ratingService.createRating(request);
         ApiResponseDTO<RatingResponseDTO> apiResponse = ApiResponseDTO.success("Avaliação adicionada com sucesso", response);
         return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
     }

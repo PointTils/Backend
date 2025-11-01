@@ -403,7 +403,7 @@ class GlobalExceptionHandlerTest {
     @Test
     void handleRatingException_ShouldReturnUnprocessableEntity_WhenMessageIsAgendamentoNaoConcluido() {
         // Arrange
-        RatingException ex = new RatingException("Agendamento ainda não foi concluído (só posso avaliar depois de status ser encerrado)");
+        RatingException ex = new RatingException("Agendamento não concluído");
 
         // Act
         ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler.handleRatingException(ex);
@@ -411,7 +411,7 @@ class GlobalExceptionHandlerTest {
         // Assert
         assertNotNull(response);
         assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, response.getStatusCode());
-        assertEquals("Agendamento ainda não foi concluído (só posso avaliar depois de status ser encerrado)", response.getBody().getMessage());
+        assertEquals("Agendamento não concluído", response.getBody().getMessage());
     }
 
     @Test
