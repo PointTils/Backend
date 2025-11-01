@@ -1,20 +1,14 @@
 package com.pointtils.pointtils.src.application.controllers;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import com.pointtils.pointtils.src.application.dto.requests.InterpreterDocumentRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterDocumentResponseDTO;
+import com.pointtils.pointtils.src.application.services.InterpreterDocumentService;
+import com.pointtils.pointtils.src.core.domain.exceptions.FileUploadException;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -22,12 +16,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.pointtils.pointtils.src.application.dto.requests.InterpreterDocumentRequestDTO;
-import com.pointtils.pointtils.src.application.dto.responses.InterpreterDocumentResponseDTO;
-import com.pointtils.pointtils.src.application.services.InterpreterDocumentService;
-import com.pointtils.pointtils.src.core.domain.exceptions.FileUploadException;
+import java.util.List;
+import java.util.UUID;
 
-import jakarta.persistence.EntityNotFoundException;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class InterpreterDocumentControllerTest {
@@ -38,7 +37,7 @@ class InterpreterDocumentControllerTest {
     private InterpreterDocumentController interpreterDocumentController;
 
     @Test
-    void shouldSaveDocumentsSuccessfully() throws IOException {
+    void shouldSaveDocumentsSuccessfully() {
         // Arrange
         UUID interpreterId = UUID.randomUUID();
         MockMultipartFile file = new MockMultipartFile(
@@ -50,23 +49,23 @@ class InterpreterDocumentControllerTest {
         InterpreterDocumentResponseDTO responseDTO = new InterpreterDocumentResponseDTO();
         responseDTO.setSuccess(true);
         responseDTO.setMessage("Documento enviado com sucesso");
-        responseDTO.setData(new InterpreterDocumentResponseDTO.DocumentData(
+        responseDTO.setData(List.of(new InterpreterDocumentResponseDTO.DocumentData(
                 UUID.randomUUID(),
                 interpreterId,
-                "https://s3.amazonaws.com/documents/test-document.pdf"));
+                "https://s3.amazonaws.com/documents/test-document.pdf")));
 
-        when(interpreterDocumentService.saveDocuments(any(UUID.class), anyList()))
-                .thenReturn(List.of(responseDTO));
+        when(interpreterDocumentService.saveDocuments(any(UUID.class), anyList(), anyBoolean()))
+                .thenReturn(responseDTO);
 
         // Act
-        ResponseEntity<List<InterpreterDocumentResponseDTO>> response = interpreterDocumentController
-                .saveDocuments(interpreterId, List.of(file));
+        ResponseEntity<InterpreterDocumentResponseDTO> response = interpreterDocumentController
+                .saveDocuments(interpreterId, List.of(file), true);
 
         // Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(1, response.getBody().size());
-        assertEquals("Documento enviado com sucesso", response.getBody().get(0).getMessage());
-        verify(interpreterDocumentService, times(1)).saveDocuments(any(UUID.class), anyList());
+        assertEquals(1, response.getBody().getData().size());
+        assertEquals("Documento enviado com sucesso", response.getBody().getMessage());
+        verify(interpreterDocumentService, times(1)).saveDocuments(any(UUID.class), anyList(), anyBoolean());
     }
 
     @Test
@@ -76,27 +75,27 @@ class InterpreterDocumentControllerTest {
         InterpreterDocumentResponseDTO responseDTO = new InterpreterDocumentResponseDTO();
         responseDTO.setSuccess(true);
         responseDTO.setMessage("Documento encontrado");
-        responseDTO.setData(new InterpreterDocumentResponseDTO.DocumentData(
+        responseDTO.setData(List.of(new InterpreterDocumentResponseDTO.DocumentData(
                 UUID.randomUUID(),
                 interpreterId,
-                "https://s3.amazonaws.com/documents/test-document.pdf"));
+                "https://s3.amazonaws.com/documents/test-document.pdf")));
 
         when(interpreterDocumentService.getDocumentsByInterpreter(any(UUID.class)))
-                .thenReturn(List.of(responseDTO));
+                .thenReturn(responseDTO);
 
         // Act
-        ResponseEntity<List<InterpreterDocumentResponseDTO>> response = interpreterDocumentController
+        ResponseEntity<InterpreterDocumentResponseDTO> response = interpreterDocumentController
                 .getDocumentsByInterpreter(interpreterId);
 
         // Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(1, response.getBody().size());
-        assertEquals("Documento encontrado", response.getBody().get(0).getMessage());
+        assertEquals(1, response.getBody().getData().size());
+        assertEquals("Documento encontrado", response.getBody().getMessage());
         verify(interpreterDocumentService, times(1)).getDocumentsByInterpreter(any(UUID.class));
     }
 
     @Test
-    void shouldUpdateDocumentSuccessfully() throws IOException {
+    void shouldUpdateDocumentSuccessfully() {
         // Arrange
         UUID interpreterId = UUID.randomUUID();
         UUID documentId = UUID.randomUUID();
@@ -109,10 +108,10 @@ class InterpreterDocumentControllerTest {
         InterpreterDocumentResponseDTO responseDTO = new InterpreterDocumentResponseDTO();
         responseDTO.setSuccess(true);
         responseDTO.setMessage("Documento atualizado com sucesso");
-        responseDTO.setData(new InterpreterDocumentResponseDTO.DocumentData(
+        responseDTO.setData(List.of(new InterpreterDocumentResponseDTO.DocumentData(
                 documentId,
                 interpreterId,
-                "https://s3.amazonaws.com/documents/updated-document.pdf"));
+                "https://s3.amazonaws.com/documents/updated-document.pdf")));
 
         when(interpreterDocumentService.updateDocument(any(UUID.class), any(InterpreterDocumentRequestDTO.class)))
                 .thenReturn(responseDTO);
@@ -138,15 +137,15 @@ class InterpreterDocumentControllerTest {
                 MediaType.APPLICATION_PDF_VALUE,
                 "Test content".getBytes());
 
-        when(interpreterDocumentService.saveDocuments(any(UUID.class), anyList()))
+        when(interpreterDocumentService.saveDocuments(any(UUID.class), anyList(), anyBoolean()))
                 .thenThrow(new FileUploadException("test-document.pdf", new RuntimeException()));
         List<MultipartFile> fileList = List.of(file);
 
         // Act & Assert
         FileUploadException exception = assertThrows(FileUploadException.class,
-                () -> interpreterDocumentController.saveDocuments(interpreterId, fileList));
+                () -> interpreterDocumentController.saveDocuments(interpreterId, fileList, true));
         assertEquals("Erro ao fazer upload do arquivo test-document.pdf", exception.getMessage());
-        verify(interpreterDocumentService, times(1)).saveDocuments(any(UUID.class), anyList());
+        verify(interpreterDocumentService, times(1)).saveDocuments(any(UUID.class), anyList(), anyBoolean());
     }
 
     @Test
@@ -180,15 +179,15 @@ class InterpreterDocumentControllerTest {
         UUID interpreterId = UUID.randomUUID();
 
         when(interpreterDocumentService.getDocumentsByInterpreter(any(UUID.class)))
-                .thenReturn(List.of());
+                .thenReturn(new InterpreterDocumentResponseDTO(true, "No documents found", List.of()));
 
         // Act
-        ResponseEntity<List<InterpreterDocumentResponseDTO>> response = interpreterDocumentController
+        ResponseEntity<InterpreterDocumentResponseDTO> response = interpreterDocumentController
                 .getDocumentsByInterpreter(interpreterId);
 
         // Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(0, response.getBody().size());
+        assertEquals(0, response.getBody().getData().size());
         verify(interpreterDocumentService, times(1)).getDocumentsByInterpreter(any(UUID.class));
     }
 
@@ -202,13 +201,13 @@ class InterpreterDocumentControllerTest {
                 MediaType.APPLICATION_PDF_VALUE,
                 "Test content".getBytes());
 
-        when(interpreterDocumentService.saveDocuments(any(UUID.class), anyList()))
+        when(interpreterDocumentService.saveDocuments(any(UUID.class), anyList(), anyBoolean()))
                 .thenThrow(new UnsupportedOperationException("Upload de documentos está desabilitado."));
         List<MultipartFile> fileList = List.of(file);
 
         // Act & Assert
         UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class,
-                () -> interpreterDocumentController.saveDocuments(interpreterId, fileList));
+                () -> interpreterDocumentController.saveDocuments(interpreterId, fileList, true));
         assertEquals("Upload de documentos está desabilitado.", exception.getMessage());
     }
 
@@ -279,13 +278,13 @@ class InterpreterDocumentControllerTest {
                 MediaType.APPLICATION_PDF_VALUE,
                 "Test content".getBytes());
 
-        when(interpreterDocumentService.saveDocuments(any(UUID.class), anyList()))
+        when(interpreterDocumentService.saveDocuments(any(UUID.class), anyList(), anyBoolean()))
                 .thenThrow(new EntityNotFoundException("Intérprete não encontrado"));
         List<MultipartFile> fileList = List.of(file);
 
         // Act & Assert
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
-                () -> interpreterDocumentController.saveDocuments(interpreterId, fileList));
+                () -> interpreterDocumentController.saveDocuments(interpreterId, fileList, true));
         assertEquals("Intérprete não encontrado", exception.getMessage());
     }
 }
