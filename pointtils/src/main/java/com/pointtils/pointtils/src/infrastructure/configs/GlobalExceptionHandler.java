@@ -277,7 +277,7 @@ public class GlobalExceptionHandler {
                     System.currentTimeMillis());
             return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
         }
-        if ("Agendamento ainda não foi concluído (só posso avaliar depois de status ser encerrado)"
+        if ("Agendamento não concluído"
                 .equals(ex.getMessage())) {
             ErrorResponse errorResponse = new ErrorResponse(
                     HttpStatus.CONFLICT.value(),

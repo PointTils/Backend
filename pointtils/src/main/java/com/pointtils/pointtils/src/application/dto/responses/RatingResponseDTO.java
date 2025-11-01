@@ -17,5 +17,5 @@ public class RatingResponseDTO {
     private BigDecimal stars;
     private String description;
     private String date;
-    private RatingUserResponseDTO user;
+    private AppointmentResponseDTO appointment;
 }

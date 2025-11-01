@@ -47,5 +47,4 @@ public class AppointmentResponseDTO {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm:ss")
     @Schema(type = "string", example = "10:30:00")
     private LocalTime endTime;
-
 }
