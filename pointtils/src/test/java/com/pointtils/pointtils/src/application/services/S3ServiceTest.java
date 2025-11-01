@@ -2,6 +2,7 @@ package com.pointtils.pointtils.src.application.services;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.awscore.exception.AwsErrorDetails;
@@ -9,6 +10,8 @@ import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectResponse;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -129,5 +132,35 @@ class S3ServiceTest {
         // Act & Assert
         IOException exception = assertThrows(IOException.class, () -> s3Service.getFile(key));
         assertEquals("Erro ao obter arquivo do S3: Not Found", exception.getMessage());
+    }
+
+    @Test
+    void shouldDeleteFileSuccessfully() {
+        // Arrange
+        String documentUrl = "https://test-bucket.s3.amazonaws.com/users/user123/test-file.txt";
+        DeleteObjectResponse mockResponse = mock(DeleteObjectResponse.class);
+        when(mockResponse.deleteMarker()).thenReturn(true);
+        ArgumentCaptor<DeleteObjectRequest> responseArgumentCaptor = ArgumentCaptor.forClass(DeleteObjectRequest.class);
+        when(s3Client.deleteObject(responseArgumentCaptor.capture())).thenReturn(mockResponse);
+
+        // Act
+        s3Service.deleteFile(documentUrl);
+
+        // Assert
+        verify(s3Client).deleteObject(any(DeleteObjectRequest.class));
+        assertEquals("test-bucket", responseArgumentCaptor.getValue().bucket());
+        assertEquals("users/user123/test-file.txt", responseArgumentCaptor.getValue().key());
+    }
+
+    @Test
+    void deleteShouldThrowExceptionIfS3IsDisabled() {
+        // Arrange
+        S3Service disabledS3Service = new S3Service("test-bucket", false, null);
+        String documentUrl = "https://test-bucket.s3.amazonaws.com/users/user123/test-file.txt";
+
+        // Act & Assert
+        UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class,
+                () -> disabledS3Service.deleteFile(documentUrl));
+        assertEquals("Delete de arquivos está desabilitado.", exception.getMessage());
     }
 }

@@ -52,7 +52,7 @@ public class S3Service {
     public void deleteFile(String documentUrl) {
         checkIfS3IsEnabled("Delete");
 
-        String fileKey = documentUrl.replaceAll(String.format("https://%s.s3.amazonaws.com", bucketName), Strings.EMPTY);
+        String fileKey = documentUrl.replaceAll(String.format("https://%s.s3.amazonaws.com/", bucketName), Strings.EMPTY);
 
         DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
                 .bucket(bucketName)
