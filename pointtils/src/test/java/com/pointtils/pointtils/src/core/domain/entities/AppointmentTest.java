@@ -1,8 +1,10 @@
 package com.pointtils.pointtils.src.core.domain.entities;
 
 import static org.junit.jupiter.api.Assertions.*;
+import org.mockito.Mockito;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.UUID;
 
@@ -22,12 +24,7 @@ class AppointmentTest {
 
     @BeforeEach
     void setUp() {
-        mockUser = new Person() {
-            @Override
-            public String getDisplayName() {
-                return "Test User";
-            }
-        };
+        mockUser = Mockito.mock(User.class);
         mockUser.setId(UUID.randomUUID());
         
         mockInterpreter = Interpreter.builder()
@@ -46,9 +43,10 @@ class AppointmentTest {
         AppointmentStatus status = AppointmentStatus.PENDING;
         LocalTime startTime = LocalTime.of(14, 0);
         LocalTime endTime = LocalTime.of(15, 0);
+     
 
-        appointment = new Appointment(uf, city, modality, date, description, status, 
-                                    mockInterpreter, mockUser, startTime, endTime);
+        appointment = new Appointment(null, uf, city, description, description, null, description, modality, date, description, status, 
+                                            mockInterpreter, mockUser, startTime, endTime, null, null);
 
         assertNotNull(appointment);
         assertEquals(uf, appointment.getUf());
@@ -66,6 +64,8 @@ class AppointmentTest {
     @Test
     @DisplayName("Deve criar appointment com builder pattern")
     void shouldCreateAppointmentWithBuilder() {
+        LocalDateTime now = LocalDateTime.now();
+
         appointment = Appointment.builder()
                 .uf("RJ")
                 .city("Rio de Janeiro")
@@ -81,6 +81,8 @@ class AppointmentTest {
                 .user(mockUser)
                 .startTime(LocalTime.of(9, 0))
                 .endTime(LocalTime.of(10, 30))
+                .createdAt(now)
+                .modifiedAt(now)
                 .build();
 
         assertNotNull(appointment);
@@ -94,6 +96,8 @@ class AppointmentTest {
         assertEquals(AppointmentStatus.ACCEPTED, appointment.getStatus());
         assertEquals(mockInterpreter, appointment.getInterpreter());
         assertEquals(mockUser, appointment.getUser());
+        assertEquals(now, appointment.getCreatedAt());
+        assertEquals(now, appointment.getModifiedAt());
     }
 
     @Test
@@ -156,6 +160,30 @@ class AppointmentTest {
         assertNotNull(appointment.getUser());
         assertEquals(mockInterpreter.getId(), appointment.getInterpreter().getId());
         assertEquals(mockUser.getId(), appointment.getUser().getId());
+    }
+
+    @Test
+    @DisplayName("Deve validar que appointment tem campos obrigatórios")
+    void shouldValidateRequiredFields() {
+        appointment = Appointment.builder()
+                .modality(AppointmentModality.ONLINE)
+                .date(LocalDate.now().plusDays(1))
+                .description("Atendimento online")
+                .status(AppointmentStatus.PENDING)
+                .interpreter(mockInterpreter)
+                .user(mockUser)
+                .startTime(LocalTime.of(10, 0))
+                .endTime(LocalTime.of(11, 0))
+                .build();
+
+        assertNotNull(appointment.getModality());
+        assertNotNull(appointment.getDate());
+        assertNotNull(appointment.getDescription());
+        assertNotNull(appointment.getStatus());
+        assertNotNull(appointment.getInterpreter());
+        assertNotNull(appointment.getUser());
+        assertNotNull(appointment.getStartTime());
+        assertNotNull(appointment.getEndTime());
     }
 
     @Test

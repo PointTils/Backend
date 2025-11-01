@@ -1,10 +1,13 @@
 package com.pointtils.pointtils.src.core.domain.entities;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 
@@ -66,6 +69,14 @@ public abstract class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserTypeE type;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt; 
+
+    @UpdateTimestamp
+    @Column(name = "modified_at", nullable = false)
+    private LocalDateTime modifiedAt; 
 
     @ManyToMany
     @JoinTable(

@@ -1,7 +1,21 @@
 # PointTils Backend
 
 ## Visão Geral
-Backend desenvolvido em Java Spring Boot para uma plataforma de agendamento de intérpretes de libras. Segue uma arquitetura limpa com separação clara de camadas e implementa autenticação JWT, gerenciamento de migrações com Flyway, e CI/CD automatizado.
+Backend desenvolvido em Java Spring Boot 3.5.4 para uma plataforma de agendamento de intérpretes de libras. Segue uma arquitetura limpa com separação clara de camadas e implementa autenticação JWT, gerenciamento de migrações com Flyway, e CI/CD automatizado.
+
+## 🚀 Tecnologias e Versões
+
+- **Java 17** - Linguagem de programação
+- **Spring Boot 3.5.4** - Framework principal
+- **PostgreSQL** - Banco de dados
+- **Flyway** - Migrações de banco de dados
+- **Spring Security + JWT** - Autenticação e autorização
+- **SpringDoc OpenAPI 2.8.6** - Documentação da API
+- **AWS S3** - Armazenamento de arquivos
+- **Docker** - Containerização
+- **Maven** - Gerenciamento de dependências
+- **SonarQube** - Análise de qualidade de código
+- **Jacoco** - Cobertura de testes (mínimo 70%)
 
 ## Arquitetura
 ```
@@ -9,7 +23,10 @@ Backend desenvolvido em Java Spring Boot para uma plataforma de agendamento de i
 │                    API REST                     │
 │ - Spring Boot 3.5.4                             │
 │ - Spring Security + JWT                         │
-│ - Swagger/OpenAPI                               │
+│ - Swagger/OpenAPI 2.8.6                         │
+│ - Spring Data JPA + PostgreSQL                  │
+│ - Flyway Migrations                             │
+│ - AWS S3 Integration                            │
 └─────────────────────────────────────────────────┘
                       │
                       ▼
@@ -21,6 +38,11 @@ Backend desenvolvido em Java Spring Boot para uma plataforma de agendamento de i
 │ - InterpreterController (Intérpretes)           │
 │ - EnterpriseController (Empresas)               │
 │ - SpecialtyController (Especialidades)          │
+│ - EmailController (Envio de emails)             │
+│ - ParametersController (Parâmetros do sistema)  │
+│ - RatingController (Avaliações)                 │
+│ - ScheduleController (Horários)                 │
+│ - StateController (Estados)                     │
 └─────────────────────────────────────────────────┘
                       │
                       ▼
@@ -32,6 +54,12 @@ Backend desenvolvido em Java Spring Boot para uma plataforma de agendamento de i
 │ - InterpreterService (Intérpretes)              │
 │ - EnterpriseService (Empresas)                  │
 │ - SpecialtyService (Especialidades)             │
+│ - EmailService (Envio de emails via Brevo)      │
+│ - S3Service (Armazenamento AWS S3)              │
+│ - ParametersService (Parâmetros)                │
+│ - RatingService (Avaliações)                    │
+│ - ScheduleService (Horários)                    │
+│ - StateService (Estados)                        │
 └─────────────────────────────────────────────────┘
                       │
                       ▼
@@ -42,6 +70,10 @@ Backend desenvolvido em Java Spring Boot para uma plataforma de agendamento de i
 │ - InterpreterRepository                         │
 │ - EnterpriseRepository                          │
 │ - SpecialtyRepository                           │
+│ - ParametersRepository                          │
+│ - RatingRepository                              │
+│ - ScheduleRepository                            │
+│ - StateRepository                               │
 └─────────────────────────────────────────────────┘
                       │
                       ▼
@@ -52,6 +84,10 @@ Backend desenvolvido em Java Spring Boot para uma plataforma de agendamento de i
 │ - Interpreter (Intérprete)                      │
 │ - Enterprise (Empresa)                          │
 │ - Specialty (Especialidade)                     │
+│ - Parameters (Parâmetros do sistema)            │
+│ - Rating (Avaliação)                            │
+│ - Schedule (Horário)                            │
+│ - State (Estado)                                │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -74,6 +110,9 @@ Backend desenvolvido em Java Spring Boot para uma plataforma de agendamento de i
 │   │   │   │   │       ├── configs/      # Configurações
 │   │   │   │   │       └── repositories/ # Repositórios
 │   │   ├── resources/                # Arquivos de configuração
+│   │   │   ├── application.properties    # Configurações gerais
+│   │   │   ├── application-prod.properties # Configurações produção
+│   │   │   └── db/migration/         # Migrações Flyway (V1-V14)
 │   └── test/                         # Testes unitários
 ├── utils/                            # Utilitários e serviços auxiliares
 │   ├── sonarqube/                    # Configuração SonarQube
@@ -82,7 +121,7 @@ Backend desenvolvido em Java Spring Boot para uma plataforma de agendamento de i
 │       └── Dockerfile
 ├── docker-compose.yaml               # Orquestração unificada de containers
 ├── docker-compose.prod.yaml          # Configuração para produção
-├── sonarqube-docker-compose.yaml     # Docker-compose antigo (legado)
+├── docker-compose-dev.yaml           # Configuração para desenvolvimento
 ├── terraform/                        # Infraestrutura como código (Produção)
 │   ├── main.tf
 │   ├── variables.tf
@@ -99,10 +138,16 @@ Backend desenvolvido em Java Spring Boot para uma plataforma de agendamento de i
 │   ├── destroy-infrastructure.yml    # Destruir infraestrutura
 │   ├── discord-pr-notification.yml   # Notificações Discord
 │   ├── mirror-to-gitlab.yml          # Mirror para GitLab
+│   ├── notify-deadlines.yml          # Notificações de prazos
 │   └── sonarcloud.yaml               # Análise SonarCloud
 └── docs/                             # Documentação organizada
     ├── README.md
     ├── IMPLEMENTACAO_DEV_E_MELHORIAS.md
+    ├── CI_CD_FLUXO_IMPLEMENTADO.md
+    ├── DEPLOY_GUIDE.md
+    ├── EMAIL_API_GUIDE.md
+    ├── FLYWAY_MIGRATION_GUIDE.md
+    ├── JWT_REFRESH_TOKEN_IMPLEMENTATION.md
     └── [outros arquivos de documentação]
 ```
 
@@ -110,27 +155,38 @@ Backend desenvolvido em Java Spring Boot para uma plataforma de agendamento de i
 
 ### Pré-requisitos
 - Java 17+
-- Maven
-- Docker (opcional)
+- Maven 3.8+
+- Docker e Docker Compose
 - Git
 
-### Comandos Úteis
+### Configuração Inicial
 
-**Executar localmente:**
+1. **Clone o repositório:**
 ```bash
-cd pointtils
-./mvnw spring-boot:run
+git clone https://github.com/PointTils/Backend.git
+cd Backend
 ```
 
-**Buildar e executar com Docker (nova estrutura unificada):**
+2. **Configure as variáveis de ambiente:**
 ```bash
-# Executa todos os serviços: aplicação, PostgreSQL e SonarQube
+cp .env.example .env
+# Edite o arquivo .env com suas configurações
+```
+
+### Execução com Docker (Recomendado)
+
+**Executar todos os serviços (aplicação + banco + SonarQube):**
+```bash
 docker-compose up --build
+```
 
-# Ou para executar em background:
+**Executar em background:**
+```bash
 docker-compose up -d --build
+```
 
-# Executar apenas serviços específicos:
+**Executar apenas serviços específicos:**
+```bash
 docker-compose up pointtils pointtils-db  # Apenas app + banco
 docker-compose up sonarqube               # Apenas SonarQube
 ```
@@ -149,6 +205,17 @@ docker-compose down -v
 # Ver logs de um serviço específico
 docker-compose logs pointtils
 docker-compose logs sonarqube
+
+# Rebuildar e executar
+docker-compose up --build
+```
+
+### Execução Local (Sem Docker)
+
+**Executar a aplicação:**
+```bash
+cd pointtils
+./mvnw spring-boot:run
 ```
 
 **Executar testes:**
@@ -156,10 +223,54 @@ docker-compose logs sonarqube
 ./mvnw test
 ```
 
-**Gerar documentação Swagger:**
-Documentação disponível no seguinte endereço:
+**Executar com cobertura de testes:**
+```bash
+./mvnw test -Pcoverage
 ```
-https://backend-v5gs.onrender.com/swagger-ui/index.html
+
+**Buildar o projeto:**
+```bash
+./mvnw clean package
+```
+
+## 📋 Variáveis de Ambiente
+
+O projeto utiliza um arquivo `.env` para configurações. Veja `.env.example` para todas as variáveis disponíveis:
+
+### Configurações Principais
+```env
+# Database
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=pointtils-db
+
+# Spring Application
+SPRING_APPLICATION_NAME=pointtils-api
+SERVER_PORT=8080
+
+# DataSource
+SPRING_DATASOURCE_URL=jdbc:postgresql://pointtils-db:5432/pointtils-db
+SPRING_DATASOURCE_USERNAME=postgres
+SPRING_DATASOURCE_PASSWORD=postgres
+
+# JWT
+JWT_SECRET=sua-chave-secreta-aqui
+JWT_EXPIRATION_TIME=900000
+JWT_REFRESH_EXPIRATION_TIME=604800000
+
+# AWS
+AWS_REGION=us-east-2
+AWS_ACCESS_KEY_ID=seu-access-key
+AWS_SECRET_ACCESS_KEY=seu-secret-key
+CLOUD_AWS_BUCKET_NAME=seu-bucket
+
+# Email (Brevo SMTP)
+BREVO_SMTP_HOST=smtp-relay.brevo.com
+BREVO_SMTP_PORT=587
+BREVO_SMTP_USERNAME=seu-username
+BREVO_SMTP_PASSWORD=sua-senha
+BREVO_SENDER_EMAIL=seu-email
+BREVO_SENDER_NAME=PointTils
 ```
 
 ## 🏗️ CI/CD e Deploy
@@ -179,52 +290,146 @@ https://backend-v5gs.onrender.com/swagger-ui/index.html
 - Deploy para AWS com aprovação manual
 - Rollback automático
 
+**Análise de Qualidade** (`.github/workflows/sonarcloud.yaml`):
+- Análise SonarCloud em cada PR
+- Verificação de cobertura de testes
+- Análise de vulnerabilidades
+
 ### Infraestrutura como Código
 
 **Produção** (`terraform/`):
 - VPC: `10.0.0.0/16`
-- Instância EC2: `t2.medium`
+- Instância EC2: `t2.micro` (Ohio - us-east-2) - Alterado para economia
 - Configurações de produção
+- Elastic IP para IP público fixo
 
 **Desenvolvimento** (`terraform-dev/`):
-- VPC: `10.1.0.0/16` (isolada)
-- Instância EC2: `t2.micro` (econômica)
+- VPC: `10.2.0.0/16` (isolada)
+- Instância EC2: `t2.micro` (Ohio - us-east-2) - Alterado para economia
 - Configurações específicas para desenvolvimento
 
 ### Scripts de Deploy
 
 - `terraform/deploy-app.sh` - Script de deploy
 - `terraform/rollback-app.sh` - Script de rollback automático
+- `terraform-dev/deploy-dev-app.sh` - Deploy para desenvolvimento
 
-## Dicas de Desenvolvimento
+## 📚 Documentação da API
 
-1. **Padrão de Commits**: Siga o Conventional Commits
-2. **Testes**: Adicione novos testes em `src/test/java`
-3. **DTOs**: Sempre use DTOs para comunicação externa
-4. **Documentação**: Mantenha atualizada a documentação Swagger
-5. **Docker**: Use `docker-compose` para ambiente consistente
+### Swagger UI
+A documentação interativa da API está disponível em:
+```
+http://localhost:8080/swagger-ui/index.html
+```
 
-## Configurações
-As principais configurações estão em:
-- `src/main/resources/application.properties` 
-- `src/main/java/.../configs/OpenApiConfig.java`
+### Endpoints Principais
 
-### Variáveis de Ambiente
-O projeto utiliza um arquivo `.env.example` como template para configurações sensíveis. Para executar o projeto:
+**Autenticação:**
+- `POST /auth/login` - Login de usuário
+- `POST /auth/refresh` - Refresh token
+- `POST /auth/logout` - Logout
 
-1. Copie o arquivo `.env.example` para `.env`:
+**Usuários:**
+- `GET /users` - Listar usuários
+- `POST /users` - Criar usuário
+- `GET /users/{id}` - Buscar usuário por ID
+
+**Agendamentos:**
+- `GET /appointments` - Listar agendamentos
+- `POST /appointments` - Criar agendamento
+- `PUT /appointments/{id}` - Atualizar agendamento
+
+**Intérpretes:**
+- `GET /interpreters` - Listar intérpretes
+- `POST /interpreters` - Criar intérprete
+- `GET /interpreters/{id}` - Buscar intérprete por ID
+
+## 🧪 Testes
+
+### Executar Testes
 ```bash
-cp .env.example .env
+cd pointtils
+./mvnw test
 ```
 
-2. Edite o `.env` com seus valores reais (não versionado no Git)
+### Cobertura de Testes
+O projeto utiliza Jacoco para cobertura de testes com os seguintes requisitos mínimos:
+- Linhas: 70%
+- Branch: 70%
+- Instruções: 75%
+- Métodos: 70%
+- Classes: 90%
 
-Variáveis comuns:
-```
-SPRING_DATASOURCE_URL=
-SPRING_DATASOURCE_USERNAME=
-SPRING_DATASOURCE_PASSWORD=
-JWT_SECRET=
+### Executar com Cobertura
+```bash
+./mvnw test -Pcoverage
 ```
 
-3. Para Docker, certifique-se que as variáveis estão definidas no `docker-compose.yaml` ou no `.env`
+## 🔧 Configurações Avançadas
+
+### Migrações de Banco (Flyway)
+O projeto utiliza Flyway para gerenciar migrações de banco de dados. As migrações estão em `pointtils/src/main/resources/db/migration/`:
+
+- `V1__Create_initial_schema.sql` - Schema inicial
+- `V2__Insert_seed_data.sql` - Dados iniciais
+- `V3__Update_user_type_and_data.sql` - Atualizações de usuário
+- ... até `V14__Update_appointment_date.sql`
+
+### Configurações de Produção
+As configurações específicas para produção estão em:
+- `pointtils/src/main/resources/application-prod.properties`
+- `docker-compose.prod.yaml`
+
+### Health Checks
+A aplicação expõe endpoints de health check:
+```
+GET /actuator/health
+```
+
+## 📊 Monitoramento
+
+### SonarQube
+Para análise de qualidade de código:
+```bash
+docker-compose up sonarqube
+```
+Acesse: `http://localhost:9000`
+
+### Logs
+Os logs da aplicação podem ser visualizados via:
+```bash
+docker-compose logs pointtils
+```
+
+## 🤝 Contribuição
+
+### Padrões de Desenvolvimento
+
+1. **Commits**: Siga o Conventional Commits
+2. **Branches**: Use `feature/`, `fix/`, `hotfix/`
+3. **Code Review**: Todas as PRs precisam de review
+4. **Testes**: Adicione testes para novas funcionalidades
+5. **Documentação**: Mantenha a documentação atualizada
+
+### Fluxo de Trabalho
+
+1. Crie uma branch a partir de `dev`
+2. Desenvolva a feature/fix
+3. Adicione testes
+4. Execute `./mvnw test` para verificar
+5. Faça commit seguindo Conventional Commits
+6. Abra PR para `dev`
+7. Aguarde code review
+8. Após aprovação, merge para `dev`
+
+## 📞 Suporte
+
+Para dúvidas ou problemas:
+1. Consulte a documentação em `docs/`
+2. Verifique os logs da aplicação
+3. Abra uma issue no GitHub
+4. Entre em contato com a equipe de desenvolvimento
+
+---
+
+**PointTils Backend** - Plataforma de agendamento de intérpretes de libras

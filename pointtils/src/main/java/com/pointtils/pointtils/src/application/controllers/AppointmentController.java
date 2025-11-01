@@ -162,14 +162,15 @@ public class AppointmentController {
             @RequestParam(required = false) AppointmentStatus status,
             @RequestParam(required = false) AppointmentModality modality,
             @RequestParam(required = false) String fromDateTime,
-            @RequestParam(required = false) Boolean hasRating) {
+            @RequestParam(required = false) Boolean hasRating,
+            @RequestParam(required = false, defaultValue = "-1") int dayLimit) {
 
         LocalDateTime from = null;
         if (fromDateTime != null && !fromDateTime.trim().isEmpty()) {
             from = LocalDateTime.parse(fromDateTime);
         }
 
-        List<AppointmentFilterResponseDTO> appointments = appointmentService.searchAppointments(interpreterId, userId, status, modality, from, hasRating);
+        List<AppointmentFilterResponseDTO> appointments = appointmentService.searchAppointments(interpreterId, userId, status, modality, from, hasRating, dayLimit);
         return ResponseEntity.ok(ApiResponseDTO.success("Solicitações encontradas com sucesso", appointments));
     }
 
