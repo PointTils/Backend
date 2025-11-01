@@ -1,14 +1,5 @@
 package com.pointtils.pointtils.src.application.services;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.UUID;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterDocumentRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterDocumentResponseDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
@@ -16,10 +7,18 @@ import com.pointtils.pointtils.src.core.domain.entities.InterpreterDocuments;
 import com.pointtils.pointtils.src.core.domain.exceptions.FileUploadException;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterDocumentsRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
-
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -35,14 +34,20 @@ public class InterpreterDocumentService {
     private String adminEmail;
 
     @Transactional
-    public List<InterpreterDocumentResponseDTO> saveDocuments(UUID interpreterId, List<MultipartFile> files) {
+    public InterpreterDocumentResponseDTO saveDocuments(UUID interpreterId, List<MultipartFile> files,
+                                                              Boolean replaceExisting) {
         Interpreter interpreter = getInterpreterById(interpreterId);
         if (!s3Service.isS3Enabled()) {
             throw new UnsupportedOperationException("Upload de documentos está desabilitado.");
         }
 
+        List<InterpreterDocuments> existingDocuments = null;
+        if (Boolean.TRUE.equals(replaceExisting)) {
+            existingDocuments = interpreterDocumentsRepository.findByInterpreter(interpreter);
+        }
+
         // Processa cada arquivo e salva no banco de dados
-        return files.stream().map(file -> {
+        List<InterpreterDocuments> savedDocuments = files.stream().map(file -> {
             // Faz o upload do arquivo para o S3
             String documentUrl;
             try {
@@ -56,13 +61,20 @@ public class InterpreterDocumentService {
             document.setInterpreter(interpreter);
             document.setDocument(documentUrl);
 
-            InterpreterDocuments savedDocument = interpreterDocumentsRepository.save(document);
-
-            // Enviar email para o administrador após cadastro
-            sendInterpreterRegistrationEmail(interpreter, files);
-
-            return InterpreterDocumentResponseDTO.fromEntity(savedDocument);
+            return interpreterDocumentsRepository.save(document);
         }).toList();
+
+        // Enviar email para o administrador após cadastro
+        sendInterpreterRegistrationEmail(interpreter, files);
+
+        if (Objects.nonNull(existingDocuments)) {
+            existingDocuments.forEach(existingDocument -> {
+                s3Service.deleteFile(existingDocument.getDocument());
+                interpreterDocumentsRepository.delete(existingDocument);
+            });
+        }
+
+        return InterpreterDocumentResponseDTO.fromEntity(savedDocuments);
     }
 
     public boolean isDocumentUploadEnabled() {
@@ -70,14 +82,12 @@ public class InterpreterDocumentService {
     }
 
     @Transactional(readOnly = true)
-    public List<InterpreterDocumentResponseDTO> getDocumentsByInterpreter(UUID interpreterId) {
+    public InterpreterDocumentResponseDTO getDocumentsByInterpreter(UUID interpreterId) {
         Interpreter interpreter = getInterpreterById(interpreterId);
 
         List<InterpreterDocuments> documents = interpreterDocumentsRepository.findByInterpreter(interpreter);
 
-        return documents.stream()
-                .map(InterpreterDocumentResponseDTO::fromEntity)
-                .toList();
+        return InterpreterDocumentResponseDTO.fromEntity(documents);
     }
 
     @Transactional
@@ -99,7 +109,7 @@ public class InterpreterDocumentService {
             existingDocument.setDocument(updatedDocumentUrl);
 
             InterpreterDocuments updatedDocument = interpreterDocumentsRepository.save(existingDocument);
-            return InterpreterDocumentResponseDTO.fromEntity(updatedDocument);
+            return InterpreterDocumentResponseDTO.fromEntity(List.of(updatedDocument));
         } catch (IOException e) {
             throw new FileUploadException(request.getFile().getOriginalFilename(), e);
         }
@@ -112,7 +122,7 @@ public class InterpreterDocumentService {
 
     /**
      * Envia email para o administrador com os dados de cadastro do intérprete
-     * 
+     *
      * @param interpreter Intérprete cadastrado
      */
     @Value("${app.api.base-url}")

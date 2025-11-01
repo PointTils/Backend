@@ -1,13 +1,13 @@
 package com.pointtils.pointtils.src.application.dto.responses;
 
-import java.util.UUID;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.pointtils.pointtils.src.core.domain.entities.InterpreterDocuments;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
+import java.util.UUID;
 
 @Data
 @AllArgsConstructor
@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 public class InterpreterDocumentResponseDTO {
     private boolean success;
     private String message;
-    private DocumentData data;
+    private List<DocumentData> data;
 
     @Data
     @AllArgsConstructor
@@ -29,15 +29,16 @@ public class InterpreterDocumentResponseDTO {
         private String document;
     }
 
-    public static InterpreterDocumentResponseDTO fromEntity(InterpreterDocuments document) {
+    public static InterpreterDocumentResponseDTO fromEntity(List<InterpreterDocuments> documents) {
         InterpreterDocumentResponseDTO response = new InterpreterDocumentResponseDTO();
         response.success = true;
         response.message = "Documento enviado com sucesso";
-        response.data = new DocumentData(
-            document.getId(),
-            document.getInterpreter().getId(),
-            document.getDocument()
-        );
+        response.data = documents.stream()
+                .map(document -> new DocumentData(
+                        document.getId(),
+                        document.getInterpreter().getId(),
+                        document.getDocument()
+                )).toList();
         return response;
     }
 }

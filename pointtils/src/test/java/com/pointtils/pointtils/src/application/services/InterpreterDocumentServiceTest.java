@@ -8,7 +8,6 @@ import com.pointtils.pointtils.src.core.domain.exceptions.FileUploadException;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterDocumentsRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
 import jakarta.persistence.EntityNotFoundException;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -75,13 +74,13 @@ class InterpreterDocumentServiceTest {
         when(interpreterDocumentsRepository.save(any(InterpreterDocuments.class))).thenReturn(savedDocument);
 
         // Act
-        List<InterpreterDocumentResponseDTO> result = interpreterDocumentService.saveDocuments(interpreterId,
-                List.of(file));
+        InterpreterDocumentResponseDTO result = interpreterDocumentService
+                .saveDocuments(interpreterId, List.of(file), true);
 
         // Assert
         assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals("https://s3.amazonaws.com/documents/test-document.pdf", result.get(0).getData().getDocument());
+        assertEquals(1, result.getData().size());
+        assertEquals("https://s3.amazonaws.com/documents/test-document.pdf", result.getData().get(0).getDocument());
         verify(s3Service, times(1)).uploadFile(any(MultipartFile.class), anyString());
         verify(interpreterDocumentsRepository, times(1)).save(any(InterpreterDocuments.class));
     }
@@ -95,7 +94,7 @@ class InterpreterDocumentServiceTest {
 
         // Act & Assert
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
-                () -> interpreterDocumentService.saveDocuments(interpreterId, fileList));
+                () -> interpreterDocumentService.saveDocuments(interpreterId, fileList, true));
         assertEquals("Intérprete não encontrado", exception.getMessage());
         verifyNoInteractions(s3Service);
     }
@@ -110,7 +109,7 @@ class InterpreterDocumentServiceTest {
 
         // Act & Assert
         UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class,
-                () -> interpreterDocumentService.saveDocuments(interpreterId, fileList));
+                () -> interpreterDocumentService.saveDocuments(interpreterId, fileList, true));
         assertEquals("Upload de documentos está desabilitado.", exception.getMessage());
         verify(s3Service).isS3Enabled();
         verifyNoMoreInteractions(s3Service);
@@ -134,7 +133,7 @@ class InterpreterDocumentServiceTest {
 
         // Act & Assert
         FileUploadException exception = assertThrows(FileUploadException.class,
-                () -> interpreterDocumentService.saveDocuments(interpreterId, fileList));
+                () -> interpreterDocumentService.saveDocuments(interpreterId, fileList, true));
         assertEquals("Erro ao fazer upload do arquivo test-document.pdf", exception.getMessage());
         assertEquals(IOException.class, exception.getCause().getClass());
         assertEquals("Falha no upload", exception.getCause().getMessage());
@@ -154,13 +153,12 @@ class InterpreterDocumentServiceTest {
         when(interpreterDocumentsRepository.findByInterpreter(interpreter)).thenReturn(List.of(document));
 
         // Act
-        List<InterpreterDocumentResponseDTO> result = interpreterDocumentService
-                .getDocumentsByInterpreter(interpreterId);
+        InterpreterDocumentResponseDTO result = interpreterDocumentService.getDocumentsByInterpreter(interpreterId);
 
         // Assert
         assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals("https://s3.amazonaws.com/documents/test-document.pdf", result.get(0).getData().getDocument());
+        assertEquals(1, result.getData().size());
+        assertEquals("https://s3.amazonaws.com/documents/test-document.pdf", result.getData().get(0).getDocument());
         verify(interpreterDocumentsRepository, times(1)).findByInterpreter(interpreter);
     }
 
@@ -196,7 +194,7 @@ class InterpreterDocumentServiceTest {
 
         // Assert
         assertNotNull(result);
-        assertEquals("https://s3.amazonaws.com/documents/updated-document.pdf", result.getData().getDocument());
+        assertEquals("https://s3.amazonaws.com/documents/updated-document.pdf", result.getData().get(0).getDocument());
         verify(s3Service, times(1)).uploadFile(any(MultipartFile.class), anyString());
         verify(interpreterDocumentsRepository, times(1)).save(any(InterpreterDocuments.class));
     }
