@@ -9,6 +9,7 @@ import software.amazon.awssdk.awscore.exception.AwsErrorDetails;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.sync.ResponseTransformer;
+import software.amazon.awssdk.http.SdkHttpResponse;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectResponse;
@@ -139,7 +140,9 @@ class S3ServiceTest {
         // Arrange
         String documentUrl = "https://test-bucket.s3.amazonaws.com/users/user123/test-file.txt";
         DeleteObjectResponse mockResponse = mock(DeleteObjectResponse.class);
-        when(mockResponse.deleteMarker()).thenReturn(true);
+        SdkHttpResponse mockSdkHttpResponse = mock(SdkHttpResponse.class);
+        when(mockResponse.sdkHttpResponse()).thenReturn(mockSdkHttpResponse);
+        when(mockSdkHttpResponse.isSuccessful()).thenReturn(Boolean.TRUE);
         ArgumentCaptor<DeleteObjectRequest> responseArgumentCaptor = ArgumentCaptor.forClass(DeleteObjectRequest.class);
         when(s3Client.deleteObject(responseArgumentCaptor.capture())).thenReturn(mockResponse);
 

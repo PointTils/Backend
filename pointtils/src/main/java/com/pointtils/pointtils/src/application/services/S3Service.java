@@ -59,8 +59,10 @@ public class S3Service {
                 .key(fileKey)
                 .build();
         var response = s3Client.deleteObject(deleteObjectRequest);
-        if (Boolean.FALSE.equals(response.deleteMarker())) {
-            log.error("Erro ao deletar arquivo {}: {}", documentUrl, response.sdkHttpResponse().statusCode());
+        if (!response.sdkHttpResponse().isSuccessful()) {
+            log.error("Erro ao deletar arquivo {}: statusCode={}, statusText={}", documentUrl,
+                    response.sdkHttpResponse().statusCode(),
+                    response.sdkHttpResponse().statusText().orElse("N/A"));
         }
     }
 
