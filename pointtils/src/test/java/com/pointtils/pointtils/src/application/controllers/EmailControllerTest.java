@@ -1,25 +1,5 @@
 package com.pointtils.pointtils.src.application.controllers;
 
-import java.util.Map;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-
 import com.pointtils.pointtils.src.application.dto.requests.EmailRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ApiResponseDTO;
 import com.pointtils.pointtils.src.application.services.EmailService;
@@ -27,6 +7,25 @@ import com.pointtils.pointtils.src.application.services.InterpreterService;
 import com.pointtils.pointtils.src.application.services.MemoryResetTokenService;
 import com.pointtils.pointtils.src.application.services.UserService;
 import com.pointtils.pointtils.src.core.domain.entities.Person;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
+import java.util.Map;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Testes Unitários do EmailController")
@@ -348,22 +347,17 @@ class EmailControllerTest {
     }
 
     @Test
-    @DisplayName("Deve retornar 410 GONE e mensagem de endpoint obsoleto ao tentar enviar solicitação de cadastro de intérprete")
-    void deveRetornarGoneAoTentarEnviarSolicitacaoCadastroInterprete() {
-        ResponseEntity<ApiResponseDTO<Void>> response = emailController.sendInterpreterRegistrationRequest();
-
-        assertEquals(HttpStatus.GONE, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertFalse(response.getBody().isSuccess());
-        assertEquals(
-                "Este endpoint está obsoleto. Use o endpoint /interpreter-documents/ para acessar o recurso.",
-                response.getBody().getMessage());
-    }
-
-    @Test
     @DisplayName("Deve retornar 410 GONE e mensagem de endpoint obsoleto ao chamar sendInterpreterRegistrationRequest")
-    void deveRetornarGoneQuandoEndpointEstiverObsoleto() {
-        ResponseEntity<ApiResponseDTO<Void>> response = emailController.sendInterpreterRegistrationRequest();
+    void deveRetornarGoneAoTentarEnviarSolicitacaoCadastroInterprete() {
+        ResponseEntity<ApiResponseDTO<Map<String, Object>>> response = emailController.sendInterpreterRegistrationRequest(
+                "admin@email.com",
+                "Nome Mock",
+                "1112223344",
+                null,
+                "mock@email.com",
+                "51987878787",
+                "http://localhost:8080/approve",
+                "http://localhost:8080/reject");
 
         assertEquals(HttpStatus.GONE, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -413,7 +407,7 @@ class EmailControllerTest {
 
         ResponseEntity<String> response = emailController.approveInterpreter(id);
 
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("HTML_FALHA_APROVAR", response.getBody());
     }
 
@@ -427,7 +421,7 @@ class EmailControllerTest {
 
         ResponseEntity<String> response = emailController.rejectInterpreter(id);
 
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("HTML_FALHA_RECUSAR", response.getBody());
     }
 }
