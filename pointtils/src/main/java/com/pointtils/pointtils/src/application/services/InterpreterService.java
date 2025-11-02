@@ -159,6 +159,91 @@ public class InterpreterService {
         return responseMapper.toResponseDTO(updatedInterpreter);
     }
 
+    /**
+     * Aprova o cadastro de um intérprete
+     *
+     * @param id ID do intérprete
+     * @return true se o cadastro foi aprovado com sucesso, false caso contrário
+     */
+    public boolean approveInterpreter(UUID id) {
+        try {
+            Interpreter interpreter = findInterpreterById(id);
+            if (interpreter.getStatus() != UserStatus.PENDING) {
+                throw new IllegalArgumentException("Cadastro do intérprete já foi verificado anteriormente.");
+            }
+
+            interpreter.setStatus(UserStatus.ACTIVE);
+            repository.save(interpreter);
+
+            // Enviar email de feedback para o intérprete
+            boolean emailSent = emailService.sendInterpreterFeedbackEmail(
+                    interpreter.getEmail(),
+                    interpreter.getName(),
+                    true // approved
+            );
+
+            if (emailSent) {
+                log.info("Cadastro do intérprete {} aprovado e email enviado com sucesso", interpreter.getName());
+            } else {
+                log.warn("Cadastro do intérprete {} aprovado, mas falha ao enviar email", interpreter.getName());
+            }
+
+            return true;
+
+        } catch (Exception e) {
+            log.error("Erro ao aprovar cadastro do intérprete {}: {}", id, e.getMessage());
+            if (e instanceof IllegalArgumentException) {
+                throw e;
+            }
+            return false;
+        }
+    }
+
+    /**
+     * Recusa o cadastro de um intérprete
+     *
+     * @param id ID do intérprete
+     * @return true se o cadastro foi recusado com sucesso, false caso contrário
+     */
+    public boolean rejectInterpreter(UUID id) {
+        try {
+            Interpreter interpreter = findInterpreterById(id);
+            if (interpreter.getStatus() != UserStatus.PENDING) {
+                throw new IllegalArgumentException("Cadastro do intérprete já foi verificado anteriormente.");
+            }
+
+            interpreter.setStatus(UserStatus.INACTIVE);
+            repository.save(interpreter);
+
+            // Enviar email de feedback para o intérprete
+            boolean emailSent = emailService.sendInterpreterFeedbackEmail(
+                    interpreter.getEmail(),
+                    interpreter.getName(),
+                    false // not approved
+            );
+
+            if (emailSent) {
+                log.info("Cadastro do intérprete {} recusado e email enviado com sucesso", interpreter.getName());
+            } else {
+                log.warn("Cadastro do intérprete {} recusado, mas falha ao enviar email", interpreter.getName());
+            }
+
+            return true;
+
+        } catch (Exception e) {
+            log.error("Erro ao recusar cadastro do intérprete {}: {}", id, e.getMessage());
+            if (e instanceof IllegalArgumentException) {
+                throw e;
+            }
+            return false;
+        }
+    }
+
+    protected Interpreter findInterpreterById(UUID id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Intérprete não encontrado"));
+    }
+
     private void updatePersonalPatchRequest(InterpreterPatchRequestDTO requestDto, Interpreter interpreter) {
         if (requestDto.getName() != null) {
             interpreter.setName(requestDto.getName());
@@ -204,90 +289,5 @@ public class InterpreterService {
         locations.stream()
                 .map(locationDTO -> locationMapper.toDomain(locationDTO, interpreter))
                 .forEach(location -> interpreter.getLocations().add(location));
-    }
-
-    private Interpreter findInterpreterById(UUID id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Intérprete não encontrado"));
-    }
-
-    /**
-     * Aprova o cadastro de um intérprete
-     * 
-     * @param id ID do intérprete
-     * @return true se o cadastro foi aprovado com sucesso, false caso contrário
-     */
-    public boolean approveInterpreter(UUID id) {
-        try {
-            Interpreter interpreter = findInterpreterById(id);
-            if (interpreter.getStatus() != UserStatus.PENDING) {
-                throw new IllegalArgumentException("Cadastro do intérprete já foi verificado anteriormente.");
-            }
-
-            interpreter.setStatus(UserStatus.ACTIVE);
-            repository.save(interpreter);
-
-            // Enviar email de feedback para o intérprete
-            boolean emailSent = emailService.sendInterpreterFeedbackEmail(
-                    interpreter.getEmail(),
-                    interpreter.getName(),
-                    true // approved
-            );
-
-            if (emailSent) {
-                log.info("Cadastro do intérprete {} aprovado e email enviado com sucesso", interpreter.getName());
-            } else {
-                log.warn("Cadastro do intérprete {} aprovado, mas falha ao enviar email", interpreter.getName());
-            }
-
-            return true;
-
-        } catch (Exception e) {
-            log.error("Erro ao aprovar cadastro do intérprete {}: {}", id, e.getMessage());
-            if (e instanceof IllegalArgumentException) {
-                throw e;
-            }
-            return false;
-        }
-    }
-
-    /**
-     * Recusa o cadastro de um intérprete
-     * 
-     * @param id ID do intérprete
-     * @return true se o cadastro foi recusado com sucesso, false caso contrário
-     */
-    public boolean rejectInterpreter(UUID id) {
-        try {
-            Interpreter interpreter = findInterpreterById(id);
-            if (interpreter.getStatus() != UserStatus.PENDING) {
-                throw new IllegalArgumentException("Cadastro do intérprete já foi verificado anteriormente.");
-            }
-
-            interpreter.setStatus(UserStatus.INACTIVE);
-            repository.save(interpreter);
-
-            // Enviar email de feedback para o intérprete
-            boolean emailSent = emailService.sendInterpreterFeedbackEmail(
-                    interpreter.getEmail(),
-                    interpreter.getName(),
-                    false // not approved
-            );
-
-            if (emailSent) {
-                log.info("Cadastro do intérprete {} recusado e email enviado com sucesso", interpreter.getName());
-            } else {
-                log.warn("Cadastro do intérprete {} recusado, mas falha ao enviar email", interpreter.getName());
-            }
-
-            return true;
-
-        } catch (Exception e) {
-            log.error("Erro ao recusar cadastro do intérprete {}: {}", id, e.getMessage());
-            if (e instanceof IllegalArgumentException) {
-                throw e;
-            }
-            return false;
-        }
     }
 }
