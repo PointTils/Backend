@@ -8,6 +8,7 @@ import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResp
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
 import com.pointtils.pointtils.src.application.services.InterpreterService;
 import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
+import com.pointtils.pointtils.src.infrastructure.configs.FirebaseConfig;
 import io.awspring.cloud.autoconfigure.s3.S3AutoConfiguration;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -58,6 +59,9 @@ class InterpreterControllerTest {
 
     @MockitoBean
     private S3Client s3Client;
+
+    @MockitoBean
+    private FirebaseConfig firebaseConfig;
 
     @Test
     @DisplayName("Deve cadastrar intérprete com sucesso usando dados básicos")

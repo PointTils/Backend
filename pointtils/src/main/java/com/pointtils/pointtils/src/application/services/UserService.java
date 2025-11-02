@@ -18,9 +18,13 @@ public class UserService {
         return userRepository.findByEmail(email);
     }
 
-    public User findById(UUID userId) {
+    protected User findById(UUID userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
+    }
+
+    protected User updateUser(User user) {
+        return userRepository.save(user);
     }
 }
 

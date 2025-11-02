@@ -1,18 +1,8 @@
 package com.pointtils.pointtils.src.core.domain.entities;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
-
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.OneToMany;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.annotations.UuidGenerator;
-import org.hibernate.type.SqlTypes;
-
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
-
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -24,12 +14,23 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.type.SqlTypes;
+
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -68,6 +69,14 @@ public abstract class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserTypeE type;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt; 
+
+    @UpdateTimestamp
+    @Column(name = "modified_at", nullable = false)
+    private LocalDateTime modifiedAt; 
 
     @ManyToMany
     @JoinTable(
