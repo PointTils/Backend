@@ -1,22 +1,5 @@
 package com.pointtils.pointtils.src.infrastructure.configs;
 
-import java.util.Set;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-
 import com.fasterxml.jackson.databind.exc.ValueInstantiationException;
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
@@ -24,10 +7,26 @@ import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationExceptio
 import com.pointtils.pointtils.src.core.domain.exceptions.ClientTimeoutException;
 import com.pointtils.pointtils.src.core.domain.exceptions.RatingException;
 import com.pointtils.pointtils.src.core.domain.exceptions.UserSpecialtyException;
-
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+
+import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class GlobalExceptionHandlerTest {
 
@@ -426,5 +425,19 @@ class GlobalExceptionHandlerTest {
         assertNotNull(response);
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertEquals("Erro desconhecido", response.getBody().getMessage());
+    }
+
+    @Test
+    void handleUnsupportedOperationException_ShouldReturnServiceUnavailable() {
+        // Arrange
+        UnsupportedOperationException ex = new UnsupportedOperationException("Upload de arquivos indisponível");
+
+        // Act
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> response = globalExceptionHandler.handleUnsupportedOperation(ex);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, response.getStatusCode());
+        assertEquals("Upload de arquivos indisponível", response.getBody().getMessage());
     }
 }
