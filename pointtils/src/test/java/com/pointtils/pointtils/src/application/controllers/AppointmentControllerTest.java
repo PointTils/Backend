@@ -164,13 +164,13 @@ class AppointmentControllerTest {
         ResponseEntity<ApiResponseDTO<AppointmentResponseDTO>> response1 =
                 appointmentController.createAppointment(appointmentRequestDTO);
 
-        assertEquals(HttpStatus.OK, response1.getStatusCode());
+        assertEquals(HttpStatus.CREATED, response1.getStatusCode());
 
         appointmentRequestDTO.setModality(AppointmentModality.PERSONALLY);
         ResponseEntity<ApiResponseDTO<AppointmentResponseDTO>> response2 =
                 appointmentController.createAppointment(appointmentRequestDTO);
 
-        assertEquals(HttpStatus.OK, response2.getStatusCode());
+        assertEquals(HttpStatus.CREATED, response2.getStatusCode());
 
         verify(appointmentService, times(2)).createAppointment(any(AppointmentRequestDTO.class));
     }
