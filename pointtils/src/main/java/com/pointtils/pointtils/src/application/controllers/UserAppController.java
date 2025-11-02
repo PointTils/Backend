@@ -1,5 +1,6 @@
 package com.pointtils.pointtils.src.application.controllers;
 
+import com.pointtils.pointtils.src.application.dto.requests.UserAppPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.UserAppRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ApiResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.UserAppResponseDTO;
@@ -12,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,8 +37,8 @@ public class UserAppController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Registra dados de um novo aplicativo do usuário")
-    public ApiResponseDTO<UserAppResponseDTO> createUserApp(@Valid @RequestBody UserAppRequestDTO dto) {
-        UserAppResponseDTO response = userAppService.createUserApp(dto);
+    public ApiResponseDTO<UserAppResponseDTO> createUserApp(@Valid @RequestBody UserAppRequestDTO request) {
+        UserAppResponseDTO response = userAppService.createUserApp(request);
         return ApiResponseDTO.success("Dados do aplicativo do usuário criados com sucesso", response);
     }
 
@@ -48,11 +51,27 @@ public class UserAppController {
         return ApiResponseDTO.success("Dados de aplicativos dos usuários encontrados com sucesso", response);
     }
 
+    @PatchMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Atualiza dados de aplicativos dos usuários")
+    public ApiResponseDTO<UserAppResponseDTO> getAllUserApps(@PathVariable("id") UUID userAppId,
+                                                             @Valid @RequestBody UserAppPatchRequestDTO request) {
+        UserAppResponseDTO response = userAppService.updateUserApp(userAppId, request);
+        return ApiResponseDTO.success("Dados do aplicativo do usuário atualizado com sucesso", response);
+    }
+
     @DeleteMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Deleta dados de aplicativos dos usuários")
     public void deleteUserApps(@RequestParam(required = false) UUID userId,
                                @RequestParam(required = false) String deviceId) {
         userAppService.deleteUserApps(userId, deviceId);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Deleta dados de aplicativos dos usuários")
+    public void deleteUserApps(@PathVariable("id") UUID userAppId) {
+        userAppService.deleteUserAppById(userAppId);
     }
 }
