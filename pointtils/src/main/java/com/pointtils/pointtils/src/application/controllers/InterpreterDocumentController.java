@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,6 +27,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/v1/interpreter-documents/")
 @RequiredArgsConstructor
+@Tag(name = "Interpreter Documents Controller", description = "Endpoints para gerenciamento de documentos de usuários intérpretes")
 public class InterpreterDocumentController {
 
     private final InterpreterDocumentService interpreterDocumentService;

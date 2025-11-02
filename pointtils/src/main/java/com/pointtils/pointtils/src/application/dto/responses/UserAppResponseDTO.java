@@ -28,9 +28,11 @@ public class UserAppResponseDTO {
     @JsonProperty("user_id")
     private UUID userId;
 
+    @JsonProperty("created_at")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "America/Sao_Paulo")
     private Instant createdAt;
 
+    @JsonProperty("modified_at")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "America/Sao_Paulo")
     private Instant modifiedAt;
 }
