@@ -50,7 +50,7 @@ public class AuthController {
                             schema = @Schema(implementation = LoginResponseDTO.class))
             ),
             @ApiResponse(responseCode = "400", description = "Dados de login inválidos"),
-            @ApiResponse(responseCode = "401", description = "Credenciais inválidos"),
+            @ApiResponse(responseCode = "401", description = "Credenciais inválidas"),
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     public ResponseEntity<LoginResponseDTO> login(@Valid @RequestBody LoginRequestDTO loginRequest, HttpServletRequest httpRequest) {
@@ -101,7 +101,7 @@ public class AuthController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Logout realizado com sucesso"),
             @ApiResponse(responseCode = "400", description = "Tokens não fornecidos"),
-            @ApiResponse(responseCode = "401", description = "Tokens de acesso ou refresh token inválido"),
+            @ApiResponse(responseCode = "401", description = "Tokens de acesso ou refresh token inválidos"),
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     public ResponseEntity logout(@Valid @RequestBody RefreshTokenRequestDTO refreshToken, HttpServletRequest httpRequest) {

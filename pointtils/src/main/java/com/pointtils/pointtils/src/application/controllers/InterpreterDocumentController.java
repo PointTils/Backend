@@ -4,6 +4,10 @@ import com.pointtils.pointtils.src.application.dto.requests.InterpreterDocumentR
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterDocumentResponseDTO;
 import com.pointtils.pointtils.src.application.services.InterpreterDocumentService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -27,7 +31,23 @@ public class InterpreterDocumentController {
     private final InterpreterDocumentService interpreterDocumentService;
 
     @PostMapping(value = "/{id}", consumes = "multipart/form-data")
-    @Operation(summary = "Salva múltiplos documentos para um usuário")
+    @Operation(
+            summary = "Salva múltiplos documentos para um usuário intérprete",
+            description = "Permite fazer upload de documentos que evidenciem a capacitação do intérprete"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Upload de documento realizado com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = InterpreterDocumentResponseDTO.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Arquivo inválido ou formato não suportado"),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
+            @ApiResponse(responseCode = "404", description = "Intérprete não encontrado"),
+            @ApiResponse(responseCode = "413", description = "Arquivo muito grande"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor"),
+            @ApiResponse(responseCode = "503", description = "Serviço de upload temporariamente indisponível",
+                    content = @Content(mediaType = "text/plain"))
+    })
     public ResponseEntity<InterpreterDocumentResponseDTO> saveDocuments(
             @PathVariable UUID id,
             @RequestParam("files") List<MultipartFile> files,

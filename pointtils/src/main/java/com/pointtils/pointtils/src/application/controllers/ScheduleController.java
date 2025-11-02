@@ -57,7 +57,7 @@ public class ScheduleController {
                 schema = @Schema(implementation = ScheduleResponseDTO.class))
         ),
         @ApiResponse(responseCode = "400", description = "Dados do horário inválido"),
-        @ApiResponse(responseCode = "401", description = "Token de autenticação inváido"),
+        @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
         @ApiResponse(responseCode = "409", description = "Conflito de horário"),
         @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
