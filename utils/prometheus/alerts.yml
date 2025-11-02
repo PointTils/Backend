@@ -80,14 +80,14 @@ groups:
 
       # Alerta para tempo de garbage collection alto
       - alert: LongGarbageCollection
-        expr: jvm_gc_collection_seconds_sum{job="pointtils"} > 1
-        for: 1m
+        expr: rate(jvm_gc_collection_seconds_sum{job="pointtils"}[5m]) > 0.1
+        for: 5m
         labels:
           severity: warning
           alert_group: pointtils_alerts
         annotations:
           summary: "Garbage collection longo para {{ $labels.job }}"
-          description: "O garbage collection do serviço {{ $labels.job }} está demorando mais de 1 segundo"
+          description: "O garbage collection do serviço {{ $labels.job }} está usando mais de 10% do tempo nos últimos 5 minutos"
 
       # Alerta para serviços específicos do domínio
       - alert: PointTilsServiceDown
@@ -100,14 +100,3 @@ groups:
         annotations:
           summary: "Serviço PointTils está offline"
           description: "O serviço principal PointTils está offline"
-
-      - alert: DatabaseServiceDown
-        expr: up{job="postgresql"} == 0
-        for: 1m
-        labels:
-          severity: critical
-          service: postgresql
-          alert_group: pointtils_alerts
-        annotations:
-          summary: "Banco de dados PostgreSQL está offline"
-          description: "O banco de dados PostgreSQL está offline"
