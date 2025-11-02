@@ -11,17 +11,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RatingResponseMapper {
 
-    public RatingResponseDTO toSingleResponseDTO(Rating rating) {
-        return RatingResponseDTO.builder()
-                .id(rating.getId())
-                .stars(rating.getStars())
-                .description(rating.getDescription())
-                .date(rating.getCreatedAt().toString())
-                .user(toUserResponseDTO(rating.getAppointment().getUser()))
-                .build();
-    }
-
-    public RatingResponseDTO toListResponseDTO(Rating rating) {
+    public RatingResponseDTO toResponseDTO(Rating rating) {
         return RatingResponseDTO.builder()
                 .id(rating.getId())
                 .stars(rating.getStars())

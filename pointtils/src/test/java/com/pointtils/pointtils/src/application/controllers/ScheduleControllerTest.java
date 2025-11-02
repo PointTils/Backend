@@ -11,16 +11,15 @@ import com.pointtils.pointtils.src.application.services.ScheduleService;
 import com.pointtils.pointtils.src.core.domain.entities.enums.DayOfWeek;
 import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
 import com.pointtils.pointtils.src.infrastructure.configs.MemoryBlacklistService;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
@@ -29,32 +28,36 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = ScheduleController.class, excludeAutoConfiguration = {
         org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class,
         org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration.class
 })
 @AutoConfigureMockMvc(addFilters = false)
-
 class ScheduleControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private ScheduleService service;
 
-    @MockBean
+    @MockitoBean
     private MemoryBlacklistService memoryBlacklistService;
 
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private JwtService jwtService;
 
     private UUID scheduleId;
@@ -79,7 +82,7 @@ class ScheduleControllerTest {
                 .startTime(LocalTime.of(9, 0)).endTime(LocalTime.of(10, 0)).build();
         when(service.registerSchedule(any(ScheduleRequestDTO.class))).thenReturn(scheduleResponse);
         mockMvc.perform(post("/v1/schedules/register").contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request))).andExpect(status().isCreated())
+                        .content(objectMapper.writeValueAsString(request))).andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Horário cadastrado com sucesso"))
                 .andExpect(jsonPath("$.data.id").value(scheduleId.toString()));
@@ -89,7 +92,7 @@ class ScheduleControllerTest {
     @Test
     @DisplayName("GET /v1/schedules/{id} deve retornar um horário existente")
     void getScheduleById_ShouldReturnOk() throws Exception {
-        when(service.findById(eq(scheduleId))).thenReturn(scheduleResponse);
+        when(service.findById(scheduleId)).thenReturn(scheduleResponse);
         mockMvc.perform(get("/v1/schedules/{id}", scheduleId)).andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Detalhes do horário obtidos com sucesso"))
@@ -115,8 +118,8 @@ class ScheduleControllerTest {
                 .thenReturn(paginated);
 
         mockMvc.perform(get("/v1/schedules")
-                .param("page", "0")
-                .param("size", "10"))
+                        .param("page", "0")
+                        .param("size", "10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Horários obtidos com sucesso"))
@@ -138,11 +141,11 @@ class ScheduleControllerTest {
                 .endTime(LocalTime.of(11, 0))
                 .build();
 
-        when(service.updateSchedule(eq(scheduleId), eq(patch))).thenReturn(scheduleResponse);
+        when(service.updateSchedule(scheduleId, patch)).thenReturn(scheduleResponse);
 
         mockMvc.perform(patch("/v1/schedules/{id}", scheduleId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(patch)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(patch)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Horário atualizado com sucesso"))
@@ -172,13 +175,13 @@ class ScheduleControllerTest {
         LocalDate dateTo = dateFrom.plusDays(5);
 
         AvailableTimeSlotsResponseDTO slot = new AvailableTimeSlotsResponseDTO();
-        when(service.findAvailableSchedules(eq(interpreterId), eq(dateFrom), eq(dateTo)))
+        when(service.findAvailableSchedules(interpreterId, dateFrom, dateTo))
                 .thenReturn(List.of(slot));
 
         mockMvc.perform(get("/v1/schedules/available")
-                .param("interpreterId", interpreterId.toString())
-                .param("dateFrom", dateFrom.toString())
-                .param("dateTo", dateTo.toString()))
+                        .param("interpreterId", interpreterId.toString())
+                        .param("dateFrom", dateFrom.toString())
+                        .param("dateTo", dateTo.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Horários disponíveis obtidos com sucesso"));

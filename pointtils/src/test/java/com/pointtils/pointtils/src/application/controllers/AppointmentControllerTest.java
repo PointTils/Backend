@@ -17,11 +17,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -44,12 +46,11 @@ class AppointmentControllerTest {
     private AppointmentRequestDTO appointmentRequestDTO;
     private AppointmentResponseDTO appointmentResponseDTO;
     private UUID appointmentId;
-    private UUID userId;
 
     @BeforeEach
     void setUp() {
         appointmentId = UUID.randomUUID();
-        userId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
 
         appointmentRequestDTO = new AppointmentRequestDTO();
         appointmentRequestDTO.setUf("SP");
@@ -243,87 +244,87 @@ class AppointmentControllerTest {
     }
 
     @Test
-@DisplayName("Deve retornar lista ao chamar findAll")
-void shouldCallFindAllAndReturnOk() {
-    when(appointmentService.findAll()).thenReturn(List.of(appointmentResponseDTO));
+    @DisplayName("Deve retornar lista ao chamar findAll")
+    void shouldCallFindAllAndReturnOk() {
+        when(appointmentService.findAll()).thenReturn(List.of(appointmentResponseDTO));
 
-    ResponseEntity<?> response = appointmentController.findAll();
+        ResponseEntity<?> response = appointmentController.findAll();
 
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    verify(appointmentService, times(1)).findAll();
-}
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(appointmentService, times(1)).findAll();
+    }
 
-@Test
-@DisplayName("Deve retornar item ao chamar findById")
-void shouldCallFindByIdAndReturnOk() {
-    when(appointmentService.findById(appointmentId)).thenReturn(appointmentResponseDTO);
+    @Test
+    @DisplayName("Deve retornar item ao chamar findById")
+    void shouldCallFindByIdAndReturnOk() {
+        when(appointmentService.findById(appointmentId)).thenReturn(appointmentResponseDTO);
 
-    ResponseEntity<?> response = appointmentController.findById(appointmentId);
+        ResponseEntity<?> response = appointmentController.findById(appointmentId);
 
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    verify(appointmentService, times(1)).findById(appointmentId);
-}
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(appointmentService, times(1)).findById(appointmentId);
+    }
 
-@Test
-@DisplayName("Deve atualizar parcialmente chamando updatePartial")
-void shouldCallUpdatePartialAndReturnOk() {
-    // cria um DTO mínimo para patch (não precisa preencher tudo)
-    var patchDto = new AppointmentPatchRequestDTO();
-    when(appointmentService.updatePartial(appointmentId, patchDto)).thenReturn(appointmentResponseDTO);
+    @Test
+    @DisplayName("Deve atualizar parcialmente chamando updatePartial")
+    void shouldCallUpdatePartialAndReturnOk() {
+        // cria um DTO mínimo para patch (não precisa preencher tudo)
+        var patchDto = new AppointmentPatchRequestDTO();
+        when(appointmentService.updatePartial(appointmentId, patchDto)).thenReturn(appointmentResponseDTO);
 
-    ResponseEntity<?> response = appointmentController.updatePartial(appointmentId, patchDto);
+        ResponseEntity<?> response = appointmentController.updatePartial(appointmentId, patchDto);
 
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    verify(appointmentService, times(1)).updatePartial(appointmentId, patchDto);
-}
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(appointmentService, times(1)).updatePartial(appointmentId, patchDto);
+    }
 
-@Test
-@DisplayName("Deve chamar delete e retornar No Content")
-void shouldCallDeleteAndReturnNoContent() {
-    doNothing().when(appointmentService).delete(appointmentId);
+    @Test
+    @DisplayName("Deve chamar delete e retornar No Content")
+    void shouldCallDeleteAndReturnNoContent() {
+        doNothing().when(appointmentService).delete(appointmentId);
 
-    ResponseEntity<Void> response = appointmentController.delete(appointmentId);
+        ResponseEntity<Void> response = appointmentController.delete(appointmentId);
 
-    assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
-    verify(appointmentService, times(1)).delete(appointmentId);
-}
+        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+        verify(appointmentService, times(1)).delete(appointmentId);
+    }
 
-@Test
-@DisplayName("Deve chamar searchAppointments cobrindo branches do fromDateTime")
-void shouldCallSearchAppointmentsCoveringFromDateTimeBranches() {
-    List<AppointmentFilterResponseDTO> mockResponse = List.of(new AppointmentFilterResponseDTO());
-    UUID interpreterId = UUID.randomUUID();
-    UUID userId = UUID.randomUUID();
-    AppointmentStatus status = AppointmentStatus.PENDING;
-    AppointmentModality modality = AppointmentModality.ONLINE;
-    Boolean hasRating = true;
-    int dayLimit = 5;
+    @Test
+    @DisplayName("Deve chamar searchAppointments cobrindo branches do fromDateTime")
+    void shouldCallSearchAppointmentsCoveringFromDateTimeBranches() {
+        List<AppointmentFilterResponseDTO> mockResponse = List.of(new AppointmentFilterResponseDTO());
+        UUID interpreterId = UUID.randomUUID();
+        UUID appointmentUserId = UUID.randomUUID();
+        AppointmentStatus status = AppointmentStatus.PENDING;
+        AppointmentModality modality = AppointmentModality.ONLINE;
+        Boolean hasRating = true;
+        int dayLimit = 5;
 
-    // Caso 1: fromDateTime válido (já existente)
-    String validDate = "2024-06-15T09:00:00";
-    when(appointmentService.searchAppointments(
-            interpreterId, userId, status, modality, LocalDateTime.parse(validDate), hasRating, dayLimit))
-        .thenReturn(mockResponse);
-    appointmentController.searchAppointments(interpreterId, userId, status, modality, validDate, hasRating, dayLimit);
+        // Caso 1: fromDateTime válido (já existente)
+        String validDate = "2024-06-15T09:00:00";
+        when(appointmentService.searchAppointments(
+                interpreterId, appointmentUserId, status, modality, LocalDateTime.parse(validDate), hasRating, dayLimit))
+                .thenReturn(mockResponse);
+        appointmentController.searchAppointments(interpreterId, appointmentUserId, status, modality, validDate, hasRating, dayLimit);
 
-    // Caso 2: fromDateTime nulo
-    when(appointmentService.searchAppointments(
-            interpreterId, userId, status, modality, null, hasRating, dayLimit))
-        .thenReturn(mockResponse);
-    appointmentController.searchAppointments(interpreterId, userId, status, modality, null, hasRating, dayLimit);
+        // Caso 2: fromDateTime nulo
+        when(appointmentService.searchAppointments(
+                interpreterId, appointmentUserId, status, modality, null, hasRating, dayLimit))
+                .thenReturn(mockResponse);
+        appointmentController.searchAppointments(interpreterId, appointmentUserId, status, modality, null, hasRating, dayLimit);
 
-    // Caso 3: fromDateTime vazio
-    when(appointmentService.searchAppointments(
-            interpreterId, userId, status, modality, null, hasRating, dayLimit))
-        .thenReturn(mockResponse);
-    appointmentController.searchAppointments(interpreterId, userId, status, modality, "   ", hasRating, dayLimit);
+        // Caso 3: fromDateTime vazio
+        when(appointmentService.searchAppointments(
+                interpreterId, appointmentUserId, status, modality, null, hasRating, dayLimit))
+                .thenReturn(mockResponse);
+        appointmentController.searchAppointments(interpreterId, appointmentUserId, status, modality, "   ", hasRating, dayLimit);
 
-    // Aqui você pode apenas verificar se o service foi chamado corretamente
-    verify(appointmentService, times(1))
-        .searchAppointments(interpreterId, userId, status, modality, LocalDateTime.parse(validDate), hasRating, dayLimit);
-    verify(appointmentService, times(2))
-        .searchAppointments(interpreterId, userId, status, modality, null, hasRating, dayLimit);
-}
+        // Aqui você pode apenas verificar se o service foi chamado corretamente
+        verify(appointmentService, times(1))
+                .searchAppointments(interpreterId, appointmentUserId, status, modality, LocalDateTime.parse(validDate), hasRating, dayLimit);
+        verify(appointmentService, times(2))
+                .searchAppointments(interpreterId, appointmentUserId, status, modality, null, hasRating, dayLimit);
+    }
 
 
 }

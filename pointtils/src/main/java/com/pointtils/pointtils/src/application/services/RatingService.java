@@ -53,7 +53,7 @@ public class RatingService {
         ratingRepository.save(rating);
         updateInterpreterAverageRating(appointment.getInterpreter());
 
-        return ratingResponseMapper.toSingleResponseDTO(rating);
+        return ratingResponseMapper.toResponseDTO(rating);
     }
 
     public List<RatingResponseDTO> getRatingsByInterpreterId(UUID interpreterId) {
@@ -63,7 +63,7 @@ public class RatingService {
         List<Rating> ratings = ratingRepository.findByInterpreterId(interpreter.getId());
 
         return ratings.stream()
-                .map(ratingResponseMapper::toListResponseDTO)
+                .map(ratingResponseMapper::toResponseDTO)
                 .toList();
     }
 
@@ -84,7 +84,7 @@ public class RatingService {
         updateInterpreterAverageRating(rating.getAppointment().getInterpreter());
 
         ratingRepository.save(rating);
-        return ratingResponseMapper.toSingleResponseDTO(rating);
+        return ratingResponseMapper.toResponseDTO(rating);
     }
 
     public void deleteRating(UUID ratingId) {

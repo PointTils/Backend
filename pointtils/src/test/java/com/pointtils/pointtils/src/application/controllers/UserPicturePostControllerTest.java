@@ -10,9 +10,9 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -30,83 +30,83 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 class UserPicturePostControllerTest {
 
-        @Autowired
-        private MockMvc mockMvc;
+    @Autowired
+    private MockMvc mockMvc;
 
-        @MockBean
-        private UserPicturePostService userService;
+    @MockitoBean
+    private UserPicturePostService userService;
 
-        @MockBean
-        private com.pointtils.pointtils.src.infrastructure.configs.JwtService jwtService;
+    @MockitoBean
+    private com.pointtils.pointtils.src.infrastructure.configs.JwtService jwtService;
 
-        @MockBean
-        private com.pointtils.pointtils.src.infrastructure.configs.MemoryBlacklistService memoryBlacklistService;
+    @MockitoBean
+    private com.pointtils.pointtils.src.infrastructure.configs.MemoryBlacklistService memoryBlacklistService;
 
-        private UUID userId;
-        private UserResponseDTO userResponse;
+    private UUID userId;
+    private UserResponseDTO userResponse;
 
-        @BeforeEach
-        void setUp() {
-                userId = UUID.randomUUID();
-                userResponse = UserResponseDTO.builder()
-                                .id(userId)
-                                .email("john.doe@example.com")
-                                .type("INTERPRETER")
-                                .status("ACTIVE")
-                                .phone("123456789")
-                                .picture("http://example.com/avatar.png")
-                                .specialties(List.of())
-                                .build();
-        }
+    @BeforeEach
+    void setUp() {
+        userId = UUID.randomUUID();
+        userResponse = UserResponseDTO.builder()
+                .id(userId)
+                .email("john.doe@example.com")
+                .type("INTERPRETER")
+                .status("ACTIVE")
+                .phone("123456789")
+                .picture("http://example.com/avatar.png")
+                .specialties(List.of())
+                .build();
+    }
 
-        @Test
-        @DisplayName("POST /v1/users/{id}/picture deve atualizar a foto com sucesso")
-        void uploadPicture_ShouldReturnOk() throws Exception {
-                MockMultipartFile file = new MockMultipartFile(
-                                "file",
-                                "avatar.png",
-                                MediaType.IMAGE_PNG_VALUE,
-                                "fake-image-content".getBytes());
+    @Test
+    @DisplayName("POST /v1/users/{id}/picture deve atualizar a foto com sucesso")
+    void uploadPicture_ShouldReturnOk() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "avatar.png",
+                MediaType.IMAGE_PNG_VALUE,
+                "fake-image-content".getBytes());
 
-                when(userService.updatePicture(any(UserPicturePostRequestDTO.class)))
-                                .thenReturn(userResponse);
+        when(userService.updatePicture(any(UserPicturePostRequestDTO.class)))
+                .thenReturn(userResponse);
 
-                mockMvc.perform(multipart("/v1/users/{id}/picture", userId)
-                                .file(file)
-                                .contentType(MediaType.MULTIPART_FORM_DATA))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.id").value(userId.toString()))
-                                .andExpect(jsonPath("$.email").value("john.doe@example.com"))
-                                .andExpect(jsonPath("$.type").value("INTERPRETER"))
-                                .andExpect(jsonPath("$.status").value("ACTIVE"))
-                                .andExpect(jsonPath("$.phone").value("123456789"))
-                                .andExpect(jsonPath("$.picture").value("http://example.com/avatar.png"))
-                                .andExpect(jsonPath("$.specialties").isArray());
+        mockMvc.perform(multipart("/v1/users/{id}/picture", userId)
+                        .file(file)
+                        .contentType(MediaType.MULTIPART_FORM_DATA))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(userId.toString()))
+                .andExpect(jsonPath("$.email").value("john.doe@example.com"))
+                .andExpect(jsonPath("$.type").value("INTERPRETER"))
+                .andExpect(jsonPath("$.status").value("ACTIVE"))
+                .andExpect(jsonPath("$.phone").value("123456789"))
+                .andExpect(jsonPath("$.picture").value("http://example.com/avatar.png"))
+                .andExpect(jsonPath("$.specialties").isArray());
 
-                ArgumentCaptor<UserPicturePostRequestDTO> captor = ArgumentCaptor
-                                .forClass(UserPicturePostRequestDTO.class);
-                verify(userService).updatePicture(captor.capture());
+        ArgumentCaptor<UserPicturePostRequestDTO> captor = ArgumentCaptor
+                .forClass(UserPicturePostRequestDTO.class);
+        verify(userService).updatePicture(captor.capture());
 
-                assertThat(captor.getValue().getUserId()).isEqualTo(userId);
-                assertThat(captor.getValue().getFile().getOriginalFilename()).isEqualTo("avatar.png");
-        }
+        assertThat(captor.getValue().getUserId()).isEqualTo(userId);
+        assertThat(captor.getValue().getFile().getOriginalFilename()).isEqualTo("avatar.png");
+    }
 
-        @Test
-        @DisplayName("POST /v1/users/{id}/picture deve retornar 503 quando upload estiver desabilitado")
-        void uploadPicture_ShouldReturnServiceUnavailable_WhenUploadDisabled() throws Exception {
-                MockMultipartFile file = new MockMultipartFile(
-                                "file",
-                                "avatar.png",
-                                MediaType.IMAGE_PNG_VALUE,
-                                "fake-image-content".getBytes());
+    @Test
+    @DisplayName("POST /v1/users/{id}/picture deve retornar 503 quando upload estiver desabilitado")
+    void uploadPicture_ShouldReturnServiceUnavailable_WhenUploadDisabled() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "avatar.png",
+                MediaType.IMAGE_PNG_VALUE,
+                "fake-image-content".getBytes());
 
-                when(userService.updatePicture(any(UserPicturePostRequestDTO.class)))
-                                .thenThrow(new UnsupportedOperationException("Upload de fotos desabilitado"));
+        when(userService.updatePicture(any(UserPicturePostRequestDTO.class)))
+                .thenThrow(new UnsupportedOperationException("Upload de fotos desabilitado"));
 
-                mockMvc.perform(multipart("/v1/users/{id}/picture", userId)
-                                .file(file)
-                                .contentType(MediaType.MULTIPART_FORM_DATA))
-                                .andExpect(status().isServiceUnavailable());
-        }
+        mockMvc.perform(multipart("/v1/users/{id}/picture", userId)
+                        .file(file)
+                        .contentType(MediaType.MULTIPART_FORM_DATA))
+                .andExpect(status().isServiceUnavailable());
+    }
 
 }
