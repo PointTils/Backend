@@ -55,7 +55,6 @@ class RatingServiceTest {
     private UUID userId;
     private UUID interpreterId;
     private Appointment appointment;
-    private Person user;
     private Rating rating;
 
     @BeforeEach
@@ -64,7 +63,7 @@ class RatingServiceTest {
         appointmentId = UUID.randomUUID();
         userId = UUID.randomUUID();
         interpreterId = UUID.randomUUID();
-        user = new Person();
+        Person user = new Person();
         user.setId(userId);
 
         appointment = new Appointment();
@@ -94,14 +93,14 @@ class RatingServiceTest {
                 .thenReturn(Optional.of(appointment.getInterpreter()));
 
         when(ratingRepository.save(any(Rating.class))).thenReturn(rating);
-        when(ratingResponseMapper.toSingleResponseDTO(any())).thenReturn(mock(RatingResponseDTO.class));
+        when(ratingResponseMapper.toResponseDTO(any())).thenReturn(mock(RatingResponseDTO.class));
         when(ratingRepository.findByInterpreterId(any())).thenReturn(List.of(rating));
 
         RatingResponseDTO response = ratingService.createRating(dto);
 
         assertNotNull(response);
         verify(ratingRepository).save(any(Rating.class));
-        verify(ratingResponseMapper).toSingleResponseDTO(any());
+        verify(ratingResponseMapper).toResponseDTO(any());
     }
 
     @Test
@@ -187,13 +186,12 @@ class RatingServiceTest {
 
     @Test
     void getRatingsByInterpreterId_shouldReturnList() {
-        UUID interpreterId = UUID.randomUUID();
         Interpreter interpreter = new Interpreter();
         interpreter.setId(interpreterId);
 
         when(userRepository.findById(interpreterId)).thenReturn(Optional.of(interpreter));
         when(ratingRepository.findByInterpreterId(interpreterId)).thenReturn(List.of(rating));
-        when(ratingResponseMapper.toListResponseDTO(any())).thenReturn(mock(RatingResponseDTO.class));
+        when(ratingResponseMapper.toResponseDTO(any())).thenReturn(mock(RatingResponseDTO.class));
 
         List<RatingResponseDTO> result = ratingService.getRatingsByInterpreterId(interpreterId);
 
@@ -203,7 +201,6 @@ class RatingServiceTest {
 
     @Test
     void getRatingsByInterpreterId_shouldThrowIfInterpreterNotFound() {
-        UUID interpreterId = UUID.randomUUID();
         when(userRepository.findById(interpreterId)).thenReturn(Optional.empty());
 
         EntityNotFoundException ex = assertThrows(EntityNotFoundException.class,
@@ -220,7 +217,7 @@ class RatingServiceTest {
 
         when(ratingRepository.findById(ratingId)).thenReturn(Optional.of(rating));
         when(ratingRepository.save(any())).thenReturn(rating);
-        when(ratingResponseMapper.toSingleResponseDTO(any())).thenReturn(mock(RatingResponseDTO.class));
+        when(ratingResponseMapper.toResponseDTO(any())).thenReturn(mock(RatingResponseDTO.class));
         when(ratingRepository.findByInterpreterId(any())).thenReturn(List.of(rating));
         when(userRepository.save(any())).thenReturn(appointment.getInterpreter());
 
@@ -278,5 +275,24 @@ class RatingServiceTest {
         EntityNotFoundException ex = assertThrows(EntityNotFoundException.class,
                 () -> ratingService.deleteRating(ratingId));
         assertTrue(ex.getMessage().contains("Agendamento não encontrado"));
+    }
+
+    @Test
+    void patchRating_deveLancarEntityNotFoundException_quandoInterpreterForNull() {
+        UUID ratingId = UUID.randomUUID();
+        RatingPatchRequestDTO request = new RatingPatchRequestDTO();
+        request.setStars(BigDecimal.valueOf(5));
+
+        Rating ratingForAppointmentWithoutInterpreter = new Rating();
+        Appointment appointmentWithoutInterpreter = new Appointment();
+        appointmentWithoutInterpreter.setInterpreter(null);
+        ratingForAppointmentWithoutInterpreter.setAppointment(appointmentWithoutInterpreter);
+
+        when(ratingRepository.findById(ratingId)).thenReturn(Optional.of(ratingForAppointmentWithoutInterpreter));
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> ratingService.patchRating(request, ratingId));
+
+        assert (exception.getMessage().equals("Intérprete não encontrado"));
     }
 }

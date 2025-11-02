@@ -1,5 +1,6 @@
 package com.pointtils.pointtils.src.application.services;
 
+import java.time.Year;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,6 +20,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -255,7 +257,7 @@ class EmailServiceTest {
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
         doNothing().when(mailSender).send(any(MimeMessage.class));
-        
+
         boolean result = emailService.sendInterpreterRegistrationRequestEmail(
                 "admin@pointtils.com", "João Intérprete", "123.456.789-00", "12.345.678/0001-90",
                 "joao@example.com", "(11) 99999-9999", "http://accept-link", "http://reject-link", files);
@@ -574,5 +576,67 @@ class EmailServiceTest {
         assertFalse(result);
         verify(mailSender).createMimeMessage();
         verify(mailSender).send(any(MimeMessage.class));
+    }
+
+    @Test
+    @DisplayName("Deve processar anexos corretamente no envio de solicitação de cadastro de intérprete")
+    void deveProcessarAnexosCorretamenteNoEnvioSolicitacaoCadastroInterprete() throws Exception {
+        MultipartFile file1 = org.mockito.Mockito.mock(MultipartFile.class);
+        MultipartFile file2 = org.mockito.Mockito.mock(MultipartFile.class);
+        List<MultipartFile> files = List.of(file1, file2);
+
+        lenient().when(file1.getOriginalFilename()).thenReturn("doc1.pdf");
+        lenient().when(file1.getBytes()).thenReturn("conteudo1".getBytes());
+        lenient().when(file2.getOriginalFilename()).thenReturn("doc2.pdf");
+        lenient().when(file2.getBytes()).thenReturn("conteudo2".getBytes());
+
+        String template = "<p>Nome: {{nome}}</p><a href=\"{link_api}\">Aceitar</a>";
+        Parameters parameter = new Parameters();
+        parameter.setKey("PENDING_INTERPRETER_ADMIN");
+        parameter.setValue(template);
+
+        when(parametersRepository.findByKey("PENDING_INTERPRETER_ADMIN")).thenReturn(Optional.of(parameter));
+
+        MimeMessage mimeMessage = new MimeMessage((Session) null);
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doNothing().when(mailSender).send(any(MimeMessage.class));
+
+        boolean result = emailService.sendInterpreterRegistrationRequestEmail(
+                "admin@pointtils.com", "João", "123", "456", "email", "phone",
+                "http://accept", "http://reject", files);
+
+        assertTrue(result);
+        verify(parametersRepository).findByKey("PENDING_INTERPRETER_ADMIN");
+        verify(mailSender).send(any(MimeMessage.class));
+    }
+
+    @Test
+    void deveProcessarTemplateAdminFeedbackCorretamente() {
+        String template = "Mensagem: {{message}}, Ano: {{ano}}";
+        Parameters parameter = new Parameters();
+        parameter.setKey("ADMIN_FEEDBACK");
+        parameter.setValue(template);
+
+        when(parametersRepository.findByKey("ADMIN_FEEDBACK")).thenReturn(Optional.of(parameter));
+
+        String emailResponse = "Cadastro aprovado";
+
+        String result = emailService.getAdminRegistrationFeedbackHtml(emailResponse);
+
+        String expected = "Mensagem: Cadastro aprovado, Ano: " + Year.now().getValue();
+        assertEquals(expected, result);
+    }
+
+    @Test
+    void deveUsarTemplatePadraoSeNaoEncontrarNoBanco() {
+
+        when(parametersRepository.findByKey("ADMIN_FEEDBACK")).thenReturn(Optional.empty());
+
+        String emailResponse = "Cadastro aprovado";
+
+        String result = emailService.getAdminRegistrationFeedbackHtml(emailResponse);
+
+        String expectedStart = "<html><body><h1>Template não encontrado</h1>";
+        assertEquals(true, result.startsWith(expectedStart));
     }
 }
