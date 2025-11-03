@@ -4,12 +4,18 @@ FROM grafana/grafana:latest
 COPY grafana.ini /etc/grafana/grafana.ini
 COPY provisioning /etc/grafana/provisioning
 
-# Copiar script de inicialização
+# Copiar script de inicialização e dashboard
 COPY init-dashboard.sh /init-dashboard.sh
-RUN chmod +x /init-dashboard.sh
-
-# Copiar dashboard para diretório de dashboards
 COPY provisioning/dashboards/pointtils_dashboard.json /var/lib/grafana/dashboards/pointtils_dashboard.json
+
+# Definir permissões corretas
+USER root
+RUN chmod +x /init-dashboard.sh && \
+    chown grafana:grafana /var/lib/grafana/dashboards/pointtils_dashboard.json && \
+    chown grafana:grafana /init-dashboard.sh
+
+# Voltar para usuário grafana
+USER grafana
 
 # Expor porta padrão do Grafana
 EXPOSE 3000
