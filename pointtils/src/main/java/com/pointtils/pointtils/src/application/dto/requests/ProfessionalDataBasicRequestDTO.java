@@ -22,4 +22,6 @@ public class ProfessionalDataBasicRequestDTO {
     private Boolean imageRights;
     private InterpreterModality modality;
     private String description;
+    @JsonProperty("video_url")
+    private String videoUrl;
 }
