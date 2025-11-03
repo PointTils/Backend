@@ -15,7 +15,7 @@ scrape_configs:
   # PointTils Application
   - job_name: 'pointtils'
     static_configs:
-      - targets: ['pointtils:8080']
+      - targets: ['pointtils-dev:8080']
     metrics_path: '/actuator/prometheus'
     scrape_interval: 15s
 
