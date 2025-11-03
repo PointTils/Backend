@@ -10,12 +10,10 @@ COPY provisioning/dashboards/pointtils_dashboard.json /var/lib/grafana/dashboard
 
 # Definir permissões corretas
 USER root
-RUN chmod +x /init-dashboard.sh && \
-    chown grafana:grafana /var/lib/grafana/dashboards/pointtils_dashboard.json && \
-    chown grafana:grafana /init-dashboard.sh
+RUN chmod +x /init-dashboard.sh
 
-# Voltar para usuário grafana
-USER grafana
+# Voltar para usuário padrão (nobody)
+USER nobody
 
 # Expor porta padrão do Grafana
 EXPOSE 3000
