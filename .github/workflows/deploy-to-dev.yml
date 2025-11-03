@@ -22,8 +22,12 @@ env:
   ECR_REPOSITORY: pointtils-dev
   APP_IMAGE: backend-pointtils-dev
   DB_IMAGE: backend-pointtils-db-dev
+  PROMETHEUS_IMAGE: backend-prometheus-dev
+  GRAFANA_IMAGE: backend-grafana-dev
   APP_IMAGE_TAG: dev-latest
   DB_IMAGE_TAG: dev-latest
+  PROMETHEUS_IMAGE_TAG: dev-latest
+  GRAFANA_IMAGE_TAG: dev-latest
   ENVIRONMENT: development
 
 jobs:
@@ -85,6 +89,24 @@ jobs:
             aws ecr create-repository --repository-name ${{ secrets.ECR_REPOSITORY }}-db --image-tag-mutability MUTABLE --image-scanning-configuration scanOnPush=true
           else
             echo "ECR repository ${{ secrets.ECR_REPOSITORY }}-db already exists"
+          fi
+
+          # Verificar e criar repositório do Prometheus
+          exists_prometheus=$(aws ecr describe-repositories --repository-names ${{ secrets.ECR_REPOSITORY }}-prometheus 2>/dev/null || echo "false")
+          if [ "$exists_prometheus" = "false" ]; then
+            echo "Creating ECR repository ${{ secrets.ECR_REPOSITORY }}-prometheus"
+            aws ecr create-repository --repository-name ${{ secrets.ECR_REPOSITORY }}-prometheus --image-tag-mutability MUTABLE --image-scanning-configuration scanOnPush=true
+          else
+            echo "ECR repository ${{ secrets.ECR_REPOSITORY }}-prometheus already exists"
+          fi
+
+          # Verificar e criar repositório do Grafana
+          exists_grafana=$(aws ecr describe-repositories --repository-names ${{ secrets.ECR_REPOSITORY }}-grafana 2>/dev/null || echo "false")
+          if [ "$exists_grafana" = "false" ]; then
+            echo "Creating ECR repository ${{ secrets.ECR_REPOSITORY }}-grafana"
+            aws ecr create-repository --repository-name ${{ secrets.ECR_REPOSITORY }}-grafana --image-tag-mutability MUTABLE --image-scanning-configuration scanOnPush=true
+          else
+            echo "ECR repository ${{ secrets.ECR_REPOSITORY }}-grafana already exists"
           fi
 
       - name: Create .env file for docker-compose build
@@ -228,6 +250,43 @@ jobs:
           else
             echo "⚠️ ERRO: Não foi possível encontrar a imagem do banco de dados para tagging!"
             exit 1
+          fi
+
+          # Tag e push das imagens de monitoramento
+          echo "Tagging and pushing monitoring images..."
+          
+          # Encontrar e taggar imagem do Prometheus
+          PROMETHEUS_IMAGE_NAME="${{ env.PROMETHEUS_IMAGE }}"
+          PROMETHEUS_IMAGE_ID=$(docker images -q $PROMETHEUS_IMAGE_NAME 2>/dev/null || docker images -q "*${PROMETHEUS_IMAGE_NAME}*" 2>/dev/null || docker images | grep -E "$PROMETHEUS_IMAGE_NAME" | awk '{print $3}' | head -n1)
+          echo "Nome da imagem do Prometheus: $PROMETHEUS_IMAGE_NAME"
+          echo "ID da imagem do Prometheus: $PROMETHEUS_IMAGE_ID"
+          
+          if [ -n "$PROMETHEUS_IMAGE_ID" ]; then
+            echo "Tagging and pushing Prometheus image..."
+            docker tag $PROMETHEUS_IMAGE_ID $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-prometheus:$IMAGE_TAG
+            docker tag $PROMETHEUS_IMAGE_ID $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-prometheus:${{ env.PROMETHEUS_IMAGE_TAG }}
+            docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-prometheus:$IMAGE_TAG
+            docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-prometheus:${{ env.PROMETHEUS_IMAGE_TAG }}
+            echo "prometheus_image=$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-prometheus:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ AVISO: Não foi possível encontrar a imagem do Prometheus para tagging"
+          fi
+
+          # Encontrar e taggar imagem do Grafana
+          GRAFANA_IMAGE_NAME="${{ env.GRAFANA_IMAGE }}"
+          GRAFANA_IMAGE_ID=$(docker images -q $GRAFANA_IMAGE_NAME 2>/dev/null || docker images -q "*${GRAFANA_IMAGE_NAME}*" 2>/dev/null || docker images | grep -E "$GRAFANA_IMAGE_NAME" | awk '{print $3}' | head -n1)
+          echo "Nome da imagem do Grafana: $GRAFANA_IMAGE_NAME"
+          echo "ID da imagem do Grafana: $GRAFANA_IMAGE_ID"
+          
+          if [ -n "$GRAFANA_IMAGE_ID" ]; then
+            echo "Tagging and pushing Grafana image..."
+            docker tag $GRAFANA_IMAGE_ID $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-grafana:$IMAGE_TAG
+            docker tag $GRAFANA_IMAGE_ID $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-grafana:${{ env.GRAFANA_IMAGE_TAG }}
+            docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-grafana:$IMAGE_TAG
+            docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-grafana:${{ env.GRAFANA_IMAGE_TAG }}
+            echo "grafana_image=$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-grafana:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ AVISO: Não foi possível encontrar a imagem do Grafana para tagging"
           fi
 
   deploy-dev-infrastructure:

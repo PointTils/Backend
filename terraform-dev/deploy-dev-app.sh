@@ -10,6 +10,8 @@ AWS_REGION="${2:-us-east-2}"
 # Imagens já construídas no GitHub Actions
 APP_IMAGE="$ECR_REGISTRY/pointtils-dev:dev-latest"
 DB_IMAGE="$ECR_REGISTRY/pointtils-dev-db:dev-latest"
+PROMETHEUS_IMAGE="$ECR_REGISTRY/pointtils-dev-prometheus:dev-latest"
+GRAFANA_IMAGE="$ECR_REGISTRY/pointtils-dev-grafana:dev-latest"
 
 echo "ECR Registry: $ECR_REGISTRY"
 echo "App Image: $APP_IMAGE"
@@ -29,6 +31,8 @@ aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --
 echo "Puxando imagens de DESENVOLVIMENTO mais recentes do ECR..."
 docker pull $APP_IMAGE
 docker pull $DB_IMAGE
+docker pull $PROMETHEUS_IMAGE
+docker pull $GRAFANA_IMAGE
 
 # Verificar o conteúdo da imagem de aplicação
 echo "Verificando a imagem da aplicação..."
@@ -42,17 +46,21 @@ docker network create pointtils-dev-network 2>/dev/null || true
 
 # Parar e remover containers existentes de DESENVOLVIMENTO
 echo "Parando containers de DESENVOLVIMENTO existentes..."
-docker stop pointtils-dev pointtils-db-dev 2>/dev/null || true
-docker rm pointtils-dev pointtils-db-dev 2>/dev/null || true
+docker stop pointtils-dev pointtils-db-dev prometheus grafana 2>/dev/null || true
+docker rm pointtils-dev pointtils-db-dev prometheus grafana 2>/dev/null || true
 
 # Remover forçadamente se ainda existirem
 echo "Removendo forçadamente se containers ainda existirem..."
 docker rm -f pointtils-dev 2>/dev/null || true
 docker rm -f pointtils-db-dev 2>/dev/null || true
+docker rm -f prometheus 2>/dev/null || true
+docker rm -f grafana 2>/dev/null || true
 
-# Criar volume se não existir
-echo "Criando volume postgres_dev_data se não existir..."
+# Criar volumes se não existirem
+echo "Criando volumes se não existirem..."
 docker volume create postgres_dev_data 2>/dev/null || true
+docker volume create prometheus_data 2>/dev/null || true
+docker volume create grafana_data 2>/dev/null || true
 
 # Iniciar container do banco de dados de DESENVOLVIMENTO
 echo "Iniciando container do banco de dados de DESENVOLVIMENTO..."
@@ -84,6 +92,32 @@ docker run -d \
 echo "Aguardando aplicação de DESENVOLVIMENTO iniciar..."
 sleep 30
 
+# Iniciar container do Prometheus
+echo "Iniciando container do Prometheus..."
+docker run -d \
+  --name prometheus \
+  --network pointtils-dev-network \
+  -p 9090:9090 \
+  -v prometheus_data:/prometheus \
+  --restart unless-stopped \
+  $PROMETHEUS_IMAGE
+
+# Iniciar container do Grafana
+echo "Iniciando container do Grafana..."
+docker run -d \
+  --name grafana \
+  --network pointtils-dev-network \
+  -p 3000:3000 \
+  -v grafana_data:/var/lib/grafana \
+  --restart unless-stopped \
+  -e GF_SECURITY_ADMIN_USER=admin \
+  -e GF_SECURITY_ADMIN_PASSWORD=admin123456 \
+  $GRAFANA_IMAGE
+
+# Aguardar serviços de monitoramento iniciarem
+echo "Aguardando serviços de monitoramento iniciarem..."
+sleep 30
+
 # Verificar status final dos containers
 echo "Verificando status final dos containers de DESENVOLVIMENTO:"
 docker ps
@@ -96,5 +130,7 @@ echo "=== Deploy de DESENVOLVIMENTO concluído! ==="
 echo "Aplicação de DESENVOLVIMENTO disponível em: http://localhost:8080"
 echo "Swagger UI: http://localhost:8080/swagger-ui.html"
 echo "Actuator Health: http://localhost:8080/actuator/health"
+echo "Prometheus disponível em: http://localhost:9090"
+echo "Grafana disponível em: http://localhost:3000 (usuário: admin, senha: admin123456)"
 echo "Para verificar logs: docker logs pointtils-dev"
 echo "Para verificar status: docker ps -a"
