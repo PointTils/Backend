@@ -62,6 +62,17 @@ docker volume create postgres_dev_data 2>/dev/null || true
 docker volume create prometheus_data 2>/dev/null || true
 docker volume create grafana_data 2>/dev/null || true
 
+# Corrigir permissões do volume do Grafana se existir
+echo "Corrigindo permissões do volume do Grafana..."
+if docker volume inspect grafana_data >/dev/null 2>&1; then
+    echo "Volume grafana_data encontrado, corrigindo permissões..."
+    # Criar container temporário para corrigir permissões
+    docker run --rm -v grafana_data:/var/lib/grafana alpine \
+        sh -c "chmod -R 777 /var/lib/grafana && echo 'Permissões do volume grafana_data corrigidas'"
+else
+    echo "Volume grafana_data não encontrado, será criado automaticamente"
+fi
+
 # Iniciar container do banco de dados de DESENVOLVIMENTO
 echo "Iniciando container do banco de dados de DESENVOLVIMENTO..."
 docker run -d \
