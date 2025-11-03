@@ -6,10 +6,19 @@ sleep 10
 # Criar diretório de dashboards se não existir
 mkdir -p /var/lib/grafana/dashboards
 
-# Copiar dashboard para o diretório correto
-cp /tmp/pointtils_dashboard.json /var/lib/grafana/dashboards/pointtils_dashboard.json
+# Verificar se o dashboard foi copiado corretamente
+if [ -f "/var/lib/grafana/dashboards/pointtils_dashboard.json" ]; then
+    echo "✅ Dashboard PointTils encontrado em /var/lib/grafana/dashboards/pointtils_dashboard.json"
+else
+    echo "❌ Dashboard PointTils não encontrado!"
+fi
 
-echo "Dashboard PointTils copiado com sucesso!"
+# Verificar se o datasource está configurado
+echo "Verificando configuração do datasource Prometheus..."
+if [ -f "/etc/grafana/provisioning/datasources/prometheus.yml" ]; then
+    echo "✅ Datasource Prometheus configurado"
+else
+    echo "❌ Datasource Prometheus não configurado!"
+fi
 
-# Manter o container rodando
-tail -f /dev/null
+echo "Inicialização do Grafana concluída!"
