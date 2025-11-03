@@ -74,39 +74,39 @@ jobs:
       - name: Check if ECR repository exists and create if needed
         run: |
           # Verificar e criar repositório da aplicação
-          exists=$(aws ecr describe-repositories --repository-names ${{ secrets.ECR_REPOSITORY }} 2>/dev/null || echo "false")
+          exists=$(aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY }} 2>/dev/null || echo "false")
           if [ "$exists" = "false" ]; then
-            echo "Creating ECR repository ${{ secrets.ECR_REPOSITORY }}"
-            aws ecr create-repository --repository-name ${{ secrets.ECR_REPOSITORY }} --image-tag-mutability MUTABLE --image-scanning-configuration scanOnPush=true
+            echo "Creating ECR repository ${{ env.ECR_REPOSITORY }}"
+            aws ecr create-repository --repository-name ${{ env.ECR_REPOSITORY }} --image-tag-mutability MUTABLE --image-scanning-configuration scanOnPush=true
           else
-            echo "ECR repository ${{ secrets.ECR_REPOSITORY }} already exists"
+            echo "ECR repository ${{ env.ECR_REPOSITORY }} already exists"
           fi
           
           # Verificar e criar repositório do banco de dados
-          exists_db=$(aws ecr describe-repositories --repository-names ${{ secrets.ECR_REPOSITORY }}-db 2>/dev/null || echo "false")
+          exists_db=$(aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY }}-db 2>/dev/null || echo "false")
           if [ "$exists_db" = "false" ]; then
-            echo "Creating ECR repository ${{ secrets.ECR_REPOSITORY }}-db"
-            aws ecr create-repository --repository-name ${{ secrets.ECR_REPOSITORY }}-db --image-tag-mutability MUTABLE --image-scanning-configuration scanOnPush=true
+            echo "Creating ECR repository ${{ env.ECR_REPOSITORY }}-db"
+            aws ecr create-repository --repository-name ${{ env.ECR_REPOSITORY }}-db --image-tag-mutability MUTABLE --image-scanning-configuration scanOnPush=true
           else
-            echo "ECR repository ${{ secrets.ECR_REPOSITORY }}-db already exists"
+            echo "ECR repository ${{ env.ECR_REPOSITORY }}-db already exists"
           fi
 
           # Verificar e criar repositório do Prometheus
-          exists_prometheus=$(aws ecr describe-repositories --repository-names ${{ secrets.ECR_REPOSITORY }}-prometheus 2>/dev/null || echo "false")
+          exists_prometheus=$(aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY }}-prometheus 2>/dev/null || echo "false")
           if [ "$exists_prometheus" = "false" ]; then
-            echo "Creating ECR repository ${{ secrets.ECR_REPOSITORY }}-prometheus"
-            aws ecr create-repository --repository-name ${{ secrets.ECR_REPOSITORY }}-prometheus --image-tag-mutability MUTABLE --image-scanning-configuration scanOnPush=true
+            echo "Creating ECR repository ${{ env.ECR_REPOSITORY }}-prometheus"
+            aws ecr create-repository --repository-name ${{ env.ECR_REPOSITORY }}-prometheus --image-tag-mutability MUTABLE --image-scanning-configuration scanOnPush=true
           else
-            echo "ECR repository ${{ secrets.ECR_REPOSITORY }}-prometheus already exists"
+            echo "ECR repository ${{ env.ECR_REPOSITORY }}-prometheus already exists"
           fi
 
           # Verificar e criar repositório do Grafana
-          exists_grafana=$(aws ecr describe-repositories --repository-names ${{ secrets.ECR_REPOSITORY }}-grafana 2>/dev/null || echo "false")
+          exists_grafana=$(aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY }}-grafana 2>/dev/null || echo "false")
           if [ "$exists_grafana" = "false" ]; then
-            echo "Creating ECR repository ${{ secrets.ECR_REPOSITORY }}-grafana"
-            aws ecr create-repository --repository-name ${{ secrets.ECR_REPOSITORY }}-grafana --image-tag-mutability MUTABLE --image-scanning-configuration scanOnPush=true
+            echo "Creating ECR repository ${{ env.ECR_REPOSITORY }}-grafana"
+            aws ecr create-repository --repository-name ${{ env.ECR_REPOSITORY }}-grafana --image-tag-mutability MUTABLE --image-scanning-configuration scanOnPush=true
           else
-            echo "ECR repository ${{ secrets.ECR_REPOSITORY }}-grafana already exists"
+            echo "ECR repository ${{ env.ECR_REPOSITORY }}-grafana already exists"
           fi
 
       - name: Create .env file for docker-compose build
