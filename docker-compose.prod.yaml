@@ -74,6 +74,39 @@ services:
       - pointtils-network
     restart: unless-stopped
 
+  # Prometheus para monitoramento em produção
+  prometheus:
+    build:
+      context: ./utils/prometheus
+      dockerfile: Dockerfile
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus_data:/prometheus
+    networks:
+      - pointtils-network
+    restart: unless-stopped
+
+  # Grafana para visualização de métricas em produção
+  grafana:
+    build:
+      context: ./utils/grafana
+      dockerfile: Dockerfile
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - pointtils-network
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
   # Banco de dados PostgreSQL
   pointtils-db:
     build:
@@ -105,6 +138,8 @@ services:
 
 volumes:
   postgres_data:
+  prometheus_data:
+  grafana_data:
 
 networks:
   pointtils-network:
