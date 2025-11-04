@@ -17,7 +17,7 @@ COPY src ./src
 RUN ./mvnw clean package -DskipTests
 
 # Estágio final
-FROM openjdk:17-jdk-slim
+FROM openjdk:17-jdk-slim-bullseye
 WORKDIR /application
 
 COPY --from=build /application/target/pointtils-0.0.1-SNAPSHOT.jar app.jar
