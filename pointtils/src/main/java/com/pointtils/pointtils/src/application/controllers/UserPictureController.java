@@ -3,10 +3,8 @@ package com.pointtils.pointtils.src.application.controllers;
 import java.io.IOException;
 import java.util.UUID;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,7 +19,6 @@ import com.pointtils.pointtils.src.application.services.UserPictureService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -48,23 +45,5 @@ public class UserPictureController {
     public ResponseEntity<Void> deletePicture(@PathVariable UUID id) {
         userPictureService.deletePicture(id);
         return ResponseEntity.noContent().build();
-    }
-
-    /**
-     * Handler para quando o upload de fotos está desabilitado
-     */
-    @ExceptionHandler(UnsupportedOperationException.class)
-    public ResponseEntity<String> handleUnsupportedOperation(UnsupportedOperationException ex) {
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body(ex.getMessage());
-    }
-
-    /**
-     * Handler para quando o usuário não é encontrado
-     */
-    @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<String> handleEntityNotFound(EntityNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ex.getMessage());
     }
 }

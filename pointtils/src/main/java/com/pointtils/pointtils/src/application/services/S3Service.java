@@ -61,7 +61,7 @@ public class S3Service {
      */
     public boolean deleteFile(String fileUrl) {
         if (!isS3Enabled() || fileUrl == null || fileUrl.isEmpty()) {
-            throw new UnsupportedOperationException("Deleção de arquivos para S3 está desabilitado. Configure spring.cloud.aws.s3.enabled=true para habilitar.");
+            throw new UnsupportedOperationException("Deleção de arquivos para S3 está desabilitada. Configure spring.cloud.aws.s3.enabled=true para habilitar.");
         }
 
         try {
@@ -86,6 +86,7 @@ public class S3Service {
      * Suporta formatos:
      * - https://bucket.s3.amazonaws.com/key
      * - https://bucket.s3.region.amazonaws.com/key
+     * - https://s3.amazonaws.com/bucket/key
      */
     private String extractKeyFromUrl(String url) {
         if (url == null || url.isEmpty()) {
