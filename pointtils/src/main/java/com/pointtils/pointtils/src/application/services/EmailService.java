@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.pointtils.pointtils.src.application.dto.requests.EmailRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterRegistrationEmailDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Parameters;
 import com.pointtils.pointtils.src.infrastructure.repositories.ParametersRepository;
 
@@ -35,6 +36,9 @@ public class EmailService {
     @Value("${app.mail.name:PointTils}")
     private String senderName;
 
+    private static final String EMAIL_REQUEST_NULL = "EmailRequestDTO não pode ser nulo";
+
+
     /**
      * Envia email simples de texto
      * 
@@ -43,7 +47,7 @@ public class EmailService {
      */
     public boolean sendSimpleEmail(EmailRequestDTO emailRequest) {
         if (emailRequest == null) {
-            log.error("EmailRequestDTO não pode ser nulo");
+            log.error(EMAIL_REQUEST_NULL);
             return false;
         }
 
@@ -72,7 +76,7 @@ public class EmailService {
      */
     public boolean sendHtmlEmail(EmailRequestDTO emailRequest) {
         if (emailRequest == null) {
-            log.error("EmailRequestDTO não pode ser nulo");
+            log.error(EMAIL_REQUEST_NULL);
             return false;
         }
 
@@ -97,7 +101,7 @@ public class EmailService {
 
     public boolean sendEmailWithAttachments(EmailRequestDTO emailRequest, List<byte[]> attachments, List<String> attachmentNames) {
         if (emailRequest == null) {
-            log.error("EmailRequestDTO não pode ser nulo");
+            log.error(EMAIL_REQUEST_NULL);
             return false;
         }
 
@@ -200,31 +204,30 @@ public class EmailService {
      * @param files           Lista de documentos anexados
      * @return true se o email foi enviado com sucesso, false caso contrário
      */
-    public boolean sendInterpreterRegistrationRequestEmail(String adminEmail, String interpreterName, String cpf,
-            String cnpj, String email, String phone, String acceptLink, String rejectLink, List<MultipartFile> files) {
+    public boolean sendInterpreterRegistrationRequestEmail(InterpreterRegistrationEmailDTO dto) {
         // Buscar template do banco de dados
         String template = getTemplateByKey("PENDING_INTERPRETER_ADMIN");
         
         List<byte[]> attachmentList = new ArrayList<>();
         List<String> attachmentNames = new ArrayList<>();
 
-        for (MultipartFile file : files) {
+        for (MultipartFile file : dto.getFiles()) {
             try {
                 byte[] documentBytes = file.getBytes();
                 attachmentNames.add(file.getOriginalFilename());
                 attachmentList.add(documentBytes);
             } catch (Exception e) {
-                log.error("Erro ao baixar documento '{}' do intérprete '{}': {}", file.getName(), interpreterName,
+                log.error("Erro ao baixar documento '{}' do intérprete '{}': {}", file.getName(), dto.getInterpreterName(),
                         e.getMessage());
             }
         }
 
         
         // Substituir placeholders do template
-        String html = processTemplate(template, interpreterName, cpf, cnpj, email, phone, acceptLink, rejectLink);
+        String html = processTemplate(template, dto.getInterpreterName(), dto.getCpf(), dto.getCnpj(), dto.getEmail(), dto.getPhone(), dto.getAcceptLink(), dto.getRejectLink());
 
         EmailRequestDTO emailRequest = new EmailRequestDTO(
-                adminEmail,
+                dto.getAdminEmail(),
                 "Nova Solicitação de Cadastro de Intérprete - PointTils",
                 html,
                 senderName);

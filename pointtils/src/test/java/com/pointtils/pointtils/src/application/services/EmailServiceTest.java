@@ -32,6 +32,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.pointtils.pointtils.src.application.dto.requests.EmailRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterRegistrationEmailDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Parameters;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.ParametersRepository;
@@ -258,9 +259,22 @@ class EmailServiceTest {
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
         doNothing().when(mailSender).send(any(MimeMessage.class));
 
-        boolean result = emailService.sendInterpreterRegistrationRequestEmail(
-                "admin@pointtils.com", "João Intérprete", "123.456.789-00", "12.345.678/0001-90",
-                "joao@example.com", "(11) 99999-9999", "http://accept-link", "http://reject-link", files);
+            InterpreterRegistrationEmailDTO dto = InterpreterRegistrationEmailDTO.builder()
+        .adminEmail("admin@pointtils.com")
+        .interpreterName("João")
+        .cpf("123")
+        .cnpj("456")
+        .email("email")
+        .phone("phone")
+        .acceptLink("http://accept")
+        .rejectLink("http://reject")
+        .files(files)
+        .build();
+
+    
+
+               boolean result = emailService.sendInterpreterRegistrationRequestEmail(dto);     
+
 
         assertTrue(result);
         verify(parametersRepository).findByKey("PENDING_INTERPRETER_ADMIN");
@@ -434,8 +448,19 @@ class EmailServiceTest {
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
         doNothing().when(mailSender).send(any(MimeMessage.class));
 
-        boolean result = emailService.sendInterpreterRegistrationRequestEmail(
-                "admin@pointtils.com", "João", "123", "456", "email", "phone", "http://accept", "http://reject", files);
+        InterpreterRegistrationEmailDTO dto = InterpreterRegistrationEmailDTO.builder()
+        .adminEmail("admin@pointtils.com")
+        .interpreterName("João")
+        .cpf("123")
+        .cnpj("456")
+        .email("email")
+        .phone("phone")
+        .acceptLink("http://accept")
+        .rejectLink("http://reject")
+        .files(files)
+        .build();
+        
+        boolean result = emailService.sendInterpreterRegistrationRequestEmail(dto);     
 
         assertTrue(result);
         verify(parametersRepository).findByKey("PENDING_INTERPRETER_ADMIN");
@@ -578,37 +603,55 @@ class EmailServiceTest {
         verify(mailSender).send(any(MimeMessage.class));
     }
 
-    @Test
-    @DisplayName("Deve processar anexos corretamente no envio de solicitação de cadastro de intérprete")
-    void deveProcessarAnexosCorretamenteNoEnvioSolicitacaoCadastroInterprete() throws Exception {
-        MultipartFile file1 = org.mockito.Mockito.mock(MultipartFile.class);
-        MultipartFile file2 = org.mockito.Mockito.mock(MultipartFile.class);
-        List<MultipartFile> files = List.of(file1, file2);
+   @Test
+@DisplayName("Deve processar anexos corretamente no envio de solicitação de cadastro de intérprete")
+void deveProcessarAnexosCorretamenteNoEnvioSolicitacaoCadastroInterprete() throws Exception {
+    // Mock dos arquivos
+    MultipartFile file1 = org.mockito.Mockito.mock(MultipartFile.class);
+    MultipartFile file2 = org.mockito.Mockito.mock(MultipartFile.class);
+    List<MultipartFile> files = List.of(file1, file2);
 
-        lenient().when(file1.getOriginalFilename()).thenReturn("doc1.pdf");
-        lenient().when(file1.getBytes()).thenReturn("conteudo1".getBytes());
-        lenient().when(file2.getOriginalFilename()).thenReturn("doc2.pdf");
-        lenient().when(file2.getBytes()).thenReturn("conteudo2".getBytes());
+    lenient().when(file1.getOriginalFilename()).thenReturn("doc1.pdf");
+    lenient().when(file1.getBytes()).thenReturn("conteudo1".getBytes());
+    lenient().when(file2.getOriginalFilename()).thenReturn("doc2.pdf");
+    lenient().when(file2.getBytes()).thenReturn("conteudo2".getBytes());
 
-        String template = "<p>Nome: {{nome}}</p><a href=\"{link_api}\">Aceitar</a>";
-        Parameters parameter = new Parameters();
-        parameter.setKey("PENDING_INTERPRETER_ADMIN");
-        parameter.setValue(template);
+    // Template armazenado no banco
+    String template = "<p>Nome: {{nome}}</p><a href=\"{link_api}\">Aceitar</a>";
+    Parameters parameter = new Parameters();
+    parameter.setKey("PENDING_INTERPRETER_ADMIN");
+    parameter.setValue(template);
 
-        when(parametersRepository.findByKey("PENDING_INTERPRETER_ADMIN")).thenReturn(Optional.of(parameter));
+    when(parametersRepository.findByKey("PENDING_INTERPRETER_ADMIN"))
+            .thenReturn(Optional.of(parameter));
 
-        MimeMessage mimeMessage = new MimeMessage((Session) null);
-        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
-        doNothing().when(mailSender).send(any(MimeMessage.class));
+    // Mock do envio do email
+    MimeMessage mimeMessage = new MimeMessage((Session) null);
+    when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+    doNothing().when(mailSender).send(any(MimeMessage.class));
 
-        boolean result = emailService.sendInterpreterRegistrationRequestEmail(
-                "admin@pointtils.com", "João", "123", "456", "email", "phone",
-                "http://accept", "http://reject", files);
+    InterpreterRegistrationEmailDTO dto = InterpreterRegistrationEmailDTO.builder()
+        .adminEmail("admin@pointtils.com")
+        .interpreterName("João")
+        .cpf("123")
+        .cnpj("456")
+        .email("email")
+        .phone("phone")
+        .acceptLink("http://accept")
+        .rejectLink("http://reject")
+        .files(files)
+        .build();
 
-        assertTrue(result);
-        verify(parametersRepository).findByKey("PENDING_INTERPRETER_ADMIN");
-        verify(mailSender).send(any(MimeMessage.class));
-    }
+
+    // Execução do método
+    boolean result = emailService.sendInterpreterRegistrationRequestEmail(dto);
+
+    // Verificações
+    assertTrue(result);
+    verify(parametersRepository).findByKey("PENDING_INTERPRETER_ADMIN");
+    verify(mailSender).send(any(MimeMessage.class));
+}
+
 
     @Test
     void deveProcessarTemplateAdminFeedbackCorretamente() {

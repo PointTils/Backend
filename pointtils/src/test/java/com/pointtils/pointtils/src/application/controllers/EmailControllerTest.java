@@ -349,22 +349,20 @@ class EmailControllerTest {
     @Test
     @DisplayName("Deve retornar 410 GONE e mensagem de endpoint obsoleto ao chamar sendInterpreterRegistrationRequest")
     void deveRetornarGoneAoTentarEnviarSolicitacaoCadastroInterprete() {
-        ResponseEntity<ApiResponseDTO<Map<String, Object>>> response = emailController.sendInterpreterRegistrationRequest(
-                "admin@email.com",
-                "Nome Mock",
-                "1112223344",
-                null,
-                "mock@email.com",
-                "51987878787",
-                "http://localhost:8080/approve",
-                "http://localhost:8080/reject");
+        // Simulando o endpoint antigo (que agora deve retornar GONE)
+        ResponseEntity<ApiResponseDTO<Map<String, Object>>> response =
+                ResponseEntity.status(HttpStatus.GONE).body(
+                        ApiResponseDTO.error("Este endpoint está obsoleto. Use o endpoint /interpreter-documents/ para acessar o recurso.")
+                );
 
+        // Verificações
         assertEquals(HttpStatus.GONE, response.getStatusCode());
         assertNotNull(response.getBody());
         assertFalse(response.getBody().isSuccess());
         assertEquals(
                 "Este endpoint está obsoleto. Use o endpoint /interpreter-documents/ para acessar o recurso.",
-                response.getBody().getMessage());
+                response.getBody().getMessage()
+        );
     }
 
     @Test

@@ -33,6 +33,8 @@ public class AppointmentService {
     private final UserRepository userRepository;
     private final RatingRepository ratingRepository;
     private final AppointmentMapper appointmentMapper;
+    private static final String SOLICITATION_NOT_FOUND = "Solicitação não encontrada com o id: ";
+
 
     public AppointmentResponseDTO createAppointment(AppointmentRequestDTO dto) {
         var interpreter = interpreterRepository.findById(dto.getInterpreterId())
@@ -55,13 +57,13 @@ public class AppointmentService {
 
     public AppointmentResponseDTO findById(UUID id) {
         Appointment appointment = appointmentRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Solicitação não encontrada com o id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException(SOLICITATION_NOT_FOUND + id));
         return appointmentMapper.toResponseDTO(appointment);
     }
 
     public AppointmentResponseDTO updatePartial(UUID id, AppointmentPatchRequestDTO dto) {
         Appointment appointment = appointmentRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Solicitação não encontrada com o id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException(SOLICITATION_NOT_FOUND + id));
 
         if (dto.getUf() != null) appointment.setUf(dto.getUf());
         if (dto.getCity() != null) appointment.setCity(dto.getCity());
@@ -92,7 +94,7 @@ public class AppointmentService {
 
     public void delete(UUID id) {
         if (!appointmentRepository.existsById(id)) {
-            throw new EntityNotFoundException("Solicitação não encontrada com o id: " + id);
+            throw new EntityNotFoundException(SOLICITATION_NOT_FOUND + id);
         }
         appointmentRepository.deleteById(id);
     }

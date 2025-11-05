@@ -2,6 +2,7 @@ package com.pointtils.pointtils.src.application.services;
 
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterDocumentRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterDocumentResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterRegistrationEmailDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
 import com.pointtils.pointtils.src.core.domain.entities.InterpreterDocuments;
 import com.pointtils.pointtils.src.core.domain.exceptions.FileUploadException;
@@ -52,43 +53,41 @@ class InterpreterDocumentServiceTest {
         ReflectionTestUtils.setField(interpreterDocumentService, "apiBaseUrl", "http://localhost:8080");
     }
 
-    @Test
-    void shouldSaveDocumentsSuccessfully() throws IOException {
-        // Arrange
-        UUID interpreterId = UUID.fromString("b56e2062-6dba-4f6a-bc2f-655ba8ba5cd3");
-        MultipartFile file = mock(MultipartFile.class);
-        when(s3Service.uploadFile(any(MultipartFile.class), anyString()))
-                .thenReturn("https://s3.amazonaws.com/documents/test-document.pdf");
+   @Test
+void shouldSaveDocumentsSuccessfully() throws IOException {
+    // Arrange
+    UUID interpreterId = UUID.fromString("b56e2062-6dba-4f6a-bc2f-655ba8ba5cd3");
+    MultipartFile file = mock(MultipartFile.class);
+    when(s3Service.uploadFile(any(MultipartFile.class), anyString()))
+        .thenReturn("https://s3.amazonaws.com/documents/test-document.pdf");
 
-        Interpreter interpreter = new Interpreter();
-        interpreter.setId(interpreterId); // Certifique-se de que o ID está preenchido
-        interpreter.setName("Nome Mock");
-        interpreter.setEmail("nome.mock@email.com");
-        interpreter.setCpf("1112222333344");
-        interpreter.setCnpj("12345678984561");
-        interpreter.setPhone("51984848484");
-        when(interpreterService.findInterpreterById(interpreterId)).thenReturn(interpreter);
+    Interpreter interpreter = new Interpreter();
+    interpreter.setId(interpreterId);
+    interpreter.setName("Nome Mock");
+    interpreter.setEmail("nome.mock@email.com");
+    interpreter.setCpf("1112222333344");
+    interpreter.setCnpj("12345678984561");
+    interpreter.setPhone("51984848484");
+    when(interpreterService.findInterpreterById(interpreterId)).thenReturn(interpreter);
 
-        InterpreterDocuments savedDocument = new InterpreterDocuments();
-        savedDocument.setDocument("https://s3.amazonaws.com/documents/test-document.pdf");
-        savedDocument.setInterpreter(interpreter); // Associe o Interpreter ao documento
-        when(interpreterDocumentsRepository.save(any(InterpreterDocuments.class))).thenReturn(savedDocument);
+    InterpreterDocuments savedDocument = new InterpreterDocuments();
+    savedDocument.setDocument("https://s3.amazonaws.com/documents/test-document.pdf");
+    savedDocument.setInterpreter(interpreter);
+    when(interpreterDocumentsRepository.save(any(InterpreterDocuments.class))).thenReturn(savedDocument);
 
-        // Act
-        List<MultipartFile> fileList = List.of(file);
-        InterpreterDocumentResponseDTO result = interpreterDocumentService.saveDocuments(interpreterId, fileList, false);
+    // Act
+    List<MultipartFile> fileList = List.of(file); // <-- Corrigido
+    InterpreterDocumentResponseDTO result = interpreterDocumentService.saveDocuments(interpreterId, fileList, false);
 
-        // Assert
-        assertNotNull(result);
-        assertEquals(1, result.getData().size());
-        assertEquals("https://s3.amazonaws.com/documents/test-document.pdf", result.getData().get(0).getDocument());
-        verify(s3Service).uploadFile(any(MultipartFile.class), anyString());
-        verify(interpreterDocumentsRepository).save(any(InterpreterDocuments.class));
-        verify(emailService).sendInterpreterRegistrationRequestEmail("admin@email.com", "Nome Mock", "1112222333344",
-                "12345678984561", "nome.mock@email.com", "51984848484",
-                "http://localhost:8080/v1/email/interpreter/b56e2062-6dba-4f6a-bc2f-655ba8ba5cd3/approve",
-                "http://localhost:8080/v1/email/interpreter/b56e2062-6dba-4f6a-bc2f-655ba8ba5cd3/reject", fileList);
-    }
+    // Assert
+    assertNotNull(result);
+    assertEquals(1, result.getData().size());
+    assertEquals("https://s3.amazonaws.com/documents/test-document.pdf", result.getData().get(0).getDocument());
+    verify(s3Service).uploadFile(any(MultipartFile.class), anyString());
+    verify(interpreterDocumentsRepository).save(any(InterpreterDocuments.class));
+    verify(emailService).sendInterpreterRegistrationRequestEmail(any(InterpreterRegistrationEmailDTO.class)); // <-- Corrigido
+}
+
 
     @Test
     void shouldReplaceExistingDocumentsSuccessfully() throws IOException {
