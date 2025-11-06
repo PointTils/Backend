@@ -33,11 +33,6 @@ public class S3Service {
     }
 
     public String uploadFile(MultipartFile file, String userId) throws IOException {
-        if (!s3Enabled || s3Client == null) {
-            throw new UnsupportedOperationException(
-                "Upload de arquivos para S3 está desabilitado. Configure spring.cloud.aws.s3.enabled=true para habilitar."
-            );
-        }
         checkIfS3IsEnabled("Upload");
 
         String key = "users/" + userId + "/" + Instant.now().toEpochMilli() + "-" + file.getOriginalFilename();

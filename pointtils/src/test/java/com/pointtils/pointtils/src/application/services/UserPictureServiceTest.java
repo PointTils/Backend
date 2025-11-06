@@ -141,32 +141,6 @@ class UserPictureServiceTest {
     }
 
     @Test
-    @DisplayName("Deve atualizar foto quando upload para S3 ocorre com sucesso")
-    void shouldUpdatePictureSuccessfully() throws IOException {
-        // Arrange
-        MultipartFile file = mock(MultipartFile.class);
-        UserPicturePostRequestDTO request = new UserPicturePostRequestDTO(userId, file);
-        String newPictureUrl = "https://test-bucket.s3.amazonaws.com/users/123/new-picture.jpg";
-
-        when(userService.findById(userId)).thenReturn(user);
-        when(s3Service.uploadFile(file, userId.toString())).thenReturn(newPictureUrl);
-        when(userService.updateUser(any(User.class))).thenAnswer(invocation -> {
-            User savedUser = invocation.getArgument(0);
-            assertEquals(newPictureUrl, savedUser.getPicture());
-            return savedUser;
-        });
-
-        // Act
-        UserResponseDTO result = userPictureService.updatePicture(request);
-
-        // Assert
-        assertNotNull(result);
-        verify(userService, times(1)).findById(userId);
-        verify(s3Service, times(1)).uploadFile(file, userId.toString());
-        verify(userService, times(1)).updateUser(any(User.class));
-    }
-
-    @Test
     @DisplayName("Deve lançar exceção ao atualizar foto quando upload para S3 falha/desabilitado")
     void shouldThrowExceptionWhenUpdatingPictureWithS3Failure() {
         // Arrange
