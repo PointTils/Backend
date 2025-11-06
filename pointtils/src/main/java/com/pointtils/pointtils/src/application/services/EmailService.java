@@ -342,4 +342,101 @@ public class EmailService {
                 .replace("{{respostaSolicitacao}}", respostaSolicitacao)
                 .replace("{{ano}}", String.valueOf(Year.now().getValue()));
     }
+
+    /**
+     * Envia email de agendamento aceito
+     * 
+     * @param email                Email do destinatário
+     * @param userName             Nome do usuário
+     * @param appointmentDate      Data e hora do agendamento
+     * @param interpreterName      Nome do intérprete
+     * @param appointmentLocation  Local do agendamento
+     * @param appointmentModality  Modalidade do agendamento (Online/Presencial)
+     * @return true se o email foi enviado com sucesso, false caso contrário
+     */
+    public boolean sendAppointmentAcceptedEmail(String email, String userName, String appointmentDate,
+            String interpreterName, String appointmentLocation, String appointmentModality) {
+        String template = getTemplateByKey("APPOINTMENT_ACCEPTED");
+        String html = processAppointmentStatusChangeTemplate(template, userName, appointmentDate, interpreterName,
+                appointmentLocation, appointmentModality, "");
+        EmailRequestDTO emailRequest = new EmailRequestDTO(
+                email,
+                "Agendamento Aceito - PointTils",
+                html,
+                senderName);
+        return sendHtmlEmail(emailRequest);
+    }
+
+    /**
+     * Envia email de agendamento negado
+     * 
+     * @param email           Email do destinatário
+     * @param userName        Nome do usuário
+     * @param appointmentDate Data e hora do agendamento
+     * @param interpreterName Nome do intérprete
+     * @return true se o email foi enviado com sucesso, false caso contrário
+     */
+    public boolean sendAppointmentDeniedEmail(String email, String userName, String appointmentDate,
+            String interpreterName) {
+        String template = getTemplateByKey("APPOINTMENT_DENIED");
+        String html = processAppointmentStatusChangeTemplate(template, userName, appointmentDate, interpreterName,
+                "", "", "");
+        EmailRequestDTO emailRequest = new EmailRequestDTO(
+                email,
+                "Agendamento Negado - PointTils",
+                html,
+                senderName);
+        return sendHtmlEmail(emailRequest);
+    }
+
+    /**
+     * Envia email de agendamento cancelado
+     * 
+     * @param email           Email do destinatário
+     * @param userName        Nome do usuário
+     * @param appointmentDate Data e hora do agendamento
+     * @param interpreterName Nome do intérprete
+     * @param cancelReason    Motivo do cancelamento
+     * @return true se o email foi enviado com sucesso, false caso contrário
+     */
+    public boolean sendAppointmentCanceledEmail(String email, String userName, String appointmentDate,
+            String interpreterName, String cancelReason) {
+        String template = getTemplateByKey("APPOINTMENT_CANCELED");
+        String html = processAppointmentStatusChangeTemplate(template, userName, appointmentDate, interpreterName,
+                "", "", cancelReason);
+        EmailRequestDTO emailRequest = new EmailRequestDTO(
+                email,
+                "Agendamento Cancelado - PointTils",
+                html,
+                senderName);
+        return sendHtmlEmail(emailRequest);
+    }
+
+    /**
+     * Processa template de mudança de status de agendamento
+     * @param template Template do banco
+     * @param userName Nome do usuário
+     * @param appointmentDate Data do agendamento
+     * @param interpreterName Nome do intérprete
+     * @param appointmentLocation Local do agendamento (opcional)
+     * @param appointmentModality Modalidade do agendamento (opcional)
+     * @param cancelReason Motivo do cancelamento (opcional)
+     * @return Template processado
+     */
+    private String processAppointmentStatusChangeTemplate(String template, String userName, String appointmentDate, 
+            String interpreterName, String appointmentLocation, String appointmentModality, String cancelReason) {
+        if (template == null) {
+            return getDefaultTemplate("APPOINTMENT_STATUS_CHANGE");
+        }
+        
+        return template
+                .replace("{{nome}}", userName != null ? userName : "")
+                .replace("{{appointmentDate}}", appointmentDate != null ? appointmentDate : "")
+                .replace("{{interpreterName}}", interpreterName != null ? interpreterName : "")
+                .replace("{{appointmentLocation}}", appointmentLocation != null ? appointmentLocation : "")
+                .replace("{{appointmentModality}}", appointmentModality != null ? appointmentModality : "")
+                .replace("{{cancelReason}}", cancelReason != null ? cancelReason : "")
+                .replace("{{ano}}", String.valueOf(Year.now().getValue()))
+                .replace("{{senderName}}", senderName);
+    }
 }
