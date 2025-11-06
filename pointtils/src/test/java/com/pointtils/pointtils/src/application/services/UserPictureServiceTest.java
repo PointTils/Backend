@@ -11,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -192,6 +193,64 @@ class UserPictureServiceTest {
             throw new RuntimeException(e);
         }
         verify(userService, never()).updateUser(any(User.class));
+    }
+
+    @Test
+    @DisplayName("updatePicture - Deve enviar arquivo ao S3, atualizar foto e retornar UserResponseDTO com URL")
+    void updatePicture_success() throws IOException {
+        UUID uid = UUID.randomUUID();
+        MultipartFile file = new MockMultipartFile("file", "foto.png", "image/png", "conteudo".getBytes());
+        String s3Url = "https://test-bucket.s3.amazonaws.com/users/" + uid + "/test.jpg";
+
+        User u = new User() {
+            @Override
+            public String getDisplayName() { return "Test User"; }
+            @Override
+            public String getDocument() { return "123456789"; }
+        };
+        u.setId(uid);
+        u.setEmail("test@example.com");
+
+        when(userService.findById(uid)).thenReturn(u);
+        when(s3Service.uploadFile(file, uid.toString())).thenReturn(s3Url);
+        when(userService.updateUser(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        UserResponseDTO response = userPictureService.updatePicture(
+                UserPicturePostRequestDTO.builder()
+                        .userId(uid)
+                        .file(file)
+                        .build()
+        );
+
+        assertNotNull(response);
+        assertEquals(uid, response.getId());
+        assertEquals(s3Url, response.getPicture());
+
+        verify(userService).findById(uid);
+        verify(s3Service).uploadFile(file, uid.toString());
+        verify(userService).updateUser(any(User.class));
+    }
+
+    @Test
+    @DisplayName("updatePicture - Deve lançar EntityNotFoundException quando usuário não existe")
+    void updatePicture_userNotFound() {
+        UUID uid = UUID.randomUUID();
+        MultipartFile file = new MockMultipartFile("file", "foto.png", "image/png", "conteudo".getBytes());
+
+        when(userService.findById(uid)).thenThrow(new EntityNotFoundException("Usuário não encontrado"));
+
+        assertThrows(EntityNotFoundException.class, () ->
+                userPictureService.updatePicture(
+                        UserPicturePostRequestDTO.builder()
+                                .userId(uid)
+                                .file(file)
+                                .build()
+                )
+        );
+
+        verify(userService).findById(uid);
+        verifyNoInteractions(s3Service);
+        verify(userService, never()).updateUser(any());
     }
 }
 
