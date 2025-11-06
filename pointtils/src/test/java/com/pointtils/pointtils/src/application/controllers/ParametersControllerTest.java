@@ -58,7 +58,7 @@ class ParametersControllerTest {
     @BeforeEach
     void setUp() {
         parametersId = UUID.randomUUID();
-        parameters = new Parameters(parametersId, "Test Key", "Test Value");
+        parameters = new Parameters(parametersId, "Test Key", "Test Value", null, null);
         parameters.setId(parametersId);
 
         mockMvc = MockMvcBuilders.standaloneSetup(parametersController)

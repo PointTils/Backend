@@ -48,6 +48,7 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.POST, "/v1/email/password-reset/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/v1/email/template/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/v1/email/interpreter/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/v1/interpreter-documents/**").permitAll()
                         .requestMatchers("/v1/email/**").authenticated()
                         .requestMatchers("/api/jwt/**", "/auth/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()

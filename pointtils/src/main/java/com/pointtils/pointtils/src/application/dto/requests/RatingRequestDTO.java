@@ -18,6 +18,6 @@ public class RatingRequestDTO {
     
     private BigDecimal stars;
     private String description;
-    @JsonProperty("user_id")
-    private UUID userId;
+    @JsonProperty("appointment_id")
+    private UUID appointmentId;
 }

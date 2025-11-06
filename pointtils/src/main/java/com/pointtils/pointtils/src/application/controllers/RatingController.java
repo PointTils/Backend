@@ -6,6 +6,10 @@ import com.pointtils.pointtils.src.application.dto.responses.ApiResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.RatingResponseDTO;
 import com.pointtils.pointtils.src.application.services.RatingService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -32,12 +36,24 @@ public class RatingController {
 
     private final RatingService ratingService;
 
-    @PostMapping("/{appointmentId}")
+    @PostMapping
     @SecurityRequirement(name = "bearerAuth")
-    @Operation(summary = "Adiciona uma avaliação a um agendamento")
-    public ResponseEntity<ApiResponseDTO<RatingResponseDTO>> postRating(@RequestBody RatingRequestDTO request,
-                                                                        @PathVariable UUID appointmentId) {
-        RatingResponseDTO response = ratingService.createRating(request, appointmentId);
+    @Operation(
+            summary = "Adiciona uma avaliação a um agendamento",
+            description = "Cria uma nova avaliação para um agendamento específico"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Avaliação criada com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = RatingResponseDTO.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Dados da avaliação inválidos"),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
+            @ApiResponse(responseCode = "404", description = "Agendamento não encontrado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+    })
+    public ResponseEntity<ApiResponseDTO<RatingResponseDTO>> postRating(@RequestBody RatingRequestDTO request) {
+        RatingResponseDTO response = ratingService.createRating(request);
         ApiResponseDTO<RatingResponseDTO> apiResponse = ApiResponseDTO.success("Avaliação adicionada com sucesso", response);
         return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
     }

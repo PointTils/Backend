@@ -8,55 +8,39 @@ import org.springframework.stereotype.Service;
 import com.pointtils.pointtils.src.application.dto.requests.UserPicturePostRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.UserResponseDTO;
 import com.pointtils.pointtils.src.core.domain.entities.User;
-import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
-
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class UserPictureService {
 
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final S3Service s3Service;
 
     public UserResponseDTO updatePicture(UserPicturePostRequestDTO request) throws IOException {
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
-
-        if (!s3Service.isS3Enabled()) {
-            throw new UnsupportedOperationException("Upload de fotos está desabilitado. Configure spring.cloud.aws.s3.enabled=true para habilitar o upload para S3.");
-        }
+        User user = userService.findById(request.getUserId());
 
         String url = s3Service.uploadFile(request.getFile(), request.getUserId().toString());
         user.setPicture(url);
 
-        User savedUser = userRepository.save(user);
+        User savedUser = userService.updateUser(user);
 
         return UserResponseDTO.fromEntity(savedUser);
     }
 
-    /**
-     * Verifica se o serviço de upload de fotos está disponível
-     */
-    public boolean isPictureUploadEnabled() {
-        return s3Service.isS3Enabled();
-    }
-
     public void deletePicture(UUID id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
+        User user = userService.findById(id);
         
         if (user.getPicture() != null && !user.getPicture().isEmpty()) {
             try {
                 s3Service.deleteFile(user.getPicture());
-            } catch (RuntimeException e) {
+            } catch (RuntimeException e){
                 // Ignora erros do S3 (incluindo UnsupportedOperationException) e continua com a atualização do banco
                 // Isso permite que a foto seja removida do banco mesmo se S3 estiver desabilitado ou falhar
             }
         }
         
         user.setPicture(null);
-        userRepository.save(user);
+        userService.updateUser(user);
     }
 }
