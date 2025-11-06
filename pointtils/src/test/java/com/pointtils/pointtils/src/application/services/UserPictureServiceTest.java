@@ -3,7 +3,6 @@ package com.pointtils.pointtils.src.application.services;
 import com.pointtils.pointtils.src.application.dto.requests.UserPicturePostRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.UserResponseDTO;
 import com.pointtils.pointtils.src.core.domain.entities.User;
-import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +14,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -26,7 +24,7 @@ import static org.mockito.Mockito.*;
 class UserPictureServiceTest {
 
     @Mock
-    private UserRepository userRepository;
+    private UserService userService;
 
     @Mock
     private S3Service s3Service;
@@ -42,7 +40,7 @@ class UserPictureServiceTest {
     void setUp() {
         userId = UUID.randomUUID();
         pictureUrl = "https://test-bucket.s3.amazonaws.com/users/123/test.jpg";
-        
+
         user = new User() {
             @Override
             public String getDisplayName() { return "Test User"; }
@@ -60,51 +58,51 @@ class UserPictureServiceTest {
     @DisplayName("Deve deletar foto com sucesso quando S3 está habilitado")
     void shouldDeletePictureSuccessfully() {
         // Arrange
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(s3Service.deleteFile(pictureUrl)).thenReturn(true);
-        when(userRepository.save(any(User.class))).thenReturn(user);
+        when(userService.findById(userId)).thenReturn(user);
+        doNothing().when(s3Service).deleteFile(pictureUrl);
+        when(userService.updateUser(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
         userPictureService.deletePicture(userId);
 
         // Assert
-        verify(userRepository, times(1)).findById(userId);
+        verify(userService, times(1)).findById(userId);
         verify(s3Service, times(1)).deleteFile(pictureUrl);
-        verify(userRepository, times(1)).save(any(User.class));
+        verify(userService, times(1)).updateUser(any(User.class));
     }
 
     @Test
     @DisplayName("Deve deletar foto do banco mesmo quando S3 está desabilitado")
     void shouldDeletePictureFromDatabaseWhenS3IsDisabled() {
         // Arrange
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(s3Service.deleteFile(pictureUrl)).thenThrow(new UnsupportedOperationException("S3 desabilitado"));
-        when(userRepository.save(any(User.class))).thenReturn(user);
+        when(userService.findById(userId)).thenReturn(user);
+        doThrow(new UnsupportedOperationException("S3 desabilitado")).when(s3Service).deleteFile(pictureUrl);
+        when(userService.updateUser(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
         userPictureService.deletePicture(userId);
 
         // Assert - Não deve lançar exceção e deve atualizar o banco
-        verify(userRepository, times(1)).findById(userId);
+        verify(userService, times(1)).findById(userId);
         verify(s3Service, times(1)).deleteFile(pictureUrl);
-        verify(userRepository, times(1)).save(any(User.class));
+        verify(userService, times(1)).updateUser(any(User.class));
     }
 
     @Test
     @DisplayName("Deve deletar foto do banco mesmo quando S3 falha com RuntimeException")
     void shouldDeletePictureFromDatabaseWhenS3Fails() {
         // Arrange
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(s3Service.deleteFile(pictureUrl)).thenThrow(new RuntimeException("Erro no S3"));
-        when(userRepository.save(any(User.class))).thenReturn(user);
+        when(userService.findById(userId)).thenReturn(user);
+        doThrow(new RuntimeException("Erro no S3")).when(s3Service).deleteFile(pictureUrl);
+        when(userService.updateUser(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
         userPictureService.deletePicture(userId);
 
         // Assert - Não deve lançar exceção e deve atualizar o banco
-        verify(userRepository, times(1)).findById(userId);
+        verify(userService, times(1)).findById(userId);
         verify(s3Service, times(1)).deleteFile(pictureUrl);
-        verify(userRepository, times(1)).save(any(User.class));
+        verify(userService, times(1)).updateUser(any(User.class));
     }
 
     @Test
@@ -112,23 +110,23 @@ class UserPictureServiceTest {
     void shouldDeletePictureWhenUserHasNoPicture() {
         // Arrange
         user.setPicture(null);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(userRepository.save(any(User.class))).thenReturn(user);
+        when(userService.findById(userId)).thenReturn(user);
+        when(userService.updateUser(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
         userPictureService.deletePicture(userId);
 
         // Assert - Não deve chamar s3Service.deleteFile
-        verify(userRepository, times(1)).findById(userId);
+        verify(userService, times(1)).findById(userId);
         verify(s3Service, never()).deleteFile(anyString());
-        verify(userRepository, times(1)).save(any(User.class));
+        verify(userService, times(1)).updateUser(any(User.class));
     }
 
     @Test
     @DisplayName("Deve lançar exceção quando usuário não existe")
     void shouldThrowExceptionWhenUserNotFound() {
         // Arrange
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+        when(userService.findById(userId)).thenThrow(new EntityNotFoundException("Usuário não encontrado"));
 
         // Act & Assert
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
@@ -136,50 +134,22 @@ class UserPictureServiceTest {
         });
 
         assertEquals("Usuário não encontrado", exception.getMessage());
-        verify(userRepository, times(1)).findById(userId);
+        verify(userService, times(1)).findById(userId);
         verify(s3Service, never()).deleteFile(anyString());
+        verify(userService, never()).updateUser(any(User.class));
     }
 
     @Test
-    @DisplayName("Deve retornar true quando S3 está habilitado")
-    void shouldReturnTrueWhenS3IsEnabled() {
-        // Arrange
-        when(s3Service.isS3Enabled()).thenReturn(true);
-
-        // Act
-        boolean result = userPictureService.isPictureUploadEnabled();
-
-        // Assert
-        assertTrue(result);
-        verify(s3Service, times(1)).isS3Enabled();
-    }
-
-    @Test
-    @DisplayName("Deve retornar false quando S3 está desabilitado")
-    void shouldReturnFalseWhenS3IsDisabled() {
-        // Arrange
-        when(s3Service.isS3Enabled()).thenReturn(false);
-
-        // Act
-        boolean result = userPictureService.isPictureUploadEnabled();
-
-        // Assert
-        assertFalse(result);
-        verify(s3Service, times(1)).isS3Enabled();
-    }
-
-    @Test
-    @DisplayName("Deve atualizar foto quando S3 está habilitado")
+    @DisplayName("Deve atualizar foto quando upload para S3 ocorre com sucesso")
     void shouldUpdatePictureSuccessfully() throws IOException {
         // Arrange
         MultipartFile file = mock(MultipartFile.class);
         UserPicturePostRequestDTO request = new UserPicturePostRequestDTO(userId, file);
         String newPictureUrl = "https://test-bucket.s3.amazonaws.com/users/123/new-picture.jpg";
-        
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(s3Service.isS3Enabled()).thenReturn(true);
+
+        when(userService.findById(userId)).thenReturn(user);
         when(s3Service.uploadFile(file, userId.toString())).thenReturn(newPictureUrl);
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+        when(userService.updateUser(any(User.class))).thenAnswer(invocation -> {
             User savedUser = invocation.getArgument(0);
             assertEquals(newPictureUrl, savedUser.getPicture());
             return savedUser;
@@ -190,32 +160,38 @@ class UserPictureServiceTest {
 
         // Assert
         assertNotNull(result);
-        verify(userRepository, times(1)).findById(userId);
-        verify(s3Service, times(1)).isS3Enabled();
+        verify(userService, times(1)).findById(userId);
         verify(s3Service, times(1)).uploadFile(file, userId.toString());
-        verify(userRepository, times(1)).save(any(User.class));
+        verify(userService, times(1)).updateUser(any(User.class));
     }
 
     @Test
-    @DisplayName("Deve lançar exceção ao atualizar foto quando S3 está desabilitado")
-    void shouldThrowExceptionWhenUpdatingPictureWithS3Disabled() throws IOException {
+    @DisplayName("Deve lançar exceção ao atualizar foto quando upload para S3 falha/desabilitado")
+    void shouldThrowExceptionWhenUpdatingPictureWithS3Failure() {
         // Arrange
         MultipartFile file = mock(MultipartFile.class);
         UserPicturePostRequestDTO request = new UserPicturePostRequestDTO(userId, file);
-        
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(s3Service.isS3Enabled()).thenReturn(false);
+
+        when(userService.findById(userId)).thenReturn(user);
+        try {
+            when(s3Service.uploadFile(file, userId.toString())).thenThrow(new UnsupportedOperationException("Upload de fotos está desabilitado"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         // Act & Assert
         UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class, () -> {
             userPictureService.updatePicture(request);
         });
 
-        assertTrue(exception.getMessage().contains("Upload de fotos está desabilitado"));
-        verify(userRepository, times(1)).findById(userId);
-        verify(s3Service, times(1)).isS3Enabled();
-        verify(s3Service, never()).uploadFile(any(), anyString());
-        verify(userRepository, never()).save(any(User.class));
+        assertTrue(exception.getMessage().contains("desabilitado"));
+        verify(userService, times(1)).findById(userId);
+        try {
+            verify(s3Service, times(1)).uploadFile(file, userId.toString());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        verify(userService, never()).updateUser(any(User.class));
     }
 }
 
