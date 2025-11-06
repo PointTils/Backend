@@ -1,4 +1,4 @@
--- Migration para inserir templates de email na tabela parameters
+-- Migration para inserir FAQ na tabela parameters
 INSERT INTO parameters
     (id, key, value)
 VALUES
