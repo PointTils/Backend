@@ -39,6 +39,37 @@ services:
       - pointtils-network
     restart: unless-stopped
 
+  # Prometheus para monitoramento local
+  prometheus:
+    build:
+      context: ./utils/prometheus
+      dockerfile: Dockerfile
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus_data:/prometheus
+    networks:
+      - pointtils-network
+    restart: unless-stopped
+
+  # Grafana para visualização de métricas local
+  grafana:
+    build:
+      context: ./utils/grafana
+      dockerfile: Dockerfile
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123456
+    networks:
+      - pointtils-network
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
   # Banco de dados PostgreSQL
   pointtils-db:
     build:
@@ -94,6 +125,7 @@ volumes:
   sonarqube_data:
   sonarqube_extensions:
   sonarqube_logs:
+  prometheus_data:
 
 networks:
   pointtils-network:

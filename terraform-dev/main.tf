@@ -101,6 +101,24 @@ resource "aws_security_group" "dev_app_sg" {
     description = "Allow SSH for NEW development"
   }
 
+  # Permitir Grafana
+  ingress {
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow Grafana dashboard access"
+  }
+
+  # Permitir Prometheus
+  ingress {
+    from_port   = 9090
+    to_port     = 9090
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow Prometheus metrics access"
+  }
+
   # Permitir todo o tráfego de saída
   egress {
     from_port   = 0

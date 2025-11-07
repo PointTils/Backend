@@ -75,6 +75,39 @@ services:
       - pointtils-dev-network
     restart: unless-stopped
 
+  # Prometheus para monitoramento em desenvolvimento
+  prometheus-dev:
+    build:
+      context: ./utils/prometheus
+      dockerfile: Dockerfile
+    container_name: prometheus-dev
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus_dev_data:/prometheus
+    networks:
+      - pointtils-dev-network
+    restart: unless-stopped
+
+  # Grafana para visualização de métricas em desenvolvimento
+  grafana-dev:
+    build:
+      context: ./utils/grafana
+      dockerfile: Dockerfile
+    container_name: grafana-dev
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_dev_data:/var/lib/grafana
+    networks:
+      - pointtils-dev-network
+    depends_on:
+      - prometheus-dev
+    restart: unless-stopped
+
   # Banco de dados PostgreSQL
   pointtils-db-dev:
     build:
@@ -102,6 +135,8 @@ services:
 
 volumes:
   postgres_dev_data:
+  prometheus_dev_data:
+  grafana_dev_data:
 
 networks:
   pointtils-dev-network:
