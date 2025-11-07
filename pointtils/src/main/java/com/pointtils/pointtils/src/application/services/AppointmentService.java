@@ -8,6 +8,7 @@ import com.pointtils.pointtils.src.application.mapper.AppointmentMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Appointment;
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentModality;
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentStatus;
+import com.pointtils.pointtils.src.core.domain.entities.enums.NotificationType;
 import com.pointtils.pointtils.src.infrastructure.repositories.AppointmentRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.RatingRepository;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -33,6 +35,7 @@ public class AppointmentService {
     private final UserRepository userRepository;
     private final RatingRepository ratingRepository;
     private final AppointmentMapper appointmentMapper;
+    private final NotificationService notificationService;
 
     public AppointmentResponseDTO createAppointment(AppointmentRequestDTO dto) {
         var interpreter = interpreterRepository.findById(dto.getInterpreterId())
@@ -43,6 +46,9 @@ public class AppointmentService {
         var appointment = appointmentMapper.toDomain(dto, interpreter, user);
 
         var savedAppointment = appointmentRepository.save(appointment);
+        notificationService.sendNotificationToUser(dto.getInterpreterId(),
+                NotificationType.APPOINTMENT_REQUESTED,
+                Map.of("userName", user.getDisplayName(), "date", dto.getDate().toString()));
 
         return appointmentMapper.toResponseDTO(savedAppointment);
     }

@@ -59,6 +59,9 @@ class AppointmentServiceTest {
     @Mock
     private RatingRepository ratingRepository;
 
+    @Mock
+    private NotificationService notificationService;
+
     @Spy
     private AppointmentMapper appointmentMapper = new AppointmentMapper(new UserSpecialtyMapper());
 
