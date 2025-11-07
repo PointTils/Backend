@@ -21,7 +21,4 @@ public class ProfessionalDataResponseDTO {
     
     @JsonProperty("image_rights")
     private Boolean imageRights;
-
-    @JsonProperty("video_url")
-    private String videoUrl;
 }

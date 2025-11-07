@@ -96,8 +96,7 @@ public class TestDataUtil {
         request.setProfessionalData(new ProfessionalDataBasicRequestDTO("12345678000195",
                 true,
                 InterpreterModality.PERSONALLY,
-                "Intérprete experiente em LIBRAS",
-		        "https://www.youtube.com/watch?v=tmIBzgKEz3o"));
+                "Intérprete experiente em LIBRAS"));
         return request;
     }
 
@@ -108,7 +107,6 @@ public class TestDataUtil {
                 .imageRights(false)
                 .modality(null)
                 .description(null)
-                .videoUrl(null)
                 .build();
 
         return InterpreterResponseDTO.builder()
@@ -151,7 +149,6 @@ public class TestDataUtil {
                 .imageRights(true)
                 .modality(InterpreterModality.PERSONALLY)
                 .description("Intérprete experiente em LIBRAS")
-                .videoUrl("https://www.youtube.com/watch?v=tmIBzgKEz3o")
                 .build();
 
         return InterpreterResponseDTO.builder()
@@ -196,7 +193,6 @@ public class TestDataUtil {
         professionalData.setDescription("Teste");
         professionalData.setImageRights(Boolean.FALSE);
         professionalData.setModality(InterpreterModality.ONLINE);
-        professionalData.setVideoUrl("https://www.youtube.com/watch?v=tmIBzgKEz3o");
         return professionalData;
     }
 }

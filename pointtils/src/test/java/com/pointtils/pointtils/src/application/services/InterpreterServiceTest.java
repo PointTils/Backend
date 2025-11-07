@@ -88,7 +88,6 @@ class InterpreterServiceTest {
         assertEquals("1990-01-01", interpreterArgumentCaptor.getValue().getBirthday().toString());
         assertEquals(BigDecimal.ZERO, interpreterArgumentCaptor.getValue().getRating());
         assertEquals("", interpreterArgumentCaptor.getValue().getDescription());
-        assertEquals("https://www.youtube.com/watch?v=tmIBzgKEz3o", interpreterArgumentCaptor.getValue().getVideoUrl());
         assertEquals("ALL", interpreterArgumentCaptor.getValue().getModality().name());
         assertFalse(interpreterArgumentCaptor.getValue().getImageRights());
     }
@@ -289,7 +288,6 @@ class InterpreterServiceTest {
         assertEquals("98765432000196", interpreterArgumentCaptor.getValue().getCnpj());
         assertEquals(InterpreterModality.ONLINE, interpreterArgumentCaptor.getValue().getModality());
         assertEquals("Teste", interpreterArgumentCaptor.getValue().getDescription());
-        assertEquals("https://www.youtube.com/watch?v=tmIBzgKEz3o", interpreterArgumentCaptor.getValue().getVideoUrl());
         assertFalse(interpreterArgumentCaptor.getValue().getImageRights());
         assertThat(interpreterArgumentCaptor.getValue().getLocations())
                 .hasSize(1)
