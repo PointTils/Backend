@@ -23,5 +23,6 @@ public class ProfessionalDataBasicRequestDTO {
     private InterpreterModality modality;
     private String description;
     @JsonProperty("video_url")
+    @Size(max = 2048, message = "A URL do vídeo deve ter no máximo 2048 caracteres")
     private String videoUrl;
 }
