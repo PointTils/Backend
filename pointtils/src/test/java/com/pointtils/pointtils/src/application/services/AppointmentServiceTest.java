@@ -1,5 +1,30 @@
 package com.pointtils.pointtils.src.application.services;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import com.pointtils.pointtils.src.application.dto.requests.AppointmentPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.AppointmentRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.AppointmentFilterResponseDTO;
@@ -16,32 +41,8 @@ import com.pointtils.pointtils.src.infrastructure.repositories.AppointmentReposi
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.RatingRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
+
 import jakarta.persistence.EntityNotFoundException;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Spy;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Testes do AppointmentService")
@@ -58,6 +59,9 @@ class AppointmentServiceTest {
 
     @Mock
     private RatingRepository ratingRepository;
+
+    @Mock
+    private EmailService emailService;
 
     @Spy
     private AppointmentMapper appointmentMapper = new AppointmentMapper(new UserSpecialtyMapper());
@@ -86,10 +90,14 @@ class AppointmentServiceTest {
             }
         };
         mockUser.setId(userId);
+        mockUser.setEmail("user@test.com");
+        ((Person) mockUser).setName("Test User");
 
         mockInterpreter = Interpreter.builder()
                 .id(interpreterId)
                 .build();
+        mockInterpreter.setEmail("interp@test.com");
+        mockInterpreter.setName("Interpreter Test");
 
         mockAppointment = Appointment.builder()
                 .id(appointmentId)
@@ -131,7 +139,7 @@ class AppointmentServiceTest {
         assertEquals(appointmentId, result.getId());
         assertEquals("SP", result.getUf());
         assertEquals("São Paulo", result.getCity());
-        
+
         verify(interpreterRepository).findById(interpreterId);
         verify(userRepository).findById(userId);
         verify(appointmentRepository).save(any(Appointment.class));
@@ -155,9 +163,9 @@ class AppointmentServiceTest {
     void shouldThrowExceptionWhenInterpreterNotFound() {
         when(interpreterRepository.findById(interpreterId)).thenReturn(Optional.empty());
 
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, 
-            () -> appointmentService.createAppointment(appointmentRequestDTO));
-        
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> appointmentService.createAppointment(appointmentRequestDTO));
+
         assertEquals("Intérprete não encontrado com o id: " + interpreterId, exception.getMessage());
         verify(interpreterRepository).findById(interpreterId);
         verify(userRepository, never()).findById(any());
@@ -170,9 +178,9 @@ class AppointmentServiceTest {
         when(interpreterRepository.findById(interpreterId)).thenReturn(Optional.of(mockInterpreter));
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, 
-            () -> appointmentService.createAppointment(appointmentRequestDTO));
-        
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> appointmentService.createAppointment(appointmentRequestDTO));
+
         assertEquals("Usuário não encontrado com o id: " + userId, exception.getMessage());
         verify(interpreterRepository).findById(interpreterId);
         verify(userRepository).findById(userId);
@@ -190,7 +198,7 @@ class AppointmentServiceTest {
         assertNotNull(result);
         assertEquals(1, result.size());
         assertEquals(appointmentId, result.get(0).getId());
-        
+
         verify(appointmentRepository).findAll();
     }
 
@@ -204,7 +212,7 @@ class AppointmentServiceTest {
         assertNotNull(result);
         assertEquals(appointmentId, result.getId());
         assertEquals("SP", result.getUf());
-        
+
         verify(appointmentRepository).findById(appointmentId);
     }
 
@@ -213,9 +221,9 @@ class AppointmentServiceTest {
     void shouldThrowExceptionWhenAppointmentNotFoundById() {
         when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.empty());
 
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, 
-            () -> appointmentService.findById(appointmentId));
-        
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> appointmentService.findById(appointmentId));
+
         assertEquals("Solicitação não encontrada com o id: " + appointmentId, exception.getMessage());
         verify(appointmentRepository).findById(appointmentId);
     }
@@ -230,7 +238,7 @@ class AppointmentServiceTest {
                 .build();
 
         when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(mockAppointment));
-        
+
         Appointment updatedAppointment = Appointment.builder()
                 .id(appointmentId)
                 .uf("RJ")
@@ -244,14 +252,14 @@ class AppointmentServiceTest {
                 .startTime(LocalTime.of(14, 0))
                 .endTime(LocalTime.of(15, 0))
                 .build();
-        
+
         when(appointmentRepository.save(any(Appointment.class))).thenReturn(updatedAppointment);
 
         AppointmentResponseDTO result = appointmentService.updatePartial(appointmentId, patchDTO);
 
         assertNotNull(result);
         assertEquals(appointmentId, result.getId());
-        
+
         verify(appointmentRepository).findById(appointmentId);
         verify(appointmentRepository).save(any(Appointment.class));
     }
@@ -273,9 +281,9 @@ class AppointmentServiceTest {
     void shouldThrowExceptionWhenDeletingNonExistentAppointment() {
         when(appointmentRepository.existsById(appointmentId)).thenReturn(false);
 
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, 
-            () -> appointmentService.delete(appointmentId));
-        
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> appointmentService.delete(appointmentId));
+
         assertEquals("Solicitação não encontrada com o id: " + appointmentId, exception.getMessage());
         verify(appointmentRepository).existsById(appointmentId);
         verify(appointmentRepository, never()).deleteById(any());
@@ -286,11 +294,11 @@ class AppointmentServiceTest {
     void shouldSearchAppointmentsWithFilters() {
         List<Appointment> appointments = Arrays.asList(mockAppointment);
         when(appointmentRepository.findAll()).thenReturn(appointments);
-        
+
         LocalDateTime fromDateTime = LocalDateTime.now();
 
         List<AppointmentFilterResponseDTO> result = appointmentService.searchAppointments(
-            interpreterId, userId, AppointmentStatus.PENDING, AppointmentModality.ONLINE, fromDateTime, true);
+                interpreterId, userId, AppointmentStatus.PENDING, AppointmentModality.ONLINE, fromDateTime, true);
 
         assertNotNull(result);
         verify(appointmentRepository).findAll();
@@ -303,7 +311,7 @@ class AppointmentServiceTest {
         when(appointmentRepository.findAll()).thenReturn(appointments);
 
         List<AppointmentFilterResponseDTO> result = appointmentService.searchAppointments(
-            null, null, null, null, null, null);
+                null, null, null, null, null, null);
 
         assertNotNull(result);
         assertEquals(1, result.size());
@@ -315,7 +323,7 @@ class AppointmentServiceTest {
     void shouldUpdateAppointmentPartiallyWithAllFields() {
         UUID newInterpreterId = UUID.randomUUID();
         UUID newUserId = UUID.randomUUID();
-        
+
         Interpreter newInterpreter = Interpreter.builder().id(newInterpreterId).build();
         User newUser = new Person() {
             @Override
@@ -418,7 +426,7 @@ class AppointmentServiceTest {
     void shouldFilterAppointmentsByInterpreterId() {
         UUID otherInterpreterId = UUID.randomUUID();
         Interpreter otherInterpreter = Interpreter.builder().id(otherInterpreterId).build();
-        
+
         Appointment otherAppointment = Appointment.builder()
                 .id(UUID.randomUUID())
                 .interpreter(otherInterpreter)
@@ -451,7 +459,7 @@ class AppointmentServiceTest {
         };
         UUID otherUserId = UUID.randomUUID();
         otherUser.setId(otherUserId);
-        
+
         Appointment otherAppointment = Appointment.builder()
                 .id(UUID.randomUUID())
                 .interpreter(mockInterpreter)
@@ -591,6 +599,132 @@ class AppointmentServiceTest {
         assertNotNull(result);
         assertEquals(1, result.size());
         verify(ratingRepository).existsByAppointment(mockAppointment);
+    }
+
+    @Test
+    @DisplayName("Deve enviar email quando status mudar para ACCEPTED")
+    void shouldSendEmailWhenStatusChangedToAccepted() {
+        AppointmentPatchRequestDTO patchDTO = AppointmentPatchRequestDTO.builder()
+                .status(AppointmentStatus.ACCEPTED)
+                .build();
+
+        when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(mockAppointment));
+
+        Appointment savedAppointment = Appointment.builder()
+                .id(appointmentId)
+                .uf(mockAppointment.getUf())
+                .city(mockAppointment.getCity())
+                .modality(AppointmentModality.ONLINE)
+                .date(mockAppointment.getDate())
+                .description(mockAppointment.getDescription())
+                .status(AppointmentStatus.ACCEPTED)
+                .interpreter(mockInterpreter)
+                .user(mockUser)
+                .startTime(mockAppointment.getStartTime())
+                .endTime(mockAppointment.getEndTime())
+                .build();
+
+        when(appointmentRepository.save(any(Appointment.class))).thenReturn(savedAppointment);
+
+        appointmentService.updatePartial(appointmentId, patchDTO);
+
+        String expectedDate = savedAppointment.getDate().toString() + " às "
+                + savedAppointment.getStartTime().toString();
+        verify(emailService).sendAppointmentAcceptedEmail(
+                mockUser.getEmail(), mockUser.getDisplayName(), expectedDate,
+                mockInterpreter.getDisplayName(), "Online", savedAppointment.getModality().toString());
+    }
+
+    @Test
+    @DisplayName("Deve enviar emails quando status mudar para CANCELED")
+    void shouldSendEmailsWhenStatusChangedToCanceled() {
+        AppointmentPatchRequestDTO patchDTO = AppointmentPatchRequestDTO.builder()
+                .status(AppointmentStatus.CANCELED)
+                .build();
+
+        when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(mockAppointment));
+
+        Appointment savedAppointment = Appointment.builder()
+                .id(appointmentId)
+                .uf(mockAppointment.getUf())
+                .city(mockAppointment.getCity())
+                .modality(AppointmentModality.PERSONALLY)
+                .date(mockAppointment.getDate())
+                .description("Motivo de cancelamento")
+                .status(AppointmentStatus.CANCELED)
+                .interpreter(mockInterpreter)
+                .user(mockUser)
+                .startTime(mockAppointment.getStartTime())
+                .endTime(mockAppointment.getEndTime())
+                .street("Rua Teste")
+                .streetNumber(123)
+                .neighborhood("Bairro")
+                .build();
+
+        when(appointmentRepository.save(any(Appointment.class))).thenReturn(savedAppointment);
+
+        appointmentService.updatePartial(appointmentId, patchDTO);
+
+        String expectedDate = savedAppointment.getDate().toString() + " às "
+                + savedAppointment.getStartTime().toString();
+
+        // Notificar usuário
+        verify(emailService).sendAppointmentCanceledEmail(
+                mockUser.getEmail(), mockUser.getDisplayName(), expectedDate,
+                mockInterpreter.getDisplayName(), savedAppointment.getDescription());
+
+        // Notificar intérprete (parameters order swapped in service)
+        verify(emailService).sendAppointmentCanceledEmail(
+                mockInterpreter.getEmail(), mockInterpreter.getDisplayName(), expectedDate,
+                mockUser.getDisplayName(), savedAppointment.getDescription());
+    }
+
+    @Test
+    @DisplayName("Deve enviar email de negação quando status voltar para PENDING vindo de ACCEPTED")
+    void shouldSendDeniedEmailWhenBackToPendingFromAccepted() {
+        // Appointment atualmente ACCEPTED
+        Appointment acceptedAppointment = Appointment.builder()
+                .id(appointmentId)
+                .uf("SP")
+                .city("São Paulo")
+                .modality(AppointmentModality.ONLINE)
+                .date(LocalDate.now().plusDays(1))
+                .description("Descricao")
+                .status(AppointmentStatus.ACCEPTED)
+                .interpreter(mockInterpreter)
+                .user(mockUser)
+                .startTime(LocalTime.of(14, 0))
+                .endTime(LocalTime.of(15, 0))
+                .build();
+
+        AppointmentPatchRequestDTO patchDTO = AppointmentPatchRequestDTO.builder()
+                .status(AppointmentStatus.PENDING)
+                .build();
+
+        when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(acceptedAppointment));
+
+        Appointment savedAppointment = Appointment.builder()
+                .id(appointmentId)
+                .uf(acceptedAppointment.getUf())
+                .city(acceptedAppointment.getCity())
+                .modality(acceptedAppointment.getModality())
+                .date(acceptedAppointment.getDate())
+                .description(acceptedAppointment.getDescription())
+                .status(AppointmentStatus.PENDING)
+                .interpreter(mockInterpreter)
+                .user(mockUser)
+                .startTime(acceptedAppointment.getStartTime())
+                .endTime(acceptedAppointment.getEndTime())
+                .build();
+
+        when(appointmentRepository.save(any(Appointment.class))).thenReturn(savedAppointment);
+
+        appointmentService.updatePartial(appointmentId, patchDTO);
+
+        String expectedDate = savedAppointment.getDate().toString() + " às "
+                + savedAppointment.getStartTime().toString();
+        verify(emailService).sendAppointmentDeniedEmail(
+                mockUser.getEmail(), mockUser.getDisplayName(), expectedDate, mockInterpreter.getDisplayName());
     }
 
 }

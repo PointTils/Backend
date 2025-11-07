@@ -1,18 +1,28 @@
 package com.pointtils.pointtils.src.application.services;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -499,5 +509,95 @@ class EmailServiceTest {
         
         assertTrue(result);
         verify(mailSender).send(any(MimeMessage.class));
+    }
+
+    @Test
+    @DisplayName("Deve enviar email quando status de agendamento for ACCEPTED")
+    void deveEnviarEmailQuandoStatusAccepted() {
+        String template = "Olá {{nome}}! Data: {{appointmentDate}}; Intérprete: {{interpreterName}}; Local: {{appointmentLocation}}; Modalidade: {{appointmentModality}}";
+        Parameters parameter = new Parameters();
+        parameter.setKey("APPOINTMENT_ACCEPTED");
+        parameter.setValue(template);
+
+        when(parametersRepository.findByKey("APPOINTMENT_ACCEPTED")).thenReturn(Optional.of(parameter));
+        MimeMessage mimeMessage = new MimeMessage((jakarta.mail.Session) null);
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doNothing().when(mailSender).send(any(MimeMessage.class));
+
+        boolean result = emailService.sendAppointmentAcceptedEmail(testEmail, testUserName, "2025-11-10 às 14:00", "Maria Intérprete", "Auditório", "PERSONALLY");
+
+        assertTrue(result);
+        verify(parametersRepository).findByKey("APPOINTMENT_ACCEPTED");
+        verify(mailSender).createMimeMessage();
+        verify(mailSender).send(any(MimeMessage.class));
+    }
+
+    @Test
+    @DisplayName("Deve enviar email quando status de agendamento for DENIED")
+    void deveEnviarEmailQuandoStatusDenied() {
+        String template = "Olá {{nome}}! Data: {{appointmentDate}}; Intérprete: {{interpreterName}}";
+        Parameters parameter = new Parameters();
+        parameter.setKey("APPOINTMENT_DENIED");
+        parameter.setValue(template);
+
+        when(parametersRepository.findByKey("APPOINTMENT_DENIED")).thenReturn(Optional.of(parameter));
+        MimeMessage mimeMessage = new MimeMessage((jakarta.mail.Session) null);
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doNothing().when(mailSender).send(any(MimeMessage.class));
+
+        boolean result = emailService.sendAppointmentDeniedEmail(testEmail, testUserName, "2025-11-10 às 14:00", "Carlos Intérprete");
+
+        assertTrue(result);
+        verify(parametersRepository).findByKey("APPOINTMENT_DENIED");
+        verify(mailSender).createMimeMessage();
+        verify(mailSender).send(any(MimeMessage.class));
+    }
+
+    @Test
+    @DisplayName("Deve enviar email quando status de agendamento for CANCELED e incluir motivo")
+    void deveEnviarEmailQuandoStatusCanceled() {
+        String template = "Olá {{nome}}! Data: {{appointmentDate}}; Motivo: {{cancelReason}}";
+        Parameters parameter = new Parameters();
+        parameter.setKey("APPOINTMENT_CANCELED");
+        parameter.setValue(template);
+
+        when(parametersRepository.findByKey("APPOINTMENT_CANCELED")).thenReturn(Optional.of(parameter));
+        MimeMessage mimeMessage = new MimeMessage((jakarta.mail.Session) null);
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doNothing().when(mailSender).send(any(MimeMessage.class));
+
+        boolean result = emailService.sendAppointmentCanceledEmail(testEmail, testUserName, "2025-11-11 às 09:00", "Carlos Intérprete", "Problema de saúde");
+
+        assertTrue(result);
+        verify(parametersRepository).findByKey("APPOINTMENT_CANCELED");
+        verify(mailSender).createMimeMessage();
+        verify(mailSender).send(any(MimeMessage.class));
+    }
+
+    @Test
+    @DisplayName("processAppointmentStatusChangeTemplate deve substituir placeholders corretamente")
+    void processAppointmentStatusChangeTemplateReplacesPlaceholders() {
+        String template = "Nome: {{nome}}; Data: {{appointmentDate}}; Intérprete: {{interpreterName}}; Local: {{appointmentLocation}}; Modalidade: {{appointmentModality}}; Motivo: {{cancelReason}}; Ano: {{ano}}";
+
+        // invoke private method via ReflectionTestUtils
+        String processed = (String) org.springframework.test.util.ReflectionTestUtils.invokeMethod(
+                emailService,
+                "processAppointmentStatusChangeTemplate",
+                template,
+                testUserName,
+                "2025-11-11 às 09:00",
+                "Intérprete X",
+                "Auditório Central",
+                "PERSONALLY",
+                "Motivo X"
+        );
+
+        assertNotNull(processed);
+        assertTrue(processed.contains("Nome: " + testUserName));
+        assertTrue(processed.contains("Data: 2025-11-11 às 09:00"));
+        assertTrue(processed.contains("Intérprete: Intérprete X"));
+        assertTrue(processed.contains("Local: Auditório Central"));
+        assertTrue(processed.contains("Modalidade: PERSONALLY"));
+        assertTrue(processed.contains("Motivo: Motivo X"));
     }
 }
