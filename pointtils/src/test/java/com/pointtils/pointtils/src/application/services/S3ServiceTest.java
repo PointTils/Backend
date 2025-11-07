@@ -69,7 +69,7 @@ class S3ServiceTest {
         // Act & Assert
         UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class,
                 () -> disabledS3Service.uploadFile(file, "user123"));
-        assertEquals("Upload de arquivos para S3 está desabilitado. Configure spring.cloud.aws.s3.enabled=true para habilitar.", exception.getMessage());
+        assertEquals("Upload de arquivos está desabilitado.", exception.getMessage());
     }
 
     @Test
