@@ -56,18 +56,32 @@ SELECT id, 'PR', 'Curitiba', 'Batel' FROM user_account WHERE email = 'empresa3@e
 
 
 -- ======== Additional Interpreters =========
-WITH new_user5 AS (
-	INSERT INTO user_account (email, password, phone, picture, status, type)
-	VALUES ('interpreter2@email.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '11977777776', NULL, 'ACTIVE', 'INTERPRETER')
-	RETURNING id
-),
-new_person2 AS (
-	INSERT INTO person (id, name, gender, birthday, cpf)
-	SELECT id, 'Pedro Mendes', 'MALE', '1992-07-25', '45678901234' FROM new_user5
-	RETURNING id
-)
-INSERT INTO interpreter (id, cnpj, rating, image_rights, modality, description)
-SELECT id, '45678901000193', 4.9, TRUE, 'ALL', 'Intérprete especializado em contextos educacionais e empresariais.' FROM new_person2;
+-- Check if interpreter2@email.com already exists before inserting
+DO $$
+DECLARE
+    interpreter2_id UUID;
+BEGIN
+    -- Check if interpreter2@email.com exists
+    SELECT id INTO interpreter2_id FROM user_account WHERE email = 'interpreter2@email.com';
+    
+    -- If not exists, insert the user
+    IF interpreter2_id IS NULL THEN
+        WITH new_user5 AS (
+            INSERT INTO user_account (email, password, phone, picture, status, type)
+            VALUES ('interpreter2@email.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '11977777776', NULL, 'ACTIVE', 'INTERPRETER')
+            RETURNING id
+        ),
+        new_person2 AS (
+            INSERT INTO person (id, name, gender, birthday, cpf)
+            SELECT id, 'Pedro Mendes', 'MALE', '1992-07-25', '45678901234' FROM new_user5
+            RETURNING id
+        )
+        INSERT INTO interpreter (id, cnpj, rating, image_rights, modality, description)
+        SELECT id, '45678901000193', 4.9, TRUE, 'ALL', 'Intérprete especializado em contextos educacionais e empresariais.' FROM new_person2;
+    ELSE
+        RAISE NOTICE 'User interpreter2@email.com already exists with ID: %', interpreter2_id;
+    END IF;
+END $$;
 
 WITH new_user6 AS (
 	INSERT INTO user_account (email, password, phone, picture, status, type)
@@ -82,8 +96,10 @@ new_person3 AS (
 INSERT INTO interpreter (id, cnpj, rating, image_rights, modality, description)
 SELECT id, NULL, 4.7, TRUE, 'PERSONALLY', 'Intérprete com experiência em eventos culturais e artísticos.' FROM new_person3;
 
+-- Insert location for interpreter2 only if the user exists
 INSERT INTO location (user_id, UF, city, neighborhood)
-SELECT id, 'SP', 'São Paulo', 'Vila Mariana' FROM user_account WHERE email = 'interpreter2@email.com';
+SELECT id, 'SP', 'São Paulo', 'Vila Mariana' FROM user_account WHERE email = 'interpreter2@email.com'
+AND NOT EXISTS (SELECT 1 FROM location WHERE user_id = user_account.id AND UF = 'SP' AND city = 'São Paulo' AND neighborhood = 'Vila Mariana');
 
 INSERT INTO location (user_id, UF, city, neighborhood)
 SELECT id, 'RJ', 'Rio de Janeiro', 'Botafogo' FROM user_account WHERE email = 'interpreter3@email.com';
@@ -192,4 +208,3 @@ VALUES
 	(uuid_generate_v4(), 'FEATURE_FLAG_SAMPLE_FLOW', 'true');
 
 -- End of V17
-
