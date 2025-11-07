@@ -196,6 +196,7 @@ public class TestDataUtil {
         professionalData.setDescription("Teste");
         professionalData.setImageRights(Boolean.FALSE);
         professionalData.setModality(InterpreterModality.ONLINE);
+        professionalData.setVideoUrl("https://www.youtube.com/watch?v=tmIBzgKEz3o");
         return professionalData;
     }
 }
