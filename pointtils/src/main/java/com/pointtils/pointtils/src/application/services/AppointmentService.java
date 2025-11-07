@@ -1,5 +1,11 @@
 package com.pointtils.pointtils.src.application.services;
 
+import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
 import com.pointtils.pointtils.src.application.dto.requests.AppointmentPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.AppointmentRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.AppointmentFilterResponseDTO;
@@ -12,20 +18,11 @@ import com.pointtils.pointtils.src.infrastructure.repositories.AppointmentReposi
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.RatingRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
+
 import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
-import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
-
-@Slf4j
+import lombok.AllArgsConstructor;
 @Service
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
@@ -33,6 +30,7 @@ public class AppointmentService {
     private final UserRepository userRepository;
     private final RatingRepository ratingRepository;
     private final AppointmentMapper appointmentMapper;
+    private final EmailService emailService;
 
     public AppointmentResponseDTO createAppointment(AppointmentRequestDTO dto) {
         var interpreter = interpreterRepository.findById(dto.getInterpreterId())
@@ -63,6 +61,9 @@ public class AppointmentService {
         Appointment appointment = appointmentRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Solicitação não encontrada com o id: " + id));
 
+        // Capturar status anterior para detectar mudanças
+        AppointmentStatus previousStatus = appointment.getStatus();
+
         if (dto.getUf() != null) appointment.setUf(dto.getUf());
         if (dto.getCity() != null) appointment.setCity(dto.getCity());
         if (dto.getModality() != null) appointment.setModality(dto.getModality());
@@ -87,6 +88,12 @@ public class AppointmentService {
         if (dto.getEndTime() != null) appointment.setEndTime(dto.getEndTime());
 
         Appointment saved = appointmentRepository.save(appointment);
+
+        // Enviar email quando o status mudar
+        if (dto.getStatus() != null && !dto.getStatus().equals(previousStatus)) {
+            sendStatusChangeEmail(saved, dto.getStatus(), previousStatus);
+        }
+
         return appointmentMapper.toResponseDTO(saved);
     }
 
@@ -136,5 +143,123 @@ public class AppointmentService {
         LocalDateTime appointmentDateTime = LocalDateTime.of(appointment.getDate(), appointment.getEndTime());
         LocalDateTime limitDateTime = appointmentDateTime.plusDays(dayLimit);
         return LocalDateTime.now().isBefore(limitDateTime);
+    }
+
+    /**
+     * Envia email de notificação quando o status do agendamento muda
+     * 
+     * @param appointment Agendamento atualizado
+     * @param newStatus Novo status
+     * @param previousStatus Status anterior
+     */
+    private void sendStatusChangeEmail(Appointment appointment, AppointmentStatus newStatus, AppointmentStatus previousStatus) {
+        // Preparar dados comuns do email
+        String userName = appointment.getUser().getDisplayName();
+        String userEmail = appointment.getUser().getEmail();
+        String interpreterName = appointment.getInterpreter().getDisplayName();
+        String interpreterEmail = appointment.getInterpreter().getEmail();
+        String appointmentDate = formatAppointmentDateTime(appointment);
+        
+        // Enviar email baseado no novo status
+        switch (newStatus) {
+            case ACCEPTED:
+                // Quando aceito, notificar o usuário que solicitou
+                String location = buildLocationString(appointment);
+                String modality = appointment.getModality().toString();
+                emailService.sendAppointmentAcceptedEmail(
+                    userEmail,
+                    userName,
+                    appointmentDate,
+                    interpreterName,
+                    location,
+                    modality
+                );
+                break;
+                
+            case CANCELED:
+                // Quando cancelado, notificar ambas as partes
+                String cancelReason = appointment.getDescription() != null ? 
+                    appointment.getDescription() : "Não especificado";
+                    
+                // Notificar usuário
+                emailService.sendAppointmentCanceledEmail(
+                    userEmail,
+                    userName,
+                    appointmentDate,
+                    interpreterName,
+                    cancelReason
+                );
+                
+                // Notificar intérprete
+                emailService.sendAppointmentCanceledEmail(
+                    interpreterEmail,
+                    interpreterName,
+                    appointmentDate,
+                    userName,
+                    cancelReason
+                );
+                break;
+                
+            case PENDING:
+                // Se voltou para PENDING de outro status, pode ser uma negação implícita
+                // Verificar se mudou de ACCEPTED para PENDING (possível negação)
+                if (previousStatus == AppointmentStatus.ACCEPTED) {
+                    emailService.sendAppointmentDeniedEmail(
+                        userEmail,
+                        userName,
+                        appointmentDate,
+                        interpreterName
+                    );
+                }
+                break;
+                
+            default:
+                // Outros status não precisam de notificação automática
+                break;
+        }
+    }
+
+    /**
+     * Formata a data e hora do agendamento para exibição no email
+     * 
+     * @param appointment Agendamento
+     * @return String formatada com data e hora
+     */
+    private String formatAppointmentDateTime(Appointment appointment) {
+        return String.format("%s às %s",
+            appointment.getDate().toString(),
+            appointment.getStartTime().toString()
+        );
+    }
+
+    /**
+     * Constrói string com o endereço completo do agendamento
+     * 
+     * @param appointment Agendamento
+     * @return String com endereço formatado
+     */
+    private String buildLocationString(Appointment appointment) {
+        if (appointment.getModality() == AppointmentModality.ONLINE) {
+            return "Online";
+        }
+        
+        StringBuilder location = new StringBuilder();
+        if (appointment.getStreet() != null) {
+            location.append(appointment.getStreet());
+        }
+        if (appointment.getStreetNumber() != null) {
+            location.append(", ").append(appointment.getStreetNumber());
+        }
+        if (appointment.getNeighborhood() != null) {
+            location.append(" - ").append(appointment.getNeighborhood());
+        }
+        if (appointment.getCity() != null) {
+            location.append(", ").append(appointment.getCity());
+        }
+        if (appointment.getUf() != null) {
+            location.append("/").append(appointment.getUf());
+        }
+        
+        return location.toString();
     }
 }

@@ -9,7 +9,7 @@
 -- ======== Additional Clients =========
 WITH new_user1 AS (
 	INSERT INTO user_account (email, password, phone, picture, status, type)
-	VALUES ('client2@email.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '51999999998', NULL, 'ACTIVE', 'CLIENT')
+	VALUES ('client2@email.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '51999999998', NULL, 'ACTIVE', 'PERSON')
 	RETURNING id
 )
 INSERT INTO person (id, name, gender, birthday, cpf)
@@ -17,7 +17,7 @@ SELECT id, 'Ana Santos', 'FEMALE', '1995-08-15', '23456789012' FROM new_user1;
 
 WITH new_user2 AS (
 	INSERT INTO user_account (email, password, phone, picture, status, type)
-	VALUES ('client3@email.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '47999999997', NULL, 'ACTIVE', 'CLIENT')
+	VALUES ('client3@email.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '47999999997', NULL, 'ACTIVE', 'PERSON')
 	RETURNING id
 )
 INSERT INTO person (id, name, gender, birthday, cpf)
