@@ -135,7 +135,7 @@ public class PersonController {
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = PersonResponseDTO.class))
             ),
-            @ApiResponse(responseCode = "400", description = "Dados de atualização inváidos"),
+            @ApiResponse(responseCode = "400", description = "Dados de atualização inválidos"),
             @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
             @ApiResponse(responseCode = "404", description = "Usuário surdo não encontrado"),
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
@@ -154,7 +154,7 @@ public class PersonController {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Usuário surdo deletado com sucesso"),
-            @ApiResponse(responseCode = "400", description = "ID inváido"),
+            @ApiResponse(responseCode = "400", description = "ID inválido"),
             @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
             @ApiResponse(responseCode = "404", description = "Usuário surdo não encontrado"),
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor")

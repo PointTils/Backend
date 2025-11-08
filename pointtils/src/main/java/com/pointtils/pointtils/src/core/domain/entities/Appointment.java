@@ -1,10 +1,13 @@
 package com.pointtils.pointtils.src.core.domain.entities;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentModality;
@@ -89,17 +92,11 @@ public class Appointment {
     @Column(name = "end_time", nullable = false)
     private LocalTime endTime;
 
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
-    public Appointment(String uf, String city, AppointmentModality modality, LocalDate date, String description, AppointmentStatus status, Interpreter interpreter_id, User user_id, LocalTime starTime, LocalTime endTime){
-        this.uf = uf;
-        this.city = city;
-        this.modality = modality;
-        this.date = date;
-        this.description = description;
-        this.status = status;
-        this.interpreter = interpreter_id;
-        this.user = user_id;
-        this.startTime = starTime;
-        this.endTime = endTime;
-    }
+    @UpdateTimestamp
+    @Column(name = "modified_at", nullable = false)
+    private LocalDateTime modifiedAt; 
 }

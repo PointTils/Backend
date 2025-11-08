@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -50,11 +51,11 @@ public class AppointmentController {
             description = "Cria uma nova solicitação de agendamento no sistema"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Agendamento criado com sucesso",
+            @ApiResponse(responseCode = "201", description = "Agendamento criado com sucesso",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = AppointmentResponseDTO.class))
             ),
-            @ApiResponse(responseCode = "400", description = "Dados de agendamentos inválidos"),
+            @ApiResponse(responseCode = "400", description = "Dados de agendamento inválidos"),
             @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
@@ -62,7 +63,8 @@ public class AppointmentController {
             @Valid @RequestBody AppointmentRequestDTO dto) {
 
     AppointmentResponseDTO response = appointmentService.createAppointment(dto);
-    return ResponseEntity.ok(ApiResponseDTO.success("Solicitação criada com sucesso", response));
+    return ResponseEntity.status(HttpStatus.CREATED)
+            .body(ApiResponseDTO.success("Solicitação criada com sucesso", response));
 }
 
 
@@ -162,14 +164,15 @@ public class AppointmentController {
             @RequestParam(required = false) AppointmentStatus status,
             @RequestParam(required = false) AppointmentModality modality,
             @RequestParam(required = false) String fromDateTime,
-            @RequestParam(required = false) Boolean hasRating) {
+            @RequestParam(required = false) Boolean hasRating,
+            @RequestParam(required = false, defaultValue = "-1") int dayLimit) {
 
         LocalDateTime from = null;
         if (fromDateTime != null && !fromDateTime.trim().isEmpty()) {
             from = LocalDateTime.parse(fromDateTime);
         }
 
-        List<AppointmentFilterResponseDTO> appointments = appointmentService.searchAppointments(interpreterId, userId, status, modality, from, hasRating);
+        List<AppointmentFilterResponseDTO> appointments = appointmentService.searchAppointments(interpreterId, userId, status, modality, from, hasRating, dayLimit);
         return ResponseEntity.ok(ApiResponseDTO.success("Solicitações encontradas com sucesso", appointments));
     }
 

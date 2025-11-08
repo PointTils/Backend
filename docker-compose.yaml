@@ -25,6 +25,10 @@ services:
       - SPRINGDOC_API_DOCS_ENABLED=${SPRINGDOC_API_DOCS_ENABLED}
       - SPRINGDOC_SWAGGER_UI_ENABLED=${SPRINGDOC_SWAGGER_UI_ENABLED}
       - SPRINGDOC_SWAGGER_UI_PATH=${SPRINGDOC_SWAGGER_UI_PATH}
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_S3_BUCKET_NAME=${AWS_S3_BUCKET_NAME}
     ports:
       - "${SERVER_PORT}:${SERVER_PORT}"
     depends_on:
@@ -32,6 +36,37 @@ services:
         condition: service_healthy
     networks:
       - pointtils-network
+    restart: unless-stopped
+
+  # Prometheus para monitoramento local
+  prometheus:
+    build:
+      context: ./utils/prometheus
+      dockerfile: Dockerfile
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus_data:/prometheus
+    networks:
+      - pointtils-network
+    restart: unless-stopped
+
+  # Grafana para visualização de métricas local
+  grafana:
+    build:
+      context: ./utils/grafana
+      dockerfile: Dockerfile
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123456
+    networks:
+      - pointtils-network
+    depends_on:
+      - prometheus
     restart: unless-stopped
 
   # Banco de dados PostgreSQL
@@ -49,7 +84,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     networks:
       - pointtils-network
     healthcheck:
@@ -89,6 +124,7 @@ volumes:
   sonarqube_data:
   sonarqube_extensions:
   sonarqube_logs:
+  prometheus_data:
 
 networks:
   pointtils-network:

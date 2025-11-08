@@ -6,44 +6,96 @@
 flowchart TD
     %% GitHub Actions CI/CD Pipeline
     subgraph CICD["GitHub Actions CI/CD"]
-        A[Código-Fonte] -->|Push/PR| B[Pipeline CI/CD]
-        B -->|Build| C[Testes Unitários]
-        C -->|Sucesso| D[Build Docker Images]
-        D -->|Tag e Push| E[AWS ECR]
+        A[Código-Fonte]
+        
+        subgraph PROD_PIPELINE["Pipeline Produção"]
+            B[deploy-to-aws.yml] -->|Build| C[Testes Unitários]
+            C -->|Sucesso| D[Build Docker Images]
+            D -->|Tag & Push| E[AWS ECR Prod]
+        end
+        
+        subgraph DEV_PIPELINE["Pipeline Desenvolvimento"]
+            F[deploy-to-dev.yml] -->|Build| G[Testes Unitários]
+            G -->|Sucesso| H[Build Docker Images]
+            H -->|Tag & Push| I[AWS ECR Dev]
+        end
+        
+        A -->|Push/PR to main| B
+        A -->|Push/PR to dev/feature/*| F
     end
 
     %% AWS Cloud Infrastructure
     subgraph CLOUD["AWS Cloud"]
-        E -->|Pull Images| F[EC2 Instance]
+        E -->|Pull Images| J[EC2 Instance Prod]
+        I -->|Pull Images| K[EC2 Instance Dev]
         
-        subgraph EC2["EC2 Instance"]
-            F -->|Deploy Script| G[Docker Engine]
+        subgraph EC2_PROD["EC2 Instance Prod"]
+            J -->|Deploy Script| L[Docker Engine]
             
-            subgraph DOCKER["Docker Engine"]
-                G -->|Run Container| H[Pointtils App Container]
-                G -->|Run Container| I[PostgreSQL DB Container]
-                H <-->|Network| I
-                I <-->|Volume| J[Postgres Data Volume]
+            subgraph DOCKER_PROD["Docker Engine"]
+                L -->|Run Container| M[Pointtils App Container]
+                L -->|Run Container| N[PostgreSQL DB Container]
+                L -->|Run Container| O[Prometheus Container]
+                L -->|Run Container| P[Grafana Container]
+                M <-->|Network| N
+                N <-->|Volume| Q[Postgres Data Volume]
+                O <-->|Volume| R[Prometheus Data Volume]
             end
             
-            H -->|Expose| K[Port 8080]
+            M -->|Expose| S[Port 8080]
+            O -->|Expose| T[Port 9090]
+            P -->|Expose| U[Port 3000]
+        end
+        
+        subgraph EC2_DEV["EC2 Instance Dev"]
+            K -->|Deploy Script| V[Docker Engine]
+            
+            subgraph DOCKER_DEV["Docker Engine"]
+                V -->|Run Container| W[Pointtils Dev Container]
+                V -->|Run Container| X[PostgreSQL Dev Container]
+                V -->|Run Container| Y[Prometheus Dev Container]
+                V -->|Run Container| Z[Grafana Dev Container]
+                W <-->|Network| X
+                X <-->|Volume| AA[Postgres Dev Volume]
+                Y <-->|Volume| AB[Prometheus Dev Volume]
+            end
+            
+            W -->|Expose| AC[Port 8080]
+            Y -->|Expose| AD[Port 9090]
+            Z -->|Expose| AE[Port 3000]
         end
         
         subgraph S3["AWS S3"]
-            L[S3 Bucket]
+            AF[S3 Bucket Prod]
+            AG[S3 Bucket Dev]
         end
         
-        H <-->|API Calls| L
+        M <-->|API Calls| AF
+        W <-->|API Calls| AG
+        M -->|Metrics| O
+        O -->|Data Source| P
+        W -->|Metrics| Y
+        Y -->|Data Source| Z
+        
+        subgraph EXTERNAL["Serviços Externos"]
+            BA[Brevo Email Service]
+            BB[API IBGE]
+        end
+        
+        M -->|Emails| BA
+        W -->|Emails| BA
+        M -->|Estados/Cidades| BB
+        W -->|Estados/Cidades| BB
     end
 
     %% Terraform Infrastructure as Code
     subgraph TERRAFORM["Terraform IaC"]
-        M[Terraform Code] -->|Plan & Apply| N[AWS Resources]
-        N -->|Create/Configure| F
-        N -->|Create/Configure| L
-        N -->|Create/Configure| O[Security Groups]
-        N -->|Create/Configure| P[IAM Roles]
-        P -->|Permissions| F
+        AH[Terraform Code Prod] -->|Plan & Apply| AI[AWS Resources Prod]
+        AJ[Terraform Code Dev] -->|Plan & Apply| AK[AWS Resources Dev]
+        AI -->|Create/Configure| J
+        AI -->|Create/Configure| AF
+        AK -->|Create/Configure| K
+        AK -->|Create/Configure| AG
     end
 ```
 
@@ -80,15 +132,21 @@ flowchart TD
 - **Produção**:
   - `pointtils`: Container da aplicação Spring Boot
   - `pointtils-db`: Container do PostgreSQL
+  - `prometheus`: Container do Prometheus para monitoramento
+  - `grafana`: Container do Grafana para visualização de métricas
 - **Desenvolvimento**:
   - `pointtils-dev`: Container da aplicação Spring Boot
   - `pointtils-db-dev`: Container do PostgreSQL
+  - `prometheus-dev`: Container do Prometheus para desenvolvimento
+  - `grafana-dev`: Container do Grafana para desenvolvimento
 
 ### Volumes Docker
 - **Produção**:
   - `postgres_data`: Volume para persistência do PostgreSQL
+  - `prometheus_data`: Volume para persistência das métricas do Prometheus
 - **Desenvolvimento**:
   - `postgres_dev_data`: Volume para persistência do PostgreSQL de desenvolvimento
+  - `prometheus_dev_data`: Volume para persistência das métricas do Prometheus de desenvolvimento
 
 ### Redes Docker
 - **Produção**:
@@ -99,6 +157,32 @@ flowchart TD
 ### Portas
 - **8080**: Aplicação Spring Boot
 - **5432**: PostgreSQL
+- **9090**: Prometheus (monitoramento)
+- **3000**: Grafana (dashboard de métricas)
+
+### Monitoramento e Observabilidade
+- **Prometheus**:
+  - **Porta**: 9090
+  - **Configuração**: Coleta métricas da aplicação via endpoint `/actuator/prometheus`
+  - **Intervalo de Scrape**: 15 segundos
+  - **Alertas**: Configurados via `alerts.yml` e `recording_rules.yml`
+  - **Métricas Principais**: Status da aplicação, CPU, memória, requisições HTTP, threads, conexões de banco
+
+- **Grafana**:
+  - **Porta**: 3000
+  - **Dashboard**: "PointTils - Dashboard de Performance"
+  - **Data Source**: Prometheus (http://prometheus:9090)
+  - **Métricas Monitoradas**:
+    - Status da aplicação e utilização de recursos
+    - Performance HTTP (vazão, tempo de resposta, status codes)
+    - Métricas JVM (memória, threads, garbage collection)
+    - Conexões de banco de dados (HikariCP)
+    - Taxa de erro e latência
+
+- **Spring Boot Actuator**:
+  - **Endpoint**: `/actuator/prometheus`
+  - **Métricas Expostas**: Micrometer metrics para JVM, HTTP, banco de dados
+  - **Configuração**: Habilitado via dependências Spring Boot Actuator e Micrometer
 
 ### AWS S3
 - **Buckets**:
@@ -109,6 +193,33 @@ flowchart TD
 - **S3**:
   - `pointtils-terraform-state`: Bucket para estado do Terraform de produção
   - `pointtils-terraform-state-dev`: Bucket para estado do Terraform de desenvolvimento
+
+### Integrações Externas
+
+- **Brevo (Email Service)**:
+  - **Provedor**: Brevo (Sendinblue)
+  - **Configuração SMTP**:
+    - **Host**: `smtp-relay.brevo.com`
+    - **Porta**: 587
+    - **Autenticação**: TLS habilitado
+    - **Templates**: Armazenados no banco de dados
+  - **Funcionalidades**:
+    - Email de boas-vindas
+    - Recuperação de senha
+    - Confirmação de agendamento
+    - Solicitação de cadastro de intérprete
+    - Feedback de aprovação/rejeição
+
+- **API IBGE (Estados e Cidades)**:
+  - **Endpoint**: `https://servicodados.ibge.gov.br/api/v1/localidades/`
+  - **Funcionalidades**:
+    - Lista de estados brasileiros
+    - Lista de cidades por estado
+    - Dados geográficos para cadastro de usuários
+  - **Configuração**:
+    - Timeout: 5 segundos
+    - RestTemplate customizado
+    - Tratamento de exceções específico
 
 ## Fluxo de Deploy
 

@@ -53,7 +53,7 @@ public class InterpreterController {
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = InterpreterResponseDTO.class))
             ),
-            @ApiResponse(responseCode = "400", description = "Dados de cadastro inválido"),
+            @ApiResponse(responseCode = "400", description = "Dados de cadastro inválidos"),
             @ApiResponse(responseCode = "409", description = "Email já cadastrado"),
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })

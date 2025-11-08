@@ -70,7 +70,7 @@ public class JwtController {
             @ApiResponse(responseCode = "200", description = "Tokens gerados com sucesso",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = RefreshTokenResponseDTO.class))),
-            @ApiResponse(responseCode = "400", description = "Nome de usuário inváido"),
+            @ApiResponse(responseCode = "400", description = "Nome de usuário inválido"),
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     public ResponseEntity<RefreshTokenResponseDTO> generateTokens(

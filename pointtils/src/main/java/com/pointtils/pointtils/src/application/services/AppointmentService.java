@@ -1,6 +1,7 @@
 package com.pointtils.pointtils.src.application.services;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,10 +21,10 @@ import com.pointtils.pointtils.src.infrastructure.repositories.RatingRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
 
 import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
 
 @Service
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
@@ -35,7 +36,8 @@ public class AppointmentService {
 
     public AppointmentResponseDTO createAppointment(AppointmentRequestDTO dto) {
         var interpreter = interpreterRepository.findById(dto.getInterpreterId())
-                .orElseThrow(() -> new EntityNotFoundException("Intérprete não encontrado com o id: " + dto.getInterpreterId()));
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Intérprete não encontrado com o id: " + dto.getInterpreterId()));
         var user = userRepository.findById(dto.getUserId())
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com o id: " + dto.getUserId()));
 
@@ -65,28 +67,42 @@ public class AppointmentService {
         // Capturar status anterior para detectar mudanças
         AppointmentStatus previousStatus = appointment.getStatus();
 
-        if (dto.getUf() != null) appointment.setUf(dto.getUf());
-        if (dto.getCity() != null) appointment.setCity(dto.getCity());
-        if (dto.getModality() != null) appointment.setModality(dto.getModality());
-        if (dto.getDate() != null) appointment.setDate(dto.getDate());
-        if (dto.getDescription() != null) appointment.setDescription(dto.getDescription());
-        if (dto.getStatus() != null) appointment.setStatus(dto.getStatus());
-        if (dto.getNeighborhood() != null) appointment.setNeighborhood(dto.getNeighborhood());
-        if (dto.getStreet() != null) appointment.setStreet(dto.getStreet());
-        if (dto.getStreetNumber() != null) appointment.setStreetNumber(dto.getStreetNumber());
-        if (dto.getAddressDetails() != null) appointment.setAddressDetails(dto.getAddressDetails());
+        if (dto.getUf() != null)
+            appointment.setUf(dto.getUf());
+        if (dto.getCity() != null)
+            appointment.setCity(dto.getCity());
+        if (dto.getModality() != null)
+            appointment.setModality(dto.getModality());
+        if (dto.getDate() != null)
+            appointment.setDate(dto.getDate());
+        if (dto.getDescription() != null)
+            appointment.setDescription(dto.getDescription());
+        if (dto.getStatus() != null)
+            appointment.setStatus(dto.getStatus());
+        if (dto.getNeighborhood() != null)
+            appointment.setNeighborhood(dto.getNeighborhood());
+        if (dto.getStreet() != null)
+            appointment.setStreet(dto.getStreet());
+        if (dto.getStreetNumber() != null)
+            appointment.setStreetNumber(dto.getStreetNumber());
+        if (dto.getAddressDetails() != null)
+            appointment.setAddressDetails(dto.getAddressDetails());
         if (dto.getInterpreterId() != null) {
             var interpreter = interpreterRepository.findById(dto.getInterpreterId())
-                    .orElseThrow(() -> new EntityNotFoundException("Intérprete não encontrado com o id: " + dto.getInterpreterId()));
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "Intérprete não encontrado com o id: " + dto.getInterpreterId()));
             appointment.setInterpreter(interpreter);
         }
         if (dto.getUserId() != null) {
             var user = userRepository.findById(dto.getUserId())
-                    .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com o id: " + dto.getUserId()));
+                    .orElseThrow(
+                            () -> new EntityNotFoundException("Usuário não encontrado com o id: " + dto.getUserId()));
             appointment.setUser(user);
         }
-        if (dto.getStartTime() != null) appointment.setStartTime(dto.getStartTime());
-        if (dto.getEndTime() != null) appointment.setEndTime(dto.getEndTime());
+        if (dto.getStartTime() != null)
+            appointment.setStartTime(dto.getStartTime());
+        if (dto.getEndTime() != null)
+            appointment.setEndTime(dto.getEndTime());
 
         Appointment saved = appointmentRepository.save(appointment);
 
@@ -105,17 +121,23 @@ public class AppointmentService {
         appointmentRepository.deleteById(id);
     }
 
-    /*Testar! */
-    public List<AppointmentFilterResponseDTO> searchAppointments(UUID interpreterId, UUID userId, AppointmentStatus status, AppointmentModality modality, LocalDateTime fromDateTime, Boolean hasRating) {
+    public List<AppointmentFilterResponseDTO> searchAppointments(UUID interpreterId, UUID userId,
+            AppointmentStatus status,
+            AppointmentModality modality, LocalDateTime fromDateTime, Boolean hasRating, int dayLimit) {
         List<Appointment> appointments = appointmentRepository.findAll();
 
         return appointments.stream()
-                .filter(appointment -> interpreterId == null || appointment.getInterpreter().getId().equals(interpreterId))
+                .filter(appointment -> interpreterId == null
+                        || appointment.getInterpreter().getId().equals(interpreterId))
                 .filter(appointment -> userId == null || appointment.getUser().getId().equals(userId))
                 .filter(appointment -> status == null || appointment.getStatus().equals(status))
                 .filter(appointment -> modality == null || appointment.getModality().equals(modality))
                 .filter(appointment -> fromDateTime == null || isAfterDateTime(appointment, fromDateTime))
                 .filter(appointment -> hasRating == null || hasRatingAssigned(appointment, hasRating))
+                .filter(appointment -> dayLimit == -1 || isBeforeDateLimit(appointment, dayLimit))
+                .sorted(Comparator.comparing(
+                        (Appointment appointment) -> LocalDateTime.of(appointment.getDate(), appointment.getEndTime()))
+                        .reversed())
                 .map(appointment -> {
                     if (interpreterId != null) {
                         return appointmentMapper.toFilterResponseDTO(appointment, appointment.getUser());
@@ -136,21 +158,29 @@ public class AppointmentService {
         return appointmentDateTime.isAfter(fromDateTime);
     }
 
+    private boolean isBeforeDateLimit(Appointment appointment, int dayLimit) {
+        LocalDateTime appointmentDateTime = LocalDateTime.of(appointment.getDate(), appointment.getEndTime());
+        LocalDateTime limitDateTime = appointmentDateTime.plusDays(dayLimit);
+        return LocalDateTime.now().isBefore(limitDateTime);
+    }
+
+
     /**
      * Envia email de notificação quando o status do agendamento muda
      * 
-     * @param appointment Agendamento atualizado
-     * @param newStatus Novo status
+     * @param appointment    Agendamento atualizado
+     * @param newStatus      Novo status
      * @param previousStatus Status anterior
      */
-    private void sendStatusChangeEmail(Appointment appointment, AppointmentStatus newStatus, AppointmentStatus previousStatus) {
+    private void sendStatusChangeEmail(Appointment appointment, AppointmentStatus newStatus,
+            AppointmentStatus previousStatus) {
         // Preparar dados comuns do email
         String userName = appointment.getUser().getDisplayName();
         String userEmail = appointment.getUser().getEmail();
         String interpreterName = appointment.getInterpreter().getDisplayName();
         String interpreterEmail = appointment.getInterpreter().getEmail();
         String appointmentDate = formatAppointmentDateTime(appointment);
-        
+
         // Enviar email baseado no novo status
         switch (newStatus) {
             case ACCEPTED:
@@ -158,52 +188,48 @@ public class AppointmentService {
                 String location = buildLocationString(appointment);
                 String modality = appointment.getModality().toString();
                 emailService.sendAppointmentAcceptedEmail(
-                    userEmail,
-                    userName,
-                    appointmentDate,
-                    interpreterName,
-                    location,
-                    modality
-                );
+                        userEmail,
+                        userName,
+                        appointmentDate,
+                        interpreterName,
+                        location,
+                        modality);
                 break;
-                
+
             case CANCELED:
                 // Quando cancelado, notificar ambas as partes
-                String cancelReason = appointment.getDescription() != null ? 
-                    appointment.getDescription() : "Não especificado";
-                    
+                String cancelReason = appointment.getDescription() != null ? appointment.getDescription()
+                        : "Não especificado";
+
                 // Notificar usuário
                 emailService.sendAppointmentCanceledEmail(
-                    userEmail,
-                    userName,
-                    appointmentDate,
-                    interpreterName,
-                    cancelReason
-                );
-                
+                        userEmail,
+                        userName,
+                        appointmentDate,
+                        interpreterName,
+                        cancelReason);
+
                 // Notificar intérprete
                 emailService.sendAppointmentCanceledEmail(
-                    interpreterEmail,
-                    interpreterName,
-                    appointmentDate,
-                    userName,
-                    cancelReason
-                );
+                        interpreterEmail,
+                        interpreterName,
+                        appointmentDate,
+                        userName,
+                        cancelReason);
                 break;
-                
+
             case PENDING:
                 // Se voltou para PENDING de outro status, pode ser uma negação implícita
                 // Verificar se mudou de ACCEPTED para PENDING (possível negação)
                 if (previousStatus == AppointmentStatus.ACCEPTED) {
                     emailService.sendAppointmentDeniedEmail(
-                        userEmail,
-                        userName,
-                        appointmentDate,
-                        interpreterName
-                    );
+                            userEmail,
+                            userName,
+                            appointmentDate,
+                            interpreterName);
                 }
                 break;
-                
+
             default:
                 // Outros status não precisam de notificação automática
                 break;
@@ -218,9 +244,8 @@ public class AppointmentService {
      */
     private String formatAppointmentDateTime(Appointment appointment) {
         return String.format("%s às %s",
-            appointment.getDate().toString(),
-            appointment.getStartTime().toString()
-        );
+                appointment.getDate().toString(),
+                appointment.getStartTime().toString());
     }
 
     /**
@@ -233,7 +258,7 @@ public class AppointmentService {
         if (appointment.getModality() == AppointmentModality.ONLINE) {
             return "Online";
         }
-        
+
         StringBuilder location = new StringBuilder();
         if (appointment.getStreet() != null) {
             location.append(appointment.getStreet());
@@ -250,7 +275,7 @@ public class AppointmentService {
         if (appointment.getUf() != null) {
             location.append("/").append(appointment.getUf());
         }
-        
+
         return location.toString();
     }
 }

@@ -101,6 +101,24 @@ resource "aws_security_group" "dev_app_sg" {
     description = "Allow SSH for NEW development"
   }
 
+  # Permitir Grafana
+  ingress {
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow Grafana dashboard access"
+  }
+
+  # Permitir Prometheus
+  ingress {
+    from_port   = 9090
+    to_port     = 9090
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow Prometheus metrics access"
+  }
+
   # Permitir todo o tráfego de saída
   egress {
     from_port   = 0
@@ -241,10 +259,10 @@ data "template_file" "dev_user_data" {
               EOF
 }
 
-# Instância EC2 para a aplicação Pointtils do NOVO ambiente de desenvolvimento (t2.medium para melhor performance)
+# Instância EC2 para a aplicação Pointtils do NOVO ambiente de desenvolvimento (Alterado para t2.micro para economia)
 resource "aws_instance" "pointtils_dev_app" {
   ami                    = var.ec2_ami
-  instance_type          = "t2.medium"  # Instância maior para melhor performance
+  instance_type          = "t2.micro"  # Instância menor para economia
   key_name               = aws_key_pair.pointtils_key.key_name
   vpc_security_group_ids = [aws_security_group.dev_app_sg.id]
   subnet_id              = aws_subnet.dev_public_subnet_1.id

@@ -57,7 +57,7 @@ public class ScheduleController {
                 schema = @Schema(implementation = ScheduleResponseDTO.class))
         ),
         @ApiResponse(responseCode = "400", description = "Dados do horário inválido"),
-        @ApiResponse(responseCode = "401", description = "Token de autenticação inváido"),
+        @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
         @ApiResponse(responseCode = "409", description = "Conflito de horário"),
         @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
@@ -103,8 +103,8 @@ public class ScheduleController {
     @GetMapping("/available")
     @Operation(summary = "Lista todos os intervalos de horários disponíveis cadastrados")
     public ResponseEntity<ApiResponseDTO<List<AvailableTimeSlotsResponseDTO>>> listAvailableSchedules(@RequestParam UUID interpreterId,
-                                                                                                   @RequestParam LocalDate dateFrom,
-                                                                                                   @RequestParam LocalDate dateTo) {
+                                                                                                      @RequestParam LocalDate dateFrom,
+                                                                                                      @RequestParam LocalDate dateTo) {
         List<AvailableTimeSlotsResponseDTO> availableTimeSlots = service.findAvailableSchedules(interpreterId, dateFrom, dateTo);
         ApiResponseDTO<List<AvailableTimeSlotsResponseDTO>> response = new ApiResponseDTO<>(true, "Horários disponíveis obtidos com sucesso", availableTimeSlots);
         return ResponseEntity.ok(response);
