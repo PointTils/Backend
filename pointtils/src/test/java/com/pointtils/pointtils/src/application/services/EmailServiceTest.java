@@ -1,6 +1,8 @@
 package com.pointtils.pointtils.src.application.services;
 
+import java.io.IOException;
 import java.time.Year;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,6 +24,7 @@ import org.mockito.Mock;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -694,6 +697,8 @@ class EmailServiceTest {
         assertTrue(processed.contains("Motivo: Motivo X"));
     }
 
+    @Test
+    @DisplayName("Deve processar template de feedback de administrador corretamente")
     void deveProcessarTemplateAdminFeedbackCorretamente() {
         String template = "Mensagem: {{message}}, Ano: {{ano}}";
         Parameters parameter = new Parameters();
@@ -711,6 +716,7 @@ class EmailServiceTest {
     }
 
     @Test
+    @DisplayName("Deve usar template padrão se não encontrar no banco")
     void deveUsarTemplatePadraoSeNaoEncontrarNoBanco() {
 
         when(parametersRepository.findByKey("ADMIN_FEEDBACK")).thenReturn(Optional.empty());
@@ -721,5 +727,366 @@ class EmailServiceTest {
 
         String expectedStart = "<html><body><h1>Template não encontrado</h1>";
         assertEquals(true, result.startsWith(expectedStart));
+    }
+
+    @Test
+    @DisplayName("Deve retornar false ao passar EmailRequestDTO nulo no envio com anexos")
+    void deveRetornarFalseAoPassarEmailRequestDTONuloNoEnvioComAnexos() {
+        byte[] attachment = "Conteúdo do anexo".getBytes();
+        List<byte[]> attachments = List.of(attachment);
+        List<String> attachmentNames = List.of("anexo.txt");
+
+        boolean result = emailService.sendEmailWithAttachments(null, attachments, attachmentNames);
+
+        assertFalse(result);
+        verify(mailSender, never()).createMimeMessage();
+        verify(mailSender, never()).send(any(MimeMessage.class));
+    }
+
+    @Test
+    @DisplayName("Deve processar múltiplos anexos corretamente")
+    void deveProcessarMultiplosAnexosCorretamente() throws Exception {
+        // Mock dos arquivos
+        MultipartFile file1 = mock(MultipartFile.class);
+        MultipartFile file2 = mock(MultipartFile.class);
+        List<MultipartFile> files = Arrays.asList(file1, file2);
+        
+        // Setup do primeiro arquivo
+        when(file1.getBytes()).thenReturn("conteudo1".getBytes());
+        when(file1.getOriginalFilename()).thenReturn("documento1.pdf");
+        
+        // Setup do segundo arquivo
+        when(file2.getBytes()).thenReturn("conteudo2".getBytes());
+        when(file2.getOriginalFilename()).thenReturn("documento2.pdf");
+
+        // Mock do template e mensagem
+        String template = "<html><body>Template teste</body></html>";
+        Parameters parameter = new Parameters();
+        parameter.setKey("PENDING_INTERPRETER_ADMIN");
+        parameter.setValue(template);
+        when(parametersRepository.findByKey("PENDING_INTERPRETER_ADMIN")).thenReturn(Optional.of(parameter));
+
+        MimeMessage mimeMessage = new MimeMessage((Session) null);
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doNothing().when(mailSender).send(any(MimeMessage.class));
+
+        // Executa o método
+        boolean result = emailService.sendInterpreterRegistrationRequestEmail(
+            "admin@test.com",
+            "João Intérprete", 
+            "123.456.789-00",
+            "12.345.678/0001-90", 
+            "joao@email.com",
+            "11999999999",
+            "http://accept",
+            "http://reject",
+            files
+        );
+
+        // Verifica o resultado
+        assertTrue(result);
+        verify(file1).getBytes();
+        verify(file1).getOriginalFilename();
+        verify(file2).getBytes();
+        verify(file2).getOriginalFilename();
+    }
+
+    @Test
+    @DisplayName("Deve continuar processamento mesmo se um anexo falhar")
+    void deveContinuarProcessamentoMesmoSeUmAnexoFalhar() throws Exception {
+        // Mock dos arquivos
+        MultipartFile file1 = mock(MultipartFile.class);
+        MultipartFile file2 = mock(MultipartFile.class);
+        List<MultipartFile> files = Arrays.asList(file1, file2);
+        
+        // Primeiro arquivo lança exceção
+        when(file1.getBytes()).thenThrow(new IOException("Erro ao ler arquivo"));
+        when(file1.getName()).thenReturn("documento1.pdf");
+        
+        // Segundo arquivo funciona normalmente
+        when(file2.getBytes()).thenReturn("conteudo2".getBytes());
+        when(file2.getOriginalFilename()).thenReturn("documento2.pdf");
+
+        // Mock do template e mensagem
+        String template = "<html><body>Template teste</body></html>";
+        Parameters parameter = new Parameters();
+        parameter.setKey("PENDING_INTERPRETER_ADMIN");
+        parameter.setValue(template);
+        when(parametersRepository.findByKey("PENDING_INTERPRETER_ADMIN")).thenReturn(Optional.of(parameter));
+
+        MimeMessage mimeMessage = new MimeMessage((Session) null);
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doNothing().when(mailSender).send(any(MimeMessage.class));
+
+        // Executa o método
+        boolean result = emailService.sendInterpreterRegistrationRequestEmail(
+            "admin@test.com",
+            "João Intérprete",
+            "123.456.789-00", 
+            "12.345.678/0001-90",
+            "joao@email.com",
+            "11999999999",
+            "http://accept",
+            "http://reject",
+            files
+        );
+
+        // Verifica o resultado
+        assertTrue(result);
+        verify(file1).getBytes();
+        verify(file2).getBytes();
+        verify(file2).getOriginalFilename();
+    }
+
+    @Test
+    @DisplayName("Deve usar template padrão quando processPasswordResetTemplate recebe template nulo")
+    void deveUsarTemplatePadraoQuandoProcessPasswordResetTemplateRecebeTemplateNulo() {
+        String defaultTemplate = "<html><body><h1>Template não encontrado</h1><p>Template com chave 'PASSWORD_RESET' não está disponível no banco de dados.</p></body></html>";
+        
+        // Invoca método privado via reflection
+        String result = (String) ReflectionTestUtils.invokeMethod(
+            emailService, 
+            "processPasswordResetTemplate",
+            null,
+            "Test User",
+            "123456"
+        );
+
+        assertEquals(defaultTemplate, result);
+        verify(parametersRepository, never()).findByKey(anyString());
+    }
+
+    @Test
+    @DisplayName("Deve usar template padrão quando processAppointmentConfirmationTemplate recebe template nulo")
+    void deveUsarTemplatePadraoQuandoProcessAppointmentConfirmationTemplateRecebeTemplateNulo() {
+        String defaultTemplate = "<html><body><h1>Template não encontrado</h1><p>Template com chave 'APPOINTMENT_CONFIRMATION' não está disponível no banco de dados.</p></body></html>";
+
+        // Invoca método privado via reflection
+        String result = (String) ReflectionTestUtils.invokeMethod(
+            emailService, 
+            "processAppointmentConfirmationTemplate",
+            null,
+            "Test User",
+            "2025-11-11 às 09:00",
+            "Intérprete X"
+        );
+
+        assertEquals(defaultTemplate, result);
+        verify(parametersRepository, never()).findByKey(anyString());
+    }
+
+    @Test
+    @DisplayName("Deve retornar template padrão quando appointmentDate for nulo")
+    void deveRetornarTemplatePadraoQuandoUserNameForNulo() {
+        String template = "Olá {{nome}}! Sua consulta está agendada para {{appointmentDate}} com {{interpreterName}}.";
+        String result = (String) ReflectionTestUtils.invokeMethod(
+                emailService,
+                "processAppointmentConfirmationTemplate",
+                template,
+                null,
+                "2025-11-11 às 09:00",
+                "Intérprete X"
+        );
+
+        assertTrue(result.contains("Olá !"));
+        assertTrue(result.contains("Sua consulta está agendada para 2025-11-11 às 09:00 com Intérprete X."));
+    }
+
+    @Test
+    @DisplayName("Deve retornar template padrão quando appointmentDate for nulo")
+    void deveRetornarTemplatePadraoQuandoAppointmentDateForNulo() {
+        String template = "Olá {{nome}}! Sua consulta está agendada para {{appointmentDate}} com {{interpreterName}}.";
+        String result = (String) ReflectionTestUtils.invokeMethod(
+                emailService,
+                "processAppointmentConfirmationTemplate",
+                template,
+                "Test User",
+                null,
+                "Intérprete X"
+        );
+
+        assertTrue(result.contains("Olá Test User! Sua consulta está agendada para  com Intérprete X."));
+    }
+
+    @Test
+    @DisplayName("Deve retornar template padrão quando template for nulo")
+    void deveRetornarTemplatePadraoQuandoTemplateForNulo() {
+        String result = (String) ReflectionTestUtils.invokeMethod(
+            emailService, 
+            "processTemplate",
+            null, // template
+            "Interpreter Name",
+            "123456789",
+            "12345678000195",
+            "test@example.com",
+            "123456789",
+            "http://accept",
+            "http://reject"
+        );
+
+        String expectedStart = "<html><body><h1>Template não encontrado</h1>";
+        assertTrue(result.startsWith(expectedStart));
+    }
+
+    @Test
+    @DisplayName("Deve retornar template padrão quando interpreterName for nulo")
+    void deveRetornarTemplatePadraoQuandoInterpreterNameForNulo() {
+        String template = "Olá {{nome}}! Sua consulta está agendada.";
+        String result = (String) ReflectionTestUtils.invokeMethod(
+            emailService, 
+            "processTemplate",
+            template,
+            null, // interpreterName
+            "123456789",
+            "12345678000195",
+            "test@example.com",
+            "123456789",
+            "http://accept",
+            "http://reject"
+        );
+
+        assertTrue(result.contains("Olá !"));
+    }
+
+    @Test
+    @DisplayName("Deve retornar template padrão quando cpf for nulo")
+    void deveRetornarTemplatePadraoQuandoCpfForNulo() {
+        String template = "Olá {{nome}}! Seu CPF é {{cpf}}.";
+        String result = (String) ReflectionTestUtils.invokeMethod(
+            emailService, 
+            "processTemplate",
+            template,
+            "Interpreter Name",
+            null, // cpf
+            "12345678000195",
+            "test@example.com",
+            "123456789",
+            "http://accept",
+            "http://reject"
+        );
+
+        assertTrue(result.contains("Seu CPF é ."));
+    }
+
+    @Test
+    @DisplayName("Deve retornar template padrão quando cnpj for nulo")
+    void deveRetornarTemplatePadraoQuandoCnpjForNulo() {
+        String template = "Olá {{nome}}! Seu CNPJ é {{cnpj}}.";
+        String result = (String) ReflectionTestUtils.invokeMethod(
+            emailService, 
+            "processTemplate",
+            template,
+            "Interpreter Name",
+            "123456789",
+            null, // cnpj
+            "test@example.com",
+            "123456789",
+            "http://accept",
+            "http://reject"
+        );
+
+        assertTrue(result.contains("Seu CNPJ é ."));
+    }
+
+    @Test
+    @DisplayName("Deve retornar template padrão quando email for nulo")
+    void deveRetornarTemplatePadraoQuandoEmailForNulo() {
+        String template = "Olá {{nome}}! Seu email é {{email}}.";
+        String result = (String) ReflectionTestUtils.invokeMethod(
+            emailService, 
+            "processTemplate",
+            template,
+            "Interpreter Name",
+            "123456789",
+            "12345678000195",
+            null, // email
+            "123456789",
+            "http://accept",
+            "http://reject"
+        );
+
+        assertTrue(result.contains("Seu email é ."));
+    }
+
+    @Test
+    @DisplayName("Deve retornar template padrão quando phone for nulo")
+    void deveRetornarTemplatePadraoQuandoPhoneForNulo() {
+        String template = "Olá {{nome}}! Seu telefone é {{telefone}}.";
+        String result = (String) ReflectionTestUtils.invokeMethod(
+            emailService, 
+            "processTemplate",
+            template,
+            "Interpreter Name",
+            "123456789",
+            "12345678000195",
+            "test@example.com",
+            null, // phone
+            "http://accept",
+            "http://reject"
+        );
+
+        assertTrue(result.contains("Seu telefone é ."));
+    }
+
+    @Test
+    @DisplayName("Deve retornar template padrão quando acceptLink for nulo")
+    void deveRetornarTemplatePadraoQuandoAcceptLinkForNulo() {
+        String template = "Clique aqui para aceitar: {{link_accept_api}}.";
+        String result = (String) ReflectionTestUtils.invokeMethod(
+            emailService, 
+            "processTemplate",
+            template,
+            "Interpreter Name",
+            "123456789",
+            "12345678000195",
+            "test@example.com",
+            "123456789",
+            null, // acceptLink
+            "http://reject"
+        );
+
+        assertTrue(result.contains("Clique aqui para aceitar: ."));
+    }
+
+    @Test
+    @DisplayName("Deve retornar template padrão quando rejectLink for nulo")
+    void deveRetornarTemplatePadraoQuandoRejectLinkForNulo() {
+        String template = "Clique aqui para rejeitar: {{link_reject_api}}.";
+        String result = (String) ReflectionTestUtils.invokeMethod(
+            emailService, 
+            "processTemplate",
+            template,
+            "Interpreter Name",
+            "123456789",
+            "12345678000195",
+            "test@example.com",
+            "123456789",
+            "http://accept",
+            null // rejectLink
+        );
+
+        assertTrue(result.contains("Clique aqui para rejeitar: ."));
+    }
+
+    @Test
+    @DisplayName("Deve retornar template padrão quando processAppointmentStatusChangeTemplate recebe template nulo")
+    void deveRetornarTemplatePadraoQuandoProcessAppointmentStatusChangeTemplateRecebeTemplateNulo() {
+        String defaultTemplate = "<html><body><h1>Template não encontrado</h1><p>Template com chave 'APPOINTMENT_STATUS_CHANGE' não está disponível no banco de dados.</p></body></html>";
+
+        // Invoca método privado via reflection
+        String result = (String) ReflectionTestUtils.invokeMethod(
+                emailService,
+                "processAppointmentStatusChangeTemplate",
+                null, // template
+                "Test User",
+                "2025-11-11 às 09:00",
+                "Intérprete X",
+                "Auditório Central",
+                "PERSONALLY",
+                "Motivo X"
+        );
+
+        assertEquals(defaultTemplate, result);
+        verify(parametersRepository, never()).findByKey(anyString());
     }
 }
