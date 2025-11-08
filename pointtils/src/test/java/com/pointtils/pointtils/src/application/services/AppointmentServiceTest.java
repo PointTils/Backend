@@ -89,9 +89,11 @@ class AppointmentServiceTest {
             }
         };
         mockUser.setId(userId);
+        mockUser.setEmail("user@email.com");
 
         mockInterpreter = Interpreter.builder()
                 .id(interpreterId)
+                .email("interpreter@email.com")
                 .build();
 
         mockAppointment = Appointment.builder()
@@ -230,6 +232,7 @@ class AppointmentServiceTest {
                 .uf("RJ")
                 .city("Rio de Janeiro")
                 .status(AppointmentStatus.ACCEPTED)
+                .loggedUserEmail("interpreter@email.com")
                 .build();
 
         when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(mockAppointment));
@@ -319,7 +322,10 @@ class AppointmentServiceTest {
         UUID newInterpreterId = UUID.randomUUID();
         UUID newUserId = UUID.randomUUID();
         
-        Interpreter newInterpreter = Interpreter.builder().id(newInterpreterId).build();
+        Interpreter newInterpreter = Interpreter.builder()
+                .id(newInterpreterId)
+                .email("interpreter@email.com")
+                .build();
         User newUser = new Person() {
             @Override
             public String getDisplayName() {
@@ -343,6 +349,7 @@ class AppointmentServiceTest {
                 .userId(newUserId)
                 .startTime(LocalTime.of(16, 0))
                 .endTime(LocalTime.of(17, 30))
+                .loggedUserEmail("interpreter@email.com")
                 .build();
 
         when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(mockAppointment));
