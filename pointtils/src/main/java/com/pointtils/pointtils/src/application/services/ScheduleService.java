@@ -32,6 +32,8 @@ public class ScheduleService {
     private final InterpreterRepository interpreterRepository;
     private final TimeSlotMapper timeSlotMapper;
 
+    private static final String TIME_NOT_FOUND = "Horário não encontrado";
+
     public ScheduleResponseDTO registerSchedule(ScheduleRequestDTO dto) {
         Optional<Interpreter> foundInterpreter = interpreterRepository.findById(dto.getInterpreterId());
         if (foundInterpreter.isEmpty()) {
@@ -69,7 +71,7 @@ public class ScheduleService {
 
     public ScheduleResponseDTO findById(UUID scheduleId) {
         Schedule schedule = scheduleRepository.findById(scheduleId)
-                .orElseThrow(() -> new EntityNotFoundException("Horário não encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException(TIME_NOT_FOUND));
 
         return ScheduleResponseDTO.builder()
                 .id(schedule.getId())
@@ -121,7 +123,7 @@ public class ScheduleService {
 
     public ScheduleResponseDTO updateSchedule(UUID scheduleId, SchedulePatchRequestDTO dto) {
         Schedule schedule = scheduleRepository.findById(scheduleId)
-                .orElseThrow(() -> new EntityNotFoundException("Horário não encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException(TIME_NOT_FOUND));
 
         if (dto.getDay() != null) {
             schedule.setDay(dto.getDay());
@@ -164,7 +166,7 @@ public class ScheduleService {
 
     public void deleteById(UUID scheduleId) {
         if (!scheduleRepository.existsById(scheduleId)) {
-            throw new EntityNotFoundException("Horário não encontrado");
+            throw new EntityNotFoundException(TIME_NOT_FOUND);
         }
 
         scheduleRepository.deleteById(scheduleId);

@@ -12,8 +12,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.pointtils.pointtils.src.application.dto.requests.FindAllInterpreterDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.InterpreterSpecificationFilterDTO;
 import com.pointtils.pointtils.src.application.dto.requests.LocationRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResponseDTO;
@@ -79,42 +81,45 @@ public class InterpreterService {
         repository.save(interpreter);
     }
 
-    public List<InterpreterListResponseDTO> findAll(String modality,
-            String gender,
-            String city,
-            String uf,
-            String neighborhood,
-            String specialty,
-            String availableDate,
-            String name) {
-        InterpreterModality modalityEnum = null;
-        if (modality != null) {
-            modalityEnum = InterpreterModality.valueOf(modality.toUpperCase());
-        }
+    public List<InterpreterListResponseDTO> findAll(FindAllInterpreterDTO dto) {
+    InterpreterModality modalityEnum = null;
+    if (dto.getModality() != null) {
+        modalityEnum = InterpreterModality.valueOf(dto.getModality().toUpperCase());
+    }
 
-        Gender genderEnum = null;
-        if (gender != null) {
-            genderEnum = Gender.valueOf(gender.toUpperCase());
-        }
+    Gender genderEnum = null;
+    if (dto.getGender() != null) {
+        genderEnum = Gender.valueOf(dto.getGender().toUpperCase());
+    }
 
-        LocalDateTime dateTime = null;
-        if (availableDate != null) {
-            dateTime = LocalDateTime.parse(availableDate, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
-        }
+    LocalDateTime dateTime = null;
+    if (dto.getAvailableDate() != null) {
+        dateTime = LocalDateTime.parse(dto.getAvailableDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+    }
 
-        List<UUID> specialtyList = null;
-        if (specialty != null) {
-            specialtyList = Arrays.stream(specialty.split(","))
-                    .map(UUID::fromString)
-                    .toList();
-        }
-
-        return repository.findAll(InterpreterSpecification.filter(modalityEnum, uf, city, neighborhood, specialtyList,
-                genderEnum, dateTime, name))
-                .stream()
-                .map(responseMapper::toListResponseDTO)
+    List<UUID> specialtyList = null;
+    if (dto.getSpecialty() != null) {
+        specialtyList = Arrays.stream(dto.getSpecialty().split(","))
+                .map(UUID::fromString)
                 .toList();
     }
+
+    InterpreterSpecificationFilterDTO filterDTO = new InterpreterSpecificationFilterDTO();
+    filterDTO.setModality(modalityEnum);
+    filterDTO.setUf(dto.getUf());
+    filterDTO.setCity(dto.getCity());
+    filterDTO.setNeighborhood(dto.getNeighborhood());
+    filterDTO.setSpecialties(specialtyList);
+    filterDTO.setGender(genderEnum);
+    filterDTO.setAvailableDate(dateTime);
+    filterDTO.setName(dto.getName());
+
+    return repository.findAll(InterpreterSpecification.filter(filterDTO))
+            .stream()
+            .map(responseMapper::toListResponseDTO)
+            .toList();
+}
+
 
     public InterpreterResponseDTO updateComplete(UUID id, InterpreterBasicRequestDTO dto) {
         Interpreter interpreter = findInterpreterById(id);

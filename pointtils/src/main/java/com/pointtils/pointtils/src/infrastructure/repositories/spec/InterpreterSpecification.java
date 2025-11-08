@@ -1,5 +1,6 @@
 package com.pointtils.pointtils.src.infrastructure.repositories.spec;
 
+import com.pointtils.pointtils.src.application.dto.requests.InterpreterSpecificationFilterDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Appointment;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
 import com.pointtils.pointtils.src.core.domain.entities.Location;
@@ -7,7 +8,6 @@ import com.pointtils.pointtils.src.core.domain.entities.Schedule;
 import com.pointtils.pointtils.src.core.domain.entities.UserSpecialty;
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.DayOfWeek;
-import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
 import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
 import io.jsonwebtoken.lang.Collections;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -35,29 +35,22 @@ public class InterpreterSpecification {
 
     @SuppressWarnings("null")
     public static Specification<Interpreter> filter(
-            InterpreterModality modality,
-            String uf,
-            String city,
-            String neighborhood,
-            List<UUID> specialties,
-            Gender gender,
-            LocalDateTime availableDate,
-            String name
+            InterpreterSpecificationFilterDTO dto
     ) {
         return (root, query, cb) -> {
             query.distinct(true);
             Predicate predicate = cb.conjunction();
 
-            if (name != null) {
-                predicate = cb.and(predicate, cb.like(cb.lower(root.get("name")), "%" + name.toLowerCase() + "%"));
+            if (dto.getName() != null) {
+                predicate = cb.and(predicate, cb.like(cb.lower(root.get("name")), "%" + dto.getName().toLowerCase() + "%"));
             }
-            if (gender != null) {
-                predicate = cb.and(predicate, cb.equal(root.get("gender"), gender));
+            if (dto.getGender() != null) {
+                predicate = cb.and(predicate, cb.equal(root.get("gender"), dto.getGender()));
             }
-            predicate = checkIfInterpreterHasModality(predicate, cb, root, modality);
-            predicate = checkIfInterpreterHasLocation(predicate, cb, root, uf, city, neighborhood);
-            predicate = checkIfInterpreterHasSpecialties(predicate, query, cb, root, specialties);
-            predicate = checkIfInterpreterIsAvailableOnRequestedDate(predicate, query, cb, root, availableDate);
+            predicate = checkIfInterpreterHasModality(predicate, cb, root, dto.getModality());
+            predicate = checkIfInterpreterHasLocation(predicate, cb, root, dto.getUf(), dto.getCity(), dto.getNeighborhood());
+            predicate = checkIfInterpreterHasSpecialties(predicate, query, cb, root, dto.getSpecialties());
+            predicate = checkIfInterpreterIsAvailableOnRequestedDate(predicate, query, cb, root, dto.getAvailableDate());
             return predicate;
         };
     }

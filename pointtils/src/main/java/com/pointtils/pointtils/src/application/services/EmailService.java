@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.pointtils.pointtils.src.application.dto.requests.EmailRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.ProcessTemplateRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterRegistrationEmailDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Parameters;
 import com.pointtils.pointtils.src.infrastructure.repositories.ParametersRepository;
@@ -37,7 +38,16 @@ public class EmailService {
     private String senderName;
 
     private static final String EMAIL_REQUEST_NULL = "EmailRequestDTO não pode ser nulo";
-
+private static final String PLACEHOLDER_NOME = "{{nome}}";
+private static final String PLACEHOLDER_CPF = "{{cpf}}";
+private static final String PLACEHOLDER_CNPJ = "{{cnpj}}";
+private static final String PLACEHOLDER_EMAIL = "{{email}}";
+private static final String PLACEHOLDER_TELEFONE = "{{telefone}}";
+private static final String PLACEHOLDER_ANO= "{{ano}}";
+private static final String PLACEHOLDER_ACCEPT = "{{link_accept_api}}";
+private static final String PLACEHOLDER_REJECT = "{{link_reject_api}}";
+private static final String PLACEHOLDER_SEND_NAME = "{{senderName}}";
+private static final String PLACEHOLDER_RESPOSTA_SOLICITACAO = "{{respostaSolicitacao}}";
 
     /**
      * Envia email simples de texto
@@ -221,10 +231,19 @@ public class EmailService {
                         e.getMessage());
             }
         }
-
         
-        // Substituir placeholders do template
-        String html = processTemplate(template, dto.getInterpreterName(), dto.getCpf(), dto.getCnpj(), dto.getEmail(), dto.getPhone(), dto.getAcceptLink(), dto.getRejectLink());
+String html = processTemplate(
+    ProcessTemplateRequestDTO.builder()
+        .template(template)
+        .interpreterName(dto.getInterpreterName())
+        .cpf(dto.getCpf())
+        .cnpj(dto.getCnpj())
+        .email(dto.getEmail())
+        .phone(dto.getPhone())
+        .acceptLink(dto.getAcceptLink())
+        .rejectLink(dto.getRejectLink())
+        .build()
+);
 
         EmailRequestDTO emailRequest = new EmailRequestDTO(
                 dto.getAdminEmail(),
@@ -260,7 +279,7 @@ public class EmailService {
         String emailTemplate = getTemplateByKey("ADMIN_FEEDBACK");
         return emailTemplate
                 .replace("{{message}}", emailResponse)
-                .replace("{{ano}}", String.valueOf(Year.now().getValue()));
+                .replace(PLACEHOLDER_ANO, String.valueOf(Year.now().getValue()));
     }
 
     /**
@@ -290,9 +309,9 @@ public class EmailService {
         }
 
         return template
-                .replace("{{nome}}", userName != null ? userName : "")
-                .replace("{{ano}}", String.valueOf(Year.now().getValue()))
-                .replace("{{senderName}}", senderName);
+                .replace(PLACEHOLDER_NOME, userName != null ? userName : "")
+                .replace(PLACEHOLDER_ANO, String.valueOf(Year.now().getValue()))
+                .replace(PLACEHOLDER_SEND_NAME, senderName);
     }
 
     /**
@@ -309,10 +328,10 @@ public class EmailService {
         }
 
         return template
-                .replace("{{nome}}", userName != null ? userName : "")
+                .replace(PLACEHOLDER_NOME, userName != null ? userName : "")
                 .replace("{{resetToken}}", resetToken != null ? resetToken : "")
-                .replace("{{ano}}", String.valueOf(Year.now().getValue()))
-                .replace("{{senderName}}", senderName);
+                .replace(PLACEHOLDER_ANO, String.valueOf(Year.now().getValue()))
+                .replace(PLACEHOLDER_SEND_NAME, senderName);
     }
 
     /**
@@ -331,11 +350,11 @@ public class EmailService {
         }
 
         return template
-                .replace("{{nome}}", userName != null ? userName : "")
+                .replace(PLACEHOLDER_NOME, userName != null ? userName : "")
                 .replace("{{appointmentDate}}", appointmentDate != null ? appointmentDate : "")
                 .replace("{{interpreterName}}", interpreterName != null ? interpreterName : "")
-                .replace("{{ano}}", String.valueOf(Year.now().getValue()))
-                .replace("{{senderName}}", senderName);
+                .replace(PLACEHOLDER_ANO, String.valueOf(Year.now().getValue()))
+                .replace(PLACEHOLDER_SEND_NAME, senderName);
     }
 
     /**
@@ -371,24 +390,23 @@ public class EmailService {
      * @param rejectLink      Link para recusar o cadastro
      * @return Template HTML processado
      */
-    private String processTemplate(String template, String interpreterName, String cpf, String cnpj,
-            String email, String phone, String acceptLink, String rejectLink) {
-        if (template == null) {
+    private String processTemplate(ProcessTemplateRequestDTO dto) {
+        if (dto.getTemplate() == null) {
             return getDefaultTemplate("PENDING_INTERPRETER_ADMIN");
-        }
-
         // Substituir placeholders do template do banco
+           }
 
-        return template
-                .replace("{{nome}}", interpreterName != null ? interpreterName : "")
-                .replace("{{cpf}}", cpf != null ? cpf : "")
-                .replace("{{cnpj}}", cnpj != null ? cnpj : "")
-                .replace("{{email}}", email != null ? email : "")
-                .replace("{{telefone}}", phone != null ? phone : "")
-                .replace("{{link_accept_api}}", acceptLink != null ? acceptLink : "")
-                .replace("{{link_reject_api}}", rejectLink != null ? rejectLink : "")
-                .replace("{{ano}}", String.valueOf(Year.now().getValue()));
+        return dto.getTemplate()
+                .replace(PLACEHOLDER_NOME, dto.getInterpreterName() != null ? dto.getInterpreterName() : "")
+                .replace(PLACEHOLDER_CPF, dto.getCpf() != null ? dto.getCpf() : "")
+                .replace(PLACEHOLDER_CNPJ, dto.getCnpj() != null ? dto.getCnpj() : "")
+                .replace(PLACEHOLDER_EMAIL, dto.getEmail() != null ? dto.getEmail() : "")
+                .replace(PLACEHOLDER_TELEFONE, dto.getPhone() != null ? dto.getPhone() : "")
+                .replace(PLACEHOLDER_ACCEPT, dto.getAcceptLink() != null ? dto.getAcceptLink() : "")
+                .replace(PLACEHOLDER_REJECT, dto.getRejectLink() != null ? dto.getRejectLink() : "")
+                .replace(PLACEHOLDER_ANO, String.valueOf(Year.now().getValue()));
     }
+
 
     /**
      * Cria template de feedback para o intérprete
@@ -407,8 +425,9 @@ public class EmailService {
 
         // Processar o template
         return template
-                .replace("{{nome}}", interpreterName != null ? interpreterName : "")
-                .replace("{{respostaSolicitacao}}", respostaSolicitacao)
-                .replace("{{ano}}", String.valueOf(Year.now().getValue()));
+                .replace(PLACEHOLDER_NOME, interpreterName != null ? interpreterName : "")
+                .replace(PLACEHOLDER_RESPOSTA_SOLICITACAO, respostaSolicitacao)
+                .replace(PLACEHOLDER_ANO, String.valueOf(Year.now().getValue()));
     }
 }
+

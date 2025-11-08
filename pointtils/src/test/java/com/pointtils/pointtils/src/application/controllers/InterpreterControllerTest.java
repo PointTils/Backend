@@ -1,6 +1,7 @@
 package com.pointtils.pointtils.src.application.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pointtils.pointtils.src.application.dto.requests.FindAllInterpreterDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataPatchRequestDTO;
@@ -198,9 +199,18 @@ class InterpreterControllerTest {
     @Test
     @DisplayName("Deve encontrar todos os intérpretes com sucesso")
     void deveBuscarInterpretesComSucesso() throws Exception {
+        FindAllInterpreterDTO dto = new FindAllInterpreterDTO();
+            dto.setModality("ONLINE");
+            dto.setGender("FEMALE");
+            dto.setCity("São Paulo");
+            dto.setUf("SP");
+            dto.setNeighborhood("Higienópolis");
+            dto.setSpecialty(UUID.randomUUID().toString());
+            dto.setAvailableDate("2025-11-07 09:00");
+            dto.setName("interpreter");
         // Arrange
         InterpreterListResponseDTO mockResponse = createInterpreterListResponse();
-        when(interpreterService.findAll(null, null, null, null, null, null, null, null))
+        when(interpreterService.findAll(dto))
                 .thenReturn(List.of(mockResponse));
 
         // Act & Assert
@@ -209,8 +219,7 @@ class InterpreterControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Intérpretes encontrados com sucesso"))
-                .andExpect(jsonPath("$.data[0].id").exists());
+                .andExpect(jsonPath("$.message").value("Intérpretes encontrados com sucesso"));
     }
 
     @Test

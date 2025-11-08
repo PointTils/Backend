@@ -1,8 +1,8 @@
 package com.pointtils.pointtils.src.infrastructure.repositories.spec;
 
+import com.pointtils.pointtils.src.application.dto.requests.InterpreterSpecificationFilterDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Appointment;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
-import com.pointtils.pointtils.src.core.domain.entities.Schedule;
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.DayOfWeek;
 import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
@@ -19,7 +19,6 @@ import jakarta.persistence.criteria.Subquery;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.UUID;
@@ -27,246 +26,267 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@SuppressWarnings({"rawtypes", "unchecked"})
+@SuppressWarnings({ "rawtypes", "unchecked" })
 class InterpreterSpecificationTest {
+        @Test
+        void shouldBuildPredicateWithGender() {
+                // Mocks do JPA Criteria
+                Root<Interpreter> root = mock(Root.class);
+                CriteriaQuery<?> query = mock(CriteriaQuery.class);
+                CriteriaBuilder cb = mock(CriteriaBuilder.class);
+                Predicate basePredicate = mock(Predicate.class);
+                Predicate genderPredicate = mock(Predicate.class);
 
-    @Test
-    void shouldBuildPredicateWithGender() {
-        Root<Interpreter> root = mock(Root.class);
-        CriteriaQuery<?> query = mock(CriteriaQuery.class);
-        CriteriaBuilder cb = mock(CriteriaBuilder.class);
-        Predicate basePredicate = mock(Predicate.class);
-        Predicate genderPredicate = mock(Predicate.class);
+                // Comportamento dos mocks
+                when(cb.conjunction()).thenReturn(basePredicate);
+                when(cb.equal(root.get("gender"), Gender.MALE)).thenReturn(genderPredicate);
+                when(cb.and(basePredicate, genderPredicate)).thenReturn(genderPredicate);
 
-        when(cb.conjunction()).thenReturn(basePredicate);
-        when(cb.equal(root.get("gender"), Gender.MALE)).thenReturn(genderPredicate);
-        when(cb.and(basePredicate, genderPredicate)).thenReturn(genderPredicate);
+                // Criar DTO de filtro com gender
+                InterpreterSpecificationFilterDTO filterDTO = new InterpreterSpecificationFilterDTO();
 
-        Specification<Interpreter> spec = InterpreterSpecification.filter(null, null, null, null,
-                null, Gender.MALE, null, null);
+                // Chamar o método agora com DTO
+                Specification<Interpreter> spec = InterpreterSpecification.filter(filterDTO);
+                filterDTO.setGender(Gender.MALE); // importante!
 
-        Predicate result = spec.toPredicate(root, query, cb);
+                Predicate result = spec.toPredicate(root, query, cb);
 
-        assertThat(result).isEqualTo(genderPredicate);
-        verify(cb).equal(root.get("gender"), Gender.MALE);
-    }
+                // Verificações
+                assertThat(result).isEqualTo(genderPredicate);
+                verify(cb).equal(root.get("gender"), Gender.MALE);
+        }
 
-    @Test
-    void shouldBuildPredicateWithAllModality() {
-        Root<Interpreter> root = mock(Root.class);
-        CriteriaQuery<?> query = mock(CriteriaQuery.class);
-        CriteriaBuilder cb = mock(CriteriaBuilder.class);
-        Predicate basePredicate = mock(Predicate.class);
-        when(cb.conjunction()).thenReturn(basePredicate);
+        @Test
+        void shouldBuildPredicateWithAllModality() {
+                Root<Interpreter> root = mock(Root.class);
+                CriteriaQuery<?> query = mock(CriteriaQuery.class);
+                CriteriaBuilder cb = mock(CriteriaBuilder.class);
+                Predicate basePredicate = mock(Predicate.class);
+                when(cb.conjunction()).thenReturn(basePredicate);
 
-        Predicate modalityPredicate = mock(Predicate.class);
-        Path modalityPath = mock(Path.class);
-        when(root.get("modality")).thenReturn(modalityPath);
-        when(modalityPath.in(InterpreterModality.ALL, InterpreterModality.ONLINE, InterpreterModality.PERSONALLY))
-                .thenReturn(modalityPredicate);
+                Predicate modalityPredicate = mock(Predicate.class);
+                Path modalityPath = mock(Path.class);
+                when(root.get("modality")).thenReturn(modalityPath);
+                when(modalityPath.in(InterpreterModality.ALL, InterpreterModality.ONLINE,
+                                InterpreterModality.PERSONALLY))
+                                .thenReturn(modalityPredicate);
 
-        Predicate resultPredicate = mock(Predicate.class);
-        when(cb.and(basePredicate, modalityPredicate)).thenReturn(resultPredicate);
+                Predicate resultPredicate = mock(Predicate.class);
+                when(cb.and(basePredicate, modalityPredicate)).thenReturn(resultPredicate);
 
-        Specification<Interpreter> spec = InterpreterSpecification.filter(InterpreterModality.ALL, null, null,
-                null, null, null, null, null);
+                InterpreterSpecificationFilterDTO filterDTO = new InterpreterSpecificationFilterDTO();
+                filterDTO.setModality(InterpreterModality.ALL);
 
-        Predicate result = spec.toPredicate(root, query, cb);
-        assertEquals(resultPredicate, result);
-    }
+                Specification<Interpreter> spec = InterpreterSpecification.filter(filterDTO);
 
-    @Test
-    void shouldBuildPredicateWithOnlineModality() {
-        Root<Interpreter> root = mock(Root.class);
-        CriteriaQuery<?> query = mock(CriteriaQuery.class);
-        CriteriaBuilder cb = mock(CriteriaBuilder.class);
-        Predicate basePredicate = mock(Predicate.class);
-        when(cb.conjunction()).thenReturn(basePredicate);
+                Predicate result = spec.toPredicate(root, query, cb);
+                assertEquals(resultPredicate, result);
+        }
 
-        Predicate modalityPredicate = mock(Predicate.class);
-        Path modalityPath = mock(Path.class);
-        when(root.get("modality")).thenReturn(modalityPath);
-        when(modalityPath.in(InterpreterModality.ALL, InterpreterModality.ONLINE))
-                .thenReturn(modalityPredicate);
+        @Test
+        void shouldBuildPredicateWithOnlineModality() {
+                // Mocks do JPA Criteria
+                Root<Interpreter> root = mock(Root.class);
+                CriteriaQuery<?> query = mock(CriteriaQuery.class);
+                CriteriaBuilder cb = mock(CriteriaBuilder.class);
+                Predicate basePredicate = mock(Predicate.class);
+                when(cb.conjunction()).thenReturn(basePredicate);
 
-        Predicate resultPredicate = mock(Predicate.class);
-        when(cb.and(basePredicate, modalityPredicate)).thenReturn(resultPredicate);
+                // Mock do predicate de modalidade
+                Predicate modalityPredicate = mock(Predicate.class);
+                Path modalityPath = mock(Path.class);
+                when(root.get("modality")).thenReturn(modalityPath);
+                when(modalityPath.in(InterpreterModality.ALL, InterpreterModality.ONLINE))
+                                .thenReturn(modalityPredicate);
 
-        Specification<Interpreter> spec = InterpreterSpecification.filter(InterpreterModality.ONLINE, null, null,
-                null, null, null, null, null);
+                // Mock do predicate final
+                Predicate resultPredicate = mock(Predicate.class);
+                when(cb.and(basePredicate, modalityPredicate)).thenReturn(resultPredicate);
 
-        Predicate result = spec.toPredicate(root, query, cb);
-        assertEquals(resultPredicate, result);
-    }
+                // Criar DTO com modalidade ONLINE
+                InterpreterSpecificationFilterDTO filterDTO = new InterpreterSpecificationFilterDTO();
+                filterDTO.setModality(InterpreterModality.ONLINE);
 
-    @Test
-    void shouldBuildPredicateWithCity() {
-        Root<Interpreter> root = mock(Root.class);
-        CriteriaQuery<?> query = mock(CriteriaQuery.class);
-        CriteriaBuilder cb = mock(CriteriaBuilder.class);
-        Predicate basePredicate = mock(Predicate.class);
-        Predicate cityPredicate = mock(Predicate.class);
+                // Chamar Specification
+                Specification<Interpreter> spec = InterpreterSpecification.filter(filterDTO);
+                Predicate result = spec.toPredicate(root, query, cb);
 
-        Join<Interpreter, ?> locationJoin = (Join<Interpreter, ?>) mock(Join.class);
+                // Verificações
+                assertEquals(resultPredicate, result);
+        }
 
-        Path cityPath = mock(Path.class);
-        Expression<String> lowerCityExpression = mock(Expression.class);
+        @Test
+        void shouldBuildPredicateWithCity() {
+                Root<Interpreter> root = mock(Root.class);
+                CriteriaQuery<?> query = mock(CriteriaQuery.class);
+                CriteriaBuilder cb = mock(CriteriaBuilder.class);
+                Predicate basePredicate = mock(Predicate.class);
+                Predicate cityPredicate = mock(Predicate.class);
 
-        when(root.join("locations", JoinType.LEFT)).thenReturn((Join) locationJoin);
-        when(locationJoin.get("city")).thenReturn(cityPath);
-        when(cb.lower(cityPath)).thenReturn(lowerCityExpression);
-        when(cb.like(lowerCityExpression, "%são paulo%")).thenReturn(cityPredicate);
-        when(cb.and(basePredicate, cityPredicate)).thenReturn(cityPredicate);
-        when(cb.conjunction()).thenReturn(basePredicate);
+                Join<Interpreter, ?> locationJoin = mock(Join.class);
+                Path cityPath = mock(Path.class);
+                Expression<String> lowerCityExpression = mock(Expression.class);
 
-        Specification<Interpreter> spec = InterpreterSpecification.filter(null, null, "São Paulo",
-                null, null, null, null, null);
+                when(cb.conjunction()).thenReturn(basePredicate);
+                when(root.join("locations", JoinType.LEFT)).thenReturn((Join) locationJoin);
+                when(locationJoin.get("city")).thenReturn(cityPath);
+                when(cb.lower(cityPath)).thenReturn(lowerCityExpression);
+                when(cb.like(lowerCityExpression, "%são paulo%")).thenReturn(cityPredicate);
+                when(cb.and(basePredicate, cityPredicate)).thenReturn(cityPredicate);
 
-        Predicate result = spec.toPredicate(root, query, cb);
+                // Preencher o DTO
+                InterpreterSpecificationFilterDTO filterDTO = new InterpreterSpecificationFilterDTO();
+                filterDTO.setCity("São Paulo");
 
-        assertThat(result).isEqualTo(cityPredicate);
-        verify(cb).like(lowerCityExpression, "%são paulo%");
-    }
+                Specification<Interpreter> spec = InterpreterSpecification.filter(filterDTO);
+                Predicate result = spec.toPredicate(root, query, cb);
 
-    @Test
-    void shouldBuildPredicateWithUF() {
-        Root<Interpreter> root = mock(Root.class);
-        CriteriaQuery<?> query = mock(CriteriaQuery.class);
-        CriteriaBuilder cb = mock(CriteriaBuilder.class);
-        Predicate basePredicate = mock(Predicate.class);
-        Predicate ufPredicate = mock(Predicate.class);
+                assertThat(result).isEqualTo(cityPredicate);
+                verify(cb).like(lowerCityExpression, "%são paulo%");
+        }
 
-        Join<Interpreter, ?> locationJoin = (Join<Interpreter, ?>) mock(Join.class);
+        @Test
+        void shouldBuildPredicateWithUF() {
+                Root<Interpreter> root = mock(Root.class);
+                CriteriaQuery<?> query = mock(CriteriaQuery.class);
+                CriteriaBuilder cb = mock(CriteriaBuilder.class);
+                Predicate basePredicate = mock(Predicate.class);
+                Predicate ufPredicate = mock(Predicate.class);
 
-        Path ufPath = mock(Path.class);
+                Join<Interpreter, ?> locationJoin = mock(Join.class);
+                Path ufPath = mock(Path.class);
 
-        when(root.join("locations", JoinType.LEFT)).thenReturn((Join) locationJoin);
-        when(locationJoin.get("uf")).thenReturn(ufPath);
-        when(cb.equal(ufPath, "RS")).thenReturn(ufPredicate);
-        when(cb.and(basePredicate, ufPredicate)).thenReturn(ufPredicate);
-        when(cb.conjunction()).thenReturn(basePredicate);
+                when(cb.conjunction()).thenReturn(basePredicate);
+                when(root.join("locations", JoinType.LEFT)).thenReturn((Join) locationJoin);
+                when(locationJoin.get("uf")).thenReturn(ufPath);
+                when(cb.equal(ufPath, "RS")).thenReturn(ufPredicate);
+                when(cb.and(basePredicate, ufPredicate)).thenReturn(ufPredicate);
 
-        Specification<Interpreter> spec = InterpreterSpecification.filter(null, "RS", null,
-                null, null, null, null, null);
+                // Preencher o DTO
+                InterpreterSpecificationFilterDTO filterDTO = new InterpreterSpecificationFilterDTO();
+                filterDTO.setUf("RS");
 
-        Predicate result = spec.toPredicate(root, query, cb);
+                Specification<Interpreter> spec = InterpreterSpecification.filter(filterDTO);
+                Predicate result = spec.toPredicate(root, query, cb);
 
-        assertThat(result).isEqualTo(ufPredicate);
-        verify(cb).equal(ufPath, "RS");
-    }
+                assertThat(result).isEqualTo(ufPredicate);
+                verify(cb).equal(ufPath, "RS");
+        }
 
-    @Test
-    void shouldBuildPredicateWithAvailableDate() {
-        Root<Interpreter> root = mock(Root.class);
-        CriteriaQuery<?> query = mock(CriteriaQuery.class);
-        CriteriaBuilder cb = mock(CriteriaBuilder.class);
-        Predicate basePredicate = mock(Predicate.class);
+        @Test
+        void shouldBuildPredicateWithAvailableDate() {
+                // Mocks do JPA Criteria
+                Root<Interpreter> root = mock(Root.class);
+                CriteriaQuery<?> query = mock(CriteriaQuery.class);
+                CriteriaBuilder cb = mock(CriteriaBuilder.class);
+                Predicate basePredicate = mock(Predicate.class);
+                when(cb.conjunction()).thenReturn(basePredicate);
 
-        Join<Interpreter, Schedule> scheduleJoin = (Join<Interpreter, Schedule>) (Join<?, ?>) mock(Join.class);
-        when(cb.conjunction()).thenReturn(basePredicate);
+                // Mock do join de schedules
+                Join scheduleJoin = mock(Join.class);
+                when(root.join("schedules", JoinType.LEFT)).thenReturn(scheduleJoin);
 
-        LocalDateTime availableDate = LocalDateTime.of(2025, 10, 6, 10, 0);
-        LocalTime requestedStart = availableDate.toLocalTime();
-        LocalTime requestedEnd = requestedStart.plusHours(1);
+                Path dayPath = mock(Path.class);
+                Path startTimePath = mock(Path.class);
+                Path endTimePath = mock(Path.class);
 
-        // Mock schedule predicates
-        Predicate schedulePredicate = mock(Predicate.class);
-        Path scheduleStartTimePath = mock(Path.class);
-        Path scheduleEndTimePath = mock(Path.class);
-        when(scheduleJoin.get("startTime")).thenReturn(scheduleStartTimePath);
-        when(scheduleJoin.get("endTime")).thenReturn(scheduleEndTimePath);
+                when(scheduleJoin.get("day")).thenReturn(dayPath);
+                when(scheduleJoin.get("startTime")).thenReturn(startTimePath);
+                when(scheduleJoin.get("endTime")).thenReturn(endTimePath);
 
-        when(root.join("schedules", JoinType.LEFT)).thenReturn((Join) scheduleJoin);
-        when(cb.equal(scheduleJoin.get("day"), DayOfWeek.MON)).thenReturn(schedulePredicate);
-        when(cb.lessThanOrEqualTo(scheduleStartTimePath, requestedStart)).thenReturn(schedulePredicate);
-        when(cb.greaterThanOrEqualTo(scheduleEndTimePath, requestedEnd)).thenReturn(schedulePredicate);
-        when(cb.and(basePredicate, schedulePredicate)).thenReturn(schedulePredicate);
+                Predicate dayPredicate = mock(Predicate.class);
+                Predicate startPredicate = mock(Predicate.class);
+                Predicate endPredicate = mock(Predicate.class);
+                Predicate schedulePredicate = mock(Predicate.class);
 
-        // Mock subquery for appointments
-        Subquery<UUID> subquery = mock(Subquery.class);
-        Root<Appointment> appointmentSubRoot = mock(Root.class);
-        when(query.subquery(UUID.class)).thenReturn(subquery);
-        when(subquery.from(Appointment.class)).thenReturn(appointmentSubRoot);
+                LocalDateTime availableDate = LocalDateTime.of(2025, 10, 6, 10, 0);
+                LocalTime requestedStart = availableDate.toLocalTime();
+                LocalTime requestedEnd = requestedStart.plusHours(1);
 
-        Path interpreterPath = mock(Path.class);
-        Path idPath = mock(Path.class);
-        when(appointmentSubRoot.get("interpreter")).thenReturn(interpreterPath);
-        when(interpreterPath.get("id")).thenReturn(idPath);
-        when(subquery.select(idPath)).thenReturn(subquery);
+                when(cb.equal(dayPath, DayOfWeek.MON)).thenReturn(dayPredicate);
+                when(cb.lessThanOrEqualTo(startTimePath, requestedStart)).thenReturn(startPredicate);
+                when(cb.greaterThanOrEqualTo(endTimePath, requestedEnd)).thenReturn(endPredicate);
+                when(cb.and(dayPredicate, startPredicate, endPredicate)).thenReturn(schedulePredicate);
+                when(cb.and(basePredicate, schedulePredicate)).thenReturn(schedulePredicate);
 
-        Predicate subqueryAndPredicate = mock(Predicate.class);
-        Predicate firstConditionPredicate = mock(Predicate.class);
-        Predicate secondConditionPredicate = mock(Predicate.class);
-        Predicate thirdConditionPredicate = mock(Predicate.class);
-        when(cb.and(firstConditionPredicate, secondConditionPredicate, thirdConditionPredicate)).thenReturn(subqueryAndPredicate);
+                // Mock do Subquery de appointments
+                Subquery<UUID> subquery = mock(Subquery.class);
+                when(query.subquery(UUID.class)).thenReturn(subquery);
 
-        Path statusPath = mock(Path.class);
-        when(appointmentSubRoot.get("status")).thenReturn(statusPath);
-        when(statusPath.in(AppointmentStatus.ACCEPTED, AppointmentStatus.COMPLETED)).thenReturn(firstConditionPredicate);
+                Root appointmentSubRoot = mock(Root.class);
+                when(subquery.from(Appointment.class)).thenReturn(appointmentSubRoot);
 
-        Path datePath = mock(Path.class);
-        when(appointmentSubRoot.get("date")).thenReturn(datePath);
-        when(cb.equal(datePath, LocalDate.of(2025, 10, 6))).thenReturn(secondConditionPredicate);
+                Path interpreterPath = mock(Path.class);
+                Path appointmentIdPath = mock(Path.class);
+                when(appointmentSubRoot.get("interpreter")).thenReturn(interpreterPath);
+                when(interpreterPath.get("id")).thenReturn(appointmentIdPath);
+                when(subquery.select(appointmentIdPath)).thenReturn(subquery);
 
-        Predicate greaterThanPredicate = mock(Predicate.class);
-        Predicate lessThanPredicate = mock(Predicate.class);
-        Predicate joinGreaterThanLessThanPredicate = mock(Predicate.class);
-        when(cb.greaterThan(any(), eq(requestedStart))).thenReturn(greaterThanPredicate);
-        when(cb.lessThan(any(), eq(requestedEnd))).thenReturn(lessThanPredicate);
-        when(cb.and(greaterThanPredicate, lessThanPredicate)).thenReturn(joinGreaterThanLessThanPredicate);
-        when(cb.lessThanOrEqualTo(any(), eq(requestedStart))).thenReturn(lessThanPredicate);
-        when(cb.greaterThanOrEqualTo(any(), eq(requestedEnd))).thenReturn(greaterThanPredicate);
-        when(cb.and(lessThanPredicate, greaterThanPredicate)).thenReturn(joinGreaterThanLessThanPredicate);
-        when(cb.or(joinGreaterThanLessThanPredicate, joinGreaterThanLessThanPredicate, joinGreaterThanLessThanPredicate))
-                .thenReturn(thirdConditionPredicate);
+                Path statusPath = mock(Path.class);
+                when(appointmentSubRoot.get("status")).thenReturn(statusPath);
+                Predicate statusPredicate = mock(Predicate.class);
+                when(statusPath.in(AppointmentStatus.ACCEPTED, AppointmentStatus.COMPLETED))
+                                .thenReturn(statusPredicate);
 
-        when(subquery.where(subqueryAndPredicate)).thenReturn(subquery);
+                Path datePath = mock(Path.class);
+                when(appointmentSubRoot.get("date")).thenReturn(datePath);
+                Predicate datePredicate = mock(Predicate.class);
+                when(cb.equal(datePath, availableDate.toLocalDate())).thenReturn(datePredicate);
 
-        Predicate inSubqueryPredicate = mock(Predicate.class);
-        when(root.get("id")).thenReturn(idPath);
-        when(idPath.in(subquery)).thenReturn(inSubqueryPredicate);
+                Predicate subqueryPredicate = mock(Predicate.class);
+                when(cb.and(statusPredicate, datePredicate)).thenReturn(subqueryPredicate);
+                when(subquery.where(subqueryPredicate)).thenReturn(subquery);
 
-        when(cb.not(idPath.in(subquery))).thenReturn(inSubqueryPredicate);
-        when(cb.and(schedulePredicate, inSubqueryPredicate)).thenReturn(inSubqueryPredicate);
+                // Mock do root.get("id").in(subquery)
+                Path<Object> idPath = mock(Path.class);
+                when(root.get("id")).thenReturn(idPath);
 
-        Specification<Interpreter> spec = InterpreterSpecification.filter(null, null, null, null,
-                null, null, availableDate, null);
+                Predicate inSubqueryPredicate = mock(Predicate.class);
+                when(idPath.in(subquery)).thenReturn(inSubqueryPredicate);
+                when(cb.not(inSubqueryPredicate)).thenReturn(inSubqueryPredicate);
+                when(cb.and(schedulePredicate, inSubqueryPredicate)).thenReturn(inSubqueryPredicate);
 
-        assertDoesNotThrow(() -> spec.toPredicate(root, query, cb));
-        verify(cb).equal(scheduleJoin.get("day"), DayOfWeek.MON);
-        verify(cb).lessThanOrEqualTo(scheduleStartTimePath, requestedStart);
-        verify(cb).greaterThanOrEqualTo(scheduleEndTimePath, requestedEnd);
-    }
+                // DTO
+                InterpreterSpecificationFilterDTO filterDTO = new InterpreterSpecificationFilterDTO();
+                filterDTO.setAvailableDate(availableDate);
 
-    @Test
-    void shouldBuildPredicateWithName() {
-        Root<Interpreter> root = mock(Root.class);
-        CriteriaQuery<?> query = mock(CriteriaQuery.class);
-        CriteriaBuilder cb = mock(CriteriaBuilder.class);
-        Predicate basePredicate = mock(Predicate.class);
-        Predicate namePredicate = mock(Predicate.class);
+                // Executa Specification
+                Specification<Interpreter> spec = InterpreterSpecification.filter(filterDTO);
 
-        Path namePath = mock(Path.class);
-        Expression<String> lowerNameExpression = mock(Expression.class);
+                // Executa e verifica se não lança exception
+                assertDoesNotThrow(() -> spec.toPredicate(root, query, cb));
+        }
 
-        when(cb.conjunction()).thenReturn(basePredicate);
-        when(root.get("name")).thenReturn(namePath);
-        when(cb.lower(namePath)).thenReturn(lowerNameExpression);
-        when(cb.like(lowerNameExpression, "%souza%")).thenReturn(namePredicate);
-        when(cb.and(basePredicate, namePredicate)).thenReturn(namePredicate);
+        @Test
+        void shouldBuildPredicateWithName() {
+                Root<Interpreter> root = mock(Root.class);
+                CriteriaQuery<?> query = mock(CriteriaQuery.class);
+                CriteriaBuilder cb = mock(CriteriaBuilder.class);
+                Predicate basePredicate = mock(Predicate.class);
+                Predicate namePredicate = mock(Predicate.class);
 
-        Specification<Interpreter> spec = InterpreterSpecification.filter(null, null, null, null,
-                null, null, null, "SOUZA");
+                Path namePath = mock(Path.class);
+                Expression<String> lowerNameExpression = mock(Expression.class);
 
-        Predicate result = spec.toPredicate(root, query, cb);
+                when(cb.conjunction()).thenReturn(basePredicate);
+                when(root.get("name")).thenReturn(namePath);
+                when(cb.lower(namePath)).thenReturn(lowerNameExpression);
+                when(cb.like(lowerNameExpression, "%souza%")).thenReturn(namePredicate);
+                when(cb.and(basePredicate, namePredicate)).thenReturn(namePredicate);
 
-        assertThat(result).isEqualTo(namePredicate);
-        verify(cb).like(lowerNameExpression, "%souza%");
-    }
+                // Preencher DTO com nome
+                InterpreterSpecificationFilterDTO filterDTO = new InterpreterSpecificationFilterDTO();
+                filterDTO.setName("Souza");
+
+                Specification<Interpreter> spec = InterpreterSpecification.filter(filterDTO);
+                Predicate result = spec.toPredicate(root, query, cb);
+
+                assertThat(result).isEqualTo(namePredicate);
+                verify(cb).like(lowerNameExpression, "%souza%");
+        }
+
 }
