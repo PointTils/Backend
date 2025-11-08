@@ -6,8 +6,7 @@ COPY provisioning /etc/grafana/provisioning
 
 # Criar diretório de dashboards e copiar dashboard
 RUN mkdir -p /var/lib/grafana/dashboards
-COPY provisioning/dashboards/pointtils_dashboard.json /var/lib/grafana/dashboards/pointtils_dashboard.json
-COPY provisioning/dashboards/spring-boot-dashboard.json /var/lib/grafana/dashboards/spring-boot-dashboard.json
+COPY provisioning/dashboards/ /var/lib/grafana/dashboards/
 
 # Expor porta padrão do Grafana
 EXPOSE 3000
