@@ -59,6 +59,7 @@ public class InterpreterService {
                 .birthday(request.getBirthday())
                 .cpf(request.getCpf())
                 .cnpj(Objects.nonNull(request.getProfessionalData()) ? request.getProfessionalData().getCnpj() : null)
+                .videoUrl(Objects.nonNull(request.getProfessionalData()) ? request.getProfessionalData().getVideoUrl() : null)
                 .rating(BigDecimal.ZERO)
                 .imageRights(false)
                 .modality(InterpreterModality.ALL)
@@ -144,6 +145,7 @@ public class InterpreterService {
             interpreter.setImageRights(professionalData.getImageRights());
             interpreter.setModality(professionalData.getModality());
             interpreter.setDescription(professionalData.getDescription());
+            interpreter.setVideoUrl(professionalData.getVideoUrl());
         }
 
         if (dto != null) {
@@ -282,6 +284,9 @@ public class InterpreterService {
         }
         if (dto.getDescription() != null) {
             interpreter.setDescription(dto.getDescription());
+        }
+        if (dto.getVideoUrl() != null) {
+            interpreter.setVideoUrl(dto.getVideoUrl());
         }
     }
 

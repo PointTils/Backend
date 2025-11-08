@@ -160,7 +160,8 @@ class InterpreterControllerTest {
                 .andExpect(jsonPath("$.data.professional_data.image_rights").value(true))
                 .andExpect(jsonPath("$.data.professional_data.modality").value("PERSONALLY"))
                 .andExpect(jsonPath("$.data.professional_data.description")
-                        .value("Intérprete experiente em LIBRAS"));
+                        .value("Intérprete experiente em LIBRAS"))
+                .andExpect(jsonPath("$.data.professional_data.video_url").value("https://www.youtube.com/watch?v=tmIBzgKEz3o"));
     }
 
     @Test
