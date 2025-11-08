@@ -6,7 +6,7 @@ COPY provisioning /etc/grafana/provisioning
 
 # Criar diretório de dashboards e copiar dashboard
 RUN mkdir -p /var/lib/grafana/dashboards
-COPY provisioning/dashboards/ /var/lib/grafana/dashboards/
+COPY provisioning/dashboards/*.json /var/lib/grafana/dashboards/
 
 # Expor porta padrão do Grafana
 EXPOSE 3000
