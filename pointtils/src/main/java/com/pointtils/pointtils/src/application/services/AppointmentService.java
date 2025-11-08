@@ -16,13 +16,12 @@ import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 @Slf4j
@@ -46,9 +45,7 @@ public class AppointmentService {
         var appointment = appointmentMapper.toDomain(dto, interpreter, user);
 
         var savedAppointment = appointmentRepository.save(appointment);
-        notificationService.sendNotificationToUser(dto.getInterpreterId(),
-                NotificationType.APPOINTMENT_REQUESTED,
-                Map.of("userName", user.getDisplayName(), "date", dto.getDate().toString()));
+        notificationService.sendNotificationToUser(dto.getInterpreterId(), NotificationType.APPOINTMENT_REQUESTED);
 
         return appointmentMapper.toResponseDTO(savedAppointment);
     }
@@ -93,7 +90,26 @@ public class AppointmentService {
         if (dto.getEndTime() != null) appointment.setEndTime(dto.getEndTime());
 
         Appointment saved = appointmentRepository.save(appointment);
+        notifyAppointmentStatusUpdate(saved, dto.getLoggedUserEmail());
+
         return appointmentMapper.toResponseDTO(saved);
+    }
+
+    private void notifyAppointmentStatusUpdate(Appointment appointment, String loggedUserEmail) {
+        boolean loggedUserIsInterpreter = appointment.getInterpreter().getEmail().equals(loggedUserEmail);
+        UUID userId = loggedUserIsInterpreter ? appointment.getUser().getId() : appointment.getInterpreter().getId();
+
+        if (Objects.requireNonNull(appointment.getStatus()) == AppointmentStatus.CANCELED) {
+            notificationService.sendNotificationToUser(userId, NotificationType.APPOINTMENT_CANCELLED);
+        } else if (appointment.getStatus() == AppointmentStatus.ACCEPTED) {
+            LocalDateTime scheduledTime = LocalDateTime.of(appointment.getDate(), appointment.getStartTime()).minusHours(24);
+
+            notificationService.sendNotificationToUser(userId, NotificationType.APPOINTMENT_ACCEPTED);
+            notificationService.sendScheduledNotification(appointment.getUser().getId(),
+                    NotificationType.APPOINTMENT_REMINDER, scheduledTime);
+            notificationService.sendScheduledNotification(appointment.getInterpreter().getId(),
+                    NotificationType.APPOINTMENT_REMINDER, scheduledTime);
+        }
     }
 
     public void delete(UUID id) {
@@ -103,29 +119,29 @@ public class AppointmentService {
         appointmentRepository.deleteById(id);
     }
 
-    public List<AppointmentFilterResponseDTO> searchAppointments(UUID interpreterId, UUID userId, AppointmentStatus status, 
-            AppointmentModality modality, LocalDateTime fromDateTime, Boolean hasRating, int dayLimit) {
+    public List<AppointmentFilterResponseDTO> searchAppointments(UUID interpreterId, UUID userId, AppointmentStatus status,
+                                                                 AppointmentModality modality, LocalDateTime fromDateTime, Boolean hasRating, int dayLimit) {
         List<Appointment> appointments = appointmentRepository.findAll();
-        
+
         return appointments.stream()
-            .filter(appointment -> interpreterId == null || appointment.getInterpreter().getId().equals(interpreterId))
-            .filter(appointment -> userId == null || appointment.getUser().getId().equals(userId))
-            .filter(appointment -> status == null || appointment.getStatus().equals(status))
-            .filter(appointment -> modality == null || appointment.getModality().equals(modality))
-            .filter(appointment -> fromDateTime == null || isAfterDateTime(appointment, fromDateTime))
-            .filter(appointment -> hasRating == null || hasRatingAssigned(appointment, hasRating))
-            .filter(appointment -> dayLimit == -1 || isBeforeDateLimit(appointment, dayLimit))
-            .sorted(Comparator.comparing(
-                    (Appointment appointment) -> LocalDateTime.of(appointment.getDate(), appointment.getEndTime())
+                .filter(appointment -> interpreterId == null || appointment.getInterpreter().getId().equals(interpreterId))
+                .filter(appointment -> userId == null || appointment.getUser().getId().equals(userId))
+                .filter(appointment -> status == null || appointment.getStatus().equals(status))
+                .filter(appointment -> modality == null || appointment.getModality().equals(modality))
+                .filter(appointment -> fromDateTime == null || isAfterDateTime(appointment, fromDateTime))
+                .filter(appointment -> hasRating == null || hasRatingAssigned(appointment, hasRating))
+                .filter(appointment -> dayLimit == -1 || isBeforeDateLimit(appointment, dayLimit))
+                .sorted(Comparator.comparing(
+                        (Appointment appointment) -> LocalDateTime.of(appointment.getDate(), appointment.getEndTime())
                 ).reversed())
-            .map(appointment -> {
-                if (interpreterId != null) {
-                    return appointmentMapper.toFilterResponseDTO(appointment, appointment.getUser());
-                } else {
-                    return appointmentMapper.toFilterResponseDTO(appointment, appointment.getInterpreter());
-                }
-            })
-        .toList();
+                .map(appointment -> {
+                    if (interpreterId != null) {
+                        return appointmentMapper.toFilterResponseDTO(appointment, appointment.getUser());
+                    } else {
+                        return appointmentMapper.toFilterResponseDTO(appointment, appointment.getInterpreter());
+                    }
+                })
+                .toList();
     }
 
     private boolean hasRatingAssigned(Appointment appointment, Boolean hasRating) {

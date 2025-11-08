@@ -6,6 +6,8 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -122,7 +124,9 @@ public class AppointmentController {
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     public ResponseEntity<ApiResponseDTO<AppointmentResponseDTO>> updatePartial(@PathVariable UUID id,
-                                                                                @RequestBody @Valid AppointmentPatchRequestDTO dto) {
+                                                                                @RequestBody @Valid AppointmentPatchRequestDTO dto,
+                                                                                @AuthenticationPrincipal UserDetails userDetails) {
+        dto.setLoggedUserEmail(userDetails.getUsername());
         AppointmentResponseDTO updated = appointmentService.updatePartial(id, dto);
         return ResponseEntity.ok(ApiResponseDTO.success("Solicitação atualizada com sucesso", updated));
     }
