@@ -17,9 +17,20 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class UserPictureServiceTest {
@@ -44,9 +55,14 @@ class UserPictureServiceTest {
 
         user = new User() {
             @Override
-            public String getDisplayName() { return "Test User"; }
+            public String getDisplayName() {
+                return "Test User";
+            }
+
             @Override
-            public String getDocument() { return "123456789"; }
+            public String getDocument() {
+                return "123456789";
+            }
         };
         user.setId(userId);
         user.setEmail("test@example.com");
@@ -142,17 +158,13 @@ class UserPictureServiceTest {
 
     @Test
     @DisplayName("Deve lançar exceção ao atualizar foto quando upload para S3 falha/desabilitado")
-    void shouldThrowExceptionWhenUpdatingPictureWithS3Failure() {
+    void shouldThrowExceptionWhenUpdatingPictureWithS3Failure() throws IOException {
         // Arrange
         MultipartFile file = mock(MultipartFile.class);
         UserPicturePostRequestDTO request = new UserPicturePostRequestDTO(userId, file);
 
         when(userService.findById(userId)).thenReturn(user);
-        try {
-            when(s3Service.uploadFile(file, userId.toString())).thenThrow(new UnsupportedOperationException("Upload de fotos está desabilitado"));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        when(s3Service.uploadFile(file, userId.toString())).thenThrow(new UnsupportedOperationException("Upload de fotos está desabilitado"));
 
         // Act & Assert
         UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class, () -> {
@@ -161,11 +173,7 @@ class UserPictureServiceTest {
 
         assertTrue(exception.getMessage().contains("desabilitado"));
         verify(userService, times(1)).findById(userId);
-        try {
-            verify(s3Service, times(1)).uploadFile(file, userId.toString());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        verify(s3Service, times(1)).uploadFile(file, userId.toString());
         verify(userService, never()).updateUser(any(User.class));
     }
 
@@ -178,9 +186,14 @@ class UserPictureServiceTest {
 
         User u = new User() {
             @Override
-            public String getDisplayName() { return "Test User"; }
+            public String getDisplayName() {
+                return "Test User";
+            }
+
             @Override
-            public String getDocument() { return "123456789"; }
+            public String getDocument() {
+                return "123456789";
+            }
         };
         u.setId(uid);
         u.setEmail("test@example.com");
@@ -213,14 +226,12 @@ class UserPictureServiceTest {
 
         when(userService.findById(uid)).thenThrow(new EntityNotFoundException("Usuário não encontrado"));
 
-        assertThrows(EntityNotFoundException.class, () ->
-                userPictureService.updatePicture(
-                        UserPicturePostRequestDTO.builder()
-                                .userId(uid)
-                                .file(file)
-                                .build()
-                )
-        );
+        UserPicturePostRequestDTO requestDTO = UserPicturePostRequestDTO.builder()
+                .userId(uid)
+                .file(file)
+                .build();
+
+        assertThrows(EntityNotFoundException.class, () -> userPictureService.updatePicture(requestDTO));
 
         verify(userService).findById(uid);
         verifyNoInteractions(s3Service);
