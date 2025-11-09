@@ -16,6 +16,10 @@ import lombok.RequiredArgsConstructor;
 public class SpecialtyService {
     
     private final SpecialtyRepository specialtyRepository;
+
+    private static final String SPECIALTY_WITH_NAME = "Especialidade com nome ";
+    private static final String ALREADY_EXIST = "já existe";
+
     
     public List<Specialty> getAllSpecialties() {
         return specialtyRepository.findAll();
@@ -28,7 +32,7 @@ public class SpecialtyService {
     
     public Specialty getSpecialtyByName(String name) {
         return specialtyRepository.findByName(name)
-                .orElseThrow(() -> new EntityNotFoundException("Especialidade com nome " + name + " não encontrada"));
+                .orElseThrow(() -> new EntityNotFoundException(SPECIALTY_WITH_NAME + name + " não encontrada"));
     }
     
     public List<Specialty> searchSpecialtiesByName(String name) {
@@ -49,7 +53,7 @@ public class SpecialtyService {
     
     public Specialty createSpecialty(String name) {
         if (specialtyRepository.existsByName(name)) {
-            throw new IllegalArgumentException("Especialidade com nome '" + name + "' já existe");
+            throw new IllegalArgumentException(SPECIALTY_WITH_NAME + name + ALREADY_EXIST);
         }
         
         Specialty specialty = new Specialty(name);
@@ -60,7 +64,7 @@ public class SpecialtyService {
         Specialty specialty = getSpecialtyById(id);
         
         if (!specialty.getName().equals(name) && specialtyRepository.existsByName(name)) {
-            throw new IllegalArgumentException("Especialidade com nome '" + name + "' já existe");
+            throw new IllegalArgumentException(SPECIALTY_WITH_NAME + name + ALREADY_EXIST);
         }
         
         specialty.setName(name);
@@ -72,7 +76,7 @@ public class SpecialtyService {
         
         if (name != null) {
             if (!specialty.getName().equals(name) && specialtyRepository.existsByName(name)) {
-                throw new IllegalArgumentException("Especialidade com nome '" + name + "' já existe");
+                throw new IllegalArgumentException(SPECIALTY_WITH_NAME + name + ALREADY_EXIST);
             }
             specialty.setName(name);
         }

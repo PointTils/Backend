@@ -1,10 +1,14 @@
 package com.pointtils.pointtils.src.application.services;
 
-import java.time.Year;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
+import com.pointtils.pointtils.src.application.dto.requests.EmailRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.ProcessTemplateRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterRegistrationEmailDTO;
+import com.pointtils.pointtils.src.core.domain.entities.Parameters;
+import com.pointtils.pointtils.src.infrastructure.repositories.ParametersRepository;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.SimpleMailMessage;
@@ -13,18 +17,28 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.pointtils.pointtils.src.application.dto.requests.EmailRequestDTO;
-import com.pointtils.pointtils.src.core.domain.entities.Parameters;
-import com.pointtils.pointtils.src.infrastructure.repositories.ParametersRepository;
-
-import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.time.Year;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmailService {
+
+    private static final String EMAIL_REQUEST_NULL = "EmailRequestDTO não pode ser nulo";
+    private static final String PLACEHOLDER_NOME = "{{nome}}";
+    private static final String PLACEHOLDER_CPF = "{{cpf}}";
+    private static final String PLACEHOLDER_CNPJ = "{{cnpj}}";
+    private static final String PLACEHOLDER_EMAIL = "{{email}}";
+    private static final String PLACEHOLDER_TELEFONE = "{{telefone}}";
+    private static final String PLACEHOLDER_ANO = "{{ano}}";
+    private static final String PLACEHOLDER_ACCEPT = "{{link_accept_api}}";
+    private static final String PLACEHOLDER_REJECT = "{{link_reject_api}}";
+    private static final String PLACEHOLDER_SEND_NAME = "{{senderName}}";
+    private static final String PLACEHOLDER_RESPOSTA_SOLICITACAO = "{{respostaSolicitacao}}";
 
     private final JavaMailSender mailSender;
     private final ParametersRepository parametersRepository;
@@ -37,13 +51,13 @@ public class EmailService {
 
     /**
      * Envia email simples de texto
-     * 
+     *
      * @param emailRequest DTO com informações do email
      * @return true se o email foi enviado com sucesso, false caso contrário
      */
     public boolean sendSimpleEmail(EmailRequestDTO emailRequest) {
         if (emailRequest == null) {
-            log.error("EmailRequestDTO não pode ser nulo");
+            log.error(EMAIL_REQUEST_NULL);
             return false;
         }
 
@@ -66,29 +80,20 @@ public class EmailService {
 
     /**
      * Envia email HTML
-     * 
+     *
      * @param emailRequest DTO com informações do email
      * @return true se o email foi enviado com sucesso, false caso contrário
      */
     public boolean sendHtmlEmail(EmailRequestDTO emailRequest) {
         if (emailRequest == null) {
-            log.error("EmailRequestDTO não pode ser nulo");
+            log.error(EMAIL_REQUEST_NULL);
             return false;
         }
 
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            helper.setFrom(String.format("%s <%s>", senderName, emailFrom));
-            helper.setTo(emailRequest.getTo());
-            helper.setSubject(emailRequest.getSubject());
-            helper.setText(emailRequest.getBody(), true);
-
-            mailSender.send(message);
+            sendEmailMessage(emailRequest, null, null);
             log.info("Email HTML enviado com sucesso para: {}", emailRequest.getTo());
             return true;
-
         } catch (Exception e) {
             log.error("Erro ao enviar email HTML para {}: {}", emailRequest.getTo(), e.getMessage());
             return false;
@@ -97,31 +102,14 @@ public class EmailService {
 
     public boolean sendEmailWithAttachments(EmailRequestDTO emailRequest, List<byte[]> attachments, List<String> attachmentNames) {
         if (emailRequest == null) {
-            log.error("EmailRequestDTO não pode ser nulo");
+            log.error(EMAIL_REQUEST_NULL);
             return false;
         }
 
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            helper.setFrom(String.format("%s <%s>", senderName, emailFrom));
-            helper.setTo(emailRequest.getTo());
-            helper.setSubject(emailRequest.getSubject());
-            helper.setText(emailRequest.getBody(), true);
-
-            // Adiciona os anexos
-            if (attachments != null) {
-                for (int i = 0; i < attachments.size(); i++) {
-                    byte[] attachment = attachments.get(i);
-                    helper.addAttachment(attachmentNames.get(i), new ByteArrayResource(attachment));
-                }
-            }
-
-            mailSender.send(message);
+            sendEmailMessage(emailRequest, attachments, attachmentNames);
             log.info("Email com anexos enviado com sucesso para: {}", emailRequest.getTo());
             return true;
-
         } catch (Exception e) {
             log.error("Erro ao enviar email com anexos para {}: {}", emailRequest.getTo(), e.getMessage());
             return false;
@@ -130,7 +118,7 @@ public class EmailService {
 
     /**
      * Envia email de boas-vindas
-     * 
+     *
      * @param email    Email do destinatário
      * @param userName Nome do usuário
      * @return true se o email foi enviado com sucesso, false caso contrário
@@ -148,7 +136,7 @@ public class EmailService {
 
     /**
      * Envia email de recuperação de senha
-     * 
+     *
      * @param email      Email do destinatário
      * @param userName   Nome do usuário
      * @param resetToken Token de recuperação
@@ -167,7 +155,7 @@ public class EmailService {
 
     /**
      * Envia email de confirmação de agendamento
-     * 
+     *
      * @param email           Email do destinatário
      * @param userName        Nome do usuário
      * @param appointmentDate Data do agendamento
@@ -175,7 +163,7 @@ public class EmailService {
      * @return true se o email foi enviado com sucesso, false caso contrário
      */
     public boolean sendAppointmentConfirmationEmail(String email, String userName, String appointmentDate,
-            String interpreterName) {
+                                                    String interpreterName) {
         String template = getTemplateByKey("APPOINTMENT_CONFIRMATION");
         String html = processAppointmentConfirmationTemplate(template, userName, appointmentDate, interpreterName);
         EmailRequestDTO emailRequest = new EmailRequestDTO(
@@ -188,43 +176,43 @@ public class EmailService {
 
     /**
      * Envia email de solicitação de cadastro de intérprete para administradores
-     * 
-     * @param adminEmail      Email do administrador
-     * @param interpreterName Nome do intérprete
-     * @param cpf             CPF do intérprete
-     * @param cnpj            CNPJ do intérprete
-     * @param email           Email do intérprete
-     * @param phone           Telefone do intérprete
-     * @param acceptLink      Link para aceitar o cadastro
-     * @param rejectLink      Link para recusar o cadastro
-     * @param files           Lista de documentos anexados
+     *
+     * @param dto Dados a serem enviados por e-mail
      * @return true se o email foi enviado com sucesso, false caso contrário
      */
-    public boolean sendInterpreterRegistrationRequestEmail(String adminEmail, String interpreterName, String cpf,
-            String cnpj, String email, String phone, String acceptLink, String rejectLink, List<MultipartFile> files) {
+    public boolean sendInterpreterRegistrationRequestEmail(InterpreterRegistrationEmailDTO dto) {
         // Buscar template do banco de dados
         String template = getTemplateByKey("PENDING_INTERPRETER_ADMIN");
-        
+
         List<byte[]> attachmentList = new ArrayList<>();
         List<String> attachmentNames = new ArrayList<>();
 
-        for (MultipartFile file : files) {
+        for (MultipartFile file : dto.getFiles()) {
             try {
                 byte[] documentBytes = file.getBytes();
                 attachmentNames.add(file.getOriginalFilename());
                 attachmentList.add(documentBytes);
             } catch (Exception e) {
-                log.error("Erro ao baixar documento '{}' do intérprete '{}': {}", file.getName(), interpreterName,
+                log.error("Erro ao baixar documento '{}' do intérprete '{}': {}", file.getName(), dto.getInterpreterName(),
                         e.getMessage());
             }
         }
 
-        
-        // Substituir placeholders do template
-        String html = processTemplate(template, interpreterName, cpf, cnpj, email, phone, acceptLink, rejectLink);
+        String html = processTemplate(
+                ProcessTemplateRequestDTO.builder()
+                        .template(template)
+                        .interpreterName(dto.getInterpreterName())
+                        .cpf(dto.getCpf())
+                        .cnpj(dto.getCnpj())
+                        .email(dto.getEmail())
+                        .phone(dto.getPhone())
+                        .acceptLink(dto.getAcceptLink())
+                        .rejectLink(dto.getRejectLink())
+                        .build()
+        );
 
         EmailRequestDTO emailRequest = new EmailRequestDTO(
-                adminEmail,
+                dto.getAdminEmail(),
                 "Nova Solicitação de Cadastro de Intérprete - PointTils",
                 html,
                 senderName);
@@ -233,7 +221,7 @@ public class EmailService {
 
     /**
      * Busca template HTML do banco de dados
-     * 
+     *
      * @param key Chave do template
      * @return Template HTML ou template padrão se não encontrado
      */
@@ -249,7 +237,7 @@ public class EmailService {
     /**
      * Constrói HTML a ser acessado pelo administrador ao clicar na aprovacao ou
      * rejeicao do cadastro
-     * 
+     *
      * @param emailResponse mensagem de retorno a ser enviada para o admin
      * @return string com o HTML construído
      */
@@ -257,87 +245,12 @@ public class EmailService {
         String emailTemplate = getTemplateByKey("ADMIN_FEEDBACK");
         return emailTemplate
                 .replace("{{message}}", emailResponse)
-                .replace("{{ano}}", String.valueOf(Year.now().getValue()));
-    }
-
-    /**
-     * Retorna template padrão baseado na chave
-     * 
-     * @param key Chave do template
-     * @return Template padrão
-     */
-    private String getDefaultTemplate(String key) {
-        log.error(
-                "Template com chave '{}' não encontrado no banco de dados. Verifique se a migration V12 foi executada.",
-                key);
-        return "<html><body><h1>Template não encontrado</h1><p>Template com chave '" + key
-                + "' não está disponível no banco de dados.</p></body></html>";
-    }
-
-    /**
-     * Processa template de boas-vindas
-     * 
-     * @param template Template do banco
-     * @param userName Nome do usuário
-     * @return Template processado
-     */
-    private String processWelcomeTemplate(String template, String userName) {
-        if (template == null) {
-            return getDefaultTemplate("WELCOME_EMAIL");
-        }
-
-        return template
-                .replace("{{nome}}", userName != null ? userName : "")
-                .replace("{{ano}}", String.valueOf(Year.now().getValue()))
-                .replace("{{senderName}}", senderName);
-    }
-
-    /**
-     * Processa template de recuperação de senha
-     * 
-     * @param template   Template do banco
-     * @param userName   Nome do usuário
-     * @param resetToken Token de recuperação
-     * @return Template processado
-     */
-    private String processPasswordResetTemplate(String template, String userName, String resetToken) {
-        if (template == null) {
-            return getDefaultTemplate("PASSWORD_RESET");
-        }
-
-        return template
-                .replace("{{nome}}", userName != null ? userName : "")
-                .replace("{{resetToken}}", resetToken != null ? resetToken : "")
-                .replace("{{ano}}", String.valueOf(Year.now().getValue()))
-                .replace("{{senderName}}", senderName);
-    }
-
-    /**
-     * Processa template de confirmação de agendamento
-     * 
-     * @param template        Template do banco
-     * @param userName        Nome do usuário
-     * @param appointmentDate Data do agendamento
-     * @param interpreterName Nome do intérprete
-     * @return Template processado
-     */
-    private String processAppointmentConfirmationTemplate(String template, String userName, String appointmentDate,
-            String interpreterName) {
-        if (template == null) {
-            return getDefaultTemplate("APPOINTMENT_CONFIRMATION");
-        }
-
-        return template
-                .replace("{{nome}}", userName != null ? userName : "")
-                .replace("{{appointmentDate}}", appointmentDate != null ? appointmentDate : "")
-                .replace("{{interpreterName}}", interpreterName != null ? interpreterName : "")
-                .replace("{{ano}}", String.valueOf(Year.now().getValue()))
-                .replace("{{senderName}}", senderName);
+                .replace(PLACEHOLDER_ANO, String.valueOf(Year.now().getValue()));
     }
 
     /**
      * Envia email de feedback sobre cadastro para o intérprete
-     * 
+     *
      * @param interpreterEmail Email do intérprete
      * @param interpreterName  Nome do intérprete
      * @param approved         true se o cadastro foi aprovado, false se foi negado
@@ -356,40 +269,107 @@ public class EmailService {
     }
 
     /**
-     * Processa o template HTML substituindo os placeholders pelos valores reais
-     * 
-     * @param template        Template HTML do banco de dados
-     * @param interpreterName Nome do intérprete
-     * @param cpf             CPF do intérprete
-     * @param cnpj            CNPJ do intérprete
-     * @param email           Email do intérprete
-     * @param phone           Telefone do intérprete
-     * @param acceptLink      Link para aceitar o cadastro
-     * @param rejectLink      Link para recusar o cadastro
-     * @return Template HTML processado
+     * Retorna template padrão baseado na chave
+     *
+     * @param key Chave do template
+     * @return Template padrão
      */
-    private String processTemplate(String template, String interpreterName, String cpf, String cnpj,
-            String email, String phone, String acceptLink, String rejectLink) {
-        if (template == null) {
-            return getDefaultTemplate("PENDING_INTERPRETER_ADMIN");
-        }
-
-        // Substituir placeholders do template do banco
-
-        return template
-                .replace("{{nome}}", interpreterName != null ? interpreterName : "")
-                .replace("{{cpf}}", cpf != null ? cpf : "")
-                .replace("{{cnpj}}", cnpj != null ? cnpj : "")
-                .replace("{{email}}", email != null ? email : "")
-                .replace("{{telefone}}", phone != null ? phone : "")
-                .replace("{{link_accept_api}}", acceptLink != null ? acceptLink : "")
-                .replace("{{link_reject_api}}", rejectLink != null ? rejectLink : "")
-                .replace("{{ano}}", String.valueOf(Year.now().getValue()));
+    private String getDefaultTemplate(String key) {
+        log.error(
+                "Template com chave '{}' não encontrado no banco de dados. Verifique se a migration V12 foi executada.",
+                key);
+        return "<html><body><h1>Template não encontrado</h1><p>Template com chave '" + key
+                + "' não está disponível no banco de dados.</p></body></html>";
     }
 
     /**
+     * Processa template de boas-vindas
+     *
+     * @param template Template do banco
+     * @param userName Nome do usuário
+     * @return Template processado
+     */
+    private String processWelcomeTemplate(String template, String userName) {
+        if (template == null) {
+            return getDefaultTemplate("WELCOME_EMAIL");
+        }
+
+        return template
+                .replace(PLACEHOLDER_NOME, userName != null ? userName : "")
+                .replace(PLACEHOLDER_ANO, String.valueOf(Year.now().getValue()))
+                .replace(PLACEHOLDER_SEND_NAME, senderName);
+    }
+
+    /**
+     * Processa template de recuperação de senha
+     *
+     * @param template   Template do banco
+     * @param userName   Nome do usuário
+     * @param resetToken Token de recuperação
+     * @return Template processado
+     */
+    private String processPasswordResetTemplate(String template, String userName, String resetToken) {
+        if (template == null) {
+            return getDefaultTemplate("PASSWORD_RESET");
+        }
+
+        return template
+                .replace(PLACEHOLDER_NOME, userName != null ? userName : "")
+                .replace("{{resetToken}}", resetToken != null ? resetToken : "")
+                .replace(PLACEHOLDER_ANO, String.valueOf(Year.now().getValue()))
+                .replace(PLACEHOLDER_SEND_NAME, senderName);
+    }
+
+    /**
+     * Processa template de confirmação de agendamento
+     *
+     * @param template        Template do banco
+     * @param userName        Nome do usuário
+     * @param appointmentDate Data do agendamento
+     * @param interpreterName Nome do intérprete
+     * @return Template processado
+     */
+    private String processAppointmentConfirmationTemplate(String template, String userName, String appointmentDate,
+                                                          String interpreterName) {
+        if (template == null) {
+            return getDefaultTemplate("APPOINTMENT_CONFIRMATION");
+        }
+
+        return template
+                .replace(PLACEHOLDER_NOME, userName != null ? userName : "")
+                .replace("{{appointmentDate}}", appointmentDate != null ? appointmentDate : "")
+                .replace("{{interpreterName}}", interpreterName != null ? interpreterName : "")
+                .replace(PLACEHOLDER_ANO, String.valueOf(Year.now().getValue()))
+                .replace(PLACEHOLDER_SEND_NAME, senderName);
+    }
+
+    /**
+     * Processa o template HTML substituindo os placeholders pelos valores reais
+     *
+     * @param dto Dados a serem preenchidos no template HTML
+     * @return Template HTML processado
+     */
+    private String processTemplate(ProcessTemplateRequestDTO dto) {
+        if (dto.getTemplate() == null) {
+            return getDefaultTemplate("PENDING_INTERPRETER_ADMIN");
+            // Substituir placeholders do template do banco
+        }
+
+        return dto.getTemplate()
+                .replace(PLACEHOLDER_NOME, dto.getInterpreterName() != null ? dto.getInterpreterName() : "")
+                .replace(PLACEHOLDER_CPF, dto.getCpf() != null ? dto.getCpf() : "")
+                .replace(PLACEHOLDER_CNPJ, dto.getCnpj() != null ? dto.getCnpj() : "")
+                .replace(PLACEHOLDER_EMAIL, dto.getEmail() != null ? dto.getEmail() : "")
+                .replace(PLACEHOLDER_TELEFONE, dto.getPhone() != null ? dto.getPhone() : "")
+                .replace(PLACEHOLDER_ACCEPT, dto.getAcceptLink() != null ? dto.getAcceptLink() : "")
+                .replace(PLACEHOLDER_REJECT, dto.getRejectLink() != null ? dto.getRejectLink() : "")
+                .replace(PLACEHOLDER_ANO, String.valueOf(Year.now().getValue()));
+    }
+
+
+    /**
      * Cria template de feedback para o intérprete
-     * 
+     *
      * @param interpreterName Nome do intérprete
      * @param approved        true se o cadastro foi aprovado, false se foi negado
      * @return Template HTML processado
@@ -404,8 +384,32 @@ public class EmailService {
 
         // Processar o template
         return template
-                .replace("{{nome}}", interpreterName != null ? interpreterName : "")
-                .replace("{{respostaSolicitacao}}", respostaSolicitacao)
-                .replace("{{ano}}", String.valueOf(Year.now().getValue()));
+                .replace(PLACEHOLDER_NOME, interpreterName != null ? interpreterName : "")
+                .replace(PLACEHOLDER_RESPOSTA_SOLICITACAO, respostaSolicitacao)
+                .replace(PLACEHOLDER_ANO, String.valueOf(Year.now().getValue()));
+    }
+
+    private void sendEmailMessage(EmailRequestDTO emailRequest,
+                                  List<byte[]> attachments,
+                                  List<String> attachmentNames) throws MessagingException {
+
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+        helper.setFrom(String.format("%s <%s>", senderName, emailFrom));
+        helper.setTo(emailRequest.getTo());
+        helper.setSubject(emailRequest.getSubject());
+        helper.setText(emailRequest.getBody(), true);
+
+        // Adiciona os anexos
+        if (Objects.nonNull(attachments)) {
+            for (int i = 0; i < attachments.size(); i++) {
+                byte[] attachment = attachments.get(i);
+                helper.addAttachment(attachmentNames.get(i), new ByteArrayResource(attachment));
+            }
+        }
+
+        mailSender.send(message);
     }
 }
+

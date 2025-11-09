@@ -1,19 +1,9 @@
 package com.pointtils.pointtils.src.application.services;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
-
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import com.pointtils.pointtils.src.application.dto.requests.FindAllInterpreterDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.InterpreterSpecificationFilterDTO;
 import com.pointtils.pointtils.src.application.dto.requests.LocationRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResponseDTO;
@@ -27,10 +17,20 @@ import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.spec.InterpreterSpecification;
-
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -80,42 +80,45 @@ public class InterpreterService {
         repository.save(interpreter);
     }
 
-    public List<InterpreterListResponseDTO> findAll(String modality,
-            String gender,
-            String city,
-            String uf,
-            String neighborhood,
-            String specialty,
-            String availableDate,
-            String name) {
+    public List<InterpreterListResponseDTO> findAll(FindAllInterpreterDTO dto) {
         InterpreterModality modalityEnum = null;
-        if (modality != null) {
-            modalityEnum = InterpreterModality.valueOf(modality.toUpperCase());
+        if (dto.getModality() != null) {
+            modalityEnum = InterpreterModality.valueOf(dto.getModality().toUpperCase());
         }
 
         Gender genderEnum = null;
-        if (gender != null) {
-            genderEnum = Gender.valueOf(gender.toUpperCase());
+        if (dto.getGender() != null) {
+            genderEnum = Gender.valueOf(dto.getGender().toUpperCase());
         }
 
         LocalDateTime dateTime = null;
-        if (availableDate != null) {
-            dateTime = LocalDateTime.parse(availableDate, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        if (dto.getAvailableDate() != null) {
+            dateTime = LocalDateTime.parse(dto.getAvailableDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
         }
 
         List<UUID> specialtyList = null;
-        if (specialty != null) {
-            specialtyList = Arrays.stream(specialty.split(","))
+        if (dto.getSpecialty() != null) {
+            specialtyList = Arrays.stream(dto.getSpecialty().split(","))
                     .map(UUID::fromString)
                     .toList();
         }
 
-        return repository.findAll(InterpreterSpecification.filter(modalityEnum, uf, city, neighborhood, specialtyList,
-                genderEnum, dateTime, name))
+        InterpreterSpecificationFilterDTO filterDTO = new InterpreterSpecificationFilterDTO();
+        filterDTO.setModality(modalityEnum);
+        filterDTO.setUf(dto.getUf());
+        filterDTO.setCity(dto.getCity());
+        filterDTO.setNeighborhood(dto.getNeighborhood());
+        filterDTO.setSpecialties(specialtyList);
+        filterDTO.setGender(genderEnum);
+        filterDTO.setAvailableDate(dateTime);
+        filterDTO.setName(dto.getName());
+
+        return repository.findAll(InterpreterSpecification.filter(filterDTO))
                 .stream()
                 .map(responseMapper::toListResponseDTO)
                 .toList();
     }
+
 
     public InterpreterResponseDTO updateComplete(UUID id, InterpreterBasicRequestDTO dto) {
         Interpreter interpreter = findInterpreterById(id);
