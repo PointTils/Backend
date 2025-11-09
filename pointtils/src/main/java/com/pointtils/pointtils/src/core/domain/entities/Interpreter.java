@@ -62,4 +62,7 @@ public class Interpreter extends Person {
 
     @OneToMany(mappedBy = "interpreter", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<InterpreterDocuments> documents = new HashSet<>();
+
+    @Column(name = "video_url")
+    private String videoUrl;
 }
