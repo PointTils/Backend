@@ -1,9 +1,8 @@
 package com.pointtils.pointtils.src.application.services;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
+import com.pointtils.pointtils.src.infrastructure.repositories.ParametersRepository;
+import jakarta.mail.Session;
+import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,10 +11,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mail.javamail.JavaMailSender;
 
-import com.pointtils.pointtils.src.infrastructure.repositories.ParametersRepository;
-
-import jakarta.mail.Session;
-import jakarta.mail.internet.MimeMessage;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Email - Testes Extras Simples")
@@ -59,29 +60,5 @@ class EmailTest {
         mailSender.send(mimeMessage);
 
         verify(mailSender, times(1)).send(mimeMessage);
-    }
-
-    @Test
-    @DisplayName("Deve lidar com email vazio de forma defensiva")
-    void deveLidarComEmailVazioDeFormaDefensiva() {
-        String emailVazio = "";
-        String nomeVazio = "";
-
-        assertDoesNotThrow(() -> {
-            assertNotNull(emailVazio);
-            assertNotNull(nomeVazio);
-        });
-    }
-
-    @Test
-    @DisplayName("Deve validar strings básicas de email")
-    void deveValidarStringsBasicasDeEmail() {
-        String emailValido = "test@example.com";
-        String nomeValido = "Usuario Teste";
-
-        assertTrue(emailValido.contains("@"));
-        assertTrue(emailValido.contains("."));
-        assertFalse(nomeValido.isEmpty());
-        assertTrue(nomeValido.length() > 0);
     }
 }

@@ -2,7 +2,8 @@ package com.pointtils.pointtils.src.application.controllers;
 
 import com.pointtils.pointtils.src.application.dto.requests.UserPicturePostRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.UserResponseDTO;
-import com.pointtils.pointtils.src.application.services.UserPicturePostService;
+import com.pointtils.pointtils.src.application.services.UserPictureService;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,15 +27,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = UserPicturePostController.class)
+@WebMvcTest(controllers = UserPictureController.class)
 @AutoConfigureMockMvc(addFilters = false)
-class UserPicturePostControllerTest {
+class UserPictureControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockitoBean
-    private UserPicturePostService userService;
+    private UserPictureService userService;
 
     @MockitoBean
     private com.pointtils.pointtils.src.infrastructure.configs.JwtService jwtService;

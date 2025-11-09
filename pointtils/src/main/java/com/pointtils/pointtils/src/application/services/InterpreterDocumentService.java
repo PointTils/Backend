@@ -2,6 +2,7 @@ package com.pointtils.pointtils.src.application.services;
 
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterDocumentRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterDocumentResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterRegistrationEmailDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
 import com.pointtils.pointtils.src.core.domain.entities.InterpreterDocuments;
 import com.pointtils.pointtils.src.core.domain.exceptions.FileUploadException;
@@ -108,17 +109,19 @@ public class InterpreterDocumentService {
             String acceptLink = String.format("%s/v1/email/interpreter/%s/approve", apiBaseUrl, interpreter.getId());
             String rejectLink = String.format("%s/v1/email/interpreter/%s/reject", apiBaseUrl, interpreter.getId());
 
-            // Enviar email usando o template do banco de dados
-            boolean emailSent = emailService.sendInterpreterRegistrationRequestEmail(
-                    adminEmail,
-                    interpreter.getName(),
-                    interpreter.getCpf(),
-                    interpreter.getCnpj(),
-                    interpreter.getEmail(),
-                    interpreter.getPhone(),
-                    acceptLink,
-                    rejectLink,
-                    files);
+            InterpreterRegistrationEmailDTO emailDTO = InterpreterRegistrationEmailDTO.builder()
+                    .adminEmail(adminEmail)
+                    .interpreterName(interpreter.getName())
+                    .cpf(interpreter.getCpf())
+                    .cnpj(interpreter.getCnpj())
+                    .email(interpreter.getEmail())
+                    .phone(interpreter.getPhone())
+                    .acceptLink(acceptLink)
+                    .rejectLink(rejectLink)
+                    .files(files)
+                    .build();
+
+            boolean emailSent = emailService.sendInterpreterRegistrationRequestEmail(emailDTO);
 
             if (emailSent) {
                 log.info("Email de solicitação de cadastro enviado com sucesso para: {}", adminEmail);
@@ -130,4 +133,5 @@ public class InterpreterDocumentService {
             log.error("Erro ao enviar email de solicitação de cadastro: {}", ex.getMessage());
         }
     }
+
 }
