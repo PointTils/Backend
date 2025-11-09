@@ -53,40 +53,40 @@ class InterpreterDocumentServiceTest {
         ReflectionTestUtils.setField(interpreterDocumentService, "apiBaseUrl", "http://localhost:8080");
     }
 
-   @Test
-void shouldSaveDocumentsSuccessfully() throws IOException {
-    // Arrange
-    UUID interpreterId = UUID.fromString("b56e2062-6dba-4f6a-bc2f-655ba8ba5cd3");
-    MultipartFile file = mock(MultipartFile.class);
-    when(s3Service.uploadFile(any(MultipartFile.class), anyString()))
-        .thenReturn("https://s3.amazonaws.com/documents/test-document.pdf");
+    @Test
+    void shouldSaveDocumentsSuccessfully() throws IOException {
+        // Arrange
+        UUID interpreterId = UUID.fromString("b56e2062-6dba-4f6a-bc2f-655ba8ba5cd3");
+        MultipartFile file = mock(MultipartFile.class);
+        when(s3Service.uploadFile(any(MultipartFile.class), anyString()))
+                .thenReturn("https://s3.amazonaws.com/documents/test-document.pdf");
 
-    Interpreter interpreter = new Interpreter();
-    interpreter.setId(interpreterId);
-    interpreter.setName("Nome Mock");
-    interpreter.setEmail("nome.mock@email.com");
-    interpreter.setCpf("1112222333344");
-    interpreter.setCnpj("12345678984561");
-    interpreter.setPhone("51984848484");
-    when(interpreterService.findInterpreterById(interpreterId)).thenReturn(interpreter);
+        Interpreter interpreter = new Interpreter();
+        interpreter.setId(interpreterId);
+        interpreter.setName("Nome Mock");
+        interpreter.setEmail("nome.mock@email.com");
+        interpreter.setCpf("1112222333344");
+        interpreter.setCnpj("12345678984561");
+        interpreter.setPhone("51984848484");
+        when(interpreterService.findInterpreterById(interpreterId)).thenReturn(interpreter);
 
-    InterpreterDocuments savedDocument = new InterpreterDocuments();
-    savedDocument.setDocument("https://s3.amazonaws.com/documents/test-document.pdf");
-    savedDocument.setInterpreter(interpreter);
-    when(interpreterDocumentsRepository.save(any(InterpreterDocuments.class))).thenReturn(savedDocument);
+        InterpreterDocuments savedDocument = new InterpreterDocuments();
+        savedDocument.setDocument("https://s3.amazonaws.com/documents/test-document.pdf");
+        savedDocument.setInterpreter(interpreter);
+        when(interpreterDocumentsRepository.save(any(InterpreterDocuments.class))).thenReturn(savedDocument);
 
-    // Act
-    List<MultipartFile> fileList = List.of(file); // <-- Corrigido
-    InterpreterDocumentResponseDTO result = interpreterDocumentService.saveDocuments(interpreterId, fileList, false);
+        // Act
+        List<MultipartFile> fileList = List.of(file); // <-- Corrigido
+        InterpreterDocumentResponseDTO result = interpreterDocumentService.saveDocuments(interpreterId, fileList, false);
 
-    // Assert
-    assertNotNull(result);
-    assertEquals(1, result.getData().size());
-    assertEquals("https://s3.amazonaws.com/documents/test-document.pdf", result.getData().get(0).getDocument());
-    verify(s3Service).uploadFile(any(MultipartFile.class), anyString());
-    verify(interpreterDocumentsRepository).save(any(InterpreterDocuments.class));
-    verify(emailService).sendInterpreterRegistrationRequestEmail(any(InterpreterRegistrationEmailDTO.class)); // <-- Corrigido
-}
+        // Assert
+        assertNotNull(result);
+        assertEquals(1, result.getData().size());
+        assertEquals("https://s3.amazonaws.com/documents/test-document.pdf", result.getData().get(0).getDocument());
+        verify(s3Service).uploadFile(any(MultipartFile.class), anyString());
+        verify(interpreterDocumentsRepository).save(any(InterpreterDocuments.class));
+        verify(emailService).sendInterpreterRegistrationRequestEmail(any(InterpreterRegistrationEmailDTO.class)); // <-- Corrigido
+    }
 
 
     @Test

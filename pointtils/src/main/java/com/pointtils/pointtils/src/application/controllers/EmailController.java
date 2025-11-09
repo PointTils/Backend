@@ -37,12 +37,12 @@ import java.util.UUID;
 @Tag(name = "Email", description = "Endpoints para envio de emails")
 public class EmailController {
 
+    private static final String USER_NAME = "userName";
+
     private final EmailService emailService;
     private final InterpreterService interpreterService;
     private final MemoryResetTokenService resetTokenService;
     private final UserService userService;
-private static final String USER_NAME = "userName"; 
-
 
     @PostMapping("/send")
     @Operation(

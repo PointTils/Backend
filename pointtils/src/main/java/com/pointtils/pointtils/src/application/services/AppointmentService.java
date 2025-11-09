@@ -15,7 +15,6 @@ import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -28,13 +27,13 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AppointmentService {
 
+    private static final String SOLICITATION_NOT_FOUND = "Solicitação não encontrada com o id: ";
+
     private final AppointmentRepository appointmentRepository;
     private final InterpreterRepository interpreterRepository;
     private final UserRepository userRepository;
     private final RatingRepository ratingRepository;
     private final AppointmentMapper appointmentMapper;
-    private static final String SOLICITATION_NOT_FOUND = "Solicitação não encontrada com o id: ";
-
 
     public AppointmentResponseDTO createAppointment(AppointmentRequestDTO dto) {
         var interpreter = interpreterRepository.findById(dto.getInterpreterId())
@@ -99,29 +98,29 @@ public class AppointmentService {
         appointmentRepository.deleteById(id);
     }
 
-    public List<AppointmentFilterResponseDTO> searchAppointments(UUID interpreterId, UUID userId, AppointmentStatus status, 
-            AppointmentModality modality, LocalDateTime fromDateTime, Boolean hasRating, int dayLimit) {
+    public List<AppointmentFilterResponseDTO> searchAppointments(UUID interpreterId, UUID userId, AppointmentStatus status,
+                                                                 AppointmentModality modality, LocalDateTime fromDateTime, Boolean hasRating, int dayLimit) {
         List<Appointment> appointments = appointmentRepository.findAll();
-        
+
         return appointments.stream()
-            .filter(appointment -> interpreterId == null || appointment.getInterpreter().getId().equals(interpreterId))
-            .filter(appointment -> userId == null || appointment.getUser().getId().equals(userId))
-            .filter(appointment -> status == null || appointment.getStatus().equals(status))
-            .filter(appointment -> modality == null || appointment.getModality().equals(modality))
-            .filter(appointment -> fromDateTime == null || isAfterDateTime(appointment, fromDateTime))
-            .filter(appointment -> hasRating == null || hasRatingAssigned(appointment, hasRating))
-            .filter(appointment -> dayLimit == -1 || isBeforeDateLimit(appointment, dayLimit))
-            .sorted(Comparator.comparing(
-                    (Appointment appointment) -> LocalDateTime.of(appointment.getDate(), appointment.getEndTime())
+                .filter(appointment -> interpreterId == null || appointment.getInterpreter().getId().equals(interpreterId))
+                .filter(appointment -> userId == null || appointment.getUser().getId().equals(userId))
+                .filter(appointment -> status == null || appointment.getStatus().equals(status))
+                .filter(appointment -> modality == null || appointment.getModality().equals(modality))
+                .filter(appointment -> fromDateTime == null || isAfterDateTime(appointment, fromDateTime))
+                .filter(appointment -> hasRating == null || hasRatingAssigned(appointment, hasRating))
+                .filter(appointment -> dayLimit == -1 || isBeforeDateLimit(appointment, dayLimit))
+                .sorted(Comparator.comparing(
+                        (Appointment appointment) -> LocalDateTime.of(appointment.getDate(), appointment.getEndTime())
                 ).reversed())
-            .map(appointment -> {
-                if (interpreterId != null) {
-                    return appointmentMapper.toFilterResponseDTO(appointment, appointment.getUser());
-                } else {
-                    return appointmentMapper.toFilterResponseDTO(appointment, appointment.getInterpreter());
-                }
-            })
-        .toList();
+                .map(appointment -> {
+                    if (interpreterId != null) {
+                        return appointmentMapper.toFilterResponseDTO(appointment, appointment.getUser());
+                    } else {
+                        return appointmentMapper.toFilterResponseDTO(appointment, appointment.getInterpreter());
+                    }
+                })
+                .toList();
     }
 
     private boolean hasRatingAssigned(Appointment appointment, Boolean hasRating) {

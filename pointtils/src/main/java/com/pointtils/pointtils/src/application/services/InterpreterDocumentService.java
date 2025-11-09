@@ -105,33 +105,33 @@ public class InterpreterDocumentService {
      * @param interpreter Intérprete cadastrado
      */
     private void sendInterpreterRegistrationEmail(Interpreter interpreter, List<MultipartFile> files) {
-    try {
-        String acceptLink = String.format("%s/v1/email/interpreter/%s/approve", apiBaseUrl, interpreter.getId());
-        String rejectLink = String.format("%s/v1/email/interpreter/%s/reject", apiBaseUrl, interpreter.getId());
+        try {
+            String acceptLink = String.format("%s/v1/email/interpreter/%s/approve", apiBaseUrl, interpreter.getId());
+            String rejectLink = String.format("%s/v1/email/interpreter/%s/reject", apiBaseUrl, interpreter.getId());
 
-        InterpreterRegistrationEmailDTO emailDTO = InterpreterRegistrationEmailDTO.builder()
-                .adminEmail(adminEmail)
-                .interpreterName(interpreter.getName())
-                .cpf(interpreter.getCpf())
-                .cnpj(interpreter.getCnpj())
-                .email(interpreter.getEmail())
-                .phone(interpreter.getPhone())
-                .acceptLink(acceptLink)
-                .rejectLink(rejectLink)
-                .files(files)
-                .build();
+            InterpreterRegistrationEmailDTO emailDTO = InterpreterRegistrationEmailDTO.builder()
+                    .adminEmail(adminEmail)
+                    .interpreterName(interpreter.getName())
+                    .cpf(interpreter.getCpf())
+                    .cnpj(interpreter.getCnpj())
+                    .email(interpreter.getEmail())
+                    .phone(interpreter.getPhone())
+                    .acceptLink(acceptLink)
+                    .rejectLink(rejectLink)
+                    .files(files)
+                    .build();
 
-        boolean emailSent = emailService.sendInterpreterRegistrationRequestEmail(emailDTO);
+            boolean emailSent = emailService.sendInterpreterRegistrationRequestEmail(emailDTO);
 
-        if (emailSent) {
-            log.info("Email de solicitação de cadastro enviado com sucesso para: {}", adminEmail);
-        } else {
-            log.error("Falha ao enviar email de solicitação de cadastro para: {}", adminEmail);
+            if (emailSent) {
+                log.info("Email de solicitação de cadastro enviado com sucesso para: {}", adminEmail);
+            } else {
+                log.error("Falha ao enviar email de solicitação de cadastro para: {}", adminEmail);
+            }
+
+        } catch (Exception ex) {
+            log.error("Erro ao enviar email de solicitação de cadastro: {}", ex.getMessage());
         }
-
-    } catch (Exception ex) {
-        log.error("Erro ao enviar email de solicitação de cadastro: {}", ex.getMessage());
     }
-}
 
 }
