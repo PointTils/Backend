@@ -10,6 +10,7 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.UUID;
 
@@ -34,8 +35,8 @@ public class NotificationService {
         }
     }
 
-    public void sendScheduledNotification(UUID userId, NotificationType type, LocalDateTime scheduledTime) {
-        if (scheduledTime.isAfter(LocalDateTime.now(ZoneOffset.of(ZONE_ID)))) {
+    public void scheduleNotificationForUser(UUID userId, NotificationType type, LocalDateTime scheduledTime) {
+        if (scheduledTime.isAfter(LocalDateTime.now(ZoneId.of(ZONE_ID)))) {
             Runnable notificationTask = () -> this.sendNotificationToUser(userId, type);
             notificationTaskScheduler.schedule(notificationTask, scheduledTime.toInstant(ZoneOffset.of(ZONE_ID)));
         } else {

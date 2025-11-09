@@ -97,23 +97,6 @@ public class AppointmentService {
         return appointmentMapper.toResponseDTO(saved);
     }
 
-    private void notifyAppointmentStatusUpdate(Appointment appointment, String loggedUserEmail) {
-        boolean loggedUserIsInterpreter = appointment.getInterpreter().getEmail().equals(loggedUserEmail);
-        UUID userId = loggedUserIsInterpreter ? appointment.getUser().getId() : appointment.getInterpreter().getId();
-
-        if (Objects.requireNonNull(appointment.getStatus()) == AppointmentStatus.CANCELED) {
-            notificationService.sendNotificationToUser(userId, NotificationType.APPOINTMENT_CANCELLED);
-        } else if (appointment.getStatus() == AppointmentStatus.ACCEPTED) {
-            LocalDateTime scheduledTime = LocalDateTime.of(appointment.getDate(), appointment.getStartTime()).minusHours(24);
-
-            notificationService.sendNotificationToUser(userId, NotificationType.APPOINTMENT_ACCEPTED);
-            notificationService.sendScheduledNotification(appointment.getUser().getId(),
-                    NotificationType.APPOINTMENT_REMINDER, scheduledTime);
-            notificationService.sendScheduledNotification(appointment.getInterpreter().getId(),
-                    NotificationType.APPOINTMENT_REMINDER, scheduledTime);
-        }
-    }
-
     public void delete(UUID id) {
         if (!appointmentRepository.existsById(id)) {
             throw new EntityNotFoundException(SOLICITATION_NOT_FOUND + id);
@@ -144,6 +127,25 @@ public class AppointmentService {
                     }
                 })
                 .toList();
+    }
+
+    private void notifyAppointmentStatusUpdate(Appointment appointment, String loggedUserEmail) {
+        var loggedUserIsInterpreter = appointment.getInterpreter().getEmail().equals(loggedUserEmail);
+        var userToNotifyId = loggedUserIsInterpreter
+                ? appointment.getUser().getId()
+                : appointment.getInterpreter().getId();
+
+        if (Objects.requireNonNull(appointment.getStatus()) == AppointmentStatus.CANCELED) {
+            notificationService.sendNotificationToUser(userToNotifyId, NotificationType.APPOINTMENT_CANCELED);
+        } else if (appointment.getStatus() == AppointmentStatus.ACCEPTED) {
+            LocalDateTime scheduledTime = LocalDateTime.of(appointment.getDate(), appointment.getStartTime()).minusHours(24);
+
+            notificationService.sendNotificationToUser(userToNotifyId, NotificationType.APPOINTMENT_ACCEPTED);
+            notificationService.scheduleNotificationForUser(appointment.getUser().getId(),
+                    NotificationType.APPOINTMENT_REMINDER, scheduledTime);
+            notificationService.scheduleNotificationForUser(appointment.getInterpreter().getId(),
+                    NotificationType.APPOINTMENT_REMINDER, scheduledTime);
+        }
     }
 
     private boolean hasRatingAssigned(Appointment appointment, Boolean hasRating) {
