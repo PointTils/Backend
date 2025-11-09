@@ -56,6 +56,28 @@ docker rm -f pointtils-db-dev 2>/dev/null || true
 docker rm -f prometheus 2>/dev/null || true
 docker rm -f grafana 2>/dev/null || true
 
+# Verificar e liberar portas em conflito
+echo "Verificando e liberando portas em conflito..."
+PORTS_TO_CHECK="5432 8080 9090 3000"
+for PORT in $PORTS_TO_CHECK; do
+  CONTAINER_USING_PORT=$(docker ps -q --filter "publish=$PORT")
+  if [ -n "$CONTAINER_USING_PORT" ]; then
+    echo "Parando container usando porta $PORT: $CONTAINER_USING_PORT"
+    docker stop $CONTAINER_USING_PORT 2>/dev/null || true
+    docker rm $CONTAINER_USING_PORT 2>/dev/null || true
+  fi
+done
+
+# Verificação final - garantir que containers não estão rodando
+echo "Verificação final - garantindo que containers não estão rodando..."
+CONTAINERS_TO_REMOVE="pointtils-dev pointtils-db-dev prometheus grafana"
+for CONTAINER in $CONTAINERS_TO_REMOVE; do
+  if docker ps -a | grep -q $CONTAINER; then
+    echo "Removendo container $CONTAINER forçadamente..."
+    docker rm -f $CONTAINER 2>/dev/null || true
+  fi
+done
+
 # Criar volumes se não existirem
 echo "Criando volumes se não existirem..."
 docker volume create postgres_dev_data 2>/dev/null || true
