@@ -263,10 +263,21 @@ jobs:
           
           if [ -n "$PROMETHEUS_IMAGE_ID" ]; then
             echo "Tagging and pushing Prometheus image..."
+            
+            # PRIMEIRO: Salvar a imagem atual como "previous" ANTES de sobrescrever com a nova
+            echo "Salvando imagem atual do Prometheus como previous..."
+            docker pull $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-prometheus:${{ env.PROMETHEUS_IMAGE_TAG }} || echo "Imagem atual do Prometheus não encontrada, pulando backup"
+            docker tag $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-prometheus:${{ env.PROMETHEUS_IMAGE_TAG }} $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-prometheus:previous || echo "Não foi possível salvar imagem anterior do Prometheus"
+            
+            # DEPOIS: Tag e push da NOVA imagem
             docker tag $PROMETHEUS_IMAGE_ID $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-prometheus:$IMAGE_TAG
             docker tag $PROMETHEUS_IMAGE_ID $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-prometheus:${{ env.PROMETHEUS_IMAGE_TAG }}
             docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-prometheus:$IMAGE_TAG
             docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-prometheus:${{ env.PROMETHEUS_IMAGE_TAG }}
+            
+            # FINALMENTE: Push da imagem "previous" (se existir)
+            docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-prometheus:previous || echo "Não foi possível fazer push da imagem previous do Prometheus"
+            
             echo "prometheus_image=$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-prometheus:$IMAGE_TAG" >> $GITHUB_OUTPUT
           else
             echo "⚠️ AVISO: Não foi possível encontrar a imagem do Prometheus para tagging"
@@ -280,10 +291,21 @@ jobs:
           
           if [ -n "$GRAFANA_IMAGE_ID" ]; then
             echo "Tagging and pushing Grafana image..."
+            
+            # PRIMEIRO: Salvar a imagem atual como "previous" ANTES de sobrescrever com a nova
+            echo "Salvando imagem atual do Grafana como previous..."
+            docker pull $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-grafana:${{ env.GRAFANA_IMAGE_TAG }} || echo "Imagem atual do Grafana não encontrada, pulando backup"
+            docker tag $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-grafana:${{ env.GRAFANA_IMAGE_TAG }} $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-grafana:previous || echo "Não foi possível salvar imagem anterior do Grafana"
+            
+            # DEPOIS: Tag e push da NOVA imagem
             docker tag $GRAFANA_IMAGE_ID $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-grafana:$IMAGE_TAG
             docker tag $GRAFANA_IMAGE_ID $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-grafana:${{ env.GRAFANA_IMAGE_TAG }}
             docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-grafana:$IMAGE_TAG
             docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-grafana:${{ env.GRAFANA_IMAGE_TAG }}
+            
+            # FINALMENTE: Push da imagem "previous" (se existir)
+            docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-grafana:previous || echo "Não foi possível fazer push da imagem previous do Grafana"
+            
             echo "grafana_image=$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}-grafana:$IMAGE_TAG" >> $GITHUB_OUTPUT
           else
             echo "⚠️ AVISO: Não foi possível encontrar a imagem do Grafana para tagging"
