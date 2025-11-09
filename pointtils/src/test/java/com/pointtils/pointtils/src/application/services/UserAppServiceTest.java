@@ -18,11 +18,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -105,6 +110,27 @@ class UserAppServiceTest {
     }
 
     @Test
+    void updateUserApp_ShouldNotUpdateNullFields() {
+        UUID userAppId = UUID.randomUUID();
+        UserAppPatchRequestDTO request = new UserAppPatchRequestDTO();
+
+        UserApp userApp = mock(UserApp.class);
+        UserAppResponseDTO response = new UserAppResponseDTO();
+
+        when(userAppRepository.findById(userAppId)).thenReturn(Optional.of(userApp));
+        when(userAppRepository.save(userApp)).thenReturn(userApp);
+        when(userAppMapper.toResponseDto(userApp)).thenReturn(response);
+
+        assertEquals(response, userAppService.updateUserApp(userAppId, request));
+        verify(userApp, never()).setDeviceId(anyString());
+        verify(userApp, never()).setPlatform(anyString());
+        verify(userApp, never()).setToken(anyString());
+        verify(userAppRepository).findById(userAppId);
+        verify(userAppRepository).save(userApp);
+        verify(userAppMapper).toResponseDto(userApp);
+    }
+
+    @Test
     void deleteUserApps_ShouldDeleteAllMatchingApps() {
         UUID userId = UUID.randomUUID();
         String deviceId = "deviceId";
@@ -116,6 +142,12 @@ class UserAppServiceTest {
 
         verify(userAppRepository).findAllByFilters(userId, deviceId);
         verify(userAppRepository).deleteAll(List.of(userApp));
+    }
+
+    @Test
+    void deleteUserApps_ShouldThrowIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, () -> userAppService.deleteUserApps(null, ""));
+        verifyNoInteractions(userAppRepository);
     }
 
     @Test
@@ -137,5 +169,15 @@ class UserAppServiceTest {
 
         assertThrows(EntityNotFoundException.class, () -> userAppService.deleteUserAppById(userAppId));
         verify(userAppRepository).findById(userAppId);
+    }
+
+    @Test
+    void shouldGetUserAppsByUserId() {
+        UUID userId = UUID.randomUUID();
+        UserApp userApp = new UserApp();
+        when(userAppRepository.findAllByUserId(userId)).thenReturn(List.of(userApp));
+
+        assertThat(userAppService.getUserAppsByUserId(userId))
+                .containsExactly(userApp);
     }
 }

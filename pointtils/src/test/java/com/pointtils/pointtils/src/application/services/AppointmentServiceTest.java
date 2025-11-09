@@ -22,6 +22,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -83,8 +85,8 @@ class AppointmentServiceTest {
     @BeforeEach
     void setUp() {
         appointmentId = UUID.randomUUID();
-        userId = UUID.randomUUID();
-        interpreterId = UUID.randomUUID();
+        userId = UUID.fromString("8ac9c3ef-e7fa-42df-bb37-febc138c3090");
+        interpreterId = UUID.fromString("1eb35247-bbb6-4564-bc50-bb16ad0901bd");
 
         mockUser = new Person() {
             @Override
@@ -279,14 +281,18 @@ class AppointmentServiceTest {
         verifyNoMoreInteractions(notificationService);
     }
 
-    @Test
+    @ParameterizedTest
     @DisplayName("Deve atualizar appointment parcialmente para status CANCELED")
-    void shouldUpdateAppointmentPartiallyToCanceledStatus() {
+    @CsvSource(value = {
+            "interpreter@email.com,8ac9c3ef-e7fa-42df-bb37-febc138c3090",
+            "user@email.com,1eb35247-bbb6-4564-bc50-bb16ad0901bd"
+    })
+    void shouldUpdateAppointmentPartiallyToCanceledStatus(String loggedUserEmail, String userToNotifyId) {
         AppointmentPatchRequestDTO patchDTO = AppointmentPatchRequestDTO.builder()
                 .uf("RJ")
                 .city("Rio de Janeiro")
                 .status(AppointmentStatus.CANCELED)
-                .loggedUserEmail("interpreter@email.com")
+                .loggedUserEmail(loggedUserEmail)
                 .build();
 
         when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(mockAppointment));
@@ -314,7 +320,7 @@ class AppointmentServiceTest {
 
         verify(appointmentRepository).findById(appointmentId);
         verify(appointmentRepository).save(any(Appointment.class));
-        verify(notificationService).sendNotificationToUser(userId, NotificationType.APPOINTMENT_CANCELED);
+        verify(notificationService).sendNotificationToUser(UUID.fromString(userToNotifyId), NotificationType.APPOINTMENT_CANCELED);
         verifyNoMoreInteractions(notificationService);
     }
 
