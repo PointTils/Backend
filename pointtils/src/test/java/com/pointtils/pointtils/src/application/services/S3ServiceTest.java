@@ -36,7 +36,7 @@ class S3ServiceTest {
     private S3Client s3Client;
     private S3Service s3Service;
 
-    @BeforeEach
+    @BeforeEach 
     void setUp() {
         s3Client = Mockito.mock(S3Client.class);
         s3Service = new S3Service("test-bucket", true, s3Client);
