@@ -24,11 +24,11 @@ INSERT INTO person (id, name, gender, birthday, cpf)
 SELECT id, 'Carlos Oliveira', 'MALE', '1988-12-03', '34567890123' FROM new_user2;
 
 -- Add locations for the new clients
-INSERT INTO location (user_id, UF, city, neighborhood)
-SELECT id, 'RS', 'Porto Alegre', 'Centro' FROM user_account WHERE email = 'client2@email.com';
+-- INSERT INTO location (user_id, UF, city, neighborhood)
+-- SELECT id, 'RS', 'Porto Alegre', 'Centro' FROM user_account WHERE email = 'client2@email.com';
 
-INSERT INTO location (user_id, UF, city, neighborhood)
-SELECT id, 'SC', 'Florianópolis', 'Trindade' FROM user_account WHERE email = 'client3@email.com';
+-- INSERT INTO location (user_id, UF, city, neighborhood)
+-- SELECT id, 'SC', 'Florianópolis', 'Trindade' FROM user_account WHERE email = 'client3@email.com';
 
 
 -- ======== Additional Enterprises =========
@@ -48,11 +48,11 @@ WITH new_user4 AS (
 INSERT INTO enterprise (id, corporate_reason, cnpj)
 SELECT id, 'Educação Inclusiva LTDA', '34567890000192' FROM new_user4;
 
-INSERT INTO location (user_id, UF, city, neighborhood)
-SELECT id, 'SP', 'Campinas', 'Barão Geraldo' FROM user_account WHERE email = 'empresa2@email.com';
+-- INSERT INTO location (user_id, UF, city, neighborhood)
+-- SELECT id, 'SP', 'Campinas', 'Barão Geraldo' FROM user_account WHERE email = 'empresa2@email.com';
 
-INSERT INTO location (user_id, UF, city, neighborhood)
-SELECT id, 'PR', 'Curitiba', 'Batel' FROM user_account WHERE email = 'empresa3@email.com';
+-- INSERT INTO location (user_id, UF, city, neighborhood)
+-- SELECT id, 'PR', 'Curitiba', 'Batel' FROM user_account WHERE email = 'empresa3@email.com';
 
 
 -- ======== Additional Interpreters =========
@@ -97,12 +97,12 @@ INSERT INTO interpreter (id, cnpj, rating, image_rights, modality, description)
 SELECT id, NULL, 4.7, TRUE, 'PERSONALLY', 'Intérprete com experiência em eventos culturais e artísticos.' FROM new_person3;
 
 -- Insert location for interpreter2 only if the user exists
-INSERT INTO location (user_id, UF, city, neighborhood)
-SELECT id, 'SP', 'São Paulo', 'Vila Mariana' FROM user_account WHERE email = 'interpreter2@email.com'
-AND NOT EXISTS (SELECT 1 FROM location WHERE user_id = user_account.id AND UF = 'SP' AND city = 'São Paulo' AND neighborhood = 'Vila Mariana');
+-- INSERT INTO location (user_id, UF, city, neighborhood)
+-- SELECT id, 'SP', 'São Paulo', 'Vila Mariana' FROM user_account WHERE email = 'interpreter2@email.com'
+-- AND NOT EXISTS (SELECT 1 FROM location WHERE user_id = user_account.id AND UF = 'SP' AND city = 'São Paulo' AND neighborhood = 'Vila Mariana');
 
-INSERT INTO location (user_id, UF, city, neighborhood)
-SELECT id, 'RJ', 'Rio de Janeiro', 'Botafogo' FROM user_account WHERE email = 'interpreter3@email.com';
+-- INSERT INTO location (user_id, UF, city, neighborhood)
+-- SELECT id, 'RJ', 'Rio de Janeiro', 'Botafogo' FROM user_account WHERE email = 'interpreter3@email.com';
 
 
 -- ======== Link specialties to the new interpreters =========
