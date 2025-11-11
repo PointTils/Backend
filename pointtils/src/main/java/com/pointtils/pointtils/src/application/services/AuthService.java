@@ -142,23 +142,23 @@ public class AuthService {
         if (resetToken == null || resetToken.isBlank()) {
             throw new AuthenticationException("Token de recuperação não fornecido");
         }
+
         if (newPassword == null || newPassword.isBlank()) {
             throw new AuthenticationException("Nova senha não fornecida");
         }
 
-        // Validar formato da senha
         if (!newPassword.matches("^[a-zA-Z0-9!@#$%^&*()_+=-]{6,}$")) {
             throw new AuthenticationException("Formato de senha inválida");
         }
 
-        // Validar o reset token
         String email = resetTokenService.validateResetToken(resetToken);
+
         if (email == null) {
             throw new AuthenticationException("Token de recuperação inválido ou expirado");
         }
 
-        // Buscar usuário
         User user = userRepository.findByEmail(email);
+
         if (user == null) {
             throw new AuthenticationException(USER_NOT_FOUND_MESSAGE);
         }
@@ -168,11 +168,10 @@ public class AuthService {
         }
 
         try {
-            // Atualizar senha
             user.setPassword(passwordEncoder.encode(newPassword));
+
             userRepository.save(user);
 
-            // Invalidar o token após uso bem-sucedido
             resetTokenService.invalidateResetToken(resetToken);
 
             log.info("Senha redefinida com sucesso para o usuário: {}", email);

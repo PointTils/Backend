@@ -70,9 +70,11 @@ public class EmailController {
         Map<String, Object> data = new HashMap<>();
         data.put("to", emailRequest.getTo());
 
-        return ResponseEntity.ok(ApiResponseDTO.success(
-                success ? "Email enviado com sucesso" : "Falha ao enviar email",
-                data));
+        if (success) {
+            return ResponseEntity.ok(ApiResponseDTO.success("Email enviado com sucesso", data));
+        } else {
+            return ResponseEntity.status(500).body(ApiResponseDTO.error("Falha ao enviar email"));
+        }
     }
 
     @PostMapping("/send-html")
@@ -101,9 +103,11 @@ public class EmailController {
         Map<String, Object> data = new HashMap<>();
         data.put("to", emailRequest.getTo());
 
-        return ResponseEntity.ok(ApiResponseDTO.success(
-                success ? "Email HTML enviado com sucesso" : "Falha ao enviar email HTML",
-                data));
+        if (success) {
+            return ResponseEntity.ok(ApiResponseDTO.success("Email HTML enviado com sucesso", data));
+        } else {
+            return ResponseEntity.status(500).body(ApiResponseDTO.error("Falha ao enviar email HTML"));
+        }
     }
 
     @PostMapping("/welcome/{email}")
@@ -133,9 +137,11 @@ public class EmailController {
         data.put("to", email);
         data.put(USER_NAME, userName);
 
-        return ResponseEntity.ok(ApiResponseDTO.success(
-                success ? "Email de boas-vindas enviado com sucesso" : "Falha ao enviar email de boas-vindas",
-                data));
+        if (success) {
+            return ResponseEntity.ok(ApiResponseDTO.success("Email de boas-vindas enviado com sucesso", data));
+        } else {
+            return ResponseEntity.status(500).body(ApiResponseDTO.error("Falha ao enviar email de boas-vindas"));
+        }
     }
 
     @PostMapping("/password-reset/{email}")
@@ -157,22 +163,25 @@ public class EmailController {
     })
     public ResponseEntity<ApiResponseDTO<Map<String, Object>>> sendPasswordResetEmail(@PathVariable String email) {
         try {
-            var userOptional = userService.findByEmail(email);
-            if (userOptional == null) {
+            var user = userService.findByEmail(email);
+
+            if (user == null) {
                 return ResponseEntity.status(404).body(ApiResponseDTO.error("Usuário não encontrado"));
             }
 
-            String userName = userOptional.getDisplayName(); // ou use valor padrão
             String resetToken = resetTokenService.generateResetToken(email);
-            boolean success = emailService.sendPasswordResetEmail(email, userName, resetToken);
+            boolean success = emailService.sendPasswordResetEmail(email, user.getDisplayName(), resetToken);
 
             Map<String, Object> data = new HashMap<>();
+            
             data.put("to", email);
-            data.put(USER_NAME, userName);
+            data.put("userName", user.getDisplayName());
 
-            return ResponseEntity.ok(ApiResponseDTO.success(
-                    success ? "Email de recuperação enviado com sucesso" : "Falha ao enviar email de recuperação",
-                    data));
+            if (success) {
+                return ResponseEntity.ok(ApiResponseDTO.success("Email de recuperação enviado com sucesso", data));
+            } else {
+                return ResponseEntity.status(500).body(ApiResponseDTO.error("Falha ao enviar email de recuperação"));
+            }
 
         } catch (Exception e) {
             log.error("Erro ao enviar email de reset de senha para {}: {}", email, e.getMessage(), e);
