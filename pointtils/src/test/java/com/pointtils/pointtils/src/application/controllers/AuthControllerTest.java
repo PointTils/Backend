@@ -2,6 +2,7 @@ package com.pointtils.pointtils.src.application.controllers;
 
 import java.util.UUID;
 
+import com.pointtils.pointtils.src.infrastructure.configs.FirebaseConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -58,6 +59,9 @@ class AuthControllerTest {
 
         @MockitoBean
         private S3Client s3Client;
+
+        @MockitoBean
+        private FirebaseConfig firebaseConfig;
 
         @MockitoBean
         private LoginAttemptService loginAttemptService;

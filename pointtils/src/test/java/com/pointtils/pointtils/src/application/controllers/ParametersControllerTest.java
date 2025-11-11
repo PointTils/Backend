@@ -4,25 +4,25 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pointtils.pointtils.src.application.dto.requests.ParametersBasicRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.ParametersPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ParametersResponseDTO;
+import com.pointtils.pointtils.src.application.services.ParametersService;
+import com.pointtils.pointtils.src.infrastructure.configs.FirebaseConfig;
 import com.pointtils.pointtils.src.infrastructure.configs.GlobalExceptionHandler;
 import io.awspring.cloud.autoconfigure.s3.S3AutoConfiguration;
-import com.pointtils.pointtils.src.application.services.ParametersService;
-import com.pointtils.pointtils.src.core.domain.entities.Parameters;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
 import java.util.List;
 import java.util.UUID;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
@@ -33,41 +33,38 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-
-@SpringBootTest
-@AutoConfigureMockMvc
-@EnableAutoConfiguration(exclude = S3AutoConfiguration.class)
 @ActiveProfiles("test")
+@SpringBootTest(classes = ParametersController.class)
+@EnableAutoConfiguration(exclude = S3AutoConfiguration.class)
 class ParametersControllerTest {
-        
-    @Autowired
-    private MockMvc mockMvc;
 
-    @Mock
+    @MockitoBean
     private ParametersService parametersService;
 
-    @InjectMocks
+    @MockitoBean
+    private FirebaseConfig firebaseConfig;
+
+    @Autowired
     private ParametersController parametersController;
 
     @Autowired
     private ObjectMapper objectMapper;
 
-    private Parameters parameters;
+    private MockMvc mockMvc;
     private UUID parametersId;
 
     @BeforeEach
     void setUp() {
         parametersId = UUID.randomUUID();
-        parameters = new Parameters(parametersId, "Test Key", "Test Value", null, null);
-        parameters.setId(parametersId);
 
         mockMvc = MockMvcBuilders.standaloneSetup(parametersController)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }
+
     @Test
     @DisplayName("Deve cadastrar um Parameters com sucesso")
-    void createSuccess() throws Exception{
+    void createSuccess() throws Exception {
 
         ParametersBasicRequestDTO dto = new ParametersBasicRequestDTO("Test Key", "Test Value");
         ParametersResponseDTO responseDTO = ParametersResponseDTO.builder()
@@ -93,8 +90,8 @@ class ParametersControllerTest {
 
     @Test
     @DisplayName("Deve listar todos os Parameters com sucesso")
-    void findAllSuccess() throws Exception{
-    
+    void findAllSuccess() throws Exception {
+
         ParametersResponseDTO responseDTO = ParametersResponseDTO.builder()
                 .id(parametersId)
                 .key("Test Key")
@@ -115,7 +112,7 @@ class ParametersControllerTest {
 
     @Test
     @DisplayName("Deve buscar um Parameters por key com sucesso")
-    void findByKeySuccess() throws Exception{
+    void findByKeySuccess() throws Exception {
         String key = "Test Key";
         ParametersResponseDTO responseDTO = ParametersResponseDTO.builder()
                 .id(parametersId)
@@ -137,8 +134,8 @@ class ParametersControllerTest {
 
     @Test
     @DisplayName("Deve atualizar um Parameters com sucesso")
-    void putSuccess() throws Exception{
-        ParametersPatchRequestDTO dto = new ParametersPatchRequestDTO("Teste key","Updated Value");
+    void putSuccess() throws Exception {
+        ParametersPatchRequestDTO dto = new ParametersPatchRequestDTO("Teste key", "Updated Value");
         ParametersResponseDTO responseDTO = ParametersResponseDTO.builder()
                 .id(parametersId)
                 .key("Test Key")
@@ -157,9 +154,10 @@ class ParametersControllerTest {
                 .andExpect(jsonPath("$.data.key").value("Test Key"))
                 .andExpect(jsonPath("$.data.value").value("Updated Value"));
     }
+
     @Test
     @DisplayName("Deve deletar um Parameters com sucesso")
-    void deleteSuccess() throws Exception{
+    void deleteSuccess() throws Exception {
         doNothing().when(parametersService).delete(parametersId);
         mockMvc.perform(delete("/v1/parameters/{id}", parametersId)
                         .contentType(MediaType.APPLICATION_JSON))

@@ -33,6 +33,7 @@ services:
         BREVO_SENDER_EMAIL: ${BREVO_SENDER_EMAIL}
         BREVO_SENDER_NAME: ${BREVO_SENDER_NAME}
         ADMIN_EMAIL: ${ADMIN_EMAIL}
+        FIREBASE_SERVICE_ACCOUNT: ${FIREBASE_SERVICE_ACCOUNT}
     image: ${APP_IMAGE:-backend-pointtils-dev}
     container_name: pointtils-dev
     environment:

@@ -8,6 +8,7 @@ import com.pointtils.pointtils.src.application.mapper.AppointmentMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Appointment;
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentModality;
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentStatus;
+import com.pointtils.pointtils.src.core.domain.entities.enums.NotificationType;
 import com.pointtils.pointtils.src.infrastructure.repositories.AppointmentRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.RatingRepository;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Slf4j
@@ -34,6 +36,7 @@ public class AppointmentService {
     private final UserRepository userRepository;
     private final RatingRepository ratingRepository;
     private final AppointmentMapper appointmentMapper;
+    private final NotificationService notificationService;
 
     public AppointmentResponseDTO createAppointment(AppointmentRequestDTO dto) {
         var interpreter = interpreterRepository.findById(dto.getInterpreterId())
@@ -44,6 +47,7 @@ public class AppointmentService {
         var appointment = appointmentMapper.toDomain(dto, interpreter, user);
 
         var savedAppointment = appointmentRepository.save(appointment);
+        notificationService.sendNotificationToUser(dto.getInterpreterId(), NotificationType.APPOINTMENT_REQUESTED);
 
         return appointmentMapper.toResponseDTO(savedAppointment);
     }
@@ -88,6 +92,8 @@ public class AppointmentService {
         if (dto.getEndTime() != null) appointment.setEndTime(dto.getEndTime());
 
         Appointment saved = appointmentRepository.save(appointment);
+        notifyAppointmentStatusUpdate(saved, dto.getLoggedUserEmail());
+
         return appointmentMapper.toResponseDTO(saved);
     }
 
@@ -121,6 +127,25 @@ public class AppointmentService {
                     }
                 })
                 .toList();
+    }
+
+    private void notifyAppointmentStatusUpdate(Appointment appointment, String loggedUserEmail) {
+        var loggedUserIsInterpreter = appointment.getInterpreter().getEmail().equals(loggedUserEmail);
+        var userToNotifyId = loggedUserIsInterpreter
+                ? appointment.getUser().getId()
+                : appointment.getInterpreter().getId();
+
+        if (Objects.requireNonNull(appointment.getStatus()) == AppointmentStatus.CANCELED) {
+            notificationService.sendNotificationToUser(userToNotifyId, NotificationType.APPOINTMENT_CANCELED);
+        } else if (appointment.getStatus() == AppointmentStatus.ACCEPTED) {
+            LocalDateTime scheduledTime = LocalDateTime.of(appointment.getDate(), appointment.getStartTime()).minusHours(24);
+
+            notificationService.sendNotificationToUser(userToNotifyId, NotificationType.APPOINTMENT_ACCEPTED);
+            notificationService.scheduleNotificationForUser(appointment.getUser().getId(),
+                    NotificationType.APPOINTMENT_REMINDER, scheduledTime);
+            notificationService.scheduleNotificationForUser(appointment.getInterpreter().getId(),
+                    NotificationType.APPOINTMENT_REMINDER, scheduledTime);
+        }
     }
 
     private boolean hasRatingAssigned(Appointment appointment, Boolean hasRating) {

@@ -71,7 +71,7 @@ class LoginAttemptServiceTest {
 
     @Test
     @DisplayName("Deve desbloquear após tempo expirado")
-    void deveDesbloquearAposTempoExpirado() throws Exception {
+    void deveDesbloquearAposTempoExpirado() {
         String ip = "8.8.8.8";
 
         for (int i = 0; i < 5; i++) {

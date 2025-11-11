@@ -28,11 +28,11 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class ScheduleService {
+    private static final String TIME_NOT_FOUND = "Horário não encontrado";
+
     private final ScheduleRepository scheduleRepository;
     private final InterpreterRepository interpreterRepository;
     private final TimeSlotMapper timeSlotMapper;
-
-    private static final String TIME_NOT_FOUND = "Horário não encontrado";
 
     public ScheduleResponseDTO registerSchedule(ScheduleRequestDTO dto) {
         Optional<Interpreter> foundInterpreter = interpreterRepository.findById(dto.getInterpreterId());
