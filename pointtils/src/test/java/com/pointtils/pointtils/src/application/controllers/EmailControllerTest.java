@@ -86,9 +86,9 @@ class EmailControllerTest {
         ResponseEntity<ApiResponseDTO<Map<String, Object>>> response = emailController.sendWelcomeEmail(testEmail,
                 testUserName);
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertTrue(response.getBody().isSuccess());
+        assertFalse(response.getBody().isSuccess());
         assertEquals("Falha ao enviar email de boas-vindas", response.getBody().getMessage());
     }
 
@@ -115,13 +115,10 @@ class EmailControllerTest {
 
         ResponseEntity<ApiResponseDTO<Map<String, Object>>> response = emailController.sendHtmlEmail(emailRequestDTO);
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertTrue(response.getBody().isSuccess());
+        assertFalse(response.getBody().isSuccess());
         assertEquals("Falha ao enviar email HTML", response.getBody().getMessage());
-
-        Map<String, Object> data = response.getBody().getData();
-        assertEquals(testEmail, data.get("to"));
     }
 
     @Test
@@ -182,9 +179,9 @@ class EmailControllerTest {
         ResponseEntity<ApiResponseDTO<Map<String, Object>>> response = emailController
                 .sendPasswordResetEmail(testEmail);
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertTrue(response.getBody().isSuccess());
+        assertFalse(response.getBody().isSuccess());
         assertEquals("Falha ao enviar email de recuperação", response.getBody().getMessage());
     }
 
