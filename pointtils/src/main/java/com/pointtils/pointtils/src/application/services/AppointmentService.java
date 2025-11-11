@@ -186,7 +186,7 @@ public class AppointmentService {
             case ACCEPTED:
                 // Quando aceito, notificar o usuário que solicitou
                 String location = buildLocationString(appointment);
-                String modality = appointment.getModality().toString();
+                String modality = formatModalityForEmail(appointment.getModality());
                 emailService.sendAppointmentAcceptedEmail(
                         userEmail,
                         userName,
@@ -246,6 +246,19 @@ public class AppointmentService {
         return String.format("%s às %s",
                 appointment.getDate().toString(),
                 appointment.getStartTime().toString());
+    }
+
+    /**
+     * Formata a modalidade do agendamento para exibição no email
+     * 
+     * @param modality Modalidade do agendamento
+     * @return String formatada (Online ou Presencial)
+     */
+    private String formatModalityForEmail(AppointmentModality modality) {
+        return switch (modality) {
+            case ONLINE -> "Online";
+            case PERSONALLY -> "Presencial";
+        };
     }
 
     /**
