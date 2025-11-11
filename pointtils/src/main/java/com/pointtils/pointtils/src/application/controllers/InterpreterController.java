@@ -3,20 +3,20 @@ package com.pointtils.pointtils.src.application.controllers;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.pointtils.pointtils.src.application.dto.requests.FindAllInterpreterDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.ApiResponseDTO;
@@ -68,17 +68,10 @@ public class InterpreterController {
     @GetMapping
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Busca todos os usuários intérprete")
-    public ResponseEntity<ApiResponseDTO<List<InterpreterListResponseDTO>>> findAll(
-            @RequestParam(required = false) String modality,
-            @RequestParam(required = false) String gender,
-            @RequestParam(required = false) String city,
-            @RequestParam(required = false) String uf,
-            @RequestParam(required = false) String neighborhood,
-            @RequestParam(required = false) String specialty,
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false, name = "available_date") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm") String availableDate) {
-        List<InterpreterListResponseDTO> interpreters = service.findAll(modality, gender, city, uf, neighborhood,
-                specialty, availableDate, name);
+    public ResponseEntity<ApiResponseDTO<List<InterpreterListResponseDTO>>> findAll(@ModelAttribute FindAllInterpreterDTO dto) {
+
+        List<InterpreterListResponseDTO> interpreters = service.findAll(dto);
+
         return ResponseEntity.ok(ApiResponseDTO.success("Intérpretes encontrados com sucesso", interpreters));
     }
 

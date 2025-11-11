@@ -1,5 +1,6 @@
 package com.pointtils.pointtils.src.application.services;
 
+import com.pointtils.pointtils.src.application.dto.requests.FindAllInterpreterDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
@@ -88,6 +89,7 @@ class InterpreterServiceTest {
         assertEquals("1990-01-01", interpreterArgumentCaptor.getValue().getBirthday().toString());
         assertEquals(BigDecimal.ZERO, interpreterArgumentCaptor.getValue().getRating());
         assertEquals("", interpreterArgumentCaptor.getValue().getDescription());
+        assertEquals("https://www.youtube.com/watch?v=tmIBzgKEz3o", interpreterArgumentCaptor.getValue().getVideoUrl());
         assertEquals("ALL", interpreterArgumentCaptor.getValue().getModality().name());
         assertFalse(interpreterArgumentCaptor.getValue().getImageRights());
     }
@@ -119,76 +121,88 @@ class InterpreterServiceTest {
 
     @Test
     void shouldFindAll() {
+        FindAllInterpreterDTO dto = new FindAllInterpreterDTO();
+            dto.setModality("ONLINE");
+            dto.setGender("FEMALE");
+            dto.setCity("São Paulo");
+            dto.setUf("SP");
+            dto.setNeighborhood("Higienópolis");
+            dto.setSpecialty(UUID.randomUUID().toString());
+            dto.setAvailableDate("2025-11-07 09:00");
+            dto.setName("interpreter");
         UUID id = UUID.randomUUID();
         Interpreter foundInterpreter = Interpreter.builder().id(id).build();
         InterpreterListResponseDTO mappedResponse = InterpreterListResponseDTO.builder().id(id).build();
         when(repository.findAll(any(Specification.class))).thenReturn(List.of(foundInterpreter));
         when(responseMapper.toListResponseDTO(foundInterpreter)).thenReturn(mappedResponse);
 
-        assertThat(service.findAll(null, null, null, null, null, null, null, null))
+        assertThat(service.findAll(dto))
                 .hasSize(1)
                 .contains(mappedResponse);
     }
 
     @Test
     void shouldFindAllWithFilters() {
-        // Arrange
-        UUID id = UUID.randomUUID();
-        Location location = Location.builder()
-                .id(UUID.randomUUID())
-                .uf("SP")
-                .city("São Paulo")
-                .neighborhood("Higienópolis")
-                .build();
+            // Arrange
+            FindAllInterpreterDTO dto = new FindAllInterpreterDTO();
+            dto.setModality("ONLINE");
+            dto.setGender("FEMALE");
+            dto.setCity("São Paulo");
+            dto.setUf("SP");
+            dto.setNeighborhood("Higienópolis");
+            dto.setSpecialty(UUID.randomUUID().toString());
+            dto.setAvailableDate("2025-11-07 09:00");
+            dto.setName("interpreter");
 
-        List<Location> locations = new ArrayList<>();
-        locations.add(location);
+            UUID id = UUID.randomUUID();
+            Location location = Location.builder()
+                            .id(UUID.randomUUID())
+                            .uf("SP")
+                            .city("São Paulo")
+                            .neighborhood("Higienópolis")
+                            .build();
 
-        Specialty specialty = new Specialty("Libras");
-        specialty.setId(UUID.randomUUID());
-        Set<Specialty> specialties = new HashSet<>();
-        specialties.add(specialty);
+            List<Location> locations = new ArrayList<>();
+            locations.add(location);
 
-        Schedule schedule = new Schedule();
-        schedule.setDay(DayOfWeek.WED);
-        schedule.setStartTime(LocalTime.of(9, 0));
-        schedule.setEndTime(LocalTime.of(18, 0));
-        Set<Schedule> schedules = new HashSet<>();
-        schedules.add(schedule);
+            Specialty specialty = new Specialty("Libras");
+            specialty.setId(UUID.randomUUID());
+            Set<Specialty> specialties = new HashSet<>();
+            specialties.add(specialty);
 
-        Interpreter foundInterpreter = Interpreter.builder()
-                .id(id)
-                .name("interpreter")
-                .gender(Gender.FEMALE)
-                .modality(InterpreterModality.ONLINE)
-                .locations(locations)
-                .specialties(specialties)
-                .schedules(schedules)
-                .build();
+            Schedule schedule = new Schedule();
+            schedule.setDay(DayOfWeek.WED);
+            schedule.setStartTime(LocalTime.of(9, 0));
+            schedule.setEndTime(LocalTime.of(18, 0));
+            Set<Schedule> schedules = new HashSet<>();
+            schedules.add(schedule);
 
-        InterpreterListResponseDTO mappedResponse = InterpreterListResponseDTO.builder()
-                .id(id)
-                .build();
+            Interpreter foundInterpreter = Interpreter.builder()
+                            .id(id)
+                            .name("interpreter")
+                            .gender(Gender.FEMALE)
+                            .modality(InterpreterModality.ONLINE)
+                            .locations(locations)
+                            .specialties(specialties)
+                            .schedules(schedules)
+                            .build();
 
-        when(repository.findAll(any(Specification.class))).thenReturn(List.of(foundInterpreter));
-        when(responseMapper.toListResponseDTO(foundInterpreter)).thenReturn(mappedResponse);
+            InterpreterListResponseDTO mappedResponse = InterpreterListResponseDTO.builder()
+                            .id(id)
+                            .build();
 
-        // Act
-        List<InterpreterListResponseDTO> result = service.findAll(
-                "ONLINE",
-                "FEMALE",
-                "São Paulo",
-                "SP",
-                "Higienópolis",
-                specialty.getId().toString(),
-                "2025-12-31 10:00",
-                null);
+            when(repository.findAll(any(Specification.class))).thenReturn(List.of(foundInterpreter));
+            when(responseMapper.toListResponseDTO(foundInterpreter)).thenReturn(mappedResponse);
 
-        // Assert
-        assertThat(result)
-                .hasSize(1)
-                .contains(mappedResponse);
+            // Act
+            List<InterpreterListResponseDTO> result = service.findAll(dto);
+
+            // Assert
+            assertThat(result)
+                            .hasSize(1)
+                            .contains(mappedResponse);
     }
+
 
     @Test
     void shouldFindById() {
@@ -288,6 +302,7 @@ class InterpreterServiceTest {
         assertEquals("98765432000196", interpreterArgumentCaptor.getValue().getCnpj());
         assertEquals(InterpreterModality.ONLINE, interpreterArgumentCaptor.getValue().getModality());
         assertEquals("Teste", interpreterArgumentCaptor.getValue().getDescription());
+        assertEquals("https://www.youtube.com/watch?v=tmIBzgKEz3o", interpreterArgumentCaptor.getValue().getVideoUrl());
         assertFalse(interpreterArgumentCaptor.getValue().getImageRights());
         assertThat(interpreterArgumentCaptor.getValue().getLocations())
                 .hasSize(1)

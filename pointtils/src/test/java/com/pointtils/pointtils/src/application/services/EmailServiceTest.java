@@ -1,5 +1,25 @@
 package com.pointtils.pointtils.src.application.services;
 
+import com.pointtils.pointtils.src.application.dto.requests.EmailRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterRegistrationEmailDTO;
+import com.pointtils.pointtils.src.core.domain.entities.Parameters;
+import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
+import com.pointtils.pointtils.src.infrastructure.repositories.ParametersRepository;
+import jakarta.mail.Session;
+import jakarta.mail.internet.MimeMessage;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.io.IOException;
 import java.time.Year;
 import java.util.Arrays;
@@ -12,15 +32,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
@@ -29,19 +42,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.multipart.MultipartFile;
-
-import com.pointtils.pointtils.src.application.dto.requests.EmailRequestDTO;
-import com.pointtils.pointtils.src.core.domain.entities.Parameters;
-import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
-import com.pointtils.pointtils.src.infrastructure.repositories.ParametersRepository;
-
-import jakarta.mail.Session;
-import jakarta.mail.internet.MimeMessage;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Testes Unitários do EmailService")
@@ -98,7 +98,7 @@ class EmailServiceTest {
 
         SimpleMailMessage sentMessage = messageCaptor.getValue();
         assertEquals("test@pointtils.com", sentMessage.getFrom());
-        assertArrayEquals(new String[] { testEmail }, sentMessage.getTo());
+        assertArrayEquals(new String[]{testEmail}, sentMessage.getTo());
         assertEquals("Assunto Teste", sentMessage.getSubject());
         assertEquals("Corpo do email teste", sentMessage.getText());
     }
@@ -249,7 +249,7 @@ class EmailServiceTest {
 
     @Test
     @DisplayName("Deve enviar email de solicitação de cadastro de intérprete com sucesso")
-    void deveEnviarEmailSolicitacaoCadastroInterpreteComSucesso() throws Exception {
+    void deveEnviarEmailSolicitacaoCadastroInterpreteComSucesso() {
         String interpreterTemplate = "<html><body><h1>Nova solicitação</h1><p>Nome: {{nome}}</p><p>CPF: {{cpf}}</p><p>CNPJ: {{cnpj}}</p><p>Email: {{email}}</p><p>Telefone: {{telefone}}</p><a href=\"{link_api}\">Aceitar</a><a href=\"{link_api}\">Recusar</a></body></html>";
         Parameters parameter = new Parameters();
         List<MultipartFile> files = List.of();
@@ -262,9 +262,21 @@ class EmailServiceTest {
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
         doNothing().when(mailSender).send(any(MimeMessage.class));
 
-        boolean result = emailService.sendInterpreterRegistrationRequestEmail(
-                "admin@pointtils.com", "João Intérprete", "123.456.789-00", "12.345.678/0001-90",
-                "joao@example.com", "(11) 99999-9999", "http://accept-link", "http://reject-link", files);
+        InterpreterRegistrationEmailDTO dto = InterpreterRegistrationEmailDTO.builder()
+                .adminEmail("admin@pointtils.com")
+                .interpreterName("João")
+                .cpf("123")
+                .cnpj("456")
+                .email("email")
+                .phone("phone")
+                .acceptLink("http://accept")
+                .rejectLink("http://reject")
+                .files(files)
+                .build();
+
+
+        boolean result = emailService.sendInterpreterRegistrationRequestEmail(dto);
+
 
         assertTrue(result);
         verify(parametersRepository).findByKey("PENDING_INTERPRETER_ADMIN");
@@ -438,8 +450,19 @@ class EmailServiceTest {
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
         doNothing().when(mailSender).send(any(MimeMessage.class));
 
-        boolean result = emailService.sendInterpreterRegistrationRequestEmail(
-                "admin@pointtils.com", "João", "123", "456", "email", "phone", "http://accept", "http://reject", files);
+        InterpreterRegistrationEmailDTO dto = InterpreterRegistrationEmailDTO.builder()
+                .adminEmail("admin@pointtils.com")
+                .interpreterName("João")
+                .cpf("123")
+                .cnpj("456")
+                .email("email")
+                .phone("phone")
+                .acceptLink("http://accept")
+                .rejectLink("http://reject")
+                .files(files)
+                .build();
+
+        boolean result = emailService.sendInterpreterRegistrationRequestEmail(dto);
 
         assertTrue(result);
         verify(parametersRepository).findByKey("PENDING_INTERPRETER_ADMIN");
@@ -451,9 +474,8 @@ class EmailServiceTest {
     void deveTratarExcecaoAoProcessarTemplateNoEnvioEmailBoasVindas() {
         when(parametersRepository.findByKey("WELCOME_EMAIL")).thenThrow(new RuntimeException("Erro no banco"));
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            emailService.sendWelcomeEmail(testEmail, testUserName);
-        });
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> emailService.sendWelcomeEmail(testEmail, testUserName));
 
         assertEquals("Erro no banco", exception.getMessage());
         verify(parametersRepository).findByKey("WELCOME_EMAIL");
@@ -642,6 +664,7 @@ class EmailServiceTest {
 
     @DisplayName("Deve processar anexos corretamente no envio de solicitação de cadastro de intérprete")
     void deveProcessarAnexosCorretamenteNoEnvioSolicitacaoCadastroInterprete() throws Exception {
+        // Mock dos arquivos
         MultipartFile file1 = org.mockito.Mockito.mock(MultipartFile.class);
         MultipartFile file2 = org.mockito.Mockito.mock(MultipartFile.class);
         List<MultipartFile> files = List.of(file1, file2);
@@ -651,24 +674,41 @@ class EmailServiceTest {
         lenient().when(file2.getOriginalFilename()).thenReturn("doc2.pdf");
         lenient().when(file2.getBytes()).thenReturn("conteudo2".getBytes());
 
+        // Template armazenado no banco
         String template = "<p>Nome: {{nome}}</p><a href=\"{link_api}\">Aceitar</a>";
         Parameters parameter = new Parameters();
         parameter.setKey("PENDING_INTERPRETER_ADMIN");
         parameter.setValue(template);
 
-        when(parametersRepository.findByKey("PENDING_INTERPRETER_ADMIN")).thenReturn(Optional.of(parameter));
+        when(parametersRepository.findByKey("PENDING_INTERPRETER_ADMIN"))
+                .thenReturn(Optional.of(parameter));
 
+        // Mock do envio do email
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
         doNothing().when(mailSender).send(any(MimeMessage.class));
 
-        boolean result = emailService.sendInterpreterRegistrationRequestEmail(
-                "admin@pointtils.com", "João", "123", "456", "email", "phone",
-                "http://accept", "http://reject", files);
+        InterpreterRegistrationEmailDTO dto = InterpreterRegistrationEmailDTO.builder()
+                .adminEmail("admin@pointtils.com")
+                .interpreterName("João")
+                .cpf("123")
+                .cnpj("456")
+                .email("email")
+                .phone("phone")
+                .acceptLink("http://accept")
+                .rejectLink("http://reject")
+                .files(files)
+                .build();
 
+
+        // Execução do método
+        boolean result = emailService.sendInterpreterRegistrationRequestEmail(dto);
+
+        // Verificações
         assertTrue(result);
         verify(parametersRepository).findByKey("PENDING_INTERPRETER_ADMIN");
     }
+
 
     @Test
     @DisplayName("processAppointmentStatusChangeTemplate deve substituir placeholders corretamente")
@@ -726,7 +766,7 @@ class EmailServiceTest {
         String result = emailService.getAdminRegistrationFeedbackHtml(emailResponse);
 
         String expectedStart = "<html><body><h1>Template não encontrado</h1>";
-        assertEquals(true, result.startsWith(expectedStart));
+        assertTrue(result.startsWith(expectedStart));
     }
 
     @Test

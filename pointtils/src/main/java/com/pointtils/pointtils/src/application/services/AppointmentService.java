@@ -27,6 +27,8 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class AppointmentService {
 
+    private static final String SOLICITATION_NOT_FOUND = "Solicitação não encontrada com o id: ";
+
     private final AppointmentRepository appointmentRepository;
     private final InterpreterRepository interpreterRepository;
     private final UserRepository userRepository;
@@ -56,13 +58,13 @@ public class AppointmentService {
 
     public AppointmentResponseDTO findById(UUID id) {
         Appointment appointment = appointmentRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Solicitação não encontrada com o id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException(SOLICITATION_NOT_FOUND + id));
         return appointmentMapper.toResponseDTO(appointment);
     }
 
     public AppointmentResponseDTO updatePartial(UUID id, AppointmentPatchRequestDTO dto) {
         Appointment appointment = appointmentRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Solicitação não encontrada com o id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException(SOLICITATION_NOT_FOUND + id));
 
         // Capturar status anterior para detectar mudanças
         AppointmentStatus previousStatus = appointment.getStatus();
@@ -116,19 +118,17 @@ public class AppointmentService {
 
     public void delete(UUID id) {
         if (!appointmentRepository.existsById(id)) {
-            throw new EntityNotFoundException("Solicitação não encontrada com o id: " + id);
+            throw new EntityNotFoundException(SOLICITATION_NOT_FOUND + id);
         }
         appointmentRepository.deleteById(id);
     }
 
-    public List<AppointmentFilterResponseDTO> searchAppointments(UUID interpreterId, UUID userId,
-            AppointmentStatus status,
-            AppointmentModality modality, LocalDateTime fromDateTime, Boolean hasRating, int dayLimit) {
+    public List<AppointmentFilterResponseDTO> searchAppointments(UUID interpreterId, UUID userId, AppointmentStatus status,
+                                                                 AppointmentModality modality, LocalDateTime fromDateTime, Boolean hasRating, int dayLimit) {
         List<Appointment> appointments = appointmentRepository.findAll();
 
         return appointments.stream()
-                .filter(appointment -> interpreterId == null
-                        || appointment.getInterpreter().getId().equals(interpreterId))
+                .filter(appointment -> interpreterId == null || appointment.getInterpreter().getId().equals(interpreterId))
                 .filter(appointment -> userId == null || appointment.getUser().getId().equals(userId))
                 .filter(appointment -> status == null || appointment.getStatus().equals(status))
                 .filter(appointment -> modality == null || appointment.getModality().equals(modality))
@@ -136,8 +136,8 @@ public class AppointmentService {
                 .filter(appointment -> hasRating == null || hasRatingAssigned(appointment, hasRating))
                 .filter(appointment -> dayLimit == -1 || isBeforeDateLimit(appointment, dayLimit))
                 .sorted(Comparator.comparing(
-                        (Appointment appointment) -> LocalDateTime.of(appointment.getDate(), appointment.getEndTime()))
-                        .reversed())
+                        (Appointment appointment) -> LocalDateTime.of(appointment.getDate(), appointment.getEndTime())
+                ).reversed())
                 .map(appointment -> {
                     if (interpreterId != null) {
                         return appointmentMapper.toFilterResponseDTO(appointment, appointment.getUser());
