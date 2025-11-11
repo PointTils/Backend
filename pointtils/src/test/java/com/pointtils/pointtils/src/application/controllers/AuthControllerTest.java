@@ -505,8 +505,8 @@ class AuthControllerTest {
 
                 String requestJson = String.format("""
                                 {
-                                    "resetToken": "%s",
-                                    "newPassword": "%s"
+                                    "reset_token": "%s",
+                                    "new_password": "%s"
                                 }
                                 """, resetToken, newPassword);
 
@@ -531,8 +531,8 @@ class AuthControllerTest {
 
                 String requestJson = String.format("""
                                 {
-                                    "resetToken": "%s",
-                                    "newPassword": "%s"
+                                    "reset_token": "%s",
+                                    "new_password": "%s"
                                 }
                                 """, resetToken, newPassword);
 

@@ -48,6 +48,7 @@ public class Interpreter extends Person {
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private InterpreterModality modality;
 
+    @ToString.Exclude
     @OneToMany(mappedBy = "interpreter", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Location> locations;
 

@@ -137,6 +137,47 @@ docker ps
 echo "Verificando logs da aplicação de DESENVOLVIMENTO:"
 docker logs --tail=50 pointtils-dev
 
+# Limpar imagens antigas para evitar acúmulo
+echo "Limpando imagens antigas para liberar espaço..."
+echo "Mantendo apenas as últimas 2 versões de cada imagem..."
+
+# Função para limpar imagens antigas mantendo as últimas N versões
+clean_old_images() {
+    local repo_name=$1
+    local keep_count=2
+    
+    echo "Limpando imagens antigas de $repo_name..."
+    
+    # Listar todas as imagens do repositório, ordenadas por data de criação (mais recentes primeiro)
+    local images=$(docker images --format "{{.ID}} {{.CreatedAt}} {{.Repository}}:{{.Tag}}" | grep "$repo_name" | sort -r -k2 | head -n 20)
+    
+    # Separar as imagens a manter (primeiras N)
+    local images_to_keep=$(echo "$images" | head -n $keep_count | awk '{print $1}')
+    
+    # Listar todas as imagens do repositório
+    local all_images=$(docker images --format "{{.ID}} {{.Repository}}:{{.Tag}}" | grep "$repo_name" | awk '{print $1}')
+    
+    # Remover imagens que não estão na lista de manter
+    for image_id in $all_images; do
+        if ! echo "$images_to_keep" | grep -q "$image_id"; then
+            echo "Removendo imagem antiga: $image_id"
+            docker rmi "$image_id" 2>/dev/null || true
+        fi
+    done
+}
+
+# Limpar imagens antigas de cada repositório
+clean_old_images "pointtils-dev"
+clean_old_images "pointtils-dev-grafana" 
+clean_old_images "pointtils-dev-prometheus"
+clean_old_images "pointtils-dev-db"
+
+# Limpeza adicional: remover imagens dangling (sem tag)
+echo "Removendo imagens dangling (sem tag)..."
+docker image prune -f
+
+echo "Limpeza de imagens concluída!"
+
 echo "=== Deploy de DESENVOLVIMENTO concluído! ==="
 echo "Aplicação de DESENVOLVIMENTO disponível em: http://localhost:8080"
 echo "Swagger UI: http://localhost:8080/swagger-ui.html"
