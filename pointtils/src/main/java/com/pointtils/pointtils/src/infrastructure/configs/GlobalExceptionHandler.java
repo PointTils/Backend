@@ -165,7 +165,8 @@ public class GlobalExceptionHandler {
             return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
         }
         if ("Refresh token inválido ou expirado".equals(message)
-                || "Access token inválido ou expirado".equals(message)) {
+                || "Access token inválido ou expirado".equals(message)
+                || "Token de recuperação inválido ou expirado".equals(message)) {
             ErrorResponse errorResponse = new ErrorResponse(
                     HttpStatus.UNAUTHORIZED.value(),
                     message,
