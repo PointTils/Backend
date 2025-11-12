@@ -116,6 +116,7 @@ public class InterpreterDocumentService {
                     .cnpj(interpreter.getCnpj())
                     .email(interpreter.getEmail())
                     .phone(interpreter.getPhone())
+                    .videoUrl(interpreter.getVideoUrl())
                     .acceptLink(acceptLink)
                     .rejectLink(rejectLink)
                     .files(files)

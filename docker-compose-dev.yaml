@@ -34,6 +34,7 @@ services:
         BREVO_SENDER_NAME: ${BREVO_SENDER_NAME}
         ADMIN_EMAIL: ${ADMIN_EMAIL}
         FIREBASE_SERVICE_ACCOUNT: ${FIREBASE_SERVICE_ACCOUNT}
+        API_BASE_URL: ${API_BASE_URL}
     image: ${APP_IMAGE:-backend-pointtils-dev}
     container_name: pointtils-dev
     environment:
@@ -66,6 +67,8 @@ services:
       - BREVO_SENDER_EMAIL=${BREVO_SENDER_EMAIL}
       - BREVO_SENDER_NAME=${BREVO_SENDER_NAME}
       - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - FIREBASE_SERVICE_ACCOUNT=${FIREBASE_SERVICE_ACCOUNT}
+      - API_BASE_URL=${API_BASE_URL}
     ports:
       - "8080:8080"
     depends_on:
@@ -131,7 +134,6 @@ services:
       retries: 3
       start_period: 40s
     restart: unless-stopped
-
 
 volumes:
   postgres_dev_data:

@@ -34,6 +34,7 @@ public class EmailService {
     private static final String PLACEHOLDER_CNPJ = "{{cnpj}}";
     private static final String PLACEHOLDER_EMAIL = "{{email}}";
     private static final String PLACEHOLDER_TELEFONE = "{{telefone}}";
+    private static final String PLACEHOLDER_VIDEO = "{{video}}";
     private static final String PLACEHOLDER_ANO = "{{ano}}";
     private static final String PLACEHOLDER_ACCEPT = "{{link_accept_api}}";
     private static final String PLACEHOLDER_REJECT = "{{link_reject_api}}";
@@ -206,6 +207,7 @@ public class EmailService {
                         .cnpj(dto.getCnpj())
                         .email(dto.getEmail())
                         .phone(dto.getPhone())
+                        .videoUrl(dto.getVideoUrl())
                         .acceptLink(dto.getAcceptLink())
                         .rejectLink(dto.getRejectLink())
                         .build()
@@ -363,7 +365,8 @@ public class EmailService {
                 .replace(PLACEHOLDER_TELEFONE, dto.getPhone() != null ? dto.getPhone() : "")
                 .replace(PLACEHOLDER_ACCEPT, dto.getAcceptLink() != null ? dto.getAcceptLink() : "")
                 .replace(PLACEHOLDER_REJECT, dto.getRejectLink() != null ? dto.getRejectLink() : "")
-                .replace(PLACEHOLDER_ANO, String.valueOf(Year.now().getValue()));
+                .replace(PLACEHOLDER_ANO, String.valueOf(Year.now().getValue()))
+                .replace(PLACEHOLDER_VIDEO, dto.getVideoUrl() != null ? dto.getVideoUrl() : "");
     }
 
 
