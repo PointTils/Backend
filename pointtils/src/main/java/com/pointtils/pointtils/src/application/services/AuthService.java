@@ -130,25 +130,10 @@ public class AuthService {
 
         return true;
     }
-
-    /**
-     * Redefine a senha do usuário usando um token de recuperação
-     *
-     * @param resetToken  Token de recuperação
-     * @param newPassword Nova senha
-     * @return true se a senha foi redefinida com sucesso, false caso contrário
-     */
-    public boolean resetPassword(String resetToken, String newPassword) {
+	
+    public boolean validateResetToken(String resetToken) {
         if (resetToken == null || resetToken.isBlank()) {
             throw new AuthenticationException("Token de recuperação não fornecido");
-        }
-
-        if (newPassword == null || newPassword.isBlank()) {
-            throw new AuthenticationException("Nova senha não fornecida");
-        }
-
-        if (!newPassword.matches("^[a-zA-Z0-9!@#$%^&*()_+=-]{6,}$")) {
-            throw new AuthenticationException("Formato de senha inválida");
         }
 
         String email = resetTokenService.validateResetToken(resetToken);
@@ -167,6 +152,31 @@ public class AuthService {
             throw new AuthenticationException("Usuário inativo");
         }
 
+        log.info("Token de recuperação validado com sucesso para o usuário: {}", email);
+        return true;
+    }
+
+    /**
+     * Redefine a senha do usuário usando um token de recuperação
+     *
+     * @param resetToken  Token de recuperação
+     * @param newPassword Nova senha
+     * @return true se a senha foi redefinida com sucesso, false caso contrário
+     */
+    public boolean resetPassword(String resetToken, String newPassword) {
+        if (newPassword == null || newPassword.isBlank()) {
+            throw new AuthenticationException("Nova senha não fornecida");
+        }
+
+        if (!newPassword.matches("^[a-zA-Z0-9!@#$%^&*()_+=-]{6,}$")) {
+            throw new AuthenticationException("Formato de senha inválida");
+        }
+
+		validateResetToken(resetToken);
+		
+        String email = resetTokenService.validateResetToken(resetToken);
+		User user = userRepository.findByEmail(email);
+		
         try {
             user.setPassword(passwordEncoder.encode(newPassword));
 
