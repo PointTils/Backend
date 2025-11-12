@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.pointtils.pointtils.src.application.dto.requests.LoginRequestDTO;
@@ -121,6 +122,31 @@ public class AuthController {
         } else {
             return ResponseEntity.ok().build();
         }
+    }
+
+    @PostMapping("/validate-mail-token")
+    @Operation(
+            summary = "Validar token de recuperação de senha",
+            description = "Valida se o token de recuperação enviado por email é válido e não está expirado"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Token validado com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiResponseDTO.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Token de recuperação não fornecido"),
+            @ApiResponse(responseCode = "401", description = "Token de recuperação inválido ou expirado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+    })
+    public ResponseEntity<ApiResponseDTO<Object>> validateMailToken(
+            @RequestParam("token") String token) {
+
+        authService.validateResetToken(token);
+
+        return ResponseEntity.ok(ApiResponseDTO.success(
+                "Token validado com sucesso",
+                null
+        ));
     }
 
     @PostMapping("/recover-password")

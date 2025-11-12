@@ -45,6 +45,9 @@ class AuthServiceTest {
     @Mock
     private MemoryBlacklistService memoryBlacklistService;
 
+    @Mock
+    private MemoryResetTokenService resetTokenService;
+
     @Test
     @DisplayName("Deve autenticar usuario pessoa com sucesso")
     void deveAutenticarUsuarioPessoaComSucesso() {
@@ -362,5 +365,101 @@ class AuthServiceTest {
                 () -> loginService.logout(validAccessToken, expiredRefreshToken)
         );
         assertEquals("Refresh token inválido ou expirado", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve validar token de recuperação com sucesso")
+    void deveValidarTokenRecuperacaoComSucesso() {
+        String validResetToken = "valid_reset_token";
+        String email = "test@email.com";
+
+        Person person = new Person();
+        person.setId(UUID.randomUUID());
+        person.setEmail(email);
+        person.setStatus(UserStatus.ACTIVE);
+
+        when(resetTokenService.validateResetToken(validResetToken)).thenReturn(email);
+        when(userRepository.findByEmail(email)).thenReturn(person);
+
+        boolean result = loginService.validateResetToken(validResetToken);
+
+        assertTrue(result);
+        verify(resetTokenService).validateResetToken(validResetToken);
+        verify(userRepository).findByEmail(email);
+    }
+
+    @Test
+    @DisplayName("Deve falhar ao validar token quando token for nulo")
+    void deveFalharAoValidarTokenQuandoTokenNulo() {
+        AuthenticationException ex = assertThrows(
+                AuthenticationException.class,
+                () -> loginService.validateResetToken(null)
+        );
+
+        assertEquals("Token de recuperação não fornecido", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve falhar ao validar token quando token for vazio")
+    void deveFalharAoValidarTokenQuandoTokenVazio() {
+        AuthenticationException ex = assertThrows(
+                AuthenticationException.class,
+                () -> loginService.validateResetToken("")
+        );
+
+        assertEquals("Token de recuperação não fornecido", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve falhar ao validar token quando token for inválido ou expirado")
+    void deveFalharAoValidarTokenQuandoTokenInvalidoOuExpirado() {
+        String invalidOrExpiredToken = "invalid_or_expired_token";
+
+        when(resetTokenService.validateResetToken(invalidOrExpiredToken)).thenReturn(null);
+
+        AuthenticationException ex = assertThrows(
+                AuthenticationException.class,
+                () -> loginService.validateResetToken(invalidOrExpiredToken)
+        );
+
+        assertEquals("Token de recuperação inválido ou expirado", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve falhar ao validar token quando usuário não for encontrado")
+    void deveFalharAoValidarTokenQuandoUsuarioNaoEncontrado() {
+        String validToken = "valid_token";
+        String email = "notfound@email.com";
+
+        when(resetTokenService.validateResetToken(validToken)).thenReturn(email);
+        when(userRepository.findByEmail(email)).thenReturn(null);
+
+        AuthenticationException ex = assertThrows(
+                AuthenticationException.class,
+                () -> loginService.validateResetToken(validToken)
+        );
+
+        assertEquals("Usuário não encontrado", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve falhar ao validar token quando usuário estiver inativo")
+    void deveFalharAoValidarTokenQuandoUsuarioInativo() {
+        String validToken = "valid_token";
+        String email = "inactive@email.com";
+
+        Person person = new Person();
+        person.setEmail(email);
+        person.setStatus(UserStatus.INACTIVE);
+
+        when(resetTokenService.validateResetToken(validToken)).thenReturn(email);
+        when(userRepository.findByEmail(email)).thenReturn(person);
+
+        AuthenticationException ex = assertThrows(
+                AuthenticationException.class,
+                () -> loginService.validateResetToken(validToken)
+        );
+
+        assertEquals("Usuário inativo", ex.getMessage());
     }
 }

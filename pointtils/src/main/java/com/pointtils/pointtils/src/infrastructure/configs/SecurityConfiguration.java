@@ -45,6 +45,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/v1/auth/refresh").permitAll()
                         .requestMatchers("/v1/auth/logout").permitAll()
                         .requestMatchers("/v1/auth/recover-password").permitAll()
+                        .requestMatchers("/v1/auth/validate-mail-token").permitAll()
                         .requestMatchers(HttpMethod.POST, "/v1/email/password-reset/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/v1/email/template/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/v1/email/interpreter/**").permitAll()
