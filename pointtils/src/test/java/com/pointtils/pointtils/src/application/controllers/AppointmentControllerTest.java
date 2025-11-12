@@ -17,7 +17,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -30,7 +29,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -274,10 +272,7 @@ class AppointmentControllerTest {
         var patchDto = new AppointmentPatchRequestDTO();
         when(appointmentService.updatePartial(appointmentId, patchDto)).thenReturn(appointmentResponseDTO);
 
-        UserDetails userDetails = mock(UserDetails.class);
-        when(userDetails.getUsername()).thenReturn("logged@email.com");
-
-        ResponseEntity<?> response = appointmentController.updatePartial(appointmentId, patchDto, userDetails);
+        ResponseEntity<?> response = appointmentController.updatePartial(appointmentId, patchDto, "logged@email.com");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("logged@email.com", patchDto.getLoggedUserEmail());
@@ -331,6 +326,5 @@ class AppointmentControllerTest {
         verify(appointmentService, times(2))
                 .searchAppointments(interpreterId, appointmentUserId, status, modality, null, hasRating, dayLimit);
     }
-
 
 }
