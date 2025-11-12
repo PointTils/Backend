@@ -175,7 +175,7 @@ public class EmailController {
             Map<String, Object> data = new HashMap<>();
             
             data.put("to", email);
-            data.put("userName", user.getDisplayName());
+            data.put(USER_NAME, user.getDisplayName());
 
             if (success) {
                 return ResponseEntity.ok(ApiResponseDTO.success("Email de recuperação enviado com sucesso", data));
