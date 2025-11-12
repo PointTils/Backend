@@ -811,17 +811,19 @@ class EmailServiceTest {
         doNothing().when(mailSender).send(any(MimeMessage.class));
 
         // Executa o método
-        boolean result = emailService.sendInterpreterRegistrationRequestEmail(
-            "admin@test.com",
-            "João Intérprete", 
-            "123.456.789-00",
-            "12.345.678/0001-90", 
-            "joao@email.com",
-            "11999999999",
-            "http://accept",
-            "http://reject",
-            files
-        );
+        InterpreterRegistrationEmailDTO dto = InterpreterRegistrationEmailDTO.builder()
+            .adminEmail("admin@test.com")
+            .interpreterName("João Intérprete")
+            .cpf("123.456.789-00")
+            .cnpj("12.345.678/0001-90")
+            .email("joao@email.com")
+            .phone("11999999999")
+            .acceptLink("http://accept")
+            .rejectLink("http://reject")
+            .files(files)
+            .build();
+
+        boolean result = emailService.sendInterpreterRegistrationRequestEmail(dto);
 
         // Verifica o resultado
         assertTrue(result);
@@ -859,17 +861,19 @@ class EmailServiceTest {
         doNothing().when(mailSender).send(any(MimeMessage.class));
 
         // Executa o método
-        boolean result = emailService.sendInterpreterRegistrationRequestEmail(
-            "admin@test.com",
-            "João Intérprete",
-            "123.456.789-00", 
-            "12.345.678/0001-90",
-            "joao@email.com",
-            "11999999999",
-            "http://accept",
-            "http://reject",
-            files
-        );
+        InterpreterRegistrationEmailDTO dto = InterpreterRegistrationEmailDTO.builder()
+            .adminEmail("admin@test.com")
+            .interpreterName("João Intérprete")
+            .cpf("123.456.789-00")
+            .cnpj("12.345.678/0001-90")
+            .email("joao@email.com")
+            .phone("11999999999")
+            .acceptLink("http://accept")
+            .rejectLink("http://reject")
+            .files(files)
+            .build();
+
+        boolean result = emailService.sendInterpreterRegistrationRequestEmail(dto);
 
         // Verifica o resultado
         assertTrue(result);
