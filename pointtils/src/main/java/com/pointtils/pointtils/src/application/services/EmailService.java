@@ -9,6 +9,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.SimpleMailMessage;
@@ -357,6 +358,10 @@ public class EmailService {
             // Substituir placeholders do template do banco
         }
 
+        String videoUrl = StringUtils.isNotBlank(dto.getVideoUrl())
+                ? "<a href=\"" + dto.getVideoUrl() + "\" target=\"_blank\" rel=\"noreferrer noopener\">Assistir</a>"
+                : "";
+
         return dto.getTemplate()
                 .replace(PLACEHOLDER_NOME, dto.getInterpreterName() != null ? dto.getInterpreterName() : "")
                 .replace(PLACEHOLDER_CPF, dto.getCpf() != null ? dto.getCpf() : "")
@@ -366,7 +371,7 @@ public class EmailService {
                 .replace(PLACEHOLDER_ACCEPT, dto.getAcceptLink() != null ? dto.getAcceptLink() : "")
                 .replace(PLACEHOLDER_REJECT, dto.getRejectLink() != null ? dto.getRejectLink() : "")
                 .replace(PLACEHOLDER_ANO, String.valueOf(Year.now().getValue()))
-                .replace(PLACEHOLDER_VIDEO, dto.getVideoUrl() != null ? dto.getVideoUrl() : "");
+                .replace(PLACEHOLDER_VIDEO, videoUrl);
     }
 
 
