@@ -5,6 +5,7 @@ import com.pointtils.pointtils.src.application.dto.responses.InterpreterDocument
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterRegistrationEmailDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Interpreter;
 import com.pointtils.pointtils.src.core.domain.entities.InterpreterDocuments;
+import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
 import com.pointtils.pointtils.src.core.domain.exceptions.FileUploadException;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterDocumentsRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -37,7 +38,7 @@ public class InterpreterDocumentService {
 
     @Transactional
     public InterpreterDocumentResponseDTO saveDocuments(UUID interpreterId, List<MultipartFile> files,
-                                                        Boolean replaceExisting) {
+            Boolean replaceExisting) {
         Interpreter interpreter = interpreterService.findInterpreterById(interpreterId);
 
         List<InterpreterDocuments> existingDocuments = null;
@@ -82,7 +83,8 @@ public class InterpreterDocumentService {
         return InterpreterDocumentResponseDTO.fromEntity(List.of(updatedDocument));
     }
 
-    private InterpreterDocuments uploadDocument(Interpreter interpreter, MultipartFile file, InterpreterDocuments interpreterDocument) {
+    private InterpreterDocuments uploadDocument(Interpreter interpreter, MultipartFile file,
+            InterpreterDocuments interpreterDocument) {
         // Faz o upload do arquivo para o S3
         String documentUrl;
         try {
@@ -135,4 +137,9 @@ public class InterpreterDocumentService {
         }
     }
 
+    public void deleteDocument(UUID id) {
+        InterpreterDocuments interpreterDocuments = interpreterDocumentsRepository.findById(id)
+                .orElseThrow(() -> new AuthenticationException("Documento não encontrado."));
+        interpreterDocumentsRepository.delete(interpreterDocuments);
+    }
 }

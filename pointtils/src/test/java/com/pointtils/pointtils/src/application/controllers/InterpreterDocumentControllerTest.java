@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -31,260 +32,277 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class InterpreterDocumentControllerTest {
 
-    @Mock
-    private InterpreterDocumentService interpreterDocumentService;
-    @InjectMocks
-    private InterpreterDocumentController interpreterDocumentController;
+        @Mock
+        private InterpreterDocumentService interpreterDocumentService;
+        @InjectMocks
+        private InterpreterDocumentController interpreterDocumentController;
 
-    @Test
-    void shouldSaveDocumentsSuccessfully() {
-        // Arrange
-        UUID interpreterId = UUID.randomUUID();
-        MockMultipartFile file = new MockMultipartFile(
-                "files",
-                "test-document.pdf",
-                MediaType.APPLICATION_PDF_VALUE,
-                "Test content".getBytes());
+        @Test
+        void shouldSaveDocumentsSuccessfully() {
+                // Arrange
+                UUID interpreterId = UUID.randomUUID();
+                MockMultipartFile file = new MockMultipartFile(
+                                "files",
+                                "test-document.pdf",
+                                MediaType.APPLICATION_PDF_VALUE,
+                                "Test content".getBytes());
 
-        InterpreterDocumentResponseDTO responseDTO = new InterpreterDocumentResponseDTO();
-        responseDTO.setSuccess(true);
-        responseDTO.setMessage("Documento enviado com sucesso");
-        responseDTO.setData(List.of(new InterpreterDocumentResponseDTO.DocumentData(
-                UUID.randomUUID(),
-                interpreterId,
-                "https://s3.amazonaws.com/documents/test-document.pdf")));
+                InterpreterDocumentResponseDTO responseDTO = new InterpreterDocumentResponseDTO();
+                responseDTO.setSuccess(true);
+                responseDTO.setMessage("Documento enviado com sucesso");
+                responseDTO.setData(List.of(new InterpreterDocumentResponseDTO.DocumentData(
+                                UUID.randomUUID(),
+                                interpreterId,
+                                "https://s3.amazonaws.com/documents/test-document.pdf")));
 
-        when(interpreterDocumentService.saveDocuments(any(UUID.class), anyList(), anyBoolean()))
-                .thenReturn(responseDTO);
+                when(interpreterDocumentService.saveDocuments(any(UUID.class), anyList(), anyBoolean()))
+                                .thenReturn(responseDTO);
 
-        // Act
-        ResponseEntity<InterpreterDocumentResponseDTO> response = interpreterDocumentController
-                .saveDocuments(interpreterId, List.of(file), true);
+                // Act
+                ResponseEntity<InterpreterDocumentResponseDTO> response = interpreterDocumentController
+                                .saveDocuments(interpreterId, List.of(file), true);
 
-        // Assert
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(1, response.getBody().getData().size());
-        assertEquals("Documento enviado com sucesso", response.getBody().getMessage());
-        verify(interpreterDocumentService, times(1)).saveDocuments(any(UUID.class), anyList(), anyBoolean());
-    }
+                // Assert
+                assertEquals(HttpStatus.OK, response.getStatusCode());
+                assertEquals(1, response.getBody().getData().size());
+                assertEquals("Documento enviado com sucesso", response.getBody().getMessage());
+                verify(interpreterDocumentService, times(1)).saveDocuments(any(UUID.class), anyList(), anyBoolean());
+        }
 
-    @Test
-    void shouldGetDocumentsByInterpreterSuccessfully() {
-        // Arrange
-        UUID interpreterId = UUID.randomUUID();
-        InterpreterDocumentResponseDTO responseDTO = new InterpreterDocumentResponseDTO();
-        responseDTO.setSuccess(true);
-        responseDTO.setMessage("Documento encontrado");
-        responseDTO.setData(List.of(new InterpreterDocumentResponseDTO.DocumentData(
-                UUID.randomUUID(),
-                interpreterId,
-                "https://s3.amazonaws.com/documents/test-document.pdf")));
+        @Test
+        void shouldGetDocumentsByInterpreterSuccessfully() {
+                // Arrange
+                UUID interpreterId = UUID.randomUUID();
+                InterpreterDocumentResponseDTO responseDTO = new InterpreterDocumentResponseDTO();
+                responseDTO.setSuccess(true);
+                responseDTO.setMessage("Documento encontrado");
+                responseDTO.setData(List.of(new InterpreterDocumentResponseDTO.DocumentData(
+                                UUID.randomUUID(),
+                                interpreterId,
+                                "https://s3.amazonaws.com/documents/test-document.pdf")));
 
-        when(interpreterDocumentService.getDocumentsByInterpreter(any(UUID.class)))
-                .thenReturn(responseDTO);
+                when(interpreterDocumentService.getDocumentsByInterpreter(any(UUID.class)))
+                                .thenReturn(responseDTO);
 
-        // Act
-        ResponseEntity<InterpreterDocumentResponseDTO> response = interpreterDocumentController
-                .getDocumentsByInterpreter(interpreterId);
+                // Act
+                ResponseEntity<InterpreterDocumentResponseDTO> response = interpreterDocumentController
+                                .getDocumentsByInterpreter(interpreterId);
 
-        // Assert
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(1, response.getBody().getData().size());
-        assertEquals("Documento encontrado", response.getBody().getMessage());
-        verify(interpreterDocumentService, times(1)).getDocumentsByInterpreter(any(UUID.class));
-    }
+                // Assert
+                assertEquals(HttpStatus.OK, response.getStatusCode());
+                assertEquals(1, response.getBody().getData().size());
+                assertEquals("Documento encontrado", response.getBody().getMessage());
+                verify(interpreterDocumentService, times(1)).getDocumentsByInterpreter(any(UUID.class));
+        }
 
-    @Test
-    void shouldUpdateDocumentSuccessfully() {
-        // Arrange
-        UUID interpreterId = UUID.randomUUID();
-        UUID documentId = UUID.randomUUID();
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "updated-document.pdf",
-                MediaType.APPLICATION_PDF_VALUE,
-                "Updated content".getBytes());
+        @Test
+        void shouldUpdateDocumentSuccessfully() {
+                // Arrange
+                UUID interpreterId = UUID.randomUUID();
+                UUID documentId = UUID.randomUUID();
+                MockMultipartFile file = new MockMultipartFile(
+                                "file",
+                                "updated-document.pdf",
+                                MediaType.APPLICATION_PDF_VALUE,
+                                "Updated content".getBytes());
 
-        InterpreterDocumentResponseDTO responseDTO = new InterpreterDocumentResponseDTO();
-        responseDTO.setSuccess(true);
-        responseDTO.setMessage("Documento atualizado com sucesso");
-        responseDTO.setData(List.of(new InterpreterDocumentResponseDTO.DocumentData(
-                documentId,
-                interpreterId,
-                "https://s3.amazonaws.com/documents/updated-document.pdf")));
+                InterpreterDocumentResponseDTO responseDTO = new InterpreterDocumentResponseDTO();
+                responseDTO.setSuccess(true);
+                responseDTO.setMessage("Documento atualizado com sucesso");
+                responseDTO.setData(List.of(new InterpreterDocumentResponseDTO.DocumentData(
+                                documentId,
+                                interpreterId,
+                                "https://s3.amazonaws.com/documents/updated-document.pdf")));
 
-        when(interpreterDocumentService.updateDocument(any(UUID.class), any(InterpreterDocumentRequestDTO.class)))
-                .thenReturn(responseDTO);
+                when(interpreterDocumentService.updateDocument(any(UUID.class),
+                                any(InterpreterDocumentRequestDTO.class)))
+                                .thenReturn(responseDTO);
 
-        // Act
-        ResponseEntity<InterpreterDocumentResponseDTO> response = interpreterDocumentController
-                .updateDocument(interpreterId, documentId, file);
+                // Act
+                ResponseEntity<InterpreterDocumentResponseDTO> response = interpreterDocumentController
+                                .updateDocument(interpreterId, documentId, file);
 
-        // Assert
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("Documento atualizado com sucesso", response.getBody().getMessage());
-        verify(interpreterDocumentService, times(1)).updateDocument(any(UUID.class),
-                any(InterpreterDocumentRequestDTO.class));
-    }
+                // Assert
+                assertEquals(HttpStatus.OK, response.getStatusCode());
+                assertEquals("Documento atualizado com sucesso", response.getBody().getMessage());
+                verify(interpreterDocumentService, times(1)).updateDocument(any(UUID.class),
+                                any(InterpreterDocumentRequestDTO.class));
+        }
 
-    @Test
-    void shouldHandleFileUploadExceptionWhenSavingDocuments() {
-        // Arrange
-        UUID interpreterId = UUID.randomUUID();
-        MockMultipartFile file = new MockMultipartFile(
-                "files",
-                "test-document.pdf",
-                MediaType.APPLICATION_PDF_VALUE,
-                "Test content".getBytes());
+        @Test
+        void shouldHandleFileUploadExceptionWhenSavingDocuments() {
+                // Arrange
+                UUID interpreterId = UUID.randomUUID();
+                MockMultipartFile file = new MockMultipartFile(
+                                "files",
+                                "test-document.pdf",
+                                MediaType.APPLICATION_PDF_VALUE,
+                                "Test content".getBytes());
 
-        when(interpreterDocumentService.saveDocuments(any(UUID.class), anyList(), anyBoolean()))
-                .thenThrow(new FileUploadException("test-document.pdf", new RuntimeException()));
-        List<MultipartFile> fileList = List.of(file);
+                when(interpreterDocumentService.saveDocuments(any(UUID.class), anyList(), anyBoolean()))
+                                .thenThrow(new FileUploadException("test-document.pdf", new RuntimeException()));
+                List<MultipartFile> fileList = List.of(file);
 
-        // Act & Assert
-        FileUploadException exception = assertThrows(FileUploadException.class,
-                () -> interpreterDocumentController.saveDocuments(interpreterId, fileList, true));
-        assertEquals("Erro ao fazer upload do arquivo test-document.pdf", exception.getMessage());
-        verify(interpreterDocumentService, times(1)).saveDocuments(any(UUID.class), anyList(), anyBoolean());
-    }
+                // Act & Assert
+                FileUploadException exception = assertThrows(FileUploadException.class,
+                                () -> interpreterDocumentController.saveDocuments(interpreterId, fileList, true));
+                assertEquals("Erro ao fazer upload do arquivo test-document.pdf", exception.getMessage());
+                verify(interpreterDocumentService, times(1)).saveDocuments(any(UUID.class), anyList(), anyBoolean());
+        }
 
-    @Test
-    void shouldHandleFileUploadExceptionWhenUpdatingDocument() {
-        // Arrange
-        UUID interpreterId = UUID.randomUUID();
-        UUID documentId = UUID.randomUUID();
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "updated-document.pdf",
-                MediaType.APPLICATION_PDF_VALUE,
-                "Updated content".getBytes());
+        @Test
+        void shouldHandleFileUploadExceptionWhenUpdatingDocument() {
+                // Arrange
+                UUID interpreterId = UUID.randomUUID();
+                UUID documentId = UUID.randomUUID();
+                MockMultipartFile file = new MockMultipartFile(
+                                "file",
+                                "updated-document.pdf",
+                                MediaType.APPLICATION_PDF_VALUE,
+                                "Updated content".getBytes());
 
-        when(interpreterDocumentService.updateDocument(any(UUID.class), any(InterpreterDocumentRequestDTO.class)))
-                .thenThrow(new FileUploadException("updated-document.pdf",
-                        new RuntimeException()));
+                when(interpreterDocumentService.updateDocument(any(UUID.class),
+                                any(InterpreterDocumentRequestDTO.class)))
+                                .thenThrow(new FileUploadException("updated-document.pdf",
+                                                new RuntimeException()));
 
-        // Act & Assert
-        FileUploadException exception = assertThrows(FileUploadException.class, () -> {
-            interpreterDocumentController.updateDocument(interpreterId, documentId, file);
-        });
+                // Act & Assert
+                FileUploadException exception = assertThrows(FileUploadException.class, () -> {
+                        interpreterDocumentController.updateDocument(interpreterId, documentId, file);
+                });
 
-        assertEquals("Erro ao fazer upload do arquivo updated-document.pdf", exception.getMessage());
-        verify(interpreterDocumentService, times(1)).updateDocument(any(UUID.class),
-                any(InterpreterDocumentRequestDTO.class));
-    }
+                assertEquals("Erro ao fazer upload do arquivo updated-document.pdf", exception.getMessage());
+                verify(interpreterDocumentService, times(1)).updateDocument(any(UUID.class),
+                                any(InterpreterDocumentRequestDTO.class));
+        }
 
-    @Test
-    void shouldHandleNoDocumentsFound() {
-        // Arrange
-        UUID interpreterId = UUID.randomUUID();
+        @Test
+        void shouldHandleNoDocumentsFound() {
+                // Arrange
+                UUID interpreterId = UUID.randomUUID();
 
-        when(interpreterDocumentService.getDocumentsByInterpreter(any(UUID.class)))
-                .thenReturn(new InterpreterDocumentResponseDTO(true, "No documents found", List.of()));
+                when(interpreterDocumentService.getDocumentsByInterpreter(any(UUID.class)))
+                                .thenReturn(new InterpreterDocumentResponseDTO(true, "No documents found", List.of()));
 
-        // Act
-        ResponseEntity<InterpreterDocumentResponseDTO> response = interpreterDocumentController
-                .getDocumentsByInterpreter(interpreterId);
+                // Act
+                ResponseEntity<InterpreterDocumentResponseDTO> response = interpreterDocumentController
+                                .getDocumentsByInterpreter(interpreterId);
 
-        // Assert
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(0, response.getBody().getData().size());
-        verify(interpreterDocumentService, times(1)).getDocumentsByInterpreter(any(UUID.class));
-    }
+                // Assert
+                assertEquals(HttpStatus.OK, response.getStatusCode());
+                assertEquals(0, response.getBody().getData().size());
+                verify(interpreterDocumentService, times(1)).getDocumentsByInterpreter(any(UUID.class));
+        }
 
-    @Test
-    void shouldHandleUnsupportedOperationExceptionWhenSavingDocuments() {
-        // Arrange
-        UUID interpreterId = UUID.randomUUID();
-        MockMultipartFile file = new MockMultipartFile(
-                "files",
-                "test-document.pdf",
-                MediaType.APPLICATION_PDF_VALUE,
-                "Test content".getBytes());
+        @Test
+        void shouldHandleUnsupportedOperationExceptionWhenSavingDocuments() {
+                // Arrange
+                UUID interpreterId = UUID.randomUUID();
+                MockMultipartFile file = new MockMultipartFile(
+                                "files",
+                                "test-document.pdf",
+                                MediaType.APPLICATION_PDF_VALUE,
+                                "Test content".getBytes());
 
-        when(interpreterDocumentService.saveDocuments(any(UUID.class), anyList(), anyBoolean()))
-                .thenThrow(new UnsupportedOperationException("Upload de documentos está desabilitado."));
-        List<MultipartFile> fileList = List.of(file);
+                when(interpreterDocumentService.saveDocuments(any(UUID.class), anyList(), anyBoolean()))
+                                .thenThrow(new UnsupportedOperationException(
+                                                "Upload de documentos está desabilitado."));
+                List<MultipartFile> fileList = List.of(file);
 
-        // Act & Assert
-        UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class,
-                () -> interpreterDocumentController.saveDocuments(interpreterId, fileList, true));
-        assertEquals("Upload de documentos está desabilitado.", exception.getMessage());
-    }
+                // Act & Assert
+                UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class,
+                                () -> interpreterDocumentController.saveDocuments(interpreterId, fileList, true));
+                assertEquals("Upload de documentos está desabilitado.", exception.getMessage());
+        }
 
-    @Test
-    void shouldHandleUnsupportedOperationExceptionWhenUpdatingDocument() {
-        // Arrange
-        UUID interpreterId = UUID.randomUUID();
-        UUID documentId = UUID.randomUUID();
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "updated-document.pdf",
-                MediaType.APPLICATION_PDF_VALUE,
-                "Updated content".getBytes());
+        @Test
+        void shouldHandleUnsupportedOperationExceptionWhenUpdatingDocument() {
+                // Arrange
+                UUID interpreterId = UUID.randomUUID();
+                UUID documentId = UUID.randomUUID();
+                MockMultipartFile file = new MockMultipartFile(
+                                "file",
+                                "updated-document.pdf",
+                                MediaType.APPLICATION_PDF_VALUE,
+                                "Updated content".getBytes());
 
-        when(interpreterDocumentService.updateDocument(any(UUID.class), any(InterpreterDocumentRequestDTO.class)))
-                .thenThrow(new UnsupportedOperationException("Upload de documentos está desabilitado."));
+                when(interpreterDocumentService.updateDocument(any(UUID.class),
+                                any(InterpreterDocumentRequestDTO.class)))
+                                .thenThrow(new UnsupportedOperationException(
+                                                "Upload de documentos está desabilitado."));
 
-        // Act & Assert
-        UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class, () -> {
-            interpreterDocumentController.updateDocument(interpreterId, documentId, file);
-        });
-        assertEquals("Upload de documentos está desabilitado.", exception.getMessage());
-    }
+                // Act & Assert
+                UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class, () -> {
+                        interpreterDocumentController.updateDocument(interpreterId, documentId, file);
+                });
+                assertEquals("Upload de documentos está desabilitado.", exception.getMessage());
+        }
 
-    @Test
-    void shouldHandleEntityNotFoundExceptionWhenGettingDocuments() {
-        // Arrange
-        UUID interpreterId = UUID.randomUUID();
+        @Test
+        void shouldHandleEntityNotFoundExceptionWhenGettingDocuments() {
+                // Arrange
+                UUID interpreterId = UUID.randomUUID();
 
-        when(interpreterDocumentService.getDocumentsByInterpreter(any(UUID.class)))
-                .thenThrow(new EntityNotFoundException("Intérprete não encontrado"));
+                when(interpreterDocumentService.getDocumentsByInterpreter(any(UUID.class)))
+                                .thenThrow(new EntityNotFoundException("Intérprete não encontrado"));
 
-        // Act & Assert
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
-            interpreterDocumentController.getDocumentsByInterpreter(interpreterId);
-        });
-        assertEquals("Intérprete não encontrado", exception.getMessage());
-    }
+                // Act & Assert
+                EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
+                        interpreterDocumentController.getDocumentsByInterpreter(interpreterId);
+                });
+                assertEquals("Intérprete não encontrado", exception.getMessage());
+        }
 
-    @Test
-    void shouldHandleEntityNotFoundExceptionWhenUpdatingDocument() {
-        // Arrange
-        UUID interpreterId = UUID.randomUUID();
-        UUID documentId = UUID.randomUUID();
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "updated-document.pdf",
-                MediaType.APPLICATION_PDF_VALUE,
-                "Updated content".getBytes());
+        @Test
+        void shouldHandleEntityNotFoundExceptionWhenUpdatingDocument() {
+                // Arrange
+                UUID interpreterId = UUID.randomUUID();
+                UUID documentId = UUID.randomUUID();
+                MockMultipartFile file = new MockMultipartFile(
+                                "file",
+                                "updated-document.pdf",
+                                MediaType.APPLICATION_PDF_VALUE,
+                                "Updated content".getBytes());
 
-        when(interpreterDocumentService.updateDocument(any(UUID.class), any(InterpreterDocumentRequestDTO.class)))
-                .thenThrow(new EntityNotFoundException("Documento não encontrado"));
+                when(interpreterDocumentService.updateDocument(any(UUID.class),
+                                any(InterpreterDocumentRequestDTO.class)))
+                                .thenThrow(new EntityNotFoundException("Documento não encontrado"));
 
-        // Act & Assert
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
-            interpreterDocumentController.updateDocument(interpreterId, documentId, file);
-        });
-        assertEquals("Documento não encontrado", exception.getMessage());
-    }
+                // Act & Assert
+                EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
+                        interpreterDocumentController.updateDocument(interpreterId, documentId, file);
+                });
+                assertEquals("Documento não encontrado", exception.getMessage());
+        }
 
-    @Test
-    void shouldHandleEntityNotFoundExceptionWhenSavingDocuments() {
-        // Arrange
-        UUID interpreterId = UUID.randomUUID();
-        MockMultipartFile file = new MockMultipartFile(
-                "files",
-                "test-document.pdf",
-                MediaType.APPLICATION_PDF_VALUE,
-                "Test content".getBytes());
+        @Test
+        void shouldHandleEntityNotFoundExceptionWhenSavingDocuments() {
+                // Arrange
+                UUID interpreterId = UUID.randomUUID();
+                MockMultipartFile file = new MockMultipartFile(
+                                "files",
+                                "test-document.pdf",
+                                MediaType.APPLICATION_PDF_VALUE,
+                                "Test content".getBytes());
 
-        when(interpreterDocumentService.saveDocuments(any(UUID.class), anyList(), anyBoolean()))
-                .thenThrow(new EntityNotFoundException("Intérprete não encontrado"));
-        List<MultipartFile> fileList = List.of(file);
+                when(interpreterDocumentService.saveDocuments(any(UUID.class), anyList(), anyBoolean()))
+                                .thenThrow(new EntityNotFoundException("Intérprete não encontrado"));
+                List<MultipartFile> fileList = List.of(file);
 
-        // Act & Assert
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
-                () -> interpreterDocumentController.saveDocuments(interpreterId, fileList, true));
-        assertEquals("Intérprete não encontrado", exception.getMessage());
-    }
+                // Act & Assert
+                EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                                () -> interpreterDocumentController.saveDocuments(interpreterId, fileList, true));
+                assertEquals("Intérprete não encontrado", exception.getMessage());
+        }
+
+        @Test
+        void deleteDocument_ShouldReturnNoContent_WhenDocumentIsDeleted() {
+                UUID id = UUID.randomUUID();
+
+                ResponseEntity<Void> response = interpreterDocumentController.deleteDocument(id);
+
+                verify(interpreterDocumentService).deleteDocument(id);
+                assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+                assertNull(response.getBody());
+        }
 }
