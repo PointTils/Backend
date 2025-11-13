@@ -5,6 +5,7 @@ import com.pointtils.pointtils.src.application.dto.responses.InterpreterRegistra
 import com.pointtils.pointtils.src.core.domain.entities.Parameters;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.ParametersRepository;
+import jakarta.mail.MessagingException;
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +22,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Year;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -678,5 +680,42 @@ class EmailServiceTest {
 
         String expectedStart = "<html><body><h1>Template não encontrado</h1>";
         assertTrue(result.startsWith(expectedStart));
+    }
+
+    @Test
+    void deveProcessarURLDeVideoCorretamenteNoEnvioSolicitacaoCadastroInterprete() throws MessagingException {
+        // Template armazenado no banco
+        String template = "<p>Video: {{url}}</p>";
+        Parameters parameter = new Parameters();
+        parameter.setKey("PENDING_INTERPRETER_ADMIN");
+        parameter.setValue(template);
+
+        when(parametersRepository.findByKey("PENDING_INTERPRETER_ADMIN"))
+                .thenReturn(Optional.of(parameter));
+
+        // Mock do envio do email
+        MimeMessage mimeMessage = new MimeMessage((Session) null);
+        ArgumentCaptor<MimeMessage> messageCaptor = ArgumentCaptor.forClass(MimeMessage.class);
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doNothing().when(mailSender).send(messageCaptor.capture());
+
+        InterpreterRegistrationEmailDTO dto = InterpreterRegistrationEmailDTO.builder()
+                .adminEmail("admin@pointtils.com")
+                .email("interpreter@email.com")
+                .videoUrl("http://video-url.com/video.mp4")
+                .files(Collections.emptyList())
+                .build();
+
+        // Execução do método
+        boolean result = emailService.sendInterpreterRegistrationRequestEmail(dto);
+
+        // Verificações
+        assertTrue(result);
+        assertEquals("Nova Solicitação de Cadastro de Intérprete - PointTils", messageCaptor.getValue().getSubject());
+        assertEquals(1, messageCaptor.getValue().getFrom().length);
+        assertEquals("PointTils Test <test@pointtils.com>", messageCaptor.getValue().getFrom()[0].toString());
+
+        verify(parametersRepository).findByKey("PENDING_INTERPRETER_ADMIN");
+        verify(mailSender).send(any(MimeMessage.class));
     }
 }
