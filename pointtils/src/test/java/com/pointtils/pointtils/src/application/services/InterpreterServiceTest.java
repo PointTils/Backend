@@ -90,7 +90,7 @@ class InterpreterServiceTest {
         assertEquals(BigDecimal.ZERO, interpreterArgumentCaptor.getValue().getRating());
         assertEquals("", interpreterArgumentCaptor.getValue().getDescription());
         assertEquals("https://www.youtube.com/watch?v=tmIBzgKEz3o", interpreterArgumentCaptor.getValue().getVideoUrl());
-        assertEquals("ALL", interpreterArgumentCaptor.getValue().getModality().name());
+        assertEquals("ONLINE", interpreterArgumentCaptor.getValue().getModality().name());
         assertFalse(interpreterArgumentCaptor.getValue().getImageRights());
     }
 
@@ -122,14 +122,14 @@ class InterpreterServiceTest {
     @Test
     void shouldFindAll() {
         FindAllInterpreterDTO dto = new FindAllInterpreterDTO();
-            dto.setModality("ONLINE");
-            dto.setGender("FEMALE");
-            dto.setCity("São Paulo");
-            dto.setUf("SP");
-            dto.setNeighborhood("Higienópolis");
-            dto.setSpecialty(UUID.randomUUID().toString());
-            dto.setAvailableDate("2025-11-07 09:00");
-            dto.setName("interpreter");
+        dto.setModality("ONLINE");
+        dto.setGender("FEMALE");
+        dto.setCity("São Paulo");
+        dto.setUf("SP");
+        dto.setNeighborhood("Higienópolis");
+        dto.setSpecialty(UUID.randomUUID().toString());
+        dto.setAvailableDate("2025-11-07 09:00");
+        dto.setName("interpreter");
         UUID id = UUID.randomUUID();
         Interpreter foundInterpreter = Interpreter.builder().id(id).build();
         InterpreterListResponseDTO mappedResponse = InterpreterListResponseDTO.builder().id(id).build();
@@ -143,64 +143,64 @@ class InterpreterServiceTest {
 
     @Test
     void shouldFindAllWithFilters() {
-            // Arrange
-            FindAllInterpreterDTO dto = new FindAllInterpreterDTO();
-            dto.setModality("ONLINE");
-            dto.setGender("FEMALE");
-            dto.setCity("São Paulo");
-            dto.setUf("SP");
-            dto.setNeighborhood("Higienópolis");
-            dto.setSpecialty(UUID.randomUUID().toString());
-            dto.setAvailableDate("2025-11-07 09:00");
-            dto.setName("interpreter");
+        // Arrange
+        FindAllInterpreterDTO dto = new FindAllInterpreterDTO();
+        dto.setModality("ONLINE");
+        dto.setGender("FEMALE");
+        dto.setCity("São Paulo");
+        dto.setUf("SP");
+        dto.setNeighborhood("Higienópolis");
+        dto.setSpecialty(UUID.randomUUID().toString());
+        dto.setAvailableDate("2025-11-07 09:00");
+        dto.setName("interpreter");
 
-            UUID id = UUID.randomUUID();
-            Location location = Location.builder()
-                            .id(UUID.randomUUID())
-                            .uf("SP")
-                            .city("São Paulo")
-                            .neighborhood("Higienópolis")
-                            .build();
+        UUID id = UUID.randomUUID();
+        Location location = Location.builder()
+                .id(UUID.randomUUID())
+                .uf("SP")
+                .city("São Paulo")
+                .neighborhood("Higienópolis")
+                .build();
 
-            List<Location> locations = new ArrayList<>();
-            locations.add(location);
+        List<Location> locations = new ArrayList<>();
+        locations.add(location);
 
-            Specialty specialty = new Specialty("Libras");
-            specialty.setId(UUID.randomUUID());
-            Set<Specialty> specialties = new HashSet<>();
-            specialties.add(specialty);
+        Specialty specialty = new Specialty("Libras");
+        specialty.setId(UUID.randomUUID());
+        Set<Specialty> specialties = new HashSet<>();
+        specialties.add(specialty);
 
-            Schedule schedule = new Schedule();
-            schedule.setDay(DayOfWeek.WED);
-            schedule.setStartTime(LocalTime.of(9, 0));
-            schedule.setEndTime(LocalTime.of(18, 0));
-            Set<Schedule> schedules = new HashSet<>();
-            schedules.add(schedule);
+        Schedule schedule = new Schedule();
+        schedule.setDay(DayOfWeek.WED);
+        schedule.setStartTime(LocalTime.of(9, 0));
+        schedule.setEndTime(LocalTime.of(18, 0));
+        Set<Schedule> schedules = new HashSet<>();
+        schedules.add(schedule);
 
-            Interpreter foundInterpreter = Interpreter.builder()
-                            .id(id)
-                            .name("interpreter")
-                            .gender(Gender.FEMALE)
-                            .modality(InterpreterModality.ONLINE)
-                            .locations(locations)
-                            .specialties(specialties)
-                            .schedules(schedules)
-                            .build();
+        Interpreter foundInterpreter = Interpreter.builder()
+                .id(id)
+                .name("interpreter")
+                .gender(Gender.FEMALE)
+                .modality(InterpreterModality.ONLINE)
+                .locations(locations)
+                .specialties(specialties)
+                .schedules(schedules)
+                .build();
 
-            InterpreterListResponseDTO mappedResponse = InterpreterListResponseDTO.builder()
-                            .id(id)
-                            .build();
+        InterpreterListResponseDTO mappedResponse = InterpreterListResponseDTO.builder()
+                .id(id)
+                .build();
 
-            when(repository.findAll(any(Specification.class))).thenReturn(List.of(foundInterpreter));
-            when(responseMapper.toListResponseDTO(foundInterpreter)).thenReturn(mappedResponse);
+        when(repository.findAll(any(Specification.class))).thenReturn(List.of(foundInterpreter));
+        when(responseMapper.toListResponseDTO(foundInterpreter)).thenReturn(mappedResponse);
 
-            // Act
-            List<InterpreterListResponseDTO> result = service.findAll(dto);
+        // Act
+        List<InterpreterListResponseDTO> result = service.findAll(dto);
 
-            // Assert
-            assertThat(result)
-                            .hasSize(1)
-                            .contains(mappedResponse);
+        // Assert
+        assertThat(result)
+                .hasSize(1)
+                .contains(mappedResponse);
     }
 
 
