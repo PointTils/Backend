@@ -60,7 +60,7 @@ public class InterpreterService {
                 .videoUrl(Objects.nonNull(request.getProfessionalData()) ? request.getProfessionalData().getVideoUrl() : null)
                 .rating(BigDecimal.ZERO)
                 .imageRights(false)
-                .modality(InterpreterModality.ALL)
+                .modality(InterpreterModality.ONLINE)
                 .description("")
                 .build();
 
