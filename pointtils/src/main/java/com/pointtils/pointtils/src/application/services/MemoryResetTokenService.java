@@ -37,6 +37,7 @@ public class MemoryResetTokenService {
      */
     public String validateResetToken(String token) {
         ResetTokenInfo tokenInfo = resetTokens.get(RESET_TOKEN_PREFIX + token);
+
         if (tokenInfo == null) {
             return null;
         }

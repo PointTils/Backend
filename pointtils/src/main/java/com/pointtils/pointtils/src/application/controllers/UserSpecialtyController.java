@@ -50,7 +50,7 @@ public class UserSpecialtyController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Especialidades do usuário encontradas com sucesso",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = UserSpecialtyDTO.class)))
+                            array = @ArraySchema(schema = @Schema(implementation = UserSpecialtiesResponseDTO.class)))
             ),
             @ApiResponse(responseCode = "400", description = "ID do usuário inválido"),
             @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
@@ -116,7 +116,7 @@ public class UserSpecialtyController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Especialidades do usuário atualizadas com sucesso",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = UserSpecialtyDTO.class)))
+                            array = @ArraySchema(schema = @Schema(implementation = UserSpecialtiesResponseDTO.class)))
             ),
             @ApiResponse(responseCode = "400", description = "Lista de especialidade inválida"),
             @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),

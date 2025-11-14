@@ -7,6 +7,7 @@ import com.pointtils.pointtils.src.application.dto.responses.RatingResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.RatingUserResponseDTO;
 import com.pointtils.pointtils.src.application.services.RatingService;
 import com.pointtils.pointtils.src.core.domain.exceptions.RatingException;
+import com.pointtils.pointtils.src.infrastructure.configs.FirebaseConfig;
 import io.awspring.cloud.autoconfigure.s3.S3AutoConfiguration;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,6 +48,9 @@ class RatingControllerTest {
 
     @MockitoBean
     private RatingService ratingService;
+
+    @MockitoBean
+    private FirebaseConfig firebaseConfig;
 
     @Autowired
     private ObjectMapper objectMapper;

@@ -1,10 +1,12 @@
 package com.pointtils.pointtils.src.application.services;
 
 import com.pointtils.pointtils.src.application.dto.requests.EmailRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.ProcessTemplateRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterRegistrationEmailDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Parameters;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.ParametersRepository;
+import jakarta.mail.MessagingException;
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.Year;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -586,6 +589,7 @@ class EmailServiceTest {
         verify(mailSender).send(any(MimeMessage.class));
     }
 
+    @Test
     @DisplayName("Deve lidar com exceção ao enviar email com anexos")
     void deveLidarComExcecaoAoEnviarEmailComAnexos() {
         MimeMessage mimeMessage = new MimeMessage((Session) null);
@@ -596,7 +600,7 @@ class EmailServiceTest {
         List<String> attachmentNames = List.of("anexo.txt");
         boolean result = emailService.sendEmailWithAttachments(emailRequestDTO, attachments, attachmentNames);
         assertFalse(result);
-   
+
     }
 
     @Test
@@ -620,6 +624,7 @@ class EmailServiceTest {
         verify(mailSender).send(any(MimeMessage.class));
     }
 
+    @Test
     @DisplayName("Deve retornar false ao enviar email com anexos quando emailRequestDTO for nulo")
     void deveRetornarFalseAoEnviarEmailComAnexosQuandoEmailRequestDTOForNulo() {
         byte[] attachment = "Conteúdo do anexo".getBytes();
@@ -662,6 +667,7 @@ class EmailServiceTest {
         verify(mailSender).send(any(MimeMessage.class));
     }
 
+    @Test
     @DisplayName("Deve processar anexos corretamente no envio de solicitação de cadastro de intérprete")
     void deveProcessarAnexosCorretamenteNoEnvioSolicitacaoCadastroInterprete() throws Exception {
         // Mock dos arquivos
@@ -716,7 +722,7 @@ class EmailServiceTest {
         String template = "Nome: {{nome}}; Data: {{appointmentDate}}; Intérprete: {{interpreterName}}; Local: {{appointmentLocation}}; Modalidade: {{appointmentModality}}; Motivo: {{cancelReason}}; Ano: {{ano}}";
 
         // invoke private method via ReflectionTestUtils
-        String processed = (String) org.springframework.test.util.ReflectionTestUtils.invokeMethod(
+        String processed = ReflectionTestUtils.invokeMethod(
                 emailService,
                 "processAppointmentStatusChangeTemplate",
                 template,
@@ -770,31 +776,17 @@ class EmailServiceTest {
     }
 
     @Test
-    @DisplayName("Deve retornar false ao passar EmailRequestDTO nulo no envio com anexos")
-    void deveRetornarFalseAoPassarEmailRequestDTONuloNoEnvioComAnexos() {
-        byte[] attachment = "Conteúdo do anexo".getBytes();
-        List<byte[]> attachments = List.of(attachment);
-        List<String> attachmentNames = List.of("anexo.txt");
-
-        boolean result = emailService.sendEmailWithAttachments(null, attachments, attachmentNames);
-
-        assertFalse(result);
-        verify(mailSender, never()).createMimeMessage();
-        verify(mailSender, never()).send(any(MimeMessage.class));
-    }
-
-    @Test
     @DisplayName("Deve processar múltiplos anexos corretamente")
     void deveProcessarMultiplosAnexosCorretamente() throws Exception {
         // Mock dos arquivos
         MultipartFile file1 = mock(MultipartFile.class);
         MultipartFile file2 = mock(MultipartFile.class);
         List<MultipartFile> files = Arrays.asList(file1, file2);
-        
+
         // Setup do primeiro arquivo
         when(file1.getBytes()).thenReturn("conteudo1".getBytes());
         when(file1.getOriginalFilename()).thenReturn("documento1.pdf");
-        
+
         // Setup do segundo arquivo
         when(file2.getBytes()).thenReturn("conteudo2".getBytes());
         when(file2.getOriginalFilename()).thenReturn("documento2.pdf");
@@ -812,16 +804,16 @@ class EmailServiceTest {
 
         // Executa o método
         InterpreterRegistrationEmailDTO dto = InterpreterRegistrationEmailDTO.builder()
-            .adminEmail("admin@test.com")
-            .interpreterName("João Intérprete")
-            .cpf("123.456.789-00")
-            .cnpj("12.345.678/0001-90")
-            .email("joao@email.com")
-            .phone("11999999999")
-            .acceptLink("http://accept")
-            .rejectLink("http://reject")
-            .files(files)
-            .build();
+                .adminEmail("admin@test.com")
+                .interpreterName("João Intérprete")
+                .cpf("123.456.789-00")
+                .cnpj("12.345.678/0001-90")
+                .email("joao@email.com")
+                .phone("11999999999")
+                .acceptLink("http://accept")
+                .rejectLink("http://reject")
+                .files(files)
+                .build();
 
         boolean result = emailService.sendInterpreterRegistrationRequestEmail(dto);
 
@@ -840,11 +832,11 @@ class EmailServiceTest {
         MultipartFile file1 = mock(MultipartFile.class);
         MultipartFile file2 = mock(MultipartFile.class);
         List<MultipartFile> files = Arrays.asList(file1, file2);
-        
+
         // Primeiro arquivo lança exceção
         when(file1.getBytes()).thenThrow(new IOException("Erro ao ler arquivo"));
         when(file1.getName()).thenReturn("documento1.pdf");
-        
+
         // Segundo arquivo funciona normalmente
         when(file2.getBytes()).thenReturn("conteudo2".getBytes());
         when(file2.getOriginalFilename()).thenReturn("documento2.pdf");
@@ -862,16 +854,16 @@ class EmailServiceTest {
 
         // Executa o método
         InterpreterRegistrationEmailDTO dto = InterpreterRegistrationEmailDTO.builder()
-            .adminEmail("admin@test.com")
-            .interpreterName("João Intérprete")
-            .cpf("123.456.789-00")
-            .cnpj("12.345.678/0001-90")
-            .email("joao@email.com")
-            .phone("11999999999")
-            .acceptLink("http://accept")
-            .rejectLink("http://reject")
-            .files(files)
-            .build();
+                .adminEmail("admin@test.com")
+                .interpreterName("João Intérprete")
+                .cpf("123.456.789-00")
+                .cnpj("12.345.678/0001-90")
+                .email("joao@email.com")
+                .phone("11999999999")
+                .acceptLink("http://accept")
+                .rejectLink("http://reject")
+                .files(files)
+                .build();
 
         boolean result = emailService.sendInterpreterRegistrationRequestEmail(dto);
 
@@ -886,14 +878,14 @@ class EmailServiceTest {
     @DisplayName("Deve usar template padrão quando processPasswordResetTemplate recebe template nulo")
     void deveUsarTemplatePadraoQuandoProcessPasswordResetTemplateRecebeTemplateNulo() {
         String defaultTemplate = "<html><body><h1>Template não encontrado</h1><p>Template com chave 'PASSWORD_RESET' não está disponível no banco de dados.</p></body></html>";
-        
+
         // Invoca método privado via reflection
-        String result = (String) ReflectionTestUtils.invokeMethod(
-            emailService, 
-            "processPasswordResetTemplate",
-            null,
-            "Test User",
-            "123456"
+        String result = ReflectionTestUtils.invokeMethod(
+                emailService,
+                "processPasswordResetTemplate",
+                null,
+                "Test User",
+                "123456"
         );
 
         assertEquals(defaultTemplate, result);
@@ -906,13 +898,13 @@ class EmailServiceTest {
         String defaultTemplate = "<html><body><h1>Template não encontrado</h1><p>Template com chave 'APPOINTMENT_CONFIRMATION' não está disponível no banco de dados.</p></body></html>";
 
         // Invoca método privado via reflection
-        String result = (String) ReflectionTestUtils.invokeMethod(
-            emailService, 
-            "processAppointmentConfirmationTemplate",
-            null,
-            "Test User",
-            "2025-11-11 às 09:00",
-            "Intérprete X"
+        String result = ReflectionTestUtils.invokeMethod(
+                emailService,
+                "processAppointmentConfirmationTemplate",
+                null,
+                "Test User",
+                "2025-11-11 às 09:00",
+                "Intérprete X"
         );
 
         assertEquals(defaultTemplate, result);
@@ -923,7 +915,7 @@ class EmailServiceTest {
     @DisplayName("Deve retornar template padrão quando appointmentDate for nulo")
     void deveRetornarTemplatePadraoQuandoUserNameForNulo() {
         String template = "Olá {{nome}}! Sua consulta está agendada para {{appointmentDate}} com {{interpreterName}}.";
-        String result = (String) ReflectionTestUtils.invokeMethod(
+        String result = ReflectionTestUtils.invokeMethod(
                 emailService,
                 "processAppointmentConfirmationTemplate",
                 template,
@@ -940,7 +932,7 @@ class EmailServiceTest {
     @DisplayName("Deve retornar template padrão quando appointmentDate for nulo")
     void deveRetornarTemplatePadraoQuandoAppointmentDateForNulo() {
         String template = "Olá {{nome}}! Sua consulta está agendada para {{appointmentDate}} com {{interpreterName}}.";
-        String result = (String) ReflectionTestUtils.invokeMethod(
+        String result = ReflectionTestUtils.invokeMethod(
                 emailService,
                 "processAppointmentConfirmationTemplate",
                 template,
@@ -955,17 +947,22 @@ class EmailServiceTest {
     @Test
     @DisplayName("Deve retornar template padrão quando template for nulo")
     void deveRetornarTemplatePadraoQuandoTemplateForNulo() {
-        String result = (String) ReflectionTestUtils.invokeMethod(
-            emailService, 
-            "processTemplate",
-            null, // template
-            "Interpreter Name",
-            "123456789",
-            "12345678000195",
-            "test@example.com",
-            "123456789",
-            "http://accept",
-            "http://reject"
+        ProcessTemplateRequestDTO dto = ProcessTemplateRequestDTO.builder()
+                .interpreterName("Interpreter Name")
+                .cpf("123456789")
+                .cnpj("12345678000195")
+                .email("test@example.com")
+                .phone("123456789")
+                .videoUrl(null)
+                .acceptLink("http://accept")
+                .rejectLink("http://reject")
+                .template(null)
+                .build();
+
+        String result = ReflectionTestUtils.invokeMethod(
+                emailService,
+                "processTemplate",
+                dto
         );
 
         String expectedStart = "<html><body><h1>Template não encontrado</h1>";
@@ -976,17 +973,22 @@ class EmailServiceTest {
     @DisplayName("Deve retornar template padrão quando interpreterName for nulo")
     void deveRetornarTemplatePadraoQuandoInterpreterNameForNulo() {
         String template = "Olá {{nome}}! Sua consulta está agendada.";
-        String result = (String) ReflectionTestUtils.invokeMethod(
-            emailService, 
-            "processTemplate",
-            template,
-            null, // interpreterName
-            "123456789",
-            "12345678000195",
-            "test@example.com",
-            "123456789",
-            "http://accept",
-            "http://reject"
+        ProcessTemplateRequestDTO dto = ProcessTemplateRequestDTO.builder()
+                .interpreterName(null)
+                .cpf("123456789")
+                .cnpj("12345678000195")
+                .email("test@example.com")
+                .phone("123456789")
+                .videoUrl(null)
+                .acceptLink("http://accept")
+                .rejectLink("http://reject")
+                .template(template)
+                .build();
+
+        String result = ReflectionTestUtils.invokeMethod(
+                emailService,
+                "processTemplate",
+                dto
         );
 
         assertTrue(result.contains("Olá !"));
@@ -996,17 +998,22 @@ class EmailServiceTest {
     @DisplayName("Deve retornar template padrão quando cpf for nulo")
     void deveRetornarTemplatePadraoQuandoCpfForNulo() {
         String template = "Olá {{nome}}! Seu CPF é {{cpf}}.";
-        String result = (String) ReflectionTestUtils.invokeMethod(
-            emailService, 
-            "processTemplate",
-            template,
-            "Interpreter Name",
-            null, // cpf
-            "12345678000195",
-            "test@example.com",
-            "123456789",
-            "http://accept",
-            "http://reject"
+        ProcessTemplateRequestDTO dto = ProcessTemplateRequestDTO.builder()
+                .interpreterName("Interpreter Name")
+                .cpf(null)
+                .cnpj("12345678000195")
+                .email("test@example.com")
+                .phone("123456789")
+                .videoUrl(null)
+                .acceptLink("http://accept")
+                .rejectLink("http://reject")
+                .template(template)
+                .build();
+
+        String result = ReflectionTestUtils.invokeMethod(
+                emailService,
+                "processTemplate",
+                dto
         );
 
         assertTrue(result.contains("Seu CPF é ."));
@@ -1016,17 +1023,22 @@ class EmailServiceTest {
     @DisplayName("Deve retornar template padrão quando cnpj for nulo")
     void deveRetornarTemplatePadraoQuandoCnpjForNulo() {
         String template = "Olá {{nome}}! Seu CNPJ é {{cnpj}}.";
-        String result = (String) ReflectionTestUtils.invokeMethod(
-            emailService, 
-            "processTemplate",
-            template,
-            "Interpreter Name",
-            "123456789",
-            null, // cnpj
-            "test@example.com",
-            "123456789",
-            "http://accept",
-            "http://reject"
+        ProcessTemplateRequestDTO dto = ProcessTemplateRequestDTO.builder()
+                .interpreterName("Interpreter Name")
+                .cpf("123456789")
+                .cnpj(null)
+                .email("test@example.com")
+                .phone("123456789")
+                .videoUrl(null)
+                .acceptLink("http://accept")
+                .rejectLink("http://reject")
+                .template(template)
+                .build();
+
+        String result = ReflectionTestUtils.invokeMethod(
+                emailService,
+                "processTemplate",
+                dto
         );
 
         assertTrue(result.contains("Seu CNPJ é ."));
@@ -1036,17 +1048,22 @@ class EmailServiceTest {
     @DisplayName("Deve retornar template padrão quando email for nulo")
     void deveRetornarTemplatePadraoQuandoEmailForNulo() {
         String template = "Olá {{nome}}! Seu email é {{email}}.";
-        String result = (String) ReflectionTestUtils.invokeMethod(
-            emailService, 
-            "processTemplate",
-            template,
-            "Interpreter Name",
-            "123456789",
-            "12345678000195",
-            null, // email
-            "123456789",
-            "http://accept",
-            "http://reject"
+        ProcessTemplateRequestDTO dto = ProcessTemplateRequestDTO.builder()
+                .interpreterName("Interpreter Name")
+                .cpf("123456789")
+                .cnpj("12345678000195")
+                .email(null)
+                .phone("123456789")
+                .videoUrl(null)
+                .acceptLink("http://accept")
+                .rejectLink("http://reject")
+                .template(template)
+                .build();
+
+        String result = ReflectionTestUtils.invokeMethod(
+                emailService,
+                "processTemplate",
+                dto
         );
 
         assertTrue(result.contains("Seu email é ."));
@@ -1056,17 +1073,22 @@ class EmailServiceTest {
     @DisplayName("Deve retornar template padrão quando phone for nulo")
     void deveRetornarTemplatePadraoQuandoPhoneForNulo() {
         String template = "Olá {{nome}}! Seu telefone é {{telefone}}.";
-        String result = (String) ReflectionTestUtils.invokeMethod(
-            emailService, 
-            "processTemplate",
-            template,
-            "Interpreter Name",
-            "123456789",
-            "12345678000195",
-            "test@example.com",
-            null, // phone
-            "http://accept",
-            "http://reject"
+        ProcessTemplateRequestDTO dto = ProcessTemplateRequestDTO.builder()
+                .interpreterName("Interpreter Name")
+                .cpf("123456789")
+                .cnpj("12345678000195")
+                .email("test@example.com")
+                .phone(null)
+                .videoUrl(null)
+                .acceptLink("http://accept")
+                .rejectLink("http://reject")
+                .template(template)
+                .build();
+
+        String result = ReflectionTestUtils.invokeMethod(
+                emailService,
+                "processTemplate",
+                dto
         );
 
         assertTrue(result.contains("Seu telefone é ."));
@@ -1076,17 +1098,22 @@ class EmailServiceTest {
     @DisplayName("Deve retornar template padrão quando acceptLink for nulo")
     void deveRetornarTemplatePadraoQuandoAcceptLinkForNulo() {
         String template = "Clique aqui para aceitar: {{link_accept_api}}.";
-        String result = (String) ReflectionTestUtils.invokeMethod(
-            emailService, 
-            "processTemplate",
-            template,
-            "Interpreter Name",
-            "123456789",
-            "12345678000195",
-            "test@example.com",
-            "123456789",
-            null, // acceptLink
-            "http://reject"
+        ProcessTemplateRequestDTO dto = ProcessTemplateRequestDTO.builder()
+                .interpreterName("Interpreter Name")
+                .cpf("123456789")
+                .cnpj("12345678000195")
+                .email("test@example.com")
+                .phone("123456789")
+                .videoUrl(null)
+                .acceptLink(null)
+                .rejectLink("http://reject")
+                .template(template)
+                .build();
+
+        String result = ReflectionTestUtils.invokeMethod(
+                emailService,
+                "processTemplate",
+                dto
         );
 
         assertTrue(result.contains("Clique aqui para aceitar: ."));
@@ -1096,17 +1123,22 @@ class EmailServiceTest {
     @DisplayName("Deve retornar template padrão quando rejectLink for nulo")
     void deveRetornarTemplatePadraoQuandoRejectLinkForNulo() {
         String template = "Clique aqui para rejeitar: {{link_reject_api}}.";
-        String result = (String) ReflectionTestUtils.invokeMethod(
-            emailService, 
-            "processTemplate",
-            template,
-            "Interpreter Name",
-            "123456789",
-            "12345678000195",
-            "test@example.com",
-            "123456789",
-            "http://accept",
-            null // rejectLink
+        ProcessTemplateRequestDTO dto = ProcessTemplateRequestDTO.builder()
+                .interpreterName("Interpreter Name")
+                .cpf("123456789")
+                .cnpj("12345678000195")
+                .email("test@example.com")
+                .phone("123456789")
+                .videoUrl(null)
+                .acceptLink("http://accept")
+                .rejectLink(null)
+                .template(template)
+                .build();
+
+        String result = ReflectionTestUtils.invokeMethod(
+                emailService,
+                "processTemplate",
+                dto
         );
 
         assertTrue(result.contains("Clique aqui para rejeitar: ."));
@@ -1118,7 +1150,7 @@ class EmailServiceTest {
         String defaultTemplate = "<html><body><h1>Template não encontrado</h1><p>Template com chave 'APPOINTMENT_STATUS_CHANGE' não está disponível no banco de dados.</p></body></html>";
 
         // Invoca método privado via reflection
-        String result = (String) ReflectionTestUtils.invokeMethod(
+        String result = ReflectionTestUtils.invokeMethod(
                 emailService,
                 "processAppointmentStatusChangeTemplate",
                 null, // template
@@ -1132,5 +1164,42 @@ class EmailServiceTest {
 
         assertEquals(defaultTemplate, result);
         verify(parametersRepository, never()).findByKey(anyString());
+    }
+
+    @Test
+    void deveProcessarURLDeVideoCorretamenteNoEnvioSolicitacaoCadastroInterprete() throws MessagingException {
+        // Template armazenado no banco
+        String template = "<p>Video: {{url}}</p>";
+        Parameters parameter = new Parameters();
+        parameter.setKey("PENDING_INTERPRETER_ADMIN");
+        parameter.setValue(template);
+
+        when(parametersRepository.findByKey("PENDING_INTERPRETER_ADMIN"))
+                .thenReturn(Optional.of(parameter));
+
+        // Mock do envio do email
+        MimeMessage mimeMessage = new MimeMessage((Session) null);
+        ArgumentCaptor<MimeMessage> messageCaptor = ArgumentCaptor.forClass(MimeMessage.class);
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doNothing().when(mailSender).send(messageCaptor.capture());
+
+        InterpreterRegistrationEmailDTO dto = InterpreterRegistrationEmailDTO.builder()
+                .adminEmail("admin@pointtils.com")
+                .email("interpreter@email.com")
+                .videoUrl("http://video-url.com/video.mp4")
+                .files(Collections.emptyList())
+                .build();
+
+        // Execução do método
+        boolean result = emailService.sendInterpreterRegistrationRequestEmail(dto);
+
+        // Verificações
+        assertTrue(result);
+        assertEquals("Nova Solicitação de Cadastro de Intérprete - PointTils", messageCaptor.getValue().getSubject());
+        assertEquals(1, messageCaptor.getValue().getFrom().length);
+        assertEquals("PointTils Test <test@pointtils.com>", messageCaptor.getValue().getFrom()[0].toString());
+
+        verify(parametersRepository).findByKey("PENDING_INTERPRETER_ADMIN");
+        verify(mailSender).send(any(MimeMessage.class));
     }
 }

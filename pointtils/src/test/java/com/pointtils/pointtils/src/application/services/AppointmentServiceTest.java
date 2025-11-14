@@ -1,30 +1,5 @@
 package com.pointtils.pointtils.src.application.services;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import static org.mockito.ArgumentMatchers.any;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import org.mockito.Spy;
-import org.mockito.junit.jupiter.MockitoExtension;
-
 import com.pointtils.pointtils.src.application.dto.requests.AppointmentPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.AppointmentRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.AppointmentFilterResponseDTO;
@@ -37,12 +12,43 @@ import com.pointtils.pointtils.src.core.domain.entities.Person;
 import com.pointtils.pointtils.src.core.domain.entities.User;
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentModality;
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentStatus;
+import com.pointtils.pointtils.src.core.domain.entities.enums.NotificationType;
 import com.pointtils.pointtils.src.infrastructure.repositories.AppointmentRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.RatingRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
-
 import jakarta.persistence.EntityNotFoundException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Testes do AppointmentService")
@@ -62,6 +68,8 @@ class AppointmentServiceTest {
 
     @Mock
     private EmailService emailService;
+    @Mock
+    private NotificationService notificationService;
 
     @Spy
     private AppointmentMapper appointmentMapper = new AppointmentMapper(new UserSpecialtyMapper());
@@ -80,8 +88,8 @@ class AppointmentServiceTest {
     @BeforeEach
     void setUp() {
         appointmentId = UUID.randomUUID();
-        userId = UUID.randomUUID();
-        interpreterId = UUID.randomUUID();
+        userId = UUID.fromString("8ac9c3ef-e7fa-42df-bb37-febc138c3090");
+        interpreterId = UUID.fromString("1eb35247-bbb6-4564-bc50-bb16ad0901bd");
 
         mockUser = new Person() {
             @Override
@@ -90,14 +98,14 @@ class AppointmentServiceTest {
             }
         };
         mockUser.setId(userId);
-        mockUser.setEmail("user@test.com");
+        mockUser.setEmail("user@email.com");
         ((Person) mockUser).setName("Test User");
 
         mockInterpreter = Interpreter.builder()
                 .id(interpreterId)
+                .email("interpreter@email.com")
+                .name("Interpreter Test")
                 .build();
-        mockInterpreter.setEmail("interp@test.com");
-        mockInterpreter.setName("Interpreter Test");
 
         mockAppointment = Appointment.builder()
                 .id(appointmentId)
@@ -143,6 +151,7 @@ class AppointmentServiceTest {
         verify(interpreterRepository).findById(interpreterId);
         verify(userRepository).findById(userId);
         verify(appointmentRepository).save(any(Appointment.class));
+        verify(notificationService).sendNotificationToUser(interpreterId, NotificationType.APPOINTMENT_REQUESTED);
     }
 
     @Test
@@ -156,6 +165,7 @@ class AppointmentServiceTest {
 
         assertNotNull(result);
         verify(appointmentRepository).save(any(Appointment.class));
+        verify(notificationService).sendNotificationToUser(interpreterId, NotificationType.APPOINTMENT_REQUESTED);
     }
 
     @Test
@@ -170,6 +180,7 @@ class AppointmentServiceTest {
         verify(interpreterRepository).findById(interpreterId);
         verify(userRepository, never()).findById(any());
         verify(appointmentRepository, never()).save(any());
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -185,12 +196,13 @@ class AppointmentServiceTest {
         verify(interpreterRepository).findById(interpreterId);
         verify(userRepository).findById(userId);
         verify(appointmentRepository, never()).save(any());
+        verifyNoInteractions(notificationService);
     }
 
     @Test
     @DisplayName("Deve retornar todos os appointments")
     void shouldReturnAllAppointments() {
-        List<Appointment> appointments = Arrays.asList(mockAppointment);
+        List<Appointment> appointments = Collections.singletonList(mockAppointment);
         when(appointmentRepository.findAll()).thenReturn(appointments);
 
         List<AppointmentResponseDTO> result = appointmentService.findAll();
@@ -200,6 +212,7 @@ class AppointmentServiceTest {
         assertEquals(appointmentId, result.get(0).getId());
 
         verify(appointmentRepository).findAll();
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -214,6 +227,7 @@ class AppointmentServiceTest {
         assertEquals("SP", result.getUf());
 
         verify(appointmentRepository).findById(appointmentId);
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -226,15 +240,17 @@ class AppointmentServiceTest {
 
         assertEquals("Solicitação não encontrada com o id: " + appointmentId, exception.getMessage());
         verify(appointmentRepository).findById(appointmentId);
+        verifyNoInteractions(notificationService);
     }
 
     @Test
-    @DisplayName("Deve atualizar appointment parcialmente")
-    void shouldUpdateAppointmentPartially() {
+    @DisplayName("Deve atualizar appointment parcialmente para status ACCEPTED")
+    void shouldUpdateAppointmentPartiallyToAcceptedStatus() {
         AppointmentPatchRequestDTO patchDTO = AppointmentPatchRequestDTO.builder()
                 .uf("RJ")
                 .city("Rio de Janeiro")
                 .status(AppointmentStatus.ACCEPTED)
+                .loggedUserEmail("interpreter@email.com")
                 .build();
 
         when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(mockAppointment));
@@ -244,7 +260,7 @@ class AppointmentServiceTest {
                 .uf("RJ")
                 .city("Rio de Janeiro")
                 .modality(AppointmentModality.ONLINE)
-                .date(LocalDate.now().plusDays(1))
+                .date(LocalDate.of(2025, 11, 8))
                 .description("Consulta teste atualizada")
                 .status(AppointmentStatus.ACCEPTED)
                 .interpreter(mockInterpreter)
@@ -262,6 +278,55 @@ class AppointmentServiceTest {
 
         verify(appointmentRepository).findById(appointmentId);
         verify(appointmentRepository).save(any(Appointment.class));
+        verify(notificationService).sendNotificationToUser(userId, NotificationType.APPOINTMENT_ACCEPTED);
+        verify(notificationService).scheduleNotificationForUser(userId, NotificationType.APPOINTMENT_REMINDER,
+                LocalDateTime.of(2025, 11, 7, 14, 0));
+        verify(notificationService).scheduleNotificationForUser(interpreterId, NotificationType.APPOINTMENT_REMINDER,
+                LocalDateTime.of(2025, 11, 7, 14, 0));
+        verifyNoMoreInteractions(notificationService);
+    }
+
+    @ParameterizedTest
+    @DisplayName("Deve atualizar appointment parcialmente para status CANCELED")
+    @CsvSource(value = {
+            "interpreter@email.com,8ac9c3ef-e7fa-42df-bb37-febc138c3090",
+            "user@email.com,1eb35247-bbb6-4564-bc50-bb16ad0901bd"
+    })
+    void shouldUpdateAppointmentPartiallyToCanceledStatus(String loggedUserEmail, String userToNotifyId) {
+        AppointmentPatchRequestDTO patchDTO = AppointmentPatchRequestDTO.builder()
+                .uf("RJ")
+                .city("Rio de Janeiro")
+                .status(AppointmentStatus.CANCELED)
+                .loggedUserEmail(loggedUserEmail)
+                .build();
+
+        when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(mockAppointment));
+
+        Appointment updatedAppointment = Appointment.builder()
+                .id(appointmentId)
+                .uf("RJ")
+                .city("Rio de Janeiro")
+                .modality(AppointmentModality.ONLINE)
+                .date(LocalDate.of(2025, 11, 8))
+                .description("Consulta teste atualizada")
+                .status(AppointmentStatus.CANCELED)
+                .interpreter(mockInterpreter)
+                .user(mockUser)
+                .startTime(LocalTime.of(14, 0))
+                .endTime(LocalTime.of(15, 0))
+                .build();
+
+        when(appointmentRepository.save(any(Appointment.class))).thenReturn(updatedAppointment);
+
+        AppointmentResponseDTO result = appointmentService.updatePartial(appointmentId, patchDTO);
+
+        assertNotNull(result);
+        assertEquals(appointmentId, result.getId());
+
+        verify(appointmentRepository).findById(appointmentId);
+        verify(appointmentRepository).save(any(Appointment.class));
+        verify(notificationService).sendNotificationToUser(UUID.fromString(userToNotifyId), NotificationType.APPOINTMENT_CANCELED);
+        verifyNoMoreInteractions(notificationService);
     }
 
     @Test
@@ -274,6 +339,7 @@ class AppointmentServiceTest {
 
         verify(appointmentRepository).existsById(appointmentId);
         verify(appointmentRepository).deleteById(appointmentId);
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -287,12 +353,13 @@ class AppointmentServiceTest {
         assertEquals("Solicitação não encontrada com o id: " + appointmentId, exception.getMessage());
         verify(appointmentRepository).existsById(appointmentId);
         verify(appointmentRepository, never()).deleteById(any());
+        verifyNoInteractions(notificationService);
     }
 
     @Test
     @DisplayName("Deve buscar appointments com filtros")
     void shouldSearchAppointmentsWithFilters() {
-        List<Appointment> appointments = Arrays.asList(mockAppointment);
+        List<Appointment> appointments = Collections.singletonList(mockAppointment);
         when(appointmentRepository.findAll()).thenReturn(appointments);
 
         LocalDateTime fromDateTime = LocalDateTime.now();
@@ -302,12 +369,13 @@ class AppointmentServiceTest {
 
         assertNotNull(result);
         verify(appointmentRepository).findAll();
+        verifyNoInteractions(notificationService);
     }
 
     @Test
     @DisplayName("Deve buscar appointments sem filtros")
     void shouldSearchAppointmentsWithoutFilters() {
-        List<Appointment> appointments = Arrays.asList(mockAppointment);
+        List<Appointment> appointments = Collections.singletonList(mockAppointment);
         when(appointmentRepository.findAll()).thenReturn(appointments);
 
         List<AppointmentFilterResponseDTO> result = appointmentService.searchAppointments(
@@ -316,6 +384,7 @@ class AppointmentServiceTest {
         assertNotNull(result);
         assertEquals(1, result.size());
         verify(appointmentRepository).findAll();
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -324,7 +393,11 @@ class AppointmentServiceTest {
         UUID newInterpreterId = UUID.randomUUID();
         UUID newUserId = UUID.randomUUID();
 
-        Interpreter newInterpreter = Interpreter.builder().id(newInterpreterId).build();
+        Interpreter newInterpreter = Interpreter.builder()
+                .id(newInterpreterId)
+                .email("interpreter@email.com")
+                .build();
+
         User newUser = new Person() {
             @Override
             public String getDisplayName() {
@@ -348,6 +421,7 @@ class AppointmentServiceTest {
                 .userId(newUserId)
                 .startTime(LocalTime.of(16, 0))
                 .endTime(LocalTime.of(17, 30))
+                .loggedUserEmail("interpreter@email.com")
                 .build();
 
         when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(mockAppointment));
@@ -362,6 +436,7 @@ class AppointmentServiceTest {
         verify(interpreterRepository).findById(newInterpreterId);
         verify(userRepository).findById(newUserId);
         verify(appointmentRepository).save(any(Appointment.class));
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -382,6 +457,7 @@ class AppointmentServiceTest {
         verify(appointmentRepository).findById(appointmentId);
         verify(interpreterRepository).findById(newInterpreterId);
         verify(appointmentRepository, never()).save(any());
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -402,6 +478,7 @@ class AppointmentServiceTest {
         verify(appointmentRepository).findById(appointmentId);
         verify(userRepository).findById(newUserId);
         verify(appointmentRepository, never()).save(any());
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -419,6 +496,7 @@ class AppointmentServiceTest {
         assertEquals("Solicitação não encontrada com o id: " + appointmentId, exception.getMessage());
         verify(appointmentRepository).findById(appointmentId);
         verify(appointmentRepository, never()).save(any());
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -446,6 +524,7 @@ class AppointmentServiceTest {
         assertNotNull(result);
         assertEquals(1, result.size()); // Só deve retornar o mockAppointment
         verify(appointmentRepository).findAll();
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -479,6 +558,7 @@ class AppointmentServiceTest {
         assertNotNull(result);
         assertEquals(1, result.size()); // Só deve retornar o mockAppointment
         verify(appointmentRepository).findAll();
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -503,6 +583,7 @@ class AppointmentServiceTest {
         assertNotNull(result);
         assertEquals(1, result.size()); // Só deve retornar o mockAppointment (PENDING)
         verify(appointmentRepository).findAll();
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -527,6 +608,7 @@ class AppointmentServiceTest {
         assertNotNull(result);
         assertEquals(1, result.size()); // Só deve retornar o mockAppointment (ONLINE)
         verify(appointmentRepository).findAll();
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -554,12 +636,13 @@ class AppointmentServiceTest {
         assertNotNull(result);
         assertEquals(1, result.size()); // Só deve retornar o mockAppointment (futuro)
         verify(appointmentRepository).findAll();
+        verifyNoInteractions(notificationService);
     }
 
     @Test
     @DisplayName("Deve retornar lista vazia quando filtros não encontram nada")
     void shouldReturnEmptyListWhenFiltersMatchNothing() {
-        List<Appointment> appointments = Arrays.asList(mockAppointment);
+        List<Appointment> appointments = Collections.singletonList(mockAppointment);
         when(appointmentRepository.findAll()).thenReturn(appointments);
 
         UUID nonExistentId = UUID.randomUUID();
@@ -569,12 +652,13 @@ class AppointmentServiceTest {
         assertNotNull(result);
         assertEquals(0, result.size());
         verify(appointmentRepository).findAll();
+        verifyNoInteractions(notificationService);
     }
 
     @Test
     @DisplayName("Should filter appointments by hasRating=true")
     void shouldFilterAppointmentsByHasRatingTrue() {
-        List<Appointment> appointments = Arrays.asList(mockAppointment);
+        List<Appointment> appointments = Collections.singletonList(mockAppointment);
         when(appointmentRepository.findAll()).thenReturn(appointments);
         when(ratingRepository.existsByAppointment(mockAppointment)).thenReturn(true);
 
@@ -584,12 +668,13 @@ class AppointmentServiceTest {
         assertNotNull(result);
         assertEquals(1, result.size());
         verify(ratingRepository).existsByAppointment(mockAppointment);
+        verifyNoInteractions(notificationService);
     }
 
     @Test
     @DisplayName("Should filter appointments by hasRating=false")
     void shouldFilterAppointmentsByHasRatingFalse() {
-        List<Appointment> appointments = Arrays.asList(mockAppointment);
+        List<Appointment> appointments = Collections.singletonList(mockAppointment);
         when(appointmentRepository.findAll()).thenReturn(appointments);
         when(ratingRepository.existsByAppointment(mockAppointment)).thenReturn(false);
 
@@ -599,6 +684,7 @@ class AppointmentServiceTest {
         assertNotNull(result);
         assertEquals(1, result.size());
         verify(ratingRepository).existsByAppointment(mockAppointment);
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -632,7 +718,7 @@ class AppointmentServiceTest {
                 + savedAppointment.getStartTime().toString();
         verify(emailService).sendAppointmentAcceptedEmail(
                 mockUser.getEmail(), mockUser.getDisplayName(), expectedDate,
-                mockInterpreter.getDisplayName(), "Online", savedAppointment.getModality().toString());
+                mockInterpreter.getDisplayName(), "Online", "Online");
     }
 
     @Test

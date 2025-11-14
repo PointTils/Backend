@@ -3,7 +3,6 @@ package com.pointtils.pointtils.src.application.controllers;
 import com.pointtils.pointtils.src.application.dto.requests.UserPicturePostRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.UserResponseDTO;
 import com.pointtils.pointtils.src.application.services.UserPictureService;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,8 +20,10 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -108,6 +109,16 @@ class UserPictureControllerTest {
                         .file(file)
                         .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andExpect(status().isServiceUnavailable());
+    }
+
+    @Test
+    @DisplayName("DELETE /v1/users/{id}/picture deve retornar 204 quando foto for deletada com sucesso")
+    void deletePicture_ShouldReturnNoContent() throws Exception {
+        doNothing().when(userService).deletePicture(userId);
+
+        mockMvc.perform(delete("/v1/users/{id}/picture", userId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
     }
 
 }

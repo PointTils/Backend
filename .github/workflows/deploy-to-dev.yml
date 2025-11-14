@@ -149,6 +149,8 @@ jobs:
           BREVO_SENDER_EMAIL=${{ vars.BREVO_SENDER_EMAIL }}
           BREVO_SENDER_NAME=${{ vars.BREVO_SENDER_NAME }}
           ADMIN_EMAIL=${{ vars.ADMIN_EMAIL }}
+          FIREBASE_SERVICE_ACCOUNT=${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          API_BASE_URL=${{ secrets.API_DEV_BASE_URL }}
           EOL
 
       - name: Build and push images with docker compose
@@ -170,7 +172,7 @@ jobs:
           # Specify exact image names to ensure the correct images are tagged
           APP_IMAGE_NAME="${{ env.APP_IMAGE }}"
           DB_IMAGE_NAME="${{ env.DB_IMAGE }}"
-          
+
           # Find the application image ID - using both exact name and wildcard approach
           APP_IMAGE_ID=$(docker images -q $APP_IMAGE_NAME 2>/dev/null || docker images -q "*${APP_IMAGE_NAME}*" 2>/dev/null || docker images | grep -E "$APP_IMAGE_NAME" | awk '{print $3}' | head -n1)
           echo "Nome da imagem da aplicação: $APP_IMAGE_NAME"

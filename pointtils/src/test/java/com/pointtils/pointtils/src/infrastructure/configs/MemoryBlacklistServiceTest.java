@@ -44,7 +44,7 @@ class MemoryBlacklistServiceTest {
 
     @Test
     @DisplayName("Deve retornar false para token expirado na blacklist")
-    void deveRetornarFalseParaTokenExpirado() throws InterruptedException {
+    void deveRetornarFalseParaTokenExpirado() {
         // Arrange
         String token = "token_expirado";
         memoryBlacklistService.addToBlacklist(token);

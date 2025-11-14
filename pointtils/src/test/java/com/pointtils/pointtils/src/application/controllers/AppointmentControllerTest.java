@@ -272,9 +272,10 @@ class AppointmentControllerTest {
         var patchDto = new AppointmentPatchRequestDTO();
         when(appointmentService.updatePartial(appointmentId, patchDto)).thenReturn(appointmentResponseDTO);
 
-        ResponseEntity<?> response = appointmentController.updatePartial(appointmentId, patchDto);
+        ResponseEntity<?> response = appointmentController.updatePartial(appointmentId, patchDto, "logged@email.com");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("logged@email.com", patchDto.getLoggedUserEmail());
         verify(appointmentService, times(1)).updatePartial(appointmentId, patchDto);
     }
 
@@ -325,6 +326,5 @@ class AppointmentControllerTest {
         verify(appointmentService, times(2))
                 .searchAppointments(interpreterId, appointmentUserId, status, modality, null, hasRating, dayLimit);
     }
-
 
 }

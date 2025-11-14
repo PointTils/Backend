@@ -1,12 +1,5 @@
 package com.pointtils.pointtils.src.application.services;
 
-import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
-
-import org.springframework.stereotype.Service;
-
 import com.pointtils.pointtils.src.application.dto.requests.AppointmentPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.AppointmentRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.AppointmentFilterResponseDTO;
@@ -15,13 +8,21 @@ import com.pointtils.pointtils.src.application.mapper.AppointmentMapper;
 import com.pointtils.pointtils.src.core.domain.entities.Appointment;
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentModality;
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentStatus;
+import com.pointtils.pointtils.src.core.domain.entities.enums.NotificationType;
 import com.pointtils.pointtils.src.infrastructure.repositories.AppointmentRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.RatingRepository;
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
-
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+
 
 @Service
 @AllArgsConstructor
@@ -35,6 +36,7 @@ public class AppointmentService {
     private final RatingRepository ratingRepository;
     private final AppointmentMapper appointmentMapper;
     private final EmailService emailService;
+    private final NotificationService notificationService;
 
     public AppointmentResponseDTO createAppointment(AppointmentRequestDTO dto) {
         var interpreter = interpreterRepository.findById(dto.getInterpreterId())
@@ -46,6 +48,7 @@ public class AppointmentService {
         var appointment = appointmentMapper.toDomain(dto, interpreter, user);
 
         var savedAppointment = appointmentRepository.save(appointment);
+        notificationService.sendNotificationToUser(dto.getInterpreterId(), NotificationType.APPOINTMENT_REQUESTED);
 
         return appointmentMapper.toResponseDTO(savedAppointment);
     }
@@ -112,6 +115,7 @@ public class AppointmentService {
         if (dto.getStatus() != null && !dto.getStatus().equals(previousStatus)) {
             sendStatusChangeEmail(saved, dto.getStatus(), previousStatus);
         }
+        notifyAppointmentStatusUpdate(saved, dto.getLoggedUserEmail());
 
         return appointmentMapper.toResponseDTO(saved);
     }
@@ -148,6 +152,25 @@ public class AppointmentService {
                 .toList();
     }
 
+    private void notifyAppointmentStatusUpdate(Appointment appointment, String loggedUserEmail) {
+        var loggedUserIsInterpreter = appointment.getInterpreter().getEmail().equals(loggedUserEmail);
+        var userToNotifyId = loggedUserIsInterpreter
+                ? appointment.getUser().getId()
+                : appointment.getInterpreter().getId();
+
+        if (Objects.requireNonNull(appointment.getStatus()) == AppointmentStatus.CANCELED) {
+            notificationService.sendNotificationToUser(userToNotifyId, NotificationType.APPOINTMENT_CANCELED);
+        } else if (appointment.getStatus() == AppointmentStatus.ACCEPTED) {
+            LocalDateTime scheduledTime = LocalDateTime.of(appointment.getDate(), appointment.getStartTime()).minusHours(24);
+
+            notificationService.sendNotificationToUser(userToNotifyId, NotificationType.APPOINTMENT_ACCEPTED);
+            notificationService.scheduleNotificationForUser(appointment.getUser().getId(),
+                    NotificationType.APPOINTMENT_REMINDER, scheduledTime);
+            notificationService.scheduleNotificationForUser(appointment.getInterpreter().getId(),
+                    NotificationType.APPOINTMENT_REMINDER, scheduledTime);
+        }
+    }
+
     private boolean hasRatingAssigned(Appointment appointment, Boolean hasRating) {
         boolean ratingExists = ratingRepository.existsByAppointment(appointment);
         return hasRating == ratingExists;
@@ -167,13 +190,13 @@ public class AppointmentService {
 
     /**
      * Envia email de notificação quando o status do agendamento muda
-     * 
+     *
      * @param appointment    Agendamento atualizado
      * @param newStatus      Novo status
      * @param previousStatus Status anterior
      */
     private void sendStatusChangeEmail(Appointment appointment, AppointmentStatus newStatus,
-            AppointmentStatus previousStatus) {
+                                       AppointmentStatus previousStatus) {
         // Preparar dados comuns do email
         String userName = appointment.getUser().getDisplayName();
         String userEmail = appointment.getUser().getEmail();
@@ -238,7 +261,7 @@ public class AppointmentService {
 
     /**
      * Formata a data e hora do agendamento para exibição no email
-     * 
+     *
      * @param appointment Agendamento
      * @return String formatada com data e hora
      */
@@ -250,7 +273,7 @@ public class AppointmentService {
 
     /**
      * Formata a modalidade do agendamento para exibição no email
-     * 
+     *
      * @param modality Modalidade do agendamento
      * @return String formatada (Online ou Presencial)
      */
@@ -263,7 +286,7 @@ public class AppointmentService {
 
     /**
      * Constrói string com o endereço completo do agendamento
-     * 
+     *
      * @param appointment Agendamento
      * @return String com endereço formatado
      */

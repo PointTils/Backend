@@ -2,6 +2,7 @@ package com.pointtils.pointtils.src.application.controllers;
 
 import java.util.UUID;
 
+import com.pointtils.pointtils.src.infrastructure.configs.FirebaseConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -58,6 +59,9 @@ class AuthControllerTest {
 
         @MockitoBean
         private S3Client s3Client;
+
+        @MockitoBean
+        private FirebaseConfig firebaseConfig;
 
         @MockitoBean
         private LoginAttemptService loginAttemptService;
@@ -501,8 +505,8 @@ class AuthControllerTest {
 
                 String requestJson = String.format("""
                                 {
-                                    "resetToken": "%s",
-                                    "newPassword": "%s"
+                                    "reset_token": "%s",
+                                    "new_password": "%s"
                                 }
                                 """, resetToken, newPassword);
 
@@ -527,8 +531,8 @@ class AuthControllerTest {
 
                 String requestJson = String.format("""
                                 {
-                                    "resetToken": "%s",
-                                    "newPassword": "%s"
+                                    "reset_token": "%s",
+                                    "new_password": "%s"
                                 }
                                 """, resetToken, newPassword);
 
@@ -541,6 +545,83 @@ class AuthControllerTest {
                                 .andExpect(jsonPath("$.success").value(true))
                                 .andExpect(jsonPath("$.message").value("Falha ao recuperar senha"))
                                 .andExpect(jsonPath("$.data.resetToken").value(resetToken));
+        }
+
+        @Test
+        @DisplayName("Deve retornar 200 quando o token de recuperação for válido")
+        void deveRetornar200QuandoTokenRecuperacaoValido() throws Exception {
+                String validToken = "valid-reset-token";
+
+                when(authService.validateResetToken(validToken)).thenReturn(true);
+
+                mockMvc.perform(MockMvcRequestBuilders
+                                .post("/v1/auth/validate-mail-token")
+                                .param("token", validToken)
+                                .accept(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.success").value(true))
+                                .andExpect(jsonPath("$.message").value("Token validado com sucesso"));
+        }
+
+        @Test
+        @DisplayName("Deve retornar 401 quando o token de recuperação for inválido ou expirado")
+        void deveRetornar401QuandoTokenRecuperacaoInvalidoOuExpirado() throws Exception {
+                String invalidOrExpiredToken = "invalid-or-expired-reset-token";
+
+                when(authService.validateResetToken(invalidOrExpiredToken))
+                                .thenThrow(new AuthenticationException("Token de recuperação inválido ou expirado"));
+
+                mockMvc.perform(MockMvcRequestBuilders
+                                .post("/v1/auth/validate-mail-token")
+                                .param("token", invalidOrExpiredToken)
+                                .accept(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isUnauthorized())
+                                .andExpect(jsonPath("$.message").value("Token de recuperação inválido ou expirado"));
+        }
+
+        @Test
+        @DisplayName("Deve retornar 500 quando o token não for fornecido")
+        void deveRetornar500QuandoTokenNaoFornecido() throws Exception {
+                when(authService.validateResetToken(""))
+                                .thenThrow(new AuthenticationException("Token de recuperação não fornecido"));
+
+                mockMvc.perform(MockMvcRequestBuilders
+                                .post("/v1/auth/validate-mail-token")
+                                .param("token", "")
+                                .accept(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isInternalServerError());
+        }
+
+        @Test
+        @DisplayName("Deve retornar 404 quando usuário não for encontrado na validação do token")
+        void deveRetornar404QuandoUsuarioNaoEncontradoValidacaoToken() throws Exception {
+                String validToken = "valid-token-no-user";
+
+                when(authService.validateResetToken(validToken))
+                                .thenThrow(new AuthenticationException("Usuário não encontrado"));
+
+                mockMvc.perform(MockMvcRequestBuilders
+                                .post("/v1/auth/validate-mail-token")
+                                .param("token", validToken)
+                                .accept(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isNotFound())
+                                .andExpect(jsonPath("$.message").value("Usuário não encontrado"));
+        }
+
+        @Test
+        @DisplayName("Deve retornar 500 quando usuário estiver inativo na validação do token")
+        void deveRetornar500QuandoUsuarioInativoValidacaoToken() throws Exception {
+                String validToken = "valid-token-inactive-user";
+
+                when(authService.validateResetToken(validToken))
+                                .thenThrow(new AuthenticationException("Usuário inativo"));
+
+                mockMvc.perform(MockMvcRequestBuilders
+                                .post("/v1/auth/validate-mail-token")
+                                .param("token", validToken)
+                                .accept(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isInternalServerError())
+                                .andExpect(jsonPath("$.message").value("Usuário inativo"));
         }
 
 }

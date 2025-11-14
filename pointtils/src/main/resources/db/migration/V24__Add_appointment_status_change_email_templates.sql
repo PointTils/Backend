@@ -1,4 +1,4 @@
--- Migration: V14__Add_appointment_status_change_email_templates.sql
+-- Migration: V24__Add_appointment_status_change_email_templates.sql
 -- Descrição: Adiciona templates de email para mudanças de status de agendamento (aceito, negado, cancelado)
 
 -- Template de Agendamento Aceito

@@ -130,6 +130,31 @@ public class AuthService {
 
         return true;
     }
+	
+    public boolean validateResetToken(String resetToken) {
+        if (resetToken == null || resetToken.isBlank()) {
+            throw new AuthenticationException("Token de recuperação não fornecido");
+        }
+
+        String email = resetTokenService.validateResetToken(resetToken);
+
+        if (email == null) {
+            throw new AuthenticationException("Token de recuperação inválido ou expirado");
+        }
+
+        User user = userRepository.findByEmail(email);
+
+        if (user == null) {
+            throw new AuthenticationException(USER_NOT_FOUND_MESSAGE);
+        }
+
+        if (UserStatus.INACTIVE.equals(user.getStatus())) {
+            throw new AuthenticationException("Usuário inativo");
+        }
+
+        log.info("Token de recuperação validado com sucesso para o usuário: {}", email);
+        return true;
+    }
 
     /**
      * Redefine a senha do usuário usando um token de recuperação
@@ -139,40 +164,24 @@ public class AuthService {
      * @return true se a senha foi redefinida com sucesso, false caso contrário
      */
     public boolean resetPassword(String resetToken, String newPassword) {
-        if (resetToken == null || resetToken.isBlank()) {
-            throw new AuthenticationException("Token de recuperação não fornecido");
-        }
         if (newPassword == null || newPassword.isBlank()) {
             throw new AuthenticationException("Nova senha não fornecida");
         }
 
-        // Validar formato da senha
         if (!newPassword.matches("^[a-zA-Z0-9!@#$%^&*()_+=-]{6,}$")) {
             throw new AuthenticationException("Formato de senha inválida");
         }
 
-        // Validar o reset token
+		validateResetToken(resetToken);
+		
         String email = resetTokenService.validateResetToken(resetToken);
-        if (email == null) {
-            throw new AuthenticationException("Token de recuperação inválido ou expirado");
-        }
-
-        // Buscar usuário
-        User user = userRepository.findByEmail(email);
-        if (user == null) {
-            throw new AuthenticationException(USER_NOT_FOUND_MESSAGE);
-        }
-
-        if (UserStatus.INACTIVE.equals(user.getStatus())) {
-            throw new AuthenticationException("Usuário inativo");
-        }
-
+		User user = userRepository.findByEmail(email);
+		
         try {
-            // Atualizar senha
             user.setPassword(passwordEncoder.encode(newPassword));
+
             userRepository.save(user);
 
-            // Invalidar o token após uso bem-sucedido
             resetTokenService.invalidateResetToken(resetToken);
 
             log.info("Senha redefinida com sucesso para o usuário: {}", email);

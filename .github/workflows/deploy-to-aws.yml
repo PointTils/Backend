@@ -127,6 +127,8 @@ jobs:
           BREVO_SENDER_EMAIL=${{ vars.BREVO_SENDER_EMAIL }}
           BREVO_SENDER_NAME=${{ vars.BREVO_SENDER_NAME }}
           ADMIN_EMAIL=${{ vars.ADMIN_EMAIL }}
+          FIREBASE_SERVICE_ACCOUNT=${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          API_BASE_URL=${{ secrets.API_PRD_BASE_URL }}
           EOL
 
       - name: Build and push images with docker compose

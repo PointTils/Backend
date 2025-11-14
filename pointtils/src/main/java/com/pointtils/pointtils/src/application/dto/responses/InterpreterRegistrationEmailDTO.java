@@ -17,6 +17,7 @@ public class InterpreterRegistrationEmailDTO {
     private String cnpj;
     private String email;
     private String phone;
+    private String videoUrl;
     private String acceptLink;
     private String rejectLink;
     private List<MultipartFile> files;
