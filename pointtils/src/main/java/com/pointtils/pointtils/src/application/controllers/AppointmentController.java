@@ -93,7 +93,7 @@ public class AppointmentController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Agendamento encontrado com sucesso",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = AppointmentResponseDTO.class))
+                            schema = @Schema(implementation = ApiResponseDTO.class))
             ),
             @ApiResponse(responseCode = "400", description = "ID inválido"),
             @ApiResponse(responseCode = "401", description = "Token de autenticação inválido ou ausente"),
