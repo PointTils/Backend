@@ -1,5 +1,6 @@
 package com.pointtils.pointtils.src.application.services;
 
+import com.pointtils.pointtils.src.application.dto.email.AppointmentUpdateEmailDTO;
 import com.pointtils.pointtils.src.application.dto.requests.AppointmentPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.AppointmentRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.AppointmentFilterResponseDTO;
@@ -22,6 +23,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+
+import static com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentStatus.ACCEPTED;
+import static com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentStatus.CANCELED;
+import static com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentStatus.PENDING;
 
 
 @Service
@@ -110,12 +115,7 @@ public class AppointmentService {
             appointment.setEndTime(dto.getEndTime());
 
         Appointment saved = appointmentRepository.save(appointment);
-
-        // Enviar email quando o status mudar
-        if (dto.getStatus() != null && !dto.getStatus().equals(previousStatus)) {
-            sendStatusChangeEmail(saved, dto.getStatus(), previousStatus);
-        }
-        notifyAppointmentStatusUpdate(saved, dto.getLoggedUserEmail());
+        notifyAppointmentStatusUpdate(saved, dto, previousStatus);
 
         return appointmentMapper.toResponseDTO(saved);
     }
@@ -152,15 +152,21 @@ public class AppointmentService {
                 .toList();
     }
 
-    private void notifyAppointmentStatusUpdate(Appointment appointment, String loggedUserEmail) {
-        var loggedUserIsInterpreter = appointment.getInterpreter().getEmail().equals(loggedUserEmail);
+    private void notifyAppointmentStatusUpdate(Appointment appointment, AppointmentPatchRequestDTO dto,
+                                               AppointmentStatus previousStatus) {
+        var loggedUserIsInterpreter = appointment.getInterpreter().getEmail().equals(dto.getLoggedUserEmail());
         var userToNotifyId = loggedUserIsInterpreter
                 ? appointment.getUser().getId()
                 : appointment.getInterpreter().getId();
 
-        if (Objects.requireNonNull(appointment.getStatus()) == AppointmentStatus.CANCELED) {
+        // Enviar email quando o status mudar
+        if (dto.getStatus() != null && !dto.getStatus().equals(previousStatus)) {
+            sendStatusChangeEmail(appointment, dto.getStatus(), previousStatus);
+        }
+
+        if (Objects.requireNonNull(appointment.getStatus()) == CANCELED) {
             notificationService.sendNotificationToUser(userToNotifyId, NotificationType.APPOINTMENT_CANCELED);
-        } else if (appointment.getStatus() == AppointmentStatus.ACCEPTED) {
+        } else if (appointment.getStatus() == ACCEPTED) {
             LocalDateTime scheduledTime = LocalDateTime.of(appointment.getDate(), appointment.getStartTime()).minusHours(24);
 
             notificationService.sendNotificationToUser(userToNotifyId, NotificationType.APPOINTMENT_ACCEPTED);
@@ -203,59 +209,44 @@ public class AppointmentService {
         String interpreterName = appointment.getInterpreter().getDisplayName();
         String interpreterEmail = appointment.getInterpreter().getEmail();
         String appointmentDate = formatAppointmentDateTime(appointment);
+        String appointmentDescription = appointment.getDescription();
+        String appointmentLocation = buildLocationString(appointment);
+        String appointmentModality = formatModalityForEmail(appointment.getModality());
+        final String interpreterSubject = "Intérprete";
 
-        // Enviar email baseado no novo status
-        switch (newStatus) {
-            case ACCEPTED:
-                // Quando aceito, notificar o usuário que solicitou
-                String location = buildLocationString(appointment);
-                String modality = formatModalityForEmail(appointment.getModality());
-                emailService.sendAppointmentAcceptedEmail(
-                        userEmail,
-                        userName,
-                        appointmentDate,
-                        interpreterName,
-                        location,
-                        modality);
-                break;
+        var emailParameters = AppointmentUpdateEmailDTO.builder()
+                .appointmentDate(appointmentDate)
+                .appointmentDescription(appointmentDescription)
+                .appointmentModality(appointmentModality)
+                .appointmentLocation(appointmentLocation);
 
-            case CANCELED:
-                // Quando cancelado, notificar ambas as partes
-                String cancelReason = appointment.getDescription() != null ? appointment.getDescription()
-                        : "Não especificado";
-
-                // Notificar usuário
-                emailService.sendAppointmentCanceledEmail(
-                        userEmail,
-                        userName,
-                        appointmentDate,
-                        interpreterName,
-                        cancelReason);
-
-                // Notificar intérprete
-                emailService.sendAppointmentCanceledEmail(
-                        interpreterEmail,
-                        interpreterName,
-                        appointmentDate,
-                        userName,
-                        cancelReason);
-                break;
-
-            case PENDING:
-                // Se voltou para PENDING de outro status, pode ser uma negação implícita
-                // Verificar se mudou de ACCEPTED para PENDING (possível negação)
-                if (previousStatus == AppointmentStatus.ACCEPTED) {
-                    emailService.sendAppointmentDeniedEmail(
-                            userEmail,
-                            userName,
-                            appointmentDate,
-                            interpreterName);
-                }
-                break;
-
-            default:
-                // Outros status não precisam de notificação automática
-                break;
+        if (ACCEPTED.equals(newStatus)) {
+            emailService.sendAppointmentAcceptedEmail(emailParameters
+                    .userName(userName)
+                    .email(userEmail)
+                    .subject(interpreterSubject)
+                    .subjectName(interpreterName)
+                    .build());
+        } else if (CANCELED.equals(newStatus) && PENDING.equals(previousStatus)) { // Interprete rejeitou solicitacao
+            emailService.sendAppointmentDeniedEmail(emailParameters
+                    .userName(userName)
+                    .email(userEmail)
+                    .subject(interpreterSubject)
+                    .subjectName(interpreterName)
+                    .build());
+        } else if (CANCELED.equals(newStatus)) { // Solicitacao havia sido confirmada e foi cancelada
+            emailService.sendAppointmentCanceledEmail(emailParameters
+                    .userName(userName)
+                    .email(userEmail)
+                    .subject(interpreterSubject)
+                    .subjectName(interpreterName)
+                    .build());
+            emailService.sendAppointmentCanceledEmail(emailParameters
+                    .userName(interpreterName)
+                    .email(interpreterEmail)
+                    .subject("Solicitante")
+                    .subjectName(userName)
+                    .build());
         }
     }
 

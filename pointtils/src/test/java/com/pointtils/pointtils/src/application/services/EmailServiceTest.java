@@ -1,7 +1,8 @@
 package com.pointtils.pointtils.src.application.services;
 
+import com.pointtils.pointtils.src.application.dto.email.AppointmentUpdateEmailDTO;
+import com.pointtils.pointtils.src.application.dto.email.ProcessAdminTemplateDTO;
 import com.pointtils.pointtils.src.application.dto.requests.EmailRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.ProcessTemplateRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterRegistrationEmailDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Parameters;
 import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
@@ -16,6 +17,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -23,16 +26,17 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.time.Year;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -569,27 +573,6 @@ class EmailServiceTest {
     }
 
     @Test
-    @DisplayName("Deve enviar email quando status de agendamento for ACCEPTED")
-    void deveEnviarEmailQuandoStatusAccepted() {
-        String template = "Olá {{nome}}! Data: {{appointmentDate}}; Intérprete: {{interpreterName}}; Local: {{appointmentLocation}}; Modalidade: {{appointmentModality}}";
-        Parameters parameter = new Parameters();
-        parameter.setKey("APPOINTMENT_ACCEPTED");
-        parameter.setValue(template);
-
-        when(parametersRepository.findByKey("APPOINTMENT_ACCEPTED")).thenReturn(Optional.of(parameter));
-        MimeMessage mimeMessage = new MimeMessage((jakarta.mail.Session) null);
-        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
-        doNothing().when(mailSender).send(any(MimeMessage.class));
-
-        boolean result = emailService.sendAppointmentAcceptedEmail(testEmail, testUserName, "2025-11-10 às 14:00", "Maria Intérprete", "Auditório", "PERSONALLY");
-
-        assertTrue(result);
-        verify(parametersRepository).findByKey("APPOINTMENT_ACCEPTED");
-        verify(mailSender).createMimeMessage();
-        verify(mailSender).send(any(MimeMessage.class));
-    }
-
-    @Test
     @DisplayName("Deve lidar com exceção ao enviar email com anexos")
     void deveLidarComExcecaoAoEnviarEmailComAnexos() {
         MimeMessage mimeMessage = new MimeMessage((Session) null);
@@ -601,27 +584,6 @@ class EmailServiceTest {
         boolean result = emailService.sendEmailWithAttachments(emailRequestDTO, attachments, attachmentNames);
         assertFalse(result);
 
-    }
-
-    @Test
-    @DisplayName("Deve enviar email quando status de agendamento for DENIED")
-    void deveEnviarEmailQuandoStatusDenied() {
-        String template = "Olá {{nome}}! Data: {{appointmentDate}}; Intérprete: {{interpreterName}}";
-        Parameters parameter = new Parameters();
-        parameter.setKey("APPOINTMENT_DENIED");
-        parameter.setValue(template);
-
-        when(parametersRepository.findByKey("APPOINTMENT_DENIED")).thenReturn(Optional.of(parameter));
-        MimeMessage mimeMessage = new MimeMessage((jakarta.mail.Session) null);
-        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
-        doNothing().when(mailSender).send(any(MimeMessage.class));
-
-        boolean result = emailService.sendAppointmentDeniedEmail(testEmail, testUserName, "2025-11-10 às 14:00", "Carlos Intérprete");
-
-        assertTrue(result);
-        verify(parametersRepository).findByKey("APPOINTMENT_DENIED");
-        verify(mailSender).createMimeMessage();
-        verify(mailSender).send(any(MimeMessage.class));
     }
 
     @Test
@@ -644,27 +606,6 @@ class EmailServiceTest {
         doThrow(new RuntimeException("Erro ao enviar email")).when(mailSender).send(any(MimeMessage.class));
         boolean result = emailService.sendEmailWithAttachments(emailRequestDTO, null, null);
         assertFalse(result);
-    }
-
-    @Test
-    @DisplayName("Deve enviar email quando status de agendamento for CANCELED e incluir motivo")
-    void deveEnviarEmailQuandoStatusCanceled() {
-        String template = "Olá {{nome}}! Data: {{appointmentDate}}; Motivo: {{cancelReason}}";
-        Parameters parameter = new Parameters();
-        parameter.setKey("APPOINTMENT_CANCELED");
-        parameter.setValue(template);
-
-        when(parametersRepository.findByKey("APPOINTMENT_CANCELED")).thenReturn(Optional.of(parameter));
-        MimeMessage mimeMessage = new MimeMessage((jakarta.mail.Session) null);
-        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
-        doNothing().when(mailSender).send(any(MimeMessage.class));
-
-        boolean result = emailService.sendAppointmentCanceledEmail(testEmail, testUserName, "2025-11-11 às 09:00", "Carlos Intérprete", "Problema de saúde");
-
-        assertTrue(result);
-        verify(parametersRepository).findByKey("APPOINTMENT_CANCELED");
-        verify(mailSender).createMimeMessage();
-        verify(mailSender).send(any(MimeMessage.class));
     }
 
     @Test
@@ -713,34 +654,6 @@ class EmailServiceTest {
         // Verificações
         assertTrue(result);
         verify(parametersRepository).findByKey("PENDING_INTERPRETER_ADMIN");
-    }
-
-
-    @Test
-    @DisplayName("processAppointmentStatusChangeTemplate deve substituir placeholders corretamente")
-    void processAppointmentStatusChangeTemplateReplacesPlaceholders() {
-        String template = "Nome: {{nome}}; Data: {{appointmentDate}}; Intérprete: {{interpreterName}}; Local: {{appointmentLocation}}; Modalidade: {{appointmentModality}}; Motivo: {{cancelReason}}; Ano: {{ano}}";
-
-        // invoke private method via ReflectionTestUtils
-        String processed = ReflectionTestUtils.invokeMethod(
-                emailService,
-                "processAppointmentStatusChangeTemplate",
-                template,
-                testUserName,
-                "2025-11-11 às 09:00",
-                "Intérprete X",
-                "Auditório Central",
-                "PERSONALLY",
-                "Motivo X"
-        );
-
-        assertNotNull(processed);
-        assertTrue(processed.contains("Nome: " + testUserName));
-        assertTrue(processed.contains("Data: 2025-11-11 às 09:00"));
-        assertTrue(processed.contains("Intérprete: Intérprete X"));
-        assertTrue(processed.contains("Local: Auditório Central"));
-        assertTrue(processed.contains("Modalidade: PERSONALLY"));
-        assertTrue(processed.contains("Motivo: Motivo X"));
     }
 
     @Test
@@ -947,7 +860,7 @@ class EmailServiceTest {
     @Test
     @DisplayName("Deve retornar template padrão quando template for nulo")
     void deveRetornarTemplatePadraoQuandoTemplateForNulo() {
-        ProcessTemplateRequestDTO dto = ProcessTemplateRequestDTO.builder()
+        ProcessAdminTemplateDTO dto = ProcessAdminTemplateDTO.builder()
                 .interpreterName("Interpreter Name")
                 .cpf("123456789")
                 .cnpj("12345678000195")
@@ -973,7 +886,7 @@ class EmailServiceTest {
     @DisplayName("Deve retornar template padrão quando interpreterName for nulo")
     void deveRetornarTemplatePadraoQuandoInterpreterNameForNulo() {
         String template = "Olá {{nome}}! Sua consulta está agendada.";
-        ProcessTemplateRequestDTO dto = ProcessTemplateRequestDTO.builder()
+        ProcessAdminTemplateDTO dto = ProcessAdminTemplateDTO.builder()
                 .interpreterName(null)
                 .cpf("123456789")
                 .cnpj("12345678000195")
@@ -998,7 +911,7 @@ class EmailServiceTest {
     @DisplayName("Deve retornar template padrão quando cpf for nulo")
     void deveRetornarTemplatePadraoQuandoCpfForNulo() {
         String template = "Olá {{nome}}! Seu CPF é {{cpf}}.";
-        ProcessTemplateRequestDTO dto = ProcessTemplateRequestDTO.builder()
+        ProcessAdminTemplateDTO dto = ProcessAdminTemplateDTO.builder()
                 .interpreterName("Interpreter Name")
                 .cpf(null)
                 .cnpj("12345678000195")
@@ -1023,7 +936,7 @@ class EmailServiceTest {
     @DisplayName("Deve retornar template padrão quando cnpj for nulo")
     void deveRetornarTemplatePadraoQuandoCnpjForNulo() {
         String template = "Olá {{nome}}! Seu CNPJ é {{cnpj}}.";
-        ProcessTemplateRequestDTO dto = ProcessTemplateRequestDTO.builder()
+        ProcessAdminTemplateDTO dto = ProcessAdminTemplateDTO.builder()
                 .interpreterName("Interpreter Name")
                 .cpf("123456789")
                 .cnpj(null)
@@ -1048,7 +961,7 @@ class EmailServiceTest {
     @DisplayName("Deve retornar template padrão quando email for nulo")
     void deveRetornarTemplatePadraoQuandoEmailForNulo() {
         String template = "Olá {{nome}}! Seu email é {{email}}.";
-        ProcessTemplateRequestDTO dto = ProcessTemplateRequestDTO.builder()
+        ProcessAdminTemplateDTO dto = ProcessAdminTemplateDTO.builder()
                 .interpreterName("Interpreter Name")
                 .cpf("123456789")
                 .cnpj("12345678000195")
@@ -1073,7 +986,7 @@ class EmailServiceTest {
     @DisplayName("Deve retornar template padrão quando phone for nulo")
     void deveRetornarTemplatePadraoQuandoPhoneForNulo() {
         String template = "Olá {{nome}}! Seu telefone é {{telefone}}.";
-        ProcessTemplateRequestDTO dto = ProcessTemplateRequestDTO.builder()
+        ProcessAdminTemplateDTO dto = ProcessAdminTemplateDTO.builder()
                 .interpreterName("Interpreter Name")
                 .cpf("123456789")
                 .cnpj("12345678000195")
@@ -1098,7 +1011,7 @@ class EmailServiceTest {
     @DisplayName("Deve retornar template padrão quando acceptLink for nulo")
     void deveRetornarTemplatePadraoQuandoAcceptLinkForNulo() {
         String template = "Clique aqui para aceitar: {{link_accept_api}}.";
-        ProcessTemplateRequestDTO dto = ProcessTemplateRequestDTO.builder()
+        ProcessAdminTemplateDTO dto = ProcessAdminTemplateDTO.builder()
                 .interpreterName("Interpreter Name")
                 .cpf("123456789")
                 .cnpj("12345678000195")
@@ -1123,7 +1036,7 @@ class EmailServiceTest {
     @DisplayName("Deve retornar template padrão quando rejectLink for nulo")
     void deveRetornarTemplatePadraoQuandoRejectLinkForNulo() {
         String template = "Clique aqui para rejeitar: {{link_reject_api}}.";
-        ProcessTemplateRequestDTO dto = ProcessTemplateRequestDTO.builder()
+        ProcessAdminTemplateDTO dto = ProcessAdminTemplateDTO.builder()
                 .interpreterName("Interpreter Name")
                 .cpf("123456789")
                 .cnpj("12345678000195")
@@ -1142,28 +1055,6 @@ class EmailServiceTest {
         );
 
         assertTrue(result.contains("Clique aqui para rejeitar: ."));
-    }
-
-    @Test
-    @DisplayName("Deve retornar template padrão quando processAppointmentStatusChangeTemplate recebe template nulo")
-    void deveRetornarTemplatePadraoQuandoProcessAppointmentStatusChangeTemplateRecebeTemplateNulo() {
-        String defaultTemplate = "<html><body><h1>Template não encontrado</h1><p>Template com chave 'APPOINTMENT_STATUS_CHANGE' não está disponível no banco de dados.</p></body></html>";
-
-        // Invoca método privado via reflection
-        String result = ReflectionTestUtils.invokeMethod(
-                emailService,
-                "processAppointmentStatusChangeTemplate",
-                null, // template
-                "Test User",
-                "2025-11-11 às 09:00",
-                "Intérprete X",
-                "Auditório Central",
-                "PERSONALLY",
-                "Motivo X"
-        );
-
-        assertEquals(defaultTemplate, result);
-        verify(parametersRepository, never()).findByKey(anyString());
     }
 
     @Test
@@ -1201,5 +1092,120 @@ class EmailServiceTest {
 
         verify(parametersRepository).findByKey("PENDING_INTERPRETER_ADMIN");
         verify(mailSender).send(any(MimeMessage.class));
+    }
+
+    @Test
+    void deveRetornarTemplateDeAtualizacaoDeAgendamento() {
+        String emailTemplate = """
+                Olá {{nome}}
+                Data e Hora: {{appointmentDate}}
+                Descrição: {{appointmentDescription}}
+                {{subject}}: {{subjectName}}
+                Modalidade: {{appointmentModality}}
+                Local: {{appointmentLocation}}
+                Atenciosamente,
+                Equipe {{senderName}}
+                Point Tils {{ano}}
+                """;
+        AppointmentUpdateEmailDTO dto = buildAppointmentUpdateEmail(emailTemplate);
+        String expectedEmailBody = """
+                Olá João Gustavo da Rocha
+                Data e Hora: 2023-10-01 10:00
+                Descrição: Reunião de condomínio
+                Intérprete: Maria Almeida
+                Modalidade: Online
+                Local: RS
+                Atenciosamente,
+                Equipe PointTils Test
+                Point Tils 2024
+                """;
+
+        Year mockedYear = mock(Year.class);
+        when(mockedYear.getValue()).thenReturn(2024);
+        try (MockedStatic<Year> mockedStaticYear = Mockito.mockStatic(Year.class)) {
+            mockedStaticYear.when(Year::now).thenReturn(mockedYear);
+            assertEquals(expectedEmailBody, ReflectionTestUtils.invokeMethod(
+                    emailService,
+                    "processAppointmentStatusChangeTemplate",
+                    dto
+            ));
+        }
+    }
+
+    @Test
+    void shouldSendAppointmentAcceptedEmail() throws Exception {
+        AppointmentUpdateEmailDTO dto = buildAppointmentUpdateEmail("");
+        Parameters mockParameters = new Parameters(UUID.randomUUID(), "APPOINTMENT_ACCEPTED", "",
+                LocalDateTime.now(), LocalDateTime.now());
+        when(parametersRepository.findByKey("APPOINTMENT_ACCEPTED")).thenReturn(Optional.of(mockParameters));
+
+        MimeMessage mimeMessage = new MimeMessage((Session) null);
+        ArgumentCaptor<MimeMessage> messageCaptor = ArgumentCaptor.forClass(MimeMessage.class);
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doNothing().when(mailSender).send(messageCaptor.capture());
+
+        assertTrue(emailService.sendAppointmentAcceptedEmail(dto));
+        assertEquals("Agendamento Aceito - PointTils", messageCaptor.getValue().getSubject());
+        assertEquals(1, messageCaptor.getValue().getFrom().length);
+        assertEquals("PointTils Test <test@pointtils.com>", messageCaptor.getValue().getFrom()[0].toString());
+
+        verify(mailSender).send(any(MimeMessage.class));
+        verify(parametersRepository).findByKey("APPOINTMENT_ACCEPTED");
+    }
+
+    @Test
+    void shouldSendAppointmentDeniedEmail() throws Exception {
+        AppointmentUpdateEmailDTO dto = buildAppointmentUpdateEmail("");
+        Parameters mockParameters = new Parameters(UUID.randomUUID(), "APPOINTMENT_DENIED", "",
+                LocalDateTime.now(), LocalDateTime.now());
+        when(parametersRepository.findByKey("APPOINTMENT_DENIED")).thenReturn(Optional.of(mockParameters));
+
+        MimeMessage mimeMessage = new MimeMessage((Session) null);
+        ArgumentCaptor<MimeMessage> messageCaptor = ArgumentCaptor.forClass(MimeMessage.class);
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doNothing().when(mailSender).send(messageCaptor.capture());
+
+        assertTrue(emailService.sendAppointmentDeniedEmail(dto));
+        assertEquals("Agendamento Negado - PointTils", messageCaptor.getValue().getSubject());
+        assertEquals(1, messageCaptor.getValue().getFrom().length);
+        assertEquals("PointTils Test <test@pointtils.com>", messageCaptor.getValue().getFrom()[0].toString());
+
+        verify(mailSender).send(any(MimeMessage.class));
+        verify(parametersRepository).findByKey("APPOINTMENT_DENIED");
+    }
+
+    @Test
+    void shouldSendAppointmentCanceledEmail() throws Exception {
+        AppointmentUpdateEmailDTO dto = buildAppointmentUpdateEmail("");
+        Parameters mockParameters = new Parameters(UUID.randomUUID(), "APPOINTMENT_CANCELED", "",
+                LocalDateTime.now(), LocalDateTime.now());
+        when(parametersRepository.findByKey("APPOINTMENT_CANCELED")).thenReturn(Optional.of(mockParameters));
+
+        MimeMessage mimeMessage = new MimeMessage((Session) null);
+        ArgumentCaptor<MimeMessage> messageCaptor = ArgumentCaptor.forClass(MimeMessage.class);
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doNothing().when(mailSender).send(messageCaptor.capture());
+
+        assertTrue(emailService.sendAppointmentCanceledEmail(dto));
+        assertEquals("Agendamento Cancelado - PointTils", messageCaptor.getValue().getSubject());
+        assertEquals(1, messageCaptor.getValue().getFrom().length);
+        assertEquals("PointTils Test <test@pointtils.com>", messageCaptor.getValue().getFrom()[0].toString());
+
+        verify(mailSender).send(any(MimeMessage.class));
+        verify(parametersRepository).findByKey("APPOINTMENT_CANCELED");
+    }
+
+    private AppointmentUpdateEmailDTO buildAppointmentUpdateEmail(String template) {
+        return AppointmentUpdateEmailDTO.builder()
+                .template(template)
+                .email("user@example.com")
+                .userName("João Gustavo da Rocha")
+                .appointmentDate("2023-10-01 10:00")
+                .appointmentDescription("Reunião de condomínio")
+                .appointmentModality("Online")
+                .appointmentLocation("RS")
+                .subject("Intérprete")
+                .subjectName("Maria Almeida")
+                .build();
     }
 }

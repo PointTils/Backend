@@ -1,4 +1,4 @@
-package com.pointtils.pointtils.src.application.dto.requests;
+package com.pointtils.pointtils.src.application.dto.email;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,7 +11,7 @@ import lombok.Setter;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ProcessTemplateRequestDTO {
+public class ProcessAdminTemplateDTO {
     private String template;
     private String interpreterName;
     private String cpf;

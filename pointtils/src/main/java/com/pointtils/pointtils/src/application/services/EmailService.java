@@ -1,7 +1,8 @@
 package com.pointtils.pointtils.src.application.services;
 
+import com.pointtils.pointtils.src.application.dto.email.AppointmentUpdateEmailDTO;
+import com.pointtils.pointtils.src.application.dto.email.ProcessAdminTemplateDTO;
 import com.pointtils.pointtils.src.application.dto.requests.EmailRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.ProcessTemplateRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterRegistrationEmailDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Parameters;
 import com.pointtils.pointtils.src.infrastructure.repositories.ParametersRepository;
@@ -201,7 +202,7 @@ public class EmailService {
         }
 
         String html = processTemplate(
-                ProcessTemplateRequestDTO.builder()
+                ProcessAdminTemplateDTO.builder()
                         .template(template)
                         .interpreterName(dto.getInterpreterName())
                         .cpf(dto.getCpf())
@@ -352,7 +353,7 @@ public class EmailService {
      * @param dto Dados a serem preenchidos no template HTML
      * @return Template HTML processado
      */
-    private String processTemplate(ProcessTemplateRequestDTO dto) {
+    private String processTemplate(ProcessAdminTemplateDTO dto) {
         if (dto.getTemplate() == null) {
             return getDefaultTemplate("PENDING_INTERPRETER_ADMIN");
             // Substituir placeholders do template do banco
@@ -422,22 +423,15 @@ public class EmailService {
 
     /**
      * Envia email de agendamento aceito
-     * 
-     * @param email                Email do destinatário
-     * @param userName             Nome do usuário
-     * @param appointmentDate      Data e hora do agendamento
-     * @param interpreterName      Nome do intérprete
-     * @param appointmentLocation  Local do agendamento
-     * @param appointmentModality  Modalidade do agendamento (Online/Presencial)
+     *
+     * @param dto DTO com parametros utilizados para envio de email
      * @return true se o email foi enviado com sucesso, false caso contrário
      */
-    public boolean sendAppointmentAcceptedEmail(String email, String userName, String appointmentDate,
-            String interpreterName, String appointmentLocation, String appointmentModality) {
-        String template = getTemplateByKey("APPOINTMENT_ACCEPTED");
-        String html = processAppointmentStatusChangeTemplate(template, userName, appointmentDate, interpreterName,
-                appointmentLocation, appointmentModality, "");
+    public boolean sendAppointmentAcceptedEmail(AppointmentUpdateEmailDTO dto) {
+        dto.setTemplate(getTemplateByKey("APPOINTMENT_ACCEPTED"));
+        String html = processAppointmentStatusChangeTemplate(dto);
         EmailRequestDTO emailRequest = new EmailRequestDTO(
-                email,
+                dto.getEmail(),
                 "Agendamento Aceito - PointTils",
                 html,
                 senderName);
@@ -446,20 +440,15 @@ public class EmailService {
 
     /**
      * Envia email de agendamento negado
-     * 
-     * @param email           Email do destinatário
-     * @param userName        Nome do usuário
-     * @param appointmentDate Data e hora do agendamento
-     * @param interpreterName Nome do intérprete
+     *
+     * @param dto DTO com parametros utilizados para envio de email
      * @return true se o email foi enviado com sucesso, false caso contrário
      */
-    public boolean sendAppointmentDeniedEmail(String email, String userName, String appointmentDate,
-            String interpreterName) {
-        String template = getTemplateByKey("APPOINTMENT_DENIED");
-        String html = processAppointmentStatusChangeTemplate(template, userName, appointmentDate, interpreterName,
-                "", "", "");
+    public boolean sendAppointmentDeniedEmail(AppointmentUpdateEmailDTO dto) {
+        dto.setTemplate(getTemplateByKey("APPOINTMENT_DENIED"));
+        String html = processAppointmentStatusChangeTemplate(dto);
         EmailRequestDTO emailRequest = new EmailRequestDTO(
-                email,
+                dto.getEmail(),
                 "Agendamento Negado - PointTils",
                 html,
                 senderName);
@@ -468,21 +457,15 @@ public class EmailService {
 
     /**
      * Envia email de agendamento cancelado
-     * 
-     * @param email           Email do destinatário
-     * @param userName        Nome do usuário
-     * @param appointmentDate Data e hora do agendamento
-     * @param interpreterName Nome do intérprete
-     * @param cancelReason    Motivo do cancelamento
+     *
+     * @param dto DTO com parametros utilizados para envio de email
      * @return true se o email foi enviado com sucesso, false caso contrário
      */
-    public boolean sendAppointmentCanceledEmail(String email, String userName, String appointmentDate,
-            String interpreterName, String cancelReason) {
-        String template = getTemplateByKey("APPOINTMENT_CANCELED");
-        String html = processAppointmentStatusChangeTemplate(template, userName, appointmentDate, interpreterName,
-                "", "", cancelReason);
+    public boolean sendAppointmentCanceledEmail(AppointmentUpdateEmailDTO dto) {
+        dto.setTemplate(getTemplateByKey("APPOINTMENT_CANCELED"));
+        String html = processAppointmentStatusChangeTemplate(dto);
         EmailRequestDTO emailRequest = new EmailRequestDTO(
-                email,
+                dto.getEmail(),
                 "Agendamento Cancelado - PointTils",
                 html,
                 senderName);
@@ -491,30 +474,25 @@ public class EmailService {
 
     /**
      * Processa template de mudança de status de agendamento
-     * @param template Template do banco
-     * @param userName Nome do usuário
-     * @param appointmentDate Data do agendamento
-     * @param interpreterName Nome do intérprete
-     * @param appointmentLocation Local do agendamento (opcional)
-     * @param appointmentModality Modalidade do agendamento (opcional)
-     * @param cancelReason Motivo do cancelamento (opcional)
+     *
+     * @param dto DTO com parametros utilizados para envio de email
      * @return Template processado
      */
-    private String processAppointmentStatusChangeTemplate(String template, String userName, String appointmentDate, 
-            String interpreterName, String appointmentLocation, String appointmentModality, String cancelReason) {
-        if (template == null) {
+    private String processAppointmentStatusChangeTemplate(AppointmentUpdateEmailDTO dto) {
+        if (dto.getTemplate() == null) {
             return getDefaultTemplate("APPOINTMENT_STATUS_CHANGE");
         }
-        
-        return template
-                .replace("{{nome}}", userName != null ? userName : "")
-                .replace("{{appointmentDate}}", appointmentDate != null ? appointmentDate : "")
-                .replace("{{interpreterName}}", interpreterName != null ? interpreterName : "")
-                .replace("{{appointmentLocation}}", appointmentLocation != null ? appointmentLocation : "")
-                .replace("{{appointmentModality}}", appointmentModality != null ? appointmentModality : "")
-                .replace("{{cancelReason}}", cancelReason != null ? cancelReason : "")
-                .replace("{{ano}}", String.valueOf(Year.now().getValue()))
-                .replace("{{senderName}}", senderName);
+
+        return dto.getTemplate()
+                .replace(PLACEHOLDER_NOME, StringUtils.getIfEmpty(dto.getUserName(), () -> ""))
+                .replace("{{appointmentDate}}", StringUtils.getIfEmpty(dto.getAppointmentDate(), () -> ""))
+                .replace("{{appointmentDescription}}", StringUtils.getIfEmpty(dto.getAppointmentDescription(), () -> ""))
+                .replace("{{appointmentModality}}", StringUtils.getIfEmpty(dto.getAppointmentModality(), () -> ""))
+                .replace("{{appointmentLocation}}", StringUtils.getIfEmpty(dto.getAppointmentLocation(), () -> ""))
+                .replace("{{subject}}", StringUtils.getIfEmpty(dto.getSubject(), () -> ""))
+                .replace("{{subjectName}}", StringUtils.getIfEmpty(dto.getSubjectName(), () -> ""))
+                .replace(PLACEHOLDER_ANO, String.valueOf(Year.now().getValue()))
+                .replace(PLACEHOLDER_SEND_NAME, senderName);
     }
 }
 

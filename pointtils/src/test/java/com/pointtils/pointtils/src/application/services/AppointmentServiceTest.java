@@ -1,5 +1,6 @@
 package com.pointtils.pointtils.src.application.services;
 
+import com.pointtils.pointtils.src.application.dto.email.AppointmentUpdateEmailDTO;
 import com.pointtils.pointtils.src.application.dto.requests.AppointmentPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.AppointmentRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.AppointmentFilterResponseDTO;
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -44,6 +46,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -716,9 +719,16 @@ class AppointmentServiceTest {
 
         String expectedDate = savedAppointment.getDate().toString() + " às "
                 + savedAppointment.getStartTime().toString();
-        verify(emailService).sendAppointmentAcceptedEmail(
-                mockUser.getEmail(), mockUser.getDisplayName(), expectedDate,
-                mockInterpreter.getDisplayName(), "Online", "Online");
+
+        ArgumentCaptor<AppointmentUpdateEmailDTO> emailCaptor = ArgumentCaptor.forClass(AppointmentUpdateEmailDTO.class);
+        verify(emailService).sendAppointmentAcceptedEmail(emailCaptor.capture());
+        AppointmentUpdateEmailDTO capturedEmail = emailCaptor.getValue();
+        assertEquals(mockUser.getEmail(), capturedEmail.getEmail());
+        assertEquals(mockUser.getDisplayName(), capturedEmail.getUserName());
+        assertEquals(expectedDate, capturedEmail.getAppointmentDate());
+        assertEquals(mockInterpreter.getDisplayName(), capturedEmail.getSubjectName());
+        assertEquals("Online", capturedEmail.getAppointmentModality());
+        assertEquals("Online", capturedEmail.getAppointmentLocation());
     }
 
     @Test
@@ -727,8 +737,11 @@ class AppointmentServiceTest {
         AppointmentPatchRequestDTO patchDTO = AppointmentPatchRequestDTO.builder()
                 .status(AppointmentStatus.CANCELED)
                 .build();
-
+        mockAppointment.setStatus(AppointmentStatus.ACCEPTED);
         when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(mockAppointment));
+
+        ArgumentCaptor<AppointmentUpdateEmailDTO> emailCaptor = ArgumentCaptor.forClass(AppointmentUpdateEmailDTO.class);
+        when(emailService.sendAppointmentCanceledEmail(emailCaptor.capture())).thenReturn(true);
 
         Appointment savedAppointment = Appointment.builder()
                 .id(appointmentId)
@@ -736,7 +749,7 @@ class AppointmentServiceTest {
                 .city(mockAppointment.getCity())
                 .modality(AppointmentModality.PERSONALLY)
                 .date(mockAppointment.getDate())
-                .description("Motivo de cancelamento")
+                .description("Reunião de condomínio")
                 .status(AppointmentStatus.CANCELED)
                 .interpreter(mockInterpreter)
                 .user(mockUser)
@@ -754,53 +767,46 @@ class AppointmentServiceTest {
         String expectedDate = savedAppointment.getDate().toString() + " às "
                 + savedAppointment.getStartTime().toString();
 
-        // Notificar usuário
-        verify(emailService).sendAppointmentCanceledEmail(
-                mockUser.getEmail(), mockUser.getDisplayName(), expectedDate,
-                mockInterpreter.getDisplayName(), savedAppointment.getDescription());
+        verify(emailService, times(2)).sendAppointmentCanceledEmail(any());
 
-        // Notificar intérprete (parameters order swapped in service)
-        verify(emailService).sendAppointmentCanceledEmail(
-                mockInterpreter.getEmail(), mockInterpreter.getDisplayName(), expectedDate,
-                mockUser.getDisplayName(), savedAppointment.getDescription());
+        AppointmentUpdateEmailDTO capturedUserEmail = emailCaptor.getAllValues().get(0);
+        assertEquals(mockUser.getEmail(), capturedUserEmail.getEmail());
+        assertEquals(mockUser.getDisplayName(), capturedUserEmail.getUserName());
+        assertEquals(expectedDate, capturedUserEmail.getAppointmentDate());
+        assertEquals("Intérprete", capturedUserEmail.getSubject());
+        assertEquals(mockInterpreter.getDisplayName(), capturedUserEmail.getSubjectName());
+        assertEquals("Reunião de condomínio", capturedUserEmail.getAppointmentDescription());
+
+        AppointmentUpdateEmailDTO capturedInterpreterEmail = emailCaptor.getAllValues().get(1);
+        assertEquals(mockInterpreter.getEmail(), capturedInterpreterEmail.getEmail());
+        assertEquals(mockInterpreter.getDisplayName(), capturedInterpreterEmail.getUserName());
+        assertEquals(expectedDate, capturedInterpreterEmail.getAppointmentDate());
+        assertEquals("Solicitante", capturedInterpreterEmail.getSubject());
+        assertEquals(mockUser.getDisplayName(), capturedInterpreterEmail.getSubjectName());
+        assertEquals("Reunião de condomínio", capturedInterpreterEmail.getAppointmentDescription());
     }
 
     @Test
-    @DisplayName("Deve enviar email de negação quando status voltar para PENDING vindo de ACCEPTED")
-    void shouldSendDeniedEmailWhenBackToPendingFromAccepted() {
-        // Appointment atualmente ACCEPTED
-        Appointment acceptedAppointment = Appointment.builder()
-                .id(appointmentId)
-                .uf("SP")
-                .city("São Paulo")
-                .modality(AppointmentModality.ONLINE)
-                .date(LocalDate.now().plusDays(1))
-                .description("Descricao")
-                .status(AppointmentStatus.ACCEPTED)
-                .interpreter(mockInterpreter)
-                .user(mockUser)
-                .startTime(LocalTime.of(14, 0))
-                .endTime(LocalTime.of(15, 0))
-                .build();
-
+    @DisplayName("Deve enviar email de negação quando status for de PENDING para CANCELED")
+    void shouldSendDeniedEmailWhenInterpreterHasCanceledAppointment() {
         AppointmentPatchRequestDTO patchDTO = AppointmentPatchRequestDTO.builder()
-                .status(AppointmentStatus.PENDING)
+                .status(AppointmentStatus.CANCELED)
                 .build();
 
-        when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(acceptedAppointment));
+        when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(mockAppointment));
 
         Appointment savedAppointment = Appointment.builder()
                 .id(appointmentId)
-                .uf(acceptedAppointment.getUf())
-                .city(acceptedAppointment.getCity())
-                .modality(acceptedAppointment.getModality())
-                .date(acceptedAppointment.getDate())
-                .description(acceptedAppointment.getDescription())
-                .status(AppointmentStatus.PENDING)
+                .uf(mockAppointment.getUf())
+                .city(mockAppointment.getCity())
+                .modality(mockAppointment.getModality())
+                .date(mockAppointment.getDate())
+                .description(mockAppointment.getDescription())
+                .status(AppointmentStatus.CANCELED)
                 .interpreter(mockInterpreter)
                 .user(mockUser)
-                .startTime(acceptedAppointment.getStartTime())
-                .endTime(acceptedAppointment.getEndTime())
+                .startTime(mockAppointment.getStartTime())
+                .endTime(mockAppointment.getEndTime())
                 .build();
 
         when(appointmentRepository.save(any(Appointment.class))).thenReturn(savedAppointment);
@@ -809,8 +815,14 @@ class AppointmentServiceTest {
 
         String expectedDate = savedAppointment.getDate().toString() + " às "
                 + savedAppointment.getStartTime().toString();
-        verify(emailService).sendAppointmentDeniedEmail(
-                mockUser.getEmail(), mockUser.getDisplayName(), expectedDate, mockInterpreter.getDisplayName());
+
+        ArgumentCaptor<AppointmentUpdateEmailDTO> emailCaptor = ArgumentCaptor.forClass(AppointmentUpdateEmailDTO.class);
+        verify(emailService).sendAppointmentDeniedEmail(emailCaptor.capture());
+        AppointmentUpdateEmailDTO capturedEmail = emailCaptor.getValue();
+        assertEquals(mockUser.getEmail(), capturedEmail.getEmail());
+        assertEquals(mockUser.getDisplayName(), capturedEmail.getUserName());
+        assertEquals(expectedDate, capturedEmail.getAppointmentDate());
+        assertEquals(mockInterpreter.getDisplayName(), capturedEmail.getSubjectName());
     }
 
 }
