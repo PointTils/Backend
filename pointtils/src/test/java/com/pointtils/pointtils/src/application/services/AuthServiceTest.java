@@ -90,12 +90,30 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("Deve falhar quando usuário estiver bloqueado")
-    void deveFalharQuandoUsuarioBloqueado() {
+    @DisplayName("Deve falhar quando usuário estiver inativo")
+    void deveFalharQuandoUsuarioInativo() {
         Person person = new Person();
         person.setEmail("usuario@exemplo.com");
         person.setPassword("123");
         person.setStatus(UserStatus.INACTIVE);
+
+        when(userRepository.findByEmail("usuario@exemplo.com")).thenReturn(person);
+
+        AuthenticationException ex = assertThrows(
+                AuthenticationException.class,
+                () -> loginService.login("usuario@exemplo.com", "senha123")
+        );
+
+        assertEquals("Usuário inativo", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve falhar quando usuário estiver pendente")
+    void deveFalharQuandoUsuarioPendente() {
+        Person person = new Person();
+        person.setEmail("usuario@exemplo.com");
+        person.setPassword("123");
+        person.setStatus(UserStatus.PENDING);
 
         when(userRepository.findByEmail("usuario@exemplo.com")).thenReturn(person);
 

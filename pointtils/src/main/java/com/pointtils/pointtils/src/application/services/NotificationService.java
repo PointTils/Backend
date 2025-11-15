@@ -38,7 +38,7 @@ public class NotificationService {
     public void scheduleNotificationForUser(UUID userId, NotificationType type, LocalDateTime scheduledTime) {
         if (scheduledTime.isAfter(LocalDateTime.now(ZoneId.of(ZONE_ID)))) {
             Runnable notificationTask = () -> this.sendNotificationToUser(userId, type);
-            notificationTaskScheduler.schedule(notificationTask, scheduledTime.toInstant(ZoneOffset.of(ZONE_ID)));
+            notificationTaskScheduler.schedule(notificationTask, scheduledTime.atZone(ZoneId.of(ZONE_ID)).toInstant());
         } else {
             log.info("Notificacao {} nao foi enviada por estar agendada para um horario anterior ao atual", type.name());
         }

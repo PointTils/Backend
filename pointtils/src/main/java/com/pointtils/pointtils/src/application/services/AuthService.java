@@ -50,7 +50,7 @@ public class AuthService {
             throw new AuthenticationException(USER_NOT_FOUND_MESSAGE);
         }
 
-        if (UserStatus.INACTIVE.equals(user.getStatus())) {
+        if (!UserStatus.ACTIVE.equals(user.getStatus())) {
             throw new AuthenticationException("Usuário inativo");
         }
 
