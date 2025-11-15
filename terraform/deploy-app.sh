@@ -38,10 +38,10 @@ docker pull $GRAFANA_IMAGE
 echo "Criando rede Docker pointtils-network se não existir..."
 docker network create pointtils-network 2>/dev/null || true
 
-# Parar e remover containers existentes
-echo "Parando containers existentes..."
-docker stop pointtils pointtils-db prometheus grafana 2>/dev/null || true
-docker rm pointtils pointtils-db prometheus grafana 2>/dev/null || true
+# Parar e remover containers existentes de forma mais robusta
+echo "Parando e removendo containers existentes..."
+docker stop pointtils pointtils-db prometheus grafana backend-pointtils backend-pointtils-db backend-prometheus backend-grafana 2>/dev/null || true
+docker rm pointtils pointtils-db prometheus grafana backend-pointtils backend-pointtils-db backend-prometheus backend-grafana 2>/dev/null || true
 
 # Remover forçadamente se ainda existirem
 echo "Removendo forçadamente se containers ainda existirem..."
@@ -49,6 +49,18 @@ docker rm -f pointtils 2>/dev/null || true
 docker rm -f pointtils-db 2>/dev/null || true
 docker rm -f prometheus 2>/dev/null || true
 docker rm -f grafana 2>/dev/null || true
+docker rm -f backend-pointtils 2>/dev/null || true
+docker rm -f backend-pointtils-db 2>/dev/null || true
+docker rm -f backend-prometheus 2>/dev/null || true
+docker rm -f backend-grafana 2>/dev/null || true
+
+# Remover containers por filtro para garantir que todos sejam removidos
+echo "Removendo containers por filtro..."
+docker ps -a --filter "name=pointtils" --filter "name=backend" --filter "name=prometheus" --filter "name=grafana" --format "{{.Names}}" | xargs -r docker rm -f 2>/dev/null || true
+
+# Listar containers ativos para debug
+echo "Listando containers ativos após remoção:"
+docker ps -a --filter "name=pointtils" --filter "name=backend" --filter "name=prometheus" --filter "name=grafana"
 
 # Criar volumes se não existirem
 echo "Criando volumes se não existirem..."
