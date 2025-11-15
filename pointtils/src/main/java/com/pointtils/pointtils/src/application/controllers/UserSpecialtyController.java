@@ -1,14 +1,8 @@
 package com.pointtils.pointtils.src.application.controllers;
 
-import com.pointtils.pointtils.src.application.dto.UserSpecialtyDTO;
-import com.pointtils.pointtils.src.application.dto.requests.AddUserSpecialtiesRequestDTO;
-import com.pointtils.pointtils.src.application.dto.responses.UserSpecialtiesResponseDTO;
-import com.pointtils.pointtils.src.application.services.UserSpecialtyService;
-import com.pointtils.pointtils.src.core.domain.entities.UserSpecialty;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -22,8 +16,22 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.UUID;
+import com.pointtils.pointtils.src.application.dto.UserSpecialtyDTO;
+import com.pointtils.pointtils.src.application.dto.requests.AddUserSpecialtiesRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.UserSpecialtiesResponseDTO;
+import com.pointtils.pointtils.src.application.services.UserSpecialtyService;
+import com.pointtils.pointtils.src.core.domain.entities.UserSpecialty;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @SecurityRequirement(name = "bearerAuth")
@@ -35,8 +43,22 @@ public class UserSpecialtyController {
     private final UserSpecialtyService userSpecialtyService;
 
     @GetMapping
-    @Operation(summary = "Busca todas as especialidades de um determinado usuário")
-    public ResponseEntity<UserSpecialtiesResponseDTO> getUserSpecialties(@PathVariable UUID userId) {
+    @Operation(
+            summary = "Busca todas as especialidades de um determinado usuário",
+            description = "Retorna lista de especialidades associadas a um usuário específico"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Especialidades do usuário encontradas com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = UserSpecialtiesResponseDTO.class)))
+            ),
+            @ApiResponse(responseCode = "400", description = "ID do usuário inválido"),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
+            @ApiResponse(responseCode = "404", description = "Usuário não encontrado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+    })
+    public ResponseEntity<UserSpecialtiesResponseDTO> getUserSpecialties(
+            @Parameter(description = "ID do usuário", required = true) @PathVariable UUID userId) {
         List<UserSpecialty> userSpecialties = userSpecialtyService.getUserSpecialties(userId);
 
         List<UserSpecialtyDTO> responseDTOs = userSpecialties.stream()
@@ -53,9 +75,22 @@ public class UserSpecialtyController {
     }
 
     @PostMapping
-    @Operation(summary = "Associa especialidades a um determinado usuário")
+    @Operation(
+            summary = "Associa especialidades a um determinado usuário",
+            description = "Adiciona uma ou mais especialidades a um usuário específico"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Especialidades adicionadas com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = UserSpecialtiesResponseDTO.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos"),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
+            @ApiResponse(responseCode = "404", description = "Usuário ou especialidade não encontrado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+    })
     public ResponseEntity<UserSpecialtiesResponseDTO> addUserSpecialties(
-            @PathVariable UUID userId,
+            @Parameter(description = "ID do usuário", required = true) @PathVariable UUID userId,
             @RequestBody AddUserSpecialtiesRequestDTO request) {
         List<UserSpecialty> addedSpecialties = userSpecialtyService.addUserSpecialties(
                 userId, request.getSpecialtyIds(), request.isReplaceExisting());
@@ -74,9 +109,22 @@ public class UserSpecialtyController {
     }
 
     @PutMapping
-    @Operation(summary = "Substitui especialidades de um determinado usuário")
+    @Operation(
+            summary = "Substitui especialidades de um determinado usuário",
+            description = "Substitui completamente as especialidades de um usuário pelas fornecidas"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Especialidades do usuário atualizadas com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = UserSpecialtiesResponseDTO.class)))
+            ),
+            @ApiResponse(responseCode = "400", description = "Lista de especialidade inválida"),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
+            @ApiResponse(responseCode = "404", description = "Usuário ou especialidades não encontrados"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+    })
     public ResponseEntity<UserSpecialtiesResponseDTO> replaceUserSpecialties(
-            @PathVariable UUID userId,
+            @Parameter(description = "ID do usuário", required = true) @PathVariable UUID userId,
             @RequestBody List<UUID> specialtyIds) {
         List<UserSpecialty> replacedSpecialties = userSpecialtyService.replaceUserSpecialties(userId, specialtyIds);
 
@@ -94,11 +142,24 @@ public class UserSpecialtyController {
     }
 
     @PatchMapping("/{userSpecialtyId}")
-    @Operation(summary = "Atualiza uma especialidade de um determinado usuário")
+    @Operation(
+            summary = "Atualiza uma especialidade de um determinado usuário",
+            description = "Atualiza uma associação específica usuário-especialidade"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Especialidade do usuário atualizada com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = UserSpecialtyDTO.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "IDs inválidos"),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
+            @ApiResponse(responseCode = "404", description = "Usuário, especialidade ou associação"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+    })
     public ResponseEntity<UserSpecialtyDTO> updateUserSpecialty(
-            @PathVariable UUID userId,
-            @PathVariable UUID userSpecialtyId,
-            @RequestParam UUID newSpecialtyId) {
+            @Parameter(description = "ID do usuário", required = true) @PathVariable UUID userId,
+            @Parameter(description = "ID da associação usuário-especialidade", required = true) @PathVariable UUID userSpecialtyId,
+            @Parameter(description = "ID da nova especialidade", required = true) @RequestParam UUID newSpecialtyId) {
         UserSpecialty updatedUserSpecialty = userSpecialtyService.updateUserSpecialty(
                 userSpecialtyId, userId, newSpecialtyId);
 
@@ -108,19 +169,42 @@ public class UserSpecialtyController {
     }
 
     @DeleteMapping("/{specialtyId}")
-    @Operation(summary = "Remove uma especialidade de um determinado usuário")
+    @Operation(
+            summary = "Remove uma especialidade de um determinado usuário",
+            description = "Remove a associação entre um usuário e uma especialidade específica"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Especialidade removida com sucesso"),
+            @ApiResponse(responseCode = "400", description = "IDs inválidos"),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
+            @ApiResponse(responseCode = "404", description = "Usuário, especialidade ou associação não encontrado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+    })
     public ResponseEntity<Void> removeUserSpecialty(
-            @PathVariable UUID userId,
-            @PathVariable UUID specialtyId) {
+            @Parameter(description = "ID do usuário", required = true) @PathVariable UUID userId,
+            @Parameter(description = "ID da especialidade", required = true) @PathVariable UUID specialtyId) {
         userSpecialtyService.removeUserSpecialty(userId, specialtyId);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping
-    @Operation(summary = "Remove especialidades de um determinado usuário")
+    @Operation(
+            summary = "Remove especialidades de um determinado usuário",
+            description = "Remove múltiplas associações entre um usuário e especialidades"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Especialidades removidas com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = UserSpecialtyDTO.class)))
+            ),
+            @ApiResponse(responseCode = "400", description = "Lista de IDs inválida"),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
+            @ApiResponse(responseCode = "404", description = "Usuário ou especialidades não encontrados"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+    })
     public ResponseEntity<UserSpecialtiesResponseDTO> removeUserSpecialties(
-            @PathVariable UUID userId,
-            @RequestParam List<UUID> specialtyIds) {
+            @Parameter(description = "ID do usuário", required = true) @PathVariable UUID userId,
+            @Parameter(description = "Lista de IDs das especialidades", required = true) @RequestParam List<UUID> specialtyIds) {
         userSpecialtyService.removeUserSpecialties(userId, specialtyIds);
 
         UserSpecialtiesResponseDTO response = new UserSpecialtiesResponseDTO(

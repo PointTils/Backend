@@ -1,7 +1,9 @@
 package com.pointtils.pointtils.src.application.services;
 
+import com.pointtils.pointtils.src.application.dto.requests.FindAllInterpreterDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.InterpreterSpecificationFilterDTO;
 import com.pointtils.pointtils.src.application.dto.requests.LocationRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResponseDTO;
@@ -18,7 +20,6 @@ import com.pointtils.pointtils.src.infrastructure.repositories.spec.InterpreterS
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,9 +44,6 @@ public class InterpreterService {
     private final LocationMapper locationMapper;
     private final EmailService emailService;
 
-    @Value("${app.mail.admin:admin@pointtils.com}")
-    private String adminEmail;
-
     public InterpreterResponseDTO registerBasic(InterpreterBasicRequestDTO request) {
         Interpreter interpreter = Interpreter.builder()
                 .email(request.getEmail())
@@ -59,16 +57,14 @@ public class InterpreterService {
                 .birthday(request.getBirthday())
                 .cpf(request.getCpf())
                 .cnpj(Objects.nonNull(request.getProfessionalData()) ? request.getProfessionalData().getCnpj() : null)
+                .videoUrl(Objects.nonNull(request.getProfessionalData()) ? request.getProfessionalData().getVideoUrl() : null)
                 .rating(BigDecimal.ZERO)
                 .imageRights(false)
-                .modality(InterpreterModality.ALL)
+                .modality(InterpreterModality.ONLINE)
                 .description("")
                 .build();
 
         Interpreter savedInterpreter = repository.save(interpreter);
-
-        // Enviar email para o administrador após cadastro
-        sendInterpreterRegistrationEmail(savedInterpreter);
 
         return responseMapper.toResponseDTO(savedInterpreter);
     }
@@ -84,42 +80,45 @@ public class InterpreterService {
         repository.save(interpreter);
     }
 
-    public List<InterpreterListResponseDTO> findAll(String modality,
-                                                    String gender,
-                                                    String city,
-                                                    String uf,
-                                                    String neighborhood,
-                                                    String specialty,
-                                                    String availableDate,
-                                                    String name) {
+    public List<InterpreterListResponseDTO> findAll(FindAllInterpreterDTO dto) {
         InterpreterModality modalityEnum = null;
-        if (modality != null) {
-            modalityEnum = InterpreterModality.valueOf(modality.toUpperCase());
+        if (dto.getModality() != null) {
+            modalityEnum = InterpreterModality.valueOf(dto.getModality().toUpperCase());
         }
 
         Gender genderEnum = null;
-        if (gender != null) {
-            genderEnum = Gender.valueOf(gender.toUpperCase());
+        if (dto.getGender() != null) {
+            genderEnum = Gender.valueOf(dto.getGender().toUpperCase());
         }
 
         LocalDateTime dateTime = null;
-        if (availableDate != null) {
-            dateTime = LocalDateTime.parse(availableDate, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        if (dto.getAvailableDate() != null) {
+            dateTime = LocalDateTime.parse(dto.getAvailableDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
         }
 
         List<UUID> specialtyList = null;
-        if (specialty != null) {
-            specialtyList = Arrays.stream(specialty.split(","))
+        if (dto.getSpecialty() != null) {
+            specialtyList = Arrays.stream(dto.getSpecialty().split(","))
                     .map(UUID::fromString)
                     .toList();
         }
 
-        return repository.findAll(InterpreterSpecification.filter(modalityEnum, uf, city, neighborhood, specialtyList,
-                        genderEnum, dateTime, name))
+        InterpreterSpecificationFilterDTO filterDTO = new InterpreterSpecificationFilterDTO();
+        filterDTO.setModality(modalityEnum);
+        filterDTO.setUf(dto.getUf());
+        filterDTO.setCity(dto.getCity());
+        filterDTO.setNeighborhood(dto.getNeighborhood());
+        filterDTO.setSpecialties(specialtyList);
+        filterDTO.setGender(genderEnum);
+        filterDTO.setAvailableDate(dateTime);
+        filterDTO.setName(dto.getName());
+
+        return repository.findAll(InterpreterSpecification.filter(filterDTO))
                 .stream()
                 .map(responseMapper::toListResponseDTO)
                 .toList();
     }
+
 
     public InterpreterResponseDTO updateComplete(UUID id, InterpreterBasicRequestDTO dto) {
         Interpreter interpreter = findInterpreterById(id);
@@ -144,6 +143,7 @@ public class InterpreterService {
             interpreter.setImageRights(professionalData.getImageRights());
             interpreter.setModality(professionalData.getModality());
             interpreter.setDescription(professionalData.getDescription());
+            interpreter.setVideoUrl(professionalData.getVideoUrl());
         }
 
         if (dto != null) {
@@ -162,6 +162,91 @@ public class InterpreterService {
 
         Interpreter updatedInterpreter = repository.save(interpreter);
         return responseMapper.toResponseDTO(updatedInterpreter);
+    }
+
+    /**
+     * Aprova o cadastro de um intérprete
+     *
+     * @param id ID do intérprete
+     * @return true se o cadastro foi aprovado com sucesso, false caso contrário
+     */
+    public boolean approveInterpreter(UUID id) {
+        try {
+            Interpreter interpreter = findInterpreterById(id);
+            if (interpreter.getStatus() != UserStatus.PENDING) {
+                throw new IllegalArgumentException("Cadastro do intérprete já foi verificado anteriormente.");
+            }
+
+            interpreter.setStatus(UserStatus.ACTIVE);
+            repository.save(interpreter);
+
+            // Enviar email de feedback para o intérprete
+            boolean emailSent = emailService.sendInterpreterFeedbackEmail(
+                    interpreter.getEmail(),
+                    interpreter.getName(),
+                    true // approved
+            );
+
+            if (emailSent) {
+                log.info("Cadastro do intérprete {} aprovado e email enviado com sucesso", interpreter.getName());
+            } else {
+                log.warn("Cadastro do intérprete {} aprovado, mas falha ao enviar email", interpreter.getName());
+            }
+
+            return true;
+
+        } catch (Exception e) {
+            log.error("Erro ao aprovar cadastro do intérprete {}: {}", id, e.getMessage());
+            if (e instanceof IllegalArgumentException) {
+                throw e;
+            }
+            return false;
+        }
+    }
+
+    /**
+     * Recusa o cadastro de um intérprete
+     *
+     * @param id ID do intérprete
+     * @return true se o cadastro foi recusado com sucesso, false caso contrário
+     */
+    public boolean rejectInterpreter(UUID id) {
+        try {
+            Interpreter interpreter = findInterpreterById(id);
+            if (interpreter.getStatus() != UserStatus.PENDING) {
+                throw new IllegalArgumentException("Cadastro do intérprete já foi verificado anteriormente.");
+            }
+
+            interpreter.setStatus(UserStatus.INACTIVE);
+            repository.save(interpreter);
+
+            // Enviar email de feedback para o intérprete
+            boolean emailSent = emailService.sendInterpreterFeedbackEmail(
+                    interpreter.getEmail(),
+                    interpreter.getName(),
+                    false // not approved
+            );
+
+            if (emailSent) {
+                log.info("Cadastro do intérprete {} recusado e email enviado com sucesso", interpreter.getName());
+            } else {
+                log.warn("Cadastro do intérprete {} recusado, mas falha ao enviar email", interpreter.getName());
+            }
+
+            return true;
+
+        } catch (Exception e) {
+            log.error("Erro ao recusar cadastro do intérprete {}: {}", id, e.getMessage());
+            if (e instanceof IllegalArgumentException) {
+                throw e;
+            }
+            return false;
+        }
+    }
+
+    protected Interpreter findInterpreterById(UUID id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Intérprete não encontrado"));
     }
 
     private void updatePersonalPatchRequest(InterpreterPatchRequestDTO requestDto, Interpreter interpreter) {
@@ -198,6 +283,9 @@ public class InterpreterService {
         if (dto.getDescription() != null) {
             interpreter.setDescription(dto.getDescription());
         }
+        if (dto.getVideoUrl() != null) {
+            interpreter.setVideoUrl(dto.getVideoUrl());
+        }
     }
 
     private void updateLocation(List<LocationRequestDTO> locations, Interpreter interpreter) {
@@ -209,123 +297,5 @@ public class InterpreterService {
         locations.stream()
                 .map(locationDTO -> locationMapper.toDomain(locationDTO, interpreter))
                 .forEach(location -> interpreter.getLocations().add(location));
-    }
-
-    private Interpreter findInterpreterById(UUID id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Intérprete não encontrado"));
-    }
-
-    /**
-     * Aprova o cadastro de um intérprete
-     * @param id ID do intérprete
-     * @return true se o cadastro foi aprovado com sucesso, false caso contrário
-     */
-    public boolean approveInterpreter(UUID id) {
-        try {
-            Interpreter interpreter = findInterpreterById(id);
-            if (interpreter.getStatus() != UserStatus.PENDING) {
-                throw new IllegalArgumentException("Cadastro do intérprete já foi verificado anteriormente.");
-            }
-
-            interpreter.setStatus(UserStatus.ACTIVE);
-            repository.save(interpreter);
-
-            // Enviar email de feedback para o intérprete
-            boolean emailSent = emailService.sendInterpreterFeedbackEmail(
-                interpreter.getEmail(),
-                interpreter.getName(),
-                true // approved
-            );
-
-            if (emailSent) {
-                log.info("Cadastro do intérprete {} aprovado e email enviado com sucesso", interpreter.getName());
-            } else {
-                log.warn("Cadastro do intérprete {} aprovado, mas falha ao enviar email", interpreter.getName());
-            }
-
-            return true;
-
-        } catch (Exception e) {
-            log.error("Erro ao aprovar cadastro do intérprete {}: {}", id, e.getMessage());
-            if (e instanceof IllegalArgumentException) {
-                throw e;
-            }
-            return false;
-        }
-    }
-
-    /**
-     * Recusa o cadastro de um intérprete
-     * @param id ID do intérprete
-     * @return true se o cadastro foi recusado com sucesso, false caso contrário
-     */
-    public boolean rejectInterpreter(UUID id) {
-        try {
-            Interpreter interpreter = findInterpreterById(id);
-            if (interpreter.getStatus() != UserStatus.PENDING) {
-                throw new IllegalArgumentException("Cadastro do intérprete já foi verificado anteriormente.");
-            }
-
-            interpreter.setStatus(UserStatus.INACTIVE);
-            repository.save(interpreter);
-
-            // Enviar email de feedback para o intérprete
-            boolean emailSent = emailService.sendInterpreterFeedbackEmail(
-                interpreter.getEmail(),
-                interpreter.getName(),
-                false // not approved
-            );
-
-            if (emailSent) {
-                log.info("Cadastro do intérprete {} recusado e email enviado com sucesso", interpreter.getName());
-            } else {
-                log.warn("Cadastro do intérprete {} recusado, mas falha ao enviar email", interpreter.getName());
-            }
-
-            return true;
-
-        } catch (Exception e) {
-            log.error("Erro ao recusar cadastro do intérprete {}: {}", id, e.getMessage());
-            if (e instanceof IllegalArgumentException) {
-                throw e;
-            }
-            return false;
-        }
-    }
-
-    /**
-     * Envia email para o administrador com os dados de cadastro do intérprete
-     * @param interpreter Intérprete cadastrado
-     */
-    @Value("${app.api.base-url}")
-    private String apiBaseUrl;
-
-    private void sendInterpreterRegistrationEmail(Interpreter interpreter) {
-        try {
-            String acceptLink = String.format("%s/v1/email/interpreter/%s/approve", apiBaseUrl, interpreter.getId());
-            String rejectLink = String.format("%s/v1/email/interpreter/%s/reject", apiBaseUrl, interpreter.getId());
-
-            // Enviar email usando o template do banco de dados
-            boolean emailSent = emailService.sendInterpreterRegistrationRequestEmail(
-                adminEmail,
-                interpreter.getName(),
-                interpreter.getCpf(),
-                interpreter.getCnpj(),
-                interpreter.getEmail(),
-                interpreter.getPhone(),
-                acceptLink,
-                rejectLink
-            );
-
-            if (emailSent) {
-                log.info("Email de solicitação de cadastro enviado com sucesso para: {}", adminEmail);
-            } else {
-                log.error("Falha ao enviar email de solicitação de cadastro para: {}", adminEmail);
-            }
-
-        } catch (Exception e) {
-            log.error("Erro ao enviar email de solicitação de cadastro: {}", e.getMessage());
-        }
     }
 }

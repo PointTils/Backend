@@ -10,9 +10,14 @@ ROLLBACK_TAG="${3:-previous}"  # Tag da imagem anterior para rollback
 
 APP_IMAGE="$ECR_REGISTRY/pointtils-dev:$ROLLBACK_TAG"
 DB_IMAGE="$ECR_REGISTRY/pointtils-dev-db:$ROLLBACK_TAG"
+PROMETHEUS_IMAGE="$ECR_REGISTRY/pointtils-dev-prometheus:$ROLLBACK_TAG"
+GRAFANA_IMAGE="$ECR_REGISTRY/pointtils-dev-grafana:$ROLLBACK_TAG"
 
 echo "ECR Registry: $ECR_REGISTRY"
 echo "Rollback App Image: $APP_IMAGE"
+echo "Rollback DB Image: $DB_IMAGE"
+echo "Rollback Prometheus Image: $PROMETHEUS_IMAGE"
+echo "Rollback Grafana Image: $GRAFANA_IMAGE"
 echo "AWS Region: $AWS_REGION"
 echo "Rollback Tag: $ROLLBACK_TAG"
 echo "Environment: DEVELOPMENT"
@@ -42,19 +47,39 @@ if ! docker pull $DB_IMAGE 2>/dev/null; then
     docker pull $DB_IMAGE
 fi
 
+# Verificar imagens de monitoramento (opcional - não falhar se não existirem)
+echo "Verificando imagens de monitoramento de DESENVOLVIMENTO..."
+if docker pull $PROMETHEUS_IMAGE 2>/dev/null; then
+    echo "✅ Imagem de rollback do Prometheus encontrada: $PROMETHEUS_IMAGE"
+else
+    echo "⚠️  Imagem de rollback do Prometheus não encontrada, usando 'dev-latest'..."
+    PROMETHEUS_IMAGE="$ECR_REGISTRY/pointtils-dev-prometheus:dev-latest"
+    docker pull $PROMETHEUS_IMAGE || echo "⚠️  Não foi possível puxar imagem do Prometheus, continuando sem rollback de monitoramento"
+fi
+
+if docker pull $GRAFANA_IMAGE 2>/dev/null; then
+    echo "✅ Imagem de rollback do Grafana encontrada: $GRAFANA_IMAGE"
+else
+    echo "⚠️  Imagem de rollback do Grafana não encontrada, usando 'dev-latest'..."
+    GRAFANA_IMAGE="$ECR_REGISTRY/pointtils-dev-grafana:dev-latest"
+    docker pull $GRAFANA_IMAGE || echo "⚠️  Não foi possível puxar imagem do Grafana, continuando sem rollback de monitoramento"
+fi
+
 # Parar e remover containers existentes de DESENVOLVIMENTO
 echo "Parando containers de DESENVOLVIMENTO existentes..."
-docker stop pointtils-dev pointtils-db-dev 2>/dev/null || true
-docker rm pointtils-dev pointtils-db-dev 2>/dev/null || true
+docker stop pointtils-dev pointtils-db-dev prometheus grafana 2>/dev/null || true
+docker rm pointtils-dev pointtils-db-dev prometheus grafana 2>/dev/null || true
 
 # Remover forçadamente se ainda existirem
 echo "Removendo forçadamente se containers ainda existirem..."
 docker rm -f pointtils-dev 2>/dev/null || true
 docker rm -f pointtils-db-dev 2>/dev/null || true
+docker rm -f prometheus 2>/dev/null || true
+docker rm -f grafana 2>/dev/null || true
 
 # Verificar e liberar portas em conflito
 echo "Verificando e liberando portas em conflito..."
-PORTS_TO_CHECK="5432 8080"
+PORTS_TO_CHECK="5432 8080 9090 3000"
 for PORT in $PORTS_TO_CHECK; do
   CONTAINER_USING_PORT=$(docker ps -q --filter "publish=$PORT")
   if [ -n "$CONTAINER_USING_PORT" ]; then
@@ -126,6 +151,36 @@ for i in {1..10}; do
   sleep 10
 done
 
+# Reiniciar containers de monitoramento se as imagens foram encontradas
+echo "Reiniciando containers de monitoramento de DESENVOLVIMENTO..."
+if docker images | grep -q "pointtils-dev-prometheus"; then
+    echo "Iniciando container do Prometheus (rollback)..."
+    docker run -d \
+      --name prometheus \
+      --network pointtils-dev-network \
+      -p 9090:9090 \
+      -v prometheus_data:/prometheus \
+      --restart unless-stopped \
+      $PROMETHEUS_IMAGE
+fi
+
+if docker images | grep -q "pointtils-dev-grafana"; then
+    echo "Iniciando container do Grafana (rollback)..."
+    docker run -d \
+      --name grafana \
+      --network pointtils-dev-network \
+      -p 3000:3000 \
+      -v grafana_data:/var/lib/grafana \
+      --restart unless-stopped \
+      -e GF_SECURITY_ADMIN_USER=admin \
+      -e GF_SECURITY_ADMIN_PASSWORD=admin123456 \
+      $GRAFANA_IMAGE
+fi
+
+# Aguardar serviços de monitoramento iniciarem
+echo "Aguardando serviços de monitoramento de DESENVOLVIMENTO iniciarem..."
+sleep 20
+
 # Verificar status final dos containers
 echo "Verificando status final dos containers de DESENVOLVIMENTO:"
 docker ps
@@ -134,3 +189,5 @@ echo "=== Rollback de DESENVOLVIMENTO concluído! ==="
 echo "Aplicação de DESENVOLVIMENTO disponível em: http://localhost:8080"
 echo "Swagger UI: http://localhost:8080/swagger-ui.html"
 echo "Actuator Health: http://localhost:8080/actuator/health"
+echo "Prometheus disponível em: http://localhost:9090"
+echo "Grafana disponível em: http://localhost:3000 (admin/admin123456)"

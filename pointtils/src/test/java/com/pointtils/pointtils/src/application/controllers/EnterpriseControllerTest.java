@@ -5,6 +5,7 @@ import com.pointtils.pointtils.src.application.dto.requests.EnterprisePatchReque
 import com.pointtils.pointtils.src.application.dto.requests.EnterpriseRequestDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Enterprise;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
+import com.pointtils.pointtils.src.infrastructure.configs.FirebaseConfig;
 import com.pointtils.pointtils.src.infrastructure.configs.JwtService;
 import com.pointtils.pointtils.src.infrastructure.repositories.EnterpriseRepository;
 import io.awspring.cloud.autoconfigure.s3.S3AutoConfiguration;
@@ -55,6 +56,9 @@ class EnterpriseControllerTest {
 
     @MockitoBean
     private S3Client s3Client;
+
+    @MockitoBean
+    private FirebaseConfig firebaseConfig;
 
     @Autowired
     private WebApplicationContext webApplicationContext;

@@ -70,6 +70,7 @@ public class InterpreterResponseMapper {
                 .modality(interpreter.getModality())
                 .description(interpreter.getDescription())
                 .imageRights(interpreter.getImageRights())
+                .videoUrl(interpreter.getVideoUrl())
                 .build();
     }
 

@@ -2,14 +2,21 @@ package com.pointtils.pointtils.src.application.services;
 
 import java.io.IOException;
 import java.time.Instant;
-
+import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
+import software.amazon.awssdk.core.ResponseBytes;
+import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
+@Slf4j
 @Service
 public class S3Service {
 
@@ -26,10 +33,7 @@ public class S3Service {
     }
 
     public String uploadFile(MultipartFile file, String userId) throws IOException {
-        // Se S3 está desabilitado, retorna null ou lança exceção
-        if (!s3Enabled || s3Client == null) {
-            throw new UnsupportedOperationException("Upload de arquivos para S3 está desabilitado. Configure spring.cloud.aws.s3.enabled=true para habilitar.");
-        }
+        checkIfS3IsEnabled("Upload");
 
         String key = "users/" + userId + "/" + Instant.now().toEpochMilli() + "-" + file.getOriginalFilename();
 
@@ -44,10 +48,61 @@ public class S3Service {
         return String.format("https://%s.s3.amazonaws.com/%s", bucketName, key);
     }
 
+    public void deleteFile(String documentUrl) {
+        checkIfS3IsEnabled("Delete");
+
+        String fileKey = documentUrl.replace(String.format("https://%s.s3.amazonaws.com/", bucketName), Strings.EMPTY);
+
+        DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+                .bucket(bucketName)
+                .key(fileKey)
+                .build();
+        var response = s3Client.deleteObject(deleteObjectRequest);
+        if (!response.sdkHttpResponse().isSuccessful()) {
+            log.error("Erro ao deletar arquivo {}: statusCode={}, statusText={}", documentUrl,
+                    response.sdkHttpResponse().statusCode(),
+                    response.sdkHttpResponse().statusText().orElse("N/A"));
+        }
+    }
+
+    /**
+     * Baixa um arquivo do S3 pelo key (o mesmo key retornado em uploadFile).
+     * Retorna os bytes do objeto ou lança IOException em caso de falha.
+     */
+    public byte[] getFile(String key) throws IOException {
+        checkIfS3IsEnabled("Download");
+
+        try {
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(key)
+                    .build();
+
+            ResponseBytes<GetObjectResponse> objectBytes = s3Client
+                    .getObject(getObjectRequest, ResponseTransformer.toBytes());
+
+            return objectBytes.asByteArray();
+        } catch (S3Exception e) {
+            throw new IOException("Erro ao obter arquivo do S3: " + e.awsErrorDetails().errorMessage(), e);
+        } catch (Exception e) {
+            throw new IOException("Falha inesperada ao baixar arquivo do S3", e);
+        }
+    }
+
+    /**
+     * Lanca excecao se o serviço S3 não está habilitado
+     */
+    private void checkIfS3IsEnabled(String operation) {
+        if (!isS3Enabled()) {
+            log.error("{} de arquivos está desabilitado. Configure spring.cloud.aws.s3.enabled=true para habilitar a conexao com o S3.", operation);
+            throw new UnsupportedOperationException(operation + " de arquivos está desabilitado.");
+        }
+    }
+
     /**
      * Verifica se o serviço S3 está habilitado
      */
-    public boolean isS3Enabled() {
+    private boolean isS3Enabled() {
         return s3Enabled && s3Client != null;
     }
 }

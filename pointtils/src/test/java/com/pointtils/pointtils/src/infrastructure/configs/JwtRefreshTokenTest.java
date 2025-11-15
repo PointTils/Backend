@@ -9,8 +9,8 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import software.amazon.awssdk.services.s3.S3Client;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @EnableAutoConfiguration(exclude = S3AutoConfiguration.class)
@@ -20,6 +20,9 @@ class JwtRefreshTokenTest {
     @MockitoBean
     private S3Client s3Client;
 
+    @MockitoBean
+    private FirebaseConfig firebaseConfig;
+
     @Autowired
     private JwtService jwtService;
 
@@ -27,27 +30,27 @@ class JwtRefreshTokenTest {
     void testGenerateAccessToken() {
         String token = jwtService.generateToken("testuser");
         assertNotNull(token);
-        assertTrue(!token.isEmpty());
+        assertFalse(token.isEmpty());
     }
 
     @Test
     void testGenerateRefreshToken() {
         String refreshToken = jwtService.generateRefreshToken("testuser");
         assertNotNull(refreshToken);
-        assertTrue(!refreshToken.isEmpty());
+        assertFalse(refreshToken.isEmpty());
     }
 
     @Test
     void testTokenNotExpired() {
         String token = jwtService.generateToken("testuser");
         boolean isExpired = jwtService.isTokenExpired(token);
-        assertTrue(!isExpired);
+        assertFalse(isExpired);
     }
 
     @Test
     void testRefreshTokenNotExpired() {
         String refreshToken = jwtService.generateRefreshToken("testuser");
         boolean isExpired = jwtService.isTokenExpired(refreshToken);
-        assertTrue(!isExpired);
+        assertFalse(isExpired);
     }
 }

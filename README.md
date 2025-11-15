@@ -16,6 +16,9 @@ Backend desenvolvido em Java Spring Boot 3.5.4 para uma plataforma de agendament
 - **Maven** - Gerenciamento de dependências
 - **SonarQube** - Análise de qualidade de código
 - **Jacoco** - Cobertura de testes (mínimo 70%)
+- **Prometheus** - Monitoramento e métricas
+- **Grafana** - Visualização de métricas
+- **Terraform** - Infraestrutura como código
 
 ## Arquitetura
 ```
@@ -27,6 +30,7 @@ Backend desenvolvido em Java Spring Boot 3.5.4 para uma plataforma de agendament
 │ - Spring Data JPA + PostgreSQL                  │
 │ - Flyway Migrations                             │
 │ - AWS S3 Integration                            │
+│ - Prometheus Metrics                            │
 └─────────────────────────────────────────────────┘
                       │
                       ▼
@@ -43,6 +47,9 @@ Backend desenvolvido em Java Spring Boot 3.5.4 para uma plataforma de agendament
 │ - RatingController (Avaliações)                 │
 │ - ScheduleController (Horários)                 │
 │ - StateController (Estados)                     │
+│ - UserAppController (Usuários do app)           │
+│ - UserPictureController (Fotos de usuário)      │
+│ - UserSpecialtyController (Especialidades)      │
 └─────────────────────────────────────────────────┘
                       │
                       ▼
@@ -60,6 +67,8 @@ Backend desenvolvido em Java Spring Boot 3.5.4 para uma plataforma de agendament
 │ - RatingService (Avaliações)                    │
 │ - ScheduleService (Horários)                    │
 │ - StateService (Estados)                        │
+│ - NotificationService (Notificações)            │
+│ - MemoryResetTokenService (Tokens)              │
 └─────────────────────────────────────────────────┘
                       │
                       ▼
@@ -112,13 +121,24 @@ Backend desenvolvido em Java Spring Boot 3.5.4 para uma plataforma de agendament
 │   │   ├── resources/                # Arquivos de configuração
 │   │   │   ├── application.properties    # Configurações gerais
 │   │   │   ├── application-prod.properties # Configurações produção
-│   │   │   └── db/migration/         # Migrações Flyway (V1-V14)
+│   │   │   └── db/migration/         # Migrações Flyway (V1-V23)
 │   └── test/                         # Testes unitários
 ├── utils/                            # Utilitários e serviços auxiliares
 │   ├── sonarqube/                    # Configuração SonarQube
 │   │   └── Dockerfile
-│   └── postgres/                     # Configuração PostgreSQL
-│       └── Dockerfile
+│   ├── postgres/                     # Configuração PostgreSQL
+│   │   └── Dockerfile
+│   ├── prometheus/                   # Monitoramento Prometheus
+│   │   ├── Dockerfile
+│   │   ├── prometheus.yml            # Configuração Prometheus
+│   │   ├── alerts.yml                # Alertas
+│   │   └── recording_rules.yml       # Regras de gravação
+│   └── grafana/                      # Dashboard Grafana
+│       ├── Dockerfile
+│       ├── grafana.ini               # Configuração Grafana
+│       └── provisioning/             # Provisionamento automático
+│           ├── datasources/prometheus.yml
+│           └── dashboards/           # Dashboards pré-configurados
 ├── docker-compose.yaml               # Orquestração unificada de containers
 ├── docker-compose.prod.yaml          # Configuração para produção
 ├── docker-compose-dev.yaml           # Configuração para desenvolvimento
@@ -132,6 +152,9 @@ Backend desenvolvido em Java Spring Boot 3.5.4 para uma plataforma de agendament
 │   ├── variables.tf
 │   ├── backend.tf
 │   └── terraform.tfvars
+├── scripts/                          # Scripts utilitários
+│   ├── check_deadlines.py            # Verificação de prazos
+│   └── README.md
 ├── .github/workflows/                # Pipelines CI/CD
 │   ├── deploy-to-aws.yml             # Pipeline de produção
 │   ├── deploy-to-dev.yml             # Pipeline de desenvolvimento
@@ -175,7 +198,7 @@ cp .env.example .env
 
 ### Execução com Docker (Recomendado)
 
-**Executar todos os serviços (aplicação + banco + SonarQube):**
+**Executar todos os serviços (aplicação + banco + monitoramento + SonarQube):**
 ```bash
 docker-compose up --build
 ```
@@ -188,7 +211,8 @@ docker-compose up -d --build
 **Executar apenas serviços específicos:**
 ```bash
 docker-compose up pointtils pointtils-db  # Apenas app + banco
-docker-compose up sonarqube               # Apenas SonarQube
+docker-compose up prometheus grafana     # Apenas monitoramento
+docker-compose up sonarqube              # Apenas SonarQube
 ```
 
 **Comandos Docker úteis:**
@@ -204,6 +228,8 @@ docker-compose down -v
 
 # Ver logs de um serviço específico
 docker-compose logs pointtils
+docker-compose logs prometheus
+docker-compose logs grafana
 docker-compose logs sonarqube
 
 # Rebuildar e executar
@@ -271,6 +297,10 @@ BREVO_SMTP_USERNAME=seu-username
 BREVO_SMTP_PASSWORD=sua-senha
 BREVO_SENDER_EMAIL=seu-email
 BREVO_SENDER_NAME=PointTils
+
+# Monitoramento
+PROMETHEUS_PORT=9090
+GRAFANA_PORT=3000
 ```
 
 ## 🏗️ CI/CD e Deploy
@@ -314,6 +344,39 @@ BREVO_SENDER_NAME=PointTils
 - `terraform/rollback-app.sh` - Script de rollback automático
 - `terraform-dev/deploy-dev-app.sh` - Deploy para desenvolvimento
 
+## 📊 Monitoramento
+
+### Prometheus
+Para coleta de métricas da aplicação:
+```bash
+docker-compose up prometheus
+```
+Acesse: `http://localhost:9090`
+
+### Grafana
+Para visualização de dashboards:
+```bash
+docker-compose up grafana
+```
+Acesse: `http://localhost:3000`
+- Usuário: `admin`
+- Senha: `admin123456` (dev) / `admin` (prod)
+
+### SonarQube
+Para análise de qualidade de código:
+```bash
+docker-compose up sonarqube
+```
+Acesse: `http://localhost:9000`
+
+### Health Checks
+A aplicação expõe endpoints de health check:
+```
+GET /actuator/health
+GET /actuator/metrics
+GET /actuator/prometheus
+```
+
 ## 📚 Documentação da API
 
 ### Swagger UI
@@ -344,6 +407,30 @@ http://localhost:8080/swagger-ui/index.html
 - `POST /interpreters` - Criar intérprete
 - `GET /interpreters/{id}` - Buscar intérprete por ID
 
+## 🗄️ Migrações de Banco (Flyway)
+
+O projeto utiliza Flyway para gerenciar migrações de banco de dados. As migrações estão em `pointtils/src/main/resources/db/migration/`:
+
+- `V1__Create_initial_schema.sql` - Schema inicial
+- `V2__Insert_seed_data.sql` - Dados iniciais
+- `V3-V4__Update_user_type_and_data.sql` - Atualizações de usuário
+- `V5__Update_specialty_names.sql` - Nomes de especialidades
+- `V6__Update_address_data.sql` - Dados de endereço
+- `V7__Insert_seed_specialties_and_update_schedule_enum.sql` - Especialidades e horários
+- `V8__Add_test_appointments.sql` - Agendamentos de teste
+- `V9__Remove_min_max_value_from_interpreter.sql` - Remoção de valores min/max
+- `V10__Add_unique_constraint_to_parameters.sql` - Constraint única
+- `V11-V13__Insert_email_templates.sql` - Templates de email
+- `V14__Update_appointment_date.sql` - Atualização de datas
+- `V15__Add_create_at_and_modified_at_all_collums.sql` - Timestamps
+- `V16__Insert_parameters_faq.sql` - FAQ do sistema
+- `V17__Insert_additional_data.sql` - Dados adicionais
+- `V18__Add_video_url_to_interpreter.sql` - URL de vídeo para intérpretes
+- `V19__Update_password_reset_template.sql` - Template de reset de senha
+- `V20__Update_client_users_to_person.sql` - Atualização de usuários
+- `V21__Create_user_app_table.sql` - Tabela de usuários do app
+- `V22-V23__Update_email_templates_logo.sql` - Templates de email com logo
+
 ## 🧪 Testes
 
 ### Executar Testes
@@ -367,39 +454,21 @@ O projeto utiliza Jacoco para cobertura de testes com os seguintes requisitos m�
 
 ## 🔧 Configurações Avançadas
 
-### Migrações de Banco (Flyway)
-O projeto utiliza Flyway para gerenciar migrações de banco de dados. As migrações estão em `pointtils/src/main/resources/db/migration/`:
-
-- `V1__Create_initial_schema.sql` - Schema inicial
-- `V2__Insert_seed_data.sql` - Dados iniciais
-- `V3__Update_user_type_and_data.sql` - Atualizações de usuário
-- ... até `V14__Update_appointment_date.sql`
-
 ### Configurações de Produção
 As configurações específicas para produção estão em:
 - `pointtils/src/main/resources/application-prod.properties`
 - `docker-compose.prod.yaml`
 
-### Health Checks
-A aplicação expõe endpoints de health check:
-```
-GET /actuator/health
-```
+### Templates de Email
+O sistema utiliza templates de email configurados na tabela `parameters`:
+- `WELCOME_EMAIL` - Email de boas-vindas
+- `PASSWORD_RESET` - Redefinição de senha
+- `APPOINTMENT_CONFIRMATION` - Confirmação de agendamento
+- `PENDING_INTERPRETER` - Intérprete pendente
+- `PENDING_INTERPRETER_ADMIN` - Notificação para admin
+- `ADMIN_FEEDBACK` - Feedback para admin
 
-## 📊 Monitoramento
-
-### SonarQube
-Para análise de qualidade de código:
-```bash
-docker-compose up sonarqube
-```
-Acesse: `http://localhost:9000`
-
-### Logs
-Os logs da aplicação podem ser visualizados via:
-```bash
-docker-compose logs pointtils
-```
+Todos os templates utilizam o logo da aplicação em: `https://pointtils-api-tests-d9396dcc.s3.us-east-2.amazonaws.com/logo_pointils.png`
 
 ## 🤝 Contribuição
 
@@ -433,3 +502,4 @@ Para dúvidas ou problemas:
 ---
 
 **PointTils Backend** - Plataforma de agendamento de intérpretes de libras
+# Trigger deployment - Tue Nov  4 01:51:17 UTC 2025

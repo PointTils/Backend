@@ -26,6 +26,15 @@ services:
         AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
         AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
         AWS_REGION: ${AWS_REGION}
+        BREVO_SMTP_PASSWORD: ${BREVO_SMTP_PASSWORD}
+        BREVO_SMTP_HOST: ${BREVO_SMTP_HOST}
+        BREVO_SMTP_PORT: ${BREVO_SMTP_PORT}
+        BREVO_SMTP_USERNAME: ${BREVO_SMTP_USERNAME}
+        BREVO_SENDER_EMAIL: ${BREVO_SENDER_EMAIL}
+        BREVO_SENDER_NAME: ${BREVO_SENDER_NAME}
+        ADMIN_EMAIL: ${ADMIN_EMAIL}
+        FIREBASE_SERVICE_ACCOUNT: ${FIREBASE_SERVICE_ACCOUNT}
+        API_BASE_URL: ${API_BASE_URL}
     image: ${APP_IMAGE:-backend-pointtils-dev}
     container_name: pointtils-dev
     environment:
@@ -51,6 +60,15 @@ services:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_REGION=${AWS_REGION}
+      - BREVO_SMTP_PASSWORD=${BREVO_SMTP_PASSWORD}
+      - BREVO_SMTP_HOST=${BREVO_SMTP_HOST}
+      - BREVO_SMTP_PORT=${BREVO_SMTP_PORT}
+      - BREVO_SMTP_USERNAME=${BREVO_SMTP_USERNAME}
+      - BREVO_SENDER_EMAIL=${BREVO_SENDER_EMAIL}
+      - BREVO_SENDER_NAME=${BREVO_SENDER_NAME}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - FIREBASE_SERVICE_ACCOUNT=${FIREBASE_SERVICE_ACCOUNT}
+      - API_BASE_URL=${API_BASE_URL}
     ports:
       - "8080:8080"
     depends_on:
@@ -58,6 +76,39 @@ services:
         condition: service_healthy
     networks:
       - pointtils-dev-network
+    restart: unless-stopped
+
+  # Prometheus para monitoramento em desenvolvimento
+  prometheus-dev:
+    build:
+      context: ./utils/prometheus
+      dockerfile: Dockerfile
+    container_name: prometheus-dev
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus_dev_data:/prometheus
+    networks:
+      - pointtils-dev-network
+    restart: unless-stopped
+
+  # Grafana para visualização de métricas em desenvolvimento
+  grafana-dev:
+    build:
+      context: ./utils/grafana
+      dockerfile: Dockerfile
+    container_name: grafana-dev
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_dev_data:/var/lib/grafana
+    networks:
+      - pointtils-dev-network
+    depends_on:
+      - prometheus-dev
     restart: unless-stopped
 
   # Banco de dados PostgreSQL
@@ -84,9 +135,10 @@ services:
       start_period: 40s
     restart: unless-stopped
 
-
 volumes:
   postgres_dev_data:
+  prometheus_dev_data:
+  grafana_dev_data:
 
 networks:
   pointtils-dev-network:

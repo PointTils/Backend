@@ -1,31 +1,5 @@
 package com.pointtils.pointtils.src.application.controllers;
 
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.UUID;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pointtils.pointtils.src.application.dto.requests.RatingPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.RatingRequestDTO;
@@ -33,9 +7,35 @@ import com.pointtils.pointtils.src.application.dto.responses.RatingResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.RatingUserResponseDTO;
 import com.pointtils.pointtils.src.application.services.RatingService;
 import com.pointtils.pointtils.src.core.domain.exceptions.RatingException;
-
+import com.pointtils.pointtils.src.infrastructure.configs.FirebaseConfig;
 import io.awspring.cloud.autoconfigure.s3.S3AutoConfiguration;
 import jakarta.persistence.EntityNotFoundException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
@@ -46,9 +46,11 @@ class RatingControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @SuppressWarnings("removal")
-    @MockBean
+    @MockitoBean
     private RatingService ratingService;
+
+    @MockitoBean
+    private FirebaseConfig firebaseConfig;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -85,7 +87,7 @@ class RatingControllerTest {
         ratingRequestDTO = RatingRequestDTO.builder()
                 .stars(BigDecimal.valueOf(4))
                 .description("Ótimo intérprete!")
-                .userId(userId)
+                .appointmentId(appointmentId)
                 .build();
 
         ratingPatchRequestDTO = RatingPatchRequestDTO.builder()
@@ -97,37 +99,37 @@ class RatingControllerTest {
     @Test
     @DisplayName("Deve criar uma nova avaliação com sucesso")
     void shouldCreateRating() throws Exception {
-        when(ratingService.createRating(any(RatingRequestDTO.class), eq(appointmentId)))
+        when(ratingService.createRating(any(RatingRequestDTO.class)))
                 .thenReturn(ratingResponseDTO);
 
-        mockMvc.perform(post("/v1/ratings/{appointmentId}", appointmentId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(ratingRequestDTO)))
+        mockMvc.perform(post("/v1/ratings", appointmentId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(ratingRequestDTO)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Avaliação adicionada com sucesso"))
                 .andExpect(jsonPath("$.data.stars").value(4))
                 .andExpect(jsonPath("$.data.description").value("Ótimo intérprete!"));
 
-        verify(ratingService).createRating(any(RatingRequestDTO.class), eq(appointmentId));
+        verify(ratingService).createRating(any(RatingRequestDTO.class));
     }
 
     @Test
     @DisplayName("Deve retornar todas as avaliações de um intérprete")
     void shouldGetAllRatingsByInterpreterId() throws Exception {
-        when(ratingService.getRatingsByInterpreterId(eq(userId)))
+        when(ratingService.getRatingsByInterpreterId(userId))
                 .thenReturn(List.of(ratingResponseDTO));
 
         mockMvc.perform(get("/v1/ratings")
-                .param("interpreterId", userId.toString())
-                .contentType(MediaType.APPLICATION_JSON))
+                        .param("interpreterId", userId.toString())
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Avaliações obtidas com sucesso"))
                 .andExpect(jsonPath("$.data[0].id").value(ratingId.toString()))
                 .andExpect(jsonPath("$.data[0].stars").value(4));
 
-        verify(ratingService).getRatingsByInterpreterId(eq(userId));
+        verify(ratingService).getRatingsByInterpreterId(userId);
     }
 
     @Test
@@ -137,8 +139,8 @@ class RatingControllerTest {
                 .thenReturn(ratingResponseDTO);
 
         mockMvc.perform(patch("/v1/ratings/{id}", ratingId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(ratingPatchRequestDTO)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(ratingPatchRequestDTO)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Avaliação atualizada com sucesso"))
@@ -152,35 +154,35 @@ class RatingControllerTest {
     @DisplayName("Deve deletar uma avaliação existente")
     void shouldDeleteRating() throws Exception {
         mockMvc.perform(delete("/v1/ratings/{id}", ratingId)
-                .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
 
-        verify(ratingService).deleteRating(eq(ratingId));
+        verify(ratingService).deleteRating(ratingId);
     }
 
     @Test
     @DisplayName("Deve retornar 404 quando agendamento ou usuário não for encontrado")
     void shouldReturnNotFoundWhenAppointmentOrUserNotFound() throws Exception {
-        when(ratingService.createRating(any(RatingRequestDTO.class), eq(appointmentId)))
-                .thenThrow(new EntityNotFoundException("Agendamento ou usuário não encontrado"));
+        when(ratingService.createRating(any(RatingRequestDTO.class)))
+                .thenThrow(new EntityNotFoundException("Agendamento não encontrado"));
 
-        mockMvc.perform(post("/v1/ratings/{appointmentId}", appointmentId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(ratingRequestDTO)))
+        mockMvc.perform(post("/v1/ratings", appointmentId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(ratingRequestDTO)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.message").value("Agendamento ou usuário não encontrado"));
+                .andExpect(jsonPath("$.message").value("Agendamento não encontrado"));
     }
 
     @Test
     @DisplayName("Deve retornar 404 quando o intérprete não for encontrado")
     void shouldReturnNotFoundWhenInterpreterNotFound() throws Exception {
-        when(ratingService.getRatingsByInterpreterId(eq(userId)))
+        when(ratingService.getRatingsByInterpreterId(userId))
                 .thenThrow(new EntityNotFoundException("Intérprete não encontrado"));
 
         mockMvc.perform(get("/v1/ratings")
-                .param("interpreterId", userId.toString())
-                .contentType(MediaType.APPLICATION_JSON))
+                        .param("interpreterId", userId.toString())
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.message").value("Intérprete não encontrado"));
@@ -189,12 +191,12 @@ class RatingControllerTest {
     @Test
     @DisplayName("Deve retornar 400 quando parâmetros de entrada forem inválidos")
     void shouldReturnBadRequestWhenInvalidParameters() throws Exception {
-        when(ratingService.createRating(any(RatingRequestDTO.class), eq(appointmentId)))
+        when(ratingService.createRating(any(RatingRequestDTO.class)))
                 .thenThrow(new RatingException("Parâmetros de entrada inválidos"));
 
-        mockMvc.perform(post("/v1/ratings/{appointmentId}", appointmentId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(ratingRequestDTO)))
+        mockMvc.perform(post("/v1/ratings", appointmentId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(ratingRequestDTO)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").value("Parâmetros de entrada inválidos"));
@@ -203,28 +205,28 @@ class RatingControllerTest {
     @Test
     @DisplayName("Deve retornar 409 quando o agendamento ainda não foi concluído")
     void shouldReturnUnprocessableWhenAppointmentNotCompleted() throws Exception {
-        when(ratingService.createRating(any(RatingRequestDTO.class), eq(appointmentId)))
+        when(ratingService.createRating(any(RatingRequestDTO.class)))
                 .thenThrow(new RatingException(
-                        "Agendamento ainda não foi concluído (só posso avaliar depois de status ser encerrado)"));
+                        "Agendamento não concluído"));
 
-        mockMvc.perform(post("/v1/ratings/{appointmentId}", appointmentId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(ratingRequestDTO)))
+        mockMvc.perform(post("/v1/ratings", appointmentId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(ratingRequestDTO)))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.message").value(
-                        "Agendamento ainda não foi concluído (só posso avaliar depois de status ser encerrado)"));
+                        "Agendamento não concluído"));
     }
 
     @Test
     @DisplayName("Deve retornar 500 para erros inesperados")
     void shouldReturnInternalServerErrorForUnexpectedErrors() throws Exception {
-        when(ratingService.createRating(any(RatingRequestDTO.class), eq(appointmentId)))
+        when(ratingService.createRating(any(RatingRequestDTO.class)))
                 .thenThrow(new RatingException("Erro inesperado no sistema"));
 
-        mockMvc.perform(post("/v1/ratings/{appointmentId}", appointmentId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(ratingRequestDTO)))
+        mockMvc.perform(post("/v1/ratings", appointmentId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(ratingRequestDTO)))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.status").value(500))
                 .andExpect(jsonPath("$.message").value("Erro inesperado no sistema"));

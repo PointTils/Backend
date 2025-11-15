@@ -1,11 +1,15 @@
 package com.pointtils.pointtils.src.application.services;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
-import java.util.Optional;
-
+import com.pointtils.pointtils.src.application.dto.email.AppointmentUpdateEmailDTO;
+import com.pointtils.pointtils.src.application.dto.email.ProcessAdminTemplateDTO;
+import com.pointtils.pointtils.src.application.dto.requests.EmailRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.InterpreterRegistrationEmailDTO;
+import com.pointtils.pointtils.src.core.domain.entities.Parameters;
+import com.pointtils.pointtils.src.infrastructure.repositories.InterpreterRepository;
+import com.pointtils.pointtils.src.infrastructure.repositories.ParametersRepository;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Session;
+import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,17 +17,38 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.multipart.MultipartFile;
 
-import com.pointtils.pointtils.src.application.dto.requests.EmailRequestDTO;
-import com.pointtils.pointtils.src.core.domain.entities.Parameters;
-import com.pointtils.pointtils.src.infrastructure.repositories.ParametersRepository;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.Year;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
-import jakarta.mail.Session;
-import jakarta.mail.internet.MimeMessage;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Testes Unitários do EmailService")
@@ -34,6 +59,12 @@ class EmailServiceTest {
 
     @Mock
     private ParametersRepository parametersRepository;
+
+    @Mock
+    private S3Service s3service;
+
+    @Mock
+    private InterpreterRepository interpreterRepository;
 
     @InjectMocks
     private EmailService emailService;
@@ -47,32 +78,31 @@ class EmailServiceTest {
     void setUp() {
         ReflectionTestUtils.setField(emailService, "emailFrom", "test@pointtils.com");
         ReflectionTestUtils.setField(emailService, "senderName", "PointTils Test");
-        
+
         testEmail = "user@example.com";
         testUserName = "João Silva";
         testToken = "reset-token-123";
-        
+
         emailRequestDTO = new EmailRequestDTO(
-            testEmail,
-            "Assunto Teste",
-            "Corpo do email teste",
-            "PointTils"
-        );
+                testEmail,
+                "Assunto Teste",
+                "Corpo do email teste",
+                "PointTils");
     }
 
     @Test
     @DisplayName("Deve enviar email simples com sucesso")
     void deveEnviarEmailSimplesComSucesso() {
         doNothing().when(mailSender).send(any(SimpleMailMessage.class));
-        
+
         boolean result = emailService.sendSimpleEmail(emailRequestDTO);
-        
+
         assertTrue(result);
         verify(mailSender).send(any(SimpleMailMessage.class));
-        
+
         ArgumentCaptor<SimpleMailMessage> messageCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
         verify(mailSender).send(messageCaptor.capture());
-        
+
         SimpleMailMessage sentMessage = messageCaptor.getValue();
         assertEquals("test@pointtils.com", sentMessage.getFrom());
         assertArrayEquals(new String[]{testEmail}, sentMessage.getTo());
@@ -84,7 +114,7 @@ class EmailServiceTest {
     @DisplayName("Deve retornar false quando emailRequestDTO for nulo no envio simples")
     void deveRetornarFalseQuandoEmailRequestDTOForNuloNoEnvioSimples() {
         boolean result = emailService.sendSimpleEmail(null);
-        
+
         assertFalse(result);
         verify(mailSender, never()).send(any(SimpleMailMessage.class));
     }
@@ -93,9 +123,9 @@ class EmailServiceTest {
     @DisplayName("Deve retornar false quando ocorrer exceção no envio simples")
     void deveRetornarFalseQuandoOcorrerExcecaoNoEnvioSimples() {
         doThrow(new RuntimeException("Erro de conexão")).when(mailSender).send(any(SimpleMailMessage.class));
-        
+
         boolean result = emailService.sendSimpleEmail(emailRequestDTO);
-        
+
         assertFalse(result);
         verify(mailSender).send(any(SimpleMailMessage.class));
     }
@@ -106,9 +136,30 @@ class EmailServiceTest {
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
         doNothing().when(mailSender).send(any(MimeMessage.class));
-        
+
         boolean result = emailService.sendHtmlEmail(emailRequestDTO);
-        
+
+        assertTrue(result);
+        verify(mailSender).createMimeMessage();
+        verify(mailSender).send(any(MimeMessage.class));
+    }
+
+    @Test
+    @DisplayName("Deve enviar email com anexos com sucesso")
+    void deveEnviarEmailComAnexosComSucesso() {
+        MimeMessage mimeMessage = new MimeMessage((Session) null);
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doNothing().when(mailSender).send(any(MimeMessage.class));
+
+        byte[] attachment1 = "Conteúdo do anexo 1".getBytes();
+        byte[] attachment2 = "Conteúdo do anexo 2".getBytes();
+        List<byte[]> attachments = List.of(attachment1, attachment2);
+        String attachmentName1 = "anexo1.txt";
+        String attachmentName2 = "anexo2.txt";
+        List<String> attachmentNames = List.of(attachmentName1, attachmentName2);
+
+        boolean result = emailService.sendEmailWithAttachments(emailRequestDTO, attachments, attachmentNames);
+
         assertTrue(result);
         verify(mailSender).createMimeMessage();
         verify(mailSender).send(any(MimeMessage.class));
@@ -118,7 +169,7 @@ class EmailServiceTest {
     @DisplayName("Deve retornar false quando emailRequestDTO for nulo no envio HTML")
     void deveRetornarFalseQuandoEmailRequestDTOForNuloNoEnvioHTML() {
         boolean result = emailService.sendHtmlEmail(null);
-        
+
         assertFalse(result);
         verify(mailSender, never()).createMimeMessage();
         verify(mailSender, never()).send(any(MimeMessage.class));
@@ -128,9 +179,9 @@ class EmailServiceTest {
     @DisplayName("Deve retornar false quando ocorrer exceção no envio HTML")
     void deveRetornarFalseQuandoOcorrerExcecaoNoEnvioHTML() {
         when(mailSender.createMimeMessage()).thenThrow(new RuntimeException("Erro de conexão"));
-        
+
         boolean result = emailService.sendHtmlEmail(emailRequestDTO);
-        
+
         assertFalse(result);
         verify(mailSender).createMimeMessage();
         verify(mailSender, never()).send(any(MimeMessage.class));
@@ -143,15 +194,15 @@ class EmailServiceTest {
         Parameters parameter = new Parameters();
         parameter.setKey("WELCOME_EMAIL");
         parameter.setValue(welcomeTemplate);
-        
+
         when(parametersRepository.findByKey("WELCOME_EMAIL")).thenReturn(Optional.of(parameter));
-        
+
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
         doNothing().when(mailSender).send(any(MimeMessage.class));
-        
+
         boolean result = emailService.sendWelcomeEmail(testEmail, testUserName);
-        
+
         assertTrue(result);
         verify(parametersRepository).findByKey("WELCOME_EMAIL");
         verify(mailSender).createMimeMessage();
@@ -165,15 +216,15 @@ class EmailServiceTest {
         Parameters parameter = new Parameters();
         parameter.setKey("PASSWORD_RESET");
         parameter.setValue(resetTemplate);
-        
+
         when(parametersRepository.findByKey("PASSWORD_RESET")).thenReturn(Optional.of(parameter));
-        
+
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
         doNothing().when(mailSender).send(any(MimeMessage.class));
-        
+
         boolean result = emailService.sendPasswordResetEmail(testEmail, testUserName, testToken);
-        
+
         assertTrue(result);
         verify(parametersRepository).findByKey("PASSWORD_RESET");
         verify(mailSender).createMimeMessage();
@@ -187,17 +238,16 @@ class EmailServiceTest {
         Parameters parameter = new Parameters();
         parameter.setKey("APPOINTMENT_CONFIRMATION");
         parameter.setValue(appointmentTemplate);
-        
+
         when(parametersRepository.findByKey("APPOINTMENT_CONFIRMATION")).thenReturn(Optional.of(parameter));
-        
+
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
         doNothing().when(mailSender).send(any(MimeMessage.class));
-        
+
         boolean result = emailService.sendAppointmentConfirmationEmail(
-            testEmail, testUserName, "2024-12-01 10:00", "Maria Intérprete"
-        );
-        
+                testEmail, testUserName, "2024-12-01 10:00", "Maria Intérprete");
+
         assertTrue(result);
         verify(parametersRepository).findByKey("APPOINTMENT_CONFIRMATION");
         verify(mailSender).createMimeMessage();
@@ -209,20 +259,32 @@ class EmailServiceTest {
     void deveEnviarEmailSolicitacaoCadastroInterpreteComSucesso() {
         String interpreterTemplate = "<html><body><h1>Nova solicitação</h1><p>Nome: {{nome}}</p><p>CPF: {{cpf}}</p><p>CNPJ: {{cnpj}}</p><p>Email: {{email}}</p><p>Telefone: {{telefone}}</p><a href=\"{link_api}\">Aceitar</a><a href=\"{link_api}\">Recusar</a></body></html>";
         Parameters parameter = new Parameters();
+        List<MultipartFile> files = List.of();
         parameter.setKey("PENDING_INTERPRETER_ADMIN");
         parameter.setValue(interpreterTemplate);
-        
+
         when(parametersRepository.findByKey("PENDING_INTERPRETER_ADMIN")).thenReturn(Optional.of(parameter));
-        
+
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
         doNothing().when(mailSender).send(any(MimeMessage.class));
-        
-        boolean result = emailService.sendInterpreterRegistrationRequestEmail(
-            "admin@pointtils.com", "João Intérprete", "123.456.789-00", "12.345.678/0001-90",
-            "joao@example.com", "(11) 99999-9999", "http://accept-link", "http://reject-link"
-        );
-        
+
+        InterpreterRegistrationEmailDTO dto = InterpreterRegistrationEmailDTO.builder()
+                .adminEmail("admin@pointtils.com")
+                .interpreterName("João")
+                .cpf("123")
+                .cnpj("456")
+                .email("email")
+                .phone("phone")
+                .acceptLink("http://accept")
+                .rejectLink("http://reject")
+                .files(files)
+                .build();
+
+
+        boolean result = emailService.sendInterpreterRegistrationRequestEmail(dto);
+
+
         assertTrue(result);
         verify(parametersRepository).findByKey("PENDING_INTERPRETER_ADMIN");
         verify(mailSender).createMimeMessage();
@@ -236,15 +298,15 @@ class EmailServiceTest {
         Parameters parameter = new Parameters();
         parameter.setKey("PENDING_INTERPRETER");
         parameter.setValue(feedbackTemplate);
-        
+
         when(parametersRepository.findByKey("PENDING_INTERPRETER")).thenReturn(Optional.of(parameter));
-        
+
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
         doNothing().when(mailSender).send(any(MimeMessage.class));
-        
+
         boolean result = emailService.sendInterpreterFeedbackEmail(testEmail, testUserName, true);
-        
+
         assertTrue(result);
         verify(parametersRepository).findByKey("PENDING_INTERPRETER");
         verify(mailSender).createMimeMessage();
@@ -258,15 +320,15 @@ class EmailServiceTest {
         Parameters parameter = new Parameters();
         parameter.setKey("PENDING_INTERPRETER");
         parameter.setValue(feedbackTemplate);
-        
+
         when(parametersRepository.findByKey("PENDING_INTERPRETER")).thenReturn(Optional.of(parameter));
-        
+
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
         doNothing().when(mailSender).send(any(MimeMessage.class));
-        
+
         boolean result = emailService.sendInterpreterFeedbackEmail(testEmail, testUserName, false);
-        
+
         assertTrue(result);
         verify(parametersRepository).findByKey("PENDING_INTERPRETER");
         verify(mailSender).createMimeMessage();
@@ -280,11 +342,11 @@ class EmailServiceTest {
         Parameters parameter = new Parameters();
         parameter.setKey("TEST_KEY");
         parameter.setValue(expectedTemplate);
-        
+
         when(parametersRepository.findByKey("TEST_KEY")).thenReturn(Optional.of(parameter));
-        
+
         String result = emailService.getTemplateByKey("TEST_KEY");
-        
+
         assertEquals(expectedTemplate, result);
         verify(parametersRepository).findByKey("TEST_KEY");
     }
@@ -293,9 +355,9 @@ class EmailServiceTest {
     @DisplayName("Deve retornar template padrão quando chave não encontrada")
     void deveRetornarTemplatePadraoQuandoChaveNaoEncontrada() {
         when(parametersRepository.findByKey("UNKNOWN_KEY")).thenReturn(Optional.empty());
-        
+
         String result = emailService.getTemplateByKey("UNKNOWN_KEY");
-        
+
         assertTrue(result.contains("Template não encontrado"));
         assertTrue(result.contains("UNKNOWN_KEY"));
         verify(parametersRepository).findByKey("UNKNOWN_KEY");
@@ -308,15 +370,15 @@ class EmailServiceTest {
         Parameters parameter = new Parameters();
         parameter.setKey("WELCOME_EMAIL");
         parameter.setValue(template);
-        
+
         when(parametersRepository.findByKey("WELCOME_EMAIL")).thenReturn(Optional.of(parameter));
-        
+
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
         doNothing().when(mailSender).send(any(MimeMessage.class));
-        
+
         emailService.sendWelcomeEmail(testEmail, testUserName);
-        
+
         verify(parametersRepository).findByKey("WELCOME_EMAIL");
         verify(mailSender).send(any(MimeMessage.class));
     }
@@ -328,15 +390,15 @@ class EmailServiceTest {
         Parameters parameter = new Parameters();
         parameter.setKey("PASSWORD_RESET");
         parameter.setValue(template);
-        
+
         when(parametersRepository.findByKey("PASSWORD_RESET")).thenReturn(Optional.of(parameter));
-        
+
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
         doNothing().when(mailSender).send(any(MimeMessage.class));
-        
+
         boolean result = emailService.sendPasswordResetEmail(testEmail, null, null);
-        
+
         assertTrue(result);
         verify(parametersRepository).findByKey("PASSWORD_RESET");
         verify(mailSender).send(any(MimeMessage.class));
@@ -346,13 +408,13 @@ class EmailServiceTest {
     @DisplayName("Deve usar template padrão quando template do banco for nulo")
     void deveUsarTemplatePadraoQuandoTemplateDoBancoForNulo() {
         when(parametersRepository.findByKey("WELCOME_EMAIL")).thenReturn(Optional.empty());
-        
+
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
         doNothing().when(mailSender).send(any(MimeMessage.class));
-        
+
         boolean result = emailService.sendWelcomeEmail(testEmail, testUserName);
-        
+
         assertTrue(result);
         verify(parametersRepository).findByKey("WELCOME_EMAIL");
         verify(mailSender).send(any(MimeMessage.class));
@@ -365,17 +427,16 @@ class EmailServiceTest {
         Parameters parameter = new Parameters();
         parameter.setKey("APPOINTMENT_CONFIRMATION");
         parameter.setValue(template);
-        
+
         when(parametersRepository.findByKey("APPOINTMENT_CONFIRMATION")).thenReturn(Optional.of(parameter));
-        
+
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
         doNothing().when(mailSender).send(any(MimeMessage.class));
-        
+
         boolean result = emailService.sendAppointmentConfirmationEmail(
-            testEmail, testUserName, "2024-12-01 10:00", "Maria Intérprete"
-        );
-        
+                testEmail, testUserName, "2024-12-01 10:00", "Maria Intérprete");
+
         assertTrue(result);
         verify(parametersRepository).findByKey("APPOINTMENT_CONFIRMATION");
         verify(mailSender).send(any(MimeMessage.class));
@@ -386,19 +447,30 @@ class EmailServiceTest {
     void deveProcessarLinksAceitarRecusarCorretamenteNoTemplateInterprete() {
         String template = "<p>Nome: {{nome}}</p><a href=\"{link_api}\" style=\"background-color: #008000;\">Aceitar</a><a href=\"{link_api}\" style=\"background-color: #FF0000;\">Recusar</a>";
         Parameters parameter = new Parameters();
+        List<MultipartFile> files = List.of();
         parameter.setKey("PENDING_INTERPRETER_ADMIN");
         parameter.setValue(template);
-        
+
         when(parametersRepository.findByKey("PENDING_INTERPRETER_ADMIN")).thenReturn(Optional.of(parameter));
-        
+
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
         doNothing().when(mailSender).send(any(MimeMessage.class));
-        
-        boolean result = emailService.sendInterpreterRegistrationRequestEmail(
-            "admin@pointtils.com", "João", "123", "456", "email", "phone", "http://accept", "http://reject"
-        );
-        
+
+        InterpreterRegistrationEmailDTO dto = InterpreterRegistrationEmailDTO.builder()
+                .adminEmail("admin@pointtils.com")
+                .interpreterName("João")
+                .cpf("123")
+                .cnpj("456")
+                .email("email")
+                .phone("phone")
+                .acceptLink("http://accept")
+                .rejectLink("http://reject")
+                .files(files)
+                .build();
+
+        boolean result = emailService.sendInterpreterRegistrationRequestEmail(dto);
+
         assertTrue(result);
         verify(parametersRepository).findByKey("PENDING_INTERPRETER_ADMIN");
         verify(mailSender).send(any(MimeMessage.class));
@@ -408,11 +480,10 @@ class EmailServiceTest {
     @DisplayName("Deve tratar exceção ao processar template no envio de email de boas-vindas")
     void deveTratarExcecaoAoProcessarTemplateNoEnvioEmailBoasVindas() {
         when(parametersRepository.findByKey("WELCOME_EMAIL")).thenThrow(new RuntimeException("Erro no banco"));
-        
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            emailService.sendWelcomeEmail(testEmail, testUserName);
-        });
-        
+
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> emailService.sendWelcomeEmail(testEmail, testUserName));
+
         assertEquals("Erro no banco", exception.getMessage());
         verify(parametersRepository).findByKey("WELCOME_EMAIL");
         verify(mailSender, never()).send(any(MimeMessage.class));
@@ -424,18 +495,18 @@ class EmailServiceTest {
         String template = "Ano atual: {{ano}}";
         Parameters parameter = new Parameters();
         parameter.setValue(template);
-        
+
         when(parametersRepository.findByKey(anyString())).thenReturn(Optional.of(parameter));
-        
+
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
         doNothing().when(mailSender).send(any(MimeMessage.class));
-        
+
         assertTrue(emailService.sendWelcomeEmail(testEmail, testUserName));
         assertTrue(emailService.sendPasswordResetEmail(testEmail, testUserName, testToken));
         assertTrue(emailService.sendAppointmentConfirmationEmail(testEmail, testUserName, "2024-12-01", "Intérprete"));
         assertTrue(emailService.sendInterpreterFeedbackEmail(testEmail, testUserName, true));
-        
+
         verify(parametersRepository, times(4)).findByKey(anyString());
         verify(mailSender, times(4)).send(any(MimeMessage.class));
     }
@@ -444,19 +515,19 @@ class EmailServiceTest {
     @DisplayName("Deve manter comportamento consistente quando senderName for nulo ou vazio")
     void deveManterComportamentoConsistenteQuandoSenderNameForNuloOuVazio() {
         ReflectionTestUtils.setField(emailService, "senderName", "");
-        
+
         String template = "Enviado por: {{senderName}}";
         Parameters parameter = new Parameters();
         parameter.setValue(template);
-        
+
         when(parametersRepository.findByKey("WELCOME_EMAIL")).thenReturn(Optional.of(parameter));
-        
+
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
         doNothing().when(mailSender).send(any(MimeMessage.class));
-        
+
         boolean result = emailService.sendWelcomeEmail(testEmail, testUserName);
-        
+
         assertTrue(result);
         verify(mailSender).send(any(MimeMessage.class));
     }
@@ -467,19 +538,19 @@ class EmailServiceTest {
         String template = "Olá {{nome}}, bem-vindo! Ano: {{ano}}, Enviado por: {{senderName}}";
         Parameters parameter = new Parameters();
         parameter.setValue(template);
-        
+
         when(parametersRepository.findByKey("WELCOME_EMAIL")).thenReturn(Optional.of(parameter));
-        
+
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
         doNothing().when(mailSender).send(any(MimeMessage.class));
-        
+
         boolean result = emailService.sendWelcomeEmail(testEmail, testUserName);
-        
+
         assertTrue(result);
         verify(parametersRepository).findByKey("WELCOME_EMAIL");
         verify(mailSender).send(any(MimeMessage.class));
-        
+
         ArgumentCaptor<MimeMessage> messageCaptor = ArgumentCaptor.forClass(MimeMessage.class);
         verify(mailSender).send(messageCaptor.capture());
     }
@@ -488,16 +559,653 @@ class EmailServiceTest {
     @DisplayName("Deve lidar com template vazio graciosamente")
     void deveLidarComTemplateVazioGraciosamente() {
         Parameters parameter = new Parameters();
-        
+
         when(parametersRepository.findByKey("WELCOME_EMAIL")).thenReturn(Optional.of(parameter));
-        
+
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
         doNothing().when(mailSender).send(any(MimeMessage.class));
-        
+
         boolean result = emailService.sendWelcomeEmail(testEmail, testUserName);
-        
+
         assertTrue(result);
         verify(mailSender).send(any(MimeMessage.class));
+    }
+
+    @Test
+    @DisplayName("Deve lidar com exceção ao enviar email com anexos")
+    void deveLidarComExcecaoAoEnviarEmailComAnexos() {
+        MimeMessage mimeMessage = new MimeMessage((Session) null);
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doThrow(new RuntimeException("Erro ao enviar email")).when(mailSender).send(any(MimeMessage.class));
+        byte[] attachment = "Conteúdo do anexo".getBytes();
+        List<byte[]> attachments = List.of(attachment);
+        List<String> attachmentNames = List.of("anexo.txt");
+        boolean result = emailService.sendEmailWithAttachments(emailRequestDTO, attachments, attachmentNames);
+        assertFalse(result);
+
+    }
+
+    @Test
+    @DisplayName("Deve retornar false ao enviar email com anexos quando emailRequestDTO for nulo")
+    void deveRetornarFalseAoEnviarEmailComAnexosQuandoEmailRequestDTOForNulo() {
+        byte[] attachment = "Conteúdo do anexo".getBytes();
+        List<byte[]> attachments = List.of(attachment);
+        List<String> attachmentNames = List.of("anexo.txt");
+        boolean result = emailService.sendEmailWithAttachments(null, attachments, attachmentNames);
+        assertFalse(result);
+        verify(mailSender, never()).createMimeMessage();
+        verify(mailSender, never()).send(any(MimeMessage.class));
+    }
+
+    @Test
+    @DisplayName("Deve retornar false ao enviar email com anexos quando ocorrer exceção")
+    void deveRetornarFalseAoEnviarEmailComAnexosQuandoOcorrerExcecao() {
+        MimeMessage mimeMessage = new MimeMessage((Session) null);
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doThrow(new RuntimeException("Erro ao enviar email")).when(mailSender).send(any(MimeMessage.class));
+        boolean result = emailService.sendEmailWithAttachments(emailRequestDTO, null, null);
+        assertFalse(result);
+    }
+
+    @Test
+    @DisplayName("Deve processar anexos corretamente no envio de solicitação de cadastro de intérprete")
+    void deveProcessarAnexosCorretamenteNoEnvioSolicitacaoCadastroInterprete() throws Exception {
+        // Mock dos arquivos
+        MultipartFile file1 = org.mockito.Mockito.mock(MultipartFile.class);
+        MultipartFile file2 = org.mockito.Mockito.mock(MultipartFile.class);
+        List<MultipartFile> files = List.of(file1, file2);
+
+        lenient().when(file1.getOriginalFilename()).thenReturn("doc1.pdf");
+        lenient().when(file1.getBytes()).thenReturn("conteudo1".getBytes());
+        lenient().when(file2.getOriginalFilename()).thenReturn("doc2.pdf");
+        lenient().when(file2.getBytes()).thenReturn("conteudo2".getBytes());
+
+        // Template armazenado no banco
+        String template = "<p>Nome: {{nome}}</p><a href=\"{link_api}\">Aceitar</a>";
+        Parameters parameter = new Parameters();
+        parameter.setKey("PENDING_INTERPRETER_ADMIN");
+        parameter.setValue(template);
+
+        when(parametersRepository.findByKey("PENDING_INTERPRETER_ADMIN"))
+                .thenReturn(Optional.of(parameter));
+
+        // Mock do envio do email
+        MimeMessage mimeMessage = new MimeMessage((Session) null);
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doNothing().when(mailSender).send(any(MimeMessage.class));
+
+        InterpreterRegistrationEmailDTO dto = InterpreterRegistrationEmailDTO.builder()
+                .adminEmail("admin@pointtils.com")
+                .interpreterName("João")
+                .cpf("123")
+                .cnpj("456")
+                .email("email")
+                .phone("phone")
+                .acceptLink("http://accept")
+                .rejectLink("http://reject")
+                .files(files)
+                .build();
+
+
+        // Execução do método
+        boolean result = emailService.sendInterpreterRegistrationRequestEmail(dto);
+
+        // Verificações
+        assertTrue(result);
+        verify(parametersRepository).findByKey("PENDING_INTERPRETER_ADMIN");
+    }
+
+    @Test
+    @DisplayName("Deve processar template de feedback de administrador corretamente")
+    void deveProcessarTemplateAdminFeedbackCorretamente() {
+        String template = "Mensagem: {{message}}, Ano: {{ano}}";
+        Parameters parameter = new Parameters();
+        parameter.setKey("ADMIN_FEEDBACK");
+        parameter.setValue(template);
+
+        when(parametersRepository.findByKey("ADMIN_FEEDBACK")).thenReturn(Optional.of(parameter));
+
+        String emailResponse = "Cadastro aprovado";
+
+        String result = emailService.getAdminRegistrationFeedbackHtml(emailResponse);
+
+        String expected = "Mensagem: Cadastro aprovado, Ano: " + Year.now().getValue();
+        assertEquals(expected, result);
+    }
+
+    @Test
+    @DisplayName("Deve usar template padrão se não encontrar no banco")
+    void deveUsarTemplatePadraoSeNaoEncontrarNoBanco() {
+
+        when(parametersRepository.findByKey("ADMIN_FEEDBACK")).thenReturn(Optional.empty());
+
+        String emailResponse = "Cadastro aprovado";
+
+        String result = emailService.getAdminRegistrationFeedbackHtml(emailResponse);
+
+        String expectedStart = "<html><body><h1>Template não encontrado</h1>";
+        assertTrue(result.startsWith(expectedStart));
+    }
+
+    @Test
+    @DisplayName("Deve processar múltiplos anexos corretamente")
+    void deveProcessarMultiplosAnexosCorretamente() throws Exception {
+        // Mock dos arquivos
+        MultipartFile file1 = mock(MultipartFile.class);
+        MultipartFile file2 = mock(MultipartFile.class);
+        List<MultipartFile> files = Arrays.asList(file1, file2);
+
+        // Setup do primeiro arquivo
+        when(file1.getBytes()).thenReturn("conteudo1".getBytes());
+        when(file1.getOriginalFilename()).thenReturn("documento1.pdf");
+
+        // Setup do segundo arquivo
+        when(file2.getBytes()).thenReturn("conteudo2".getBytes());
+        when(file2.getOriginalFilename()).thenReturn("documento2.pdf");
+
+        // Mock do template e mensagem
+        String template = "<html><body>Template teste</body></html>";
+        Parameters parameter = new Parameters();
+        parameter.setKey("PENDING_INTERPRETER_ADMIN");
+        parameter.setValue(template);
+        when(parametersRepository.findByKey("PENDING_INTERPRETER_ADMIN")).thenReturn(Optional.of(parameter));
+
+        MimeMessage mimeMessage = new MimeMessage((Session) null);
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doNothing().when(mailSender).send(any(MimeMessage.class));
+
+        // Executa o método
+        InterpreterRegistrationEmailDTO dto = InterpreterRegistrationEmailDTO.builder()
+                .adminEmail("admin@test.com")
+                .interpreterName("João Intérprete")
+                .cpf("123.456.789-00")
+                .cnpj("12.345.678/0001-90")
+                .email("joao@email.com")
+                .phone("11999999999")
+                .acceptLink("http://accept")
+                .rejectLink("http://reject")
+                .files(files)
+                .build();
+
+        boolean result = emailService.sendInterpreterRegistrationRequestEmail(dto);
+
+        // Verifica o resultado
+        assertTrue(result);
+        verify(file1).getBytes();
+        verify(file1).getOriginalFilename();
+        verify(file2).getBytes();
+        verify(file2).getOriginalFilename();
+    }
+
+    @Test
+    @DisplayName("Deve continuar processamento mesmo se um anexo falhar")
+    void deveContinuarProcessamentoMesmoSeUmAnexoFalhar() throws Exception {
+        // Mock dos arquivos
+        MultipartFile file1 = mock(MultipartFile.class);
+        MultipartFile file2 = mock(MultipartFile.class);
+        List<MultipartFile> files = Arrays.asList(file1, file2);
+
+        // Primeiro arquivo lança exceção
+        when(file1.getBytes()).thenThrow(new IOException("Erro ao ler arquivo"));
+        when(file1.getName()).thenReturn("documento1.pdf");
+
+        // Segundo arquivo funciona normalmente
+        when(file2.getBytes()).thenReturn("conteudo2".getBytes());
+        when(file2.getOriginalFilename()).thenReturn("documento2.pdf");
+
+        // Mock do template e mensagem
+        String template = "<html><body>Template teste</body></html>";
+        Parameters parameter = new Parameters();
+        parameter.setKey("PENDING_INTERPRETER_ADMIN");
+        parameter.setValue(template);
+        when(parametersRepository.findByKey("PENDING_INTERPRETER_ADMIN")).thenReturn(Optional.of(parameter));
+
+        MimeMessage mimeMessage = new MimeMessage((Session) null);
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doNothing().when(mailSender).send(any(MimeMessage.class));
+
+        // Executa o método
+        InterpreterRegistrationEmailDTO dto = InterpreterRegistrationEmailDTO.builder()
+                .adminEmail("admin@test.com")
+                .interpreterName("João Intérprete")
+                .cpf("123.456.789-00")
+                .cnpj("12.345.678/0001-90")
+                .email("joao@email.com")
+                .phone("11999999999")
+                .acceptLink("http://accept")
+                .rejectLink("http://reject")
+                .files(files)
+                .build();
+
+        boolean result = emailService.sendInterpreterRegistrationRequestEmail(dto);
+
+        // Verifica o resultado
+        assertTrue(result);
+        verify(file1).getBytes();
+        verify(file2).getBytes();
+        verify(file2).getOriginalFilename();
+    }
+
+    @Test
+    @DisplayName("Deve usar template padrão quando processPasswordResetTemplate recebe template nulo")
+    void deveUsarTemplatePadraoQuandoProcessPasswordResetTemplateRecebeTemplateNulo() {
+        String defaultTemplate = "<html><body><h1>Template não encontrado</h1><p>Template com chave 'PASSWORD_RESET' não está disponível no banco de dados.</p></body></html>";
+
+        // Invoca método privado via reflection
+        String result = ReflectionTestUtils.invokeMethod(
+                emailService,
+                "processPasswordResetTemplate",
+                null,
+                "Test User",
+                "123456"
+        );
+
+        assertEquals(defaultTemplate, result);
+        verify(parametersRepository, never()).findByKey(anyString());
+    }
+
+    @Test
+    @DisplayName("Deve usar template padrão quando processAppointmentConfirmationTemplate recebe template nulo")
+    void deveUsarTemplatePadraoQuandoProcessAppointmentConfirmationTemplateRecebeTemplateNulo() {
+        String defaultTemplate = "<html><body><h1>Template não encontrado</h1><p>Template com chave 'APPOINTMENT_CONFIRMATION' não está disponível no banco de dados.</p></body></html>";
+
+        // Invoca método privado via reflection
+        String result = ReflectionTestUtils.invokeMethod(
+                emailService,
+                "processAppointmentConfirmationTemplate",
+                null,
+                "Test User",
+                "2025-11-11 às 09:00",
+                "Intérprete X"
+        );
+
+        assertEquals(defaultTemplate, result);
+        verify(parametersRepository, never()).findByKey(anyString());
+    }
+
+    @Test
+    @DisplayName("Deve retornar template padrão quando appointmentDate for nulo")
+    void deveRetornarTemplatePadraoQuandoUserNameForNulo() {
+        String template = "Olá {{nome}}! Sua consulta está agendada para {{appointmentDate}} com {{interpreterName}}.";
+        String result = ReflectionTestUtils.invokeMethod(
+                emailService,
+                "processAppointmentConfirmationTemplate",
+                template,
+                null,
+                "2025-11-11 às 09:00",
+                "Intérprete X"
+        );
+
+        assertTrue(result.contains("Olá !"));
+        assertTrue(result.contains("Sua consulta está agendada para 2025-11-11 às 09:00 com Intérprete X."));
+    }
+
+    @Test
+    @DisplayName("Deve retornar template padrão quando appointmentDate for nulo")
+    void deveRetornarTemplatePadraoQuandoAppointmentDateForNulo() {
+        String template = "Olá {{nome}}! Sua consulta está agendada para {{appointmentDate}} com {{interpreterName}}.";
+        String result = ReflectionTestUtils.invokeMethod(
+                emailService,
+                "processAppointmentConfirmationTemplate",
+                template,
+                "Test User",
+                null,
+                "Intérprete X"
+        );
+
+        assertTrue(result.contains("Olá Test User! Sua consulta está agendada para  com Intérprete X."));
+    }
+
+    @Test
+    @DisplayName("Deve retornar template padrão quando template for nulo")
+    void deveRetornarTemplatePadraoQuandoTemplateForNulo() {
+        ProcessAdminTemplateDTO dto = ProcessAdminTemplateDTO.builder()
+                .interpreterName("Interpreter Name")
+                .cpf("123456789")
+                .cnpj("12345678000195")
+                .email("test@example.com")
+                .phone("123456789")
+                .videoUrl(null)
+                .acceptLink("http://accept")
+                .rejectLink("http://reject")
+                .template(null)
+                .build();
+
+        String result = ReflectionTestUtils.invokeMethod(
+                emailService,
+                "processTemplate",
+                dto
+        );
+
+        String expectedStart = "<html><body><h1>Template não encontrado</h1>";
+        assertTrue(result.startsWith(expectedStart));
+    }
+
+    @Test
+    @DisplayName("Deve retornar template padrão quando interpreterName for nulo")
+    void deveRetornarTemplatePadraoQuandoInterpreterNameForNulo() {
+        String template = "Olá {{nome}}! Sua consulta está agendada.";
+        ProcessAdminTemplateDTO dto = ProcessAdminTemplateDTO.builder()
+                .interpreterName(null)
+                .cpf("123456789")
+                .cnpj("12345678000195")
+                .email("test@example.com")
+                .phone("123456789")
+                .videoUrl(null)
+                .acceptLink("http://accept")
+                .rejectLink("http://reject")
+                .template(template)
+                .build();
+
+        String result = ReflectionTestUtils.invokeMethod(
+                emailService,
+                "processTemplate",
+                dto
+        );
+
+        assertTrue(result.contains("Olá !"));
+    }
+
+    @Test
+    @DisplayName("Deve retornar template padrão quando cpf for nulo")
+    void deveRetornarTemplatePadraoQuandoCpfForNulo() {
+        String template = "Olá {{nome}}! Seu CPF é {{cpf}}.";
+        ProcessAdminTemplateDTO dto = ProcessAdminTemplateDTO.builder()
+                .interpreterName("Interpreter Name")
+                .cpf(null)
+                .cnpj("12345678000195")
+                .email("test@example.com")
+                .phone("123456789")
+                .videoUrl(null)
+                .acceptLink("http://accept")
+                .rejectLink("http://reject")
+                .template(template)
+                .build();
+
+        String result = ReflectionTestUtils.invokeMethod(
+                emailService,
+                "processTemplate",
+                dto
+        );
+
+        assertTrue(result.contains("Seu CPF é ."));
+    }
+
+    @Test
+    @DisplayName("Deve retornar template padrão quando cnpj for nulo")
+    void deveRetornarTemplatePadraoQuandoCnpjForNulo() {
+        String template = "Olá {{nome}}! Seu CNPJ é {{cnpj}}.";
+        ProcessAdminTemplateDTO dto = ProcessAdminTemplateDTO.builder()
+                .interpreterName("Interpreter Name")
+                .cpf("123456789")
+                .cnpj(null)
+                .email("test@example.com")
+                .phone("123456789")
+                .videoUrl(null)
+                .acceptLink("http://accept")
+                .rejectLink("http://reject")
+                .template(template)
+                .build();
+
+        String result = ReflectionTestUtils.invokeMethod(
+                emailService,
+                "processTemplate",
+                dto
+        );
+
+        assertTrue(result.contains("Seu CNPJ é ."));
+    }
+
+    @Test
+    @DisplayName("Deve retornar template padrão quando email for nulo")
+    void deveRetornarTemplatePadraoQuandoEmailForNulo() {
+        String template = "Olá {{nome}}! Seu email é {{email}}.";
+        ProcessAdminTemplateDTO dto = ProcessAdminTemplateDTO.builder()
+                .interpreterName("Interpreter Name")
+                .cpf("123456789")
+                .cnpj("12345678000195")
+                .email(null)
+                .phone("123456789")
+                .videoUrl(null)
+                .acceptLink("http://accept")
+                .rejectLink("http://reject")
+                .template(template)
+                .build();
+
+        String result = ReflectionTestUtils.invokeMethod(
+                emailService,
+                "processTemplate",
+                dto
+        );
+
+        assertTrue(result.contains("Seu email é ."));
+    }
+
+    @Test
+    @DisplayName("Deve retornar template padrão quando phone for nulo")
+    void deveRetornarTemplatePadraoQuandoPhoneForNulo() {
+        String template = "Olá {{nome}}! Seu telefone é {{telefone}}.";
+        ProcessAdminTemplateDTO dto = ProcessAdminTemplateDTO.builder()
+                .interpreterName("Interpreter Name")
+                .cpf("123456789")
+                .cnpj("12345678000195")
+                .email("test@example.com")
+                .phone(null)
+                .videoUrl(null)
+                .acceptLink("http://accept")
+                .rejectLink("http://reject")
+                .template(template)
+                .build();
+
+        String result = ReflectionTestUtils.invokeMethod(
+                emailService,
+                "processTemplate",
+                dto
+        );
+
+        assertTrue(result.contains("Seu telefone é ."));
+    }
+
+    @Test
+    @DisplayName("Deve retornar template padrão quando acceptLink for nulo")
+    void deveRetornarTemplatePadraoQuandoAcceptLinkForNulo() {
+        String template = "Clique aqui para aceitar: {{link_accept_api}}.";
+        ProcessAdminTemplateDTO dto = ProcessAdminTemplateDTO.builder()
+                .interpreterName("Interpreter Name")
+                .cpf("123456789")
+                .cnpj("12345678000195")
+                .email("test@example.com")
+                .phone("123456789")
+                .videoUrl(null)
+                .acceptLink(null)
+                .rejectLink("http://reject")
+                .template(template)
+                .build();
+
+        String result = ReflectionTestUtils.invokeMethod(
+                emailService,
+                "processTemplate",
+                dto
+        );
+
+        assertTrue(result.contains("Clique aqui para aceitar: ."));
+    }
+
+    @Test
+    @DisplayName("Deve retornar template padrão quando rejectLink for nulo")
+    void deveRetornarTemplatePadraoQuandoRejectLinkForNulo() {
+        String template = "Clique aqui para rejeitar: {{link_reject_api}}.";
+        ProcessAdminTemplateDTO dto = ProcessAdminTemplateDTO.builder()
+                .interpreterName("Interpreter Name")
+                .cpf("123456789")
+                .cnpj("12345678000195")
+                .email("test@example.com")
+                .phone("123456789")
+                .videoUrl(null)
+                .acceptLink("http://accept")
+                .rejectLink(null)
+                .template(template)
+                .build();
+
+        String result = ReflectionTestUtils.invokeMethod(
+                emailService,
+                "processTemplate",
+                dto
+        );
+
+        assertTrue(result.contains("Clique aqui para rejeitar: ."));
+    }
+
+    @Test
+    void deveProcessarURLDeVideoCorretamenteNoEnvioSolicitacaoCadastroInterprete() throws MessagingException {
+        // Template armazenado no banco
+        String template = "<p>Video: {{url}}</p>";
+        Parameters parameter = new Parameters();
+        parameter.setKey("PENDING_INTERPRETER_ADMIN");
+        parameter.setValue(template);
+
+        when(parametersRepository.findByKey("PENDING_INTERPRETER_ADMIN"))
+                .thenReturn(Optional.of(parameter));
+
+        // Mock do envio do email
+        MimeMessage mimeMessage = new MimeMessage((Session) null);
+        ArgumentCaptor<MimeMessage> messageCaptor = ArgumentCaptor.forClass(MimeMessage.class);
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doNothing().when(mailSender).send(messageCaptor.capture());
+
+        InterpreterRegistrationEmailDTO dto = InterpreterRegistrationEmailDTO.builder()
+                .adminEmail("admin@pointtils.com")
+                .email("interpreter@email.com")
+                .videoUrl("http://video-url.com/video.mp4")
+                .files(Collections.emptyList())
+                .build();
+
+        // Execução do método
+        boolean result = emailService.sendInterpreterRegistrationRequestEmail(dto);
+
+        // Verificações
+        assertTrue(result);
+        assertEquals("Nova Solicitação de Cadastro de Intérprete - PointTils", messageCaptor.getValue().getSubject());
+        assertEquals(1, messageCaptor.getValue().getFrom().length);
+        assertEquals("PointTils Test <test@pointtils.com>", messageCaptor.getValue().getFrom()[0].toString());
+
+        verify(parametersRepository).findByKey("PENDING_INTERPRETER_ADMIN");
+        verify(mailSender).send(any(MimeMessage.class));
+    }
+
+    @Test
+    void deveRetornarTemplateDeAtualizacaoDeAgendamento() {
+        String emailTemplate = """
+                Olá {{nome}}
+                Data e Hora: {{appointmentDate}}
+                Descrição: {{appointmentDescription}}
+                {{subject}}: {{subjectName}}
+                Modalidade: {{appointmentModality}}
+                Local: {{appointmentLocation}}
+                Atenciosamente,
+                Equipe {{senderName}}
+                Point Tils {{ano}}
+                """;
+        AppointmentUpdateEmailDTO dto = buildAppointmentUpdateEmail(emailTemplate);
+        String expectedEmailBody = """
+                Olá João Gustavo da Rocha
+                Data e Hora: 2023-10-01 10:00
+                Descrição: Reunião de condomínio
+                Intérprete: Maria Almeida
+                Modalidade: Online
+                Local: RS
+                Atenciosamente,
+                Equipe PointTils Test
+                Point Tils 2024
+                """;
+
+        Year mockedYear = mock(Year.class);
+        when(mockedYear.getValue()).thenReturn(2024);
+        try (MockedStatic<Year> mockedStaticYear = Mockito.mockStatic(Year.class)) {
+            mockedStaticYear.when(Year::now).thenReturn(mockedYear);
+            assertEquals(expectedEmailBody, ReflectionTestUtils.invokeMethod(
+                    emailService,
+                    "processAppointmentStatusChangeTemplate",
+                    dto
+            ));
+        }
+    }
+
+    @Test
+    void shouldSendAppointmentAcceptedEmail() throws Exception {
+        AppointmentUpdateEmailDTO dto = buildAppointmentUpdateEmail("");
+        Parameters mockParameters = new Parameters(UUID.randomUUID(), "APPOINTMENT_ACCEPTED", "",
+                LocalDateTime.now(), LocalDateTime.now());
+        when(parametersRepository.findByKey("APPOINTMENT_ACCEPTED")).thenReturn(Optional.of(mockParameters));
+
+        MimeMessage mimeMessage = new MimeMessage((Session) null);
+        ArgumentCaptor<MimeMessage> messageCaptor = ArgumentCaptor.forClass(MimeMessage.class);
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doNothing().when(mailSender).send(messageCaptor.capture());
+
+        assertTrue(emailService.sendAppointmentAcceptedEmail(dto));
+        assertEquals("Agendamento Aceito - PointTils", messageCaptor.getValue().getSubject());
+        assertEquals(1, messageCaptor.getValue().getFrom().length);
+        assertEquals("PointTils Test <test@pointtils.com>", messageCaptor.getValue().getFrom()[0].toString());
+
+        verify(mailSender).send(any(MimeMessage.class));
+        verify(parametersRepository).findByKey("APPOINTMENT_ACCEPTED");
+    }
+
+    @Test
+    void shouldSendAppointmentDeniedEmail() throws Exception {
+        AppointmentUpdateEmailDTO dto = buildAppointmentUpdateEmail("");
+        Parameters mockParameters = new Parameters(UUID.randomUUID(), "APPOINTMENT_DENIED", "",
+                LocalDateTime.now(), LocalDateTime.now());
+        when(parametersRepository.findByKey("APPOINTMENT_DENIED")).thenReturn(Optional.of(mockParameters));
+
+        MimeMessage mimeMessage = new MimeMessage((Session) null);
+        ArgumentCaptor<MimeMessage> messageCaptor = ArgumentCaptor.forClass(MimeMessage.class);
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doNothing().when(mailSender).send(messageCaptor.capture());
+
+        assertTrue(emailService.sendAppointmentDeniedEmail(dto));
+        assertEquals("Agendamento Negado - PointTils", messageCaptor.getValue().getSubject());
+        assertEquals(1, messageCaptor.getValue().getFrom().length);
+        assertEquals("PointTils Test <test@pointtils.com>", messageCaptor.getValue().getFrom()[0].toString());
+
+        verify(mailSender).send(any(MimeMessage.class));
+        verify(parametersRepository).findByKey("APPOINTMENT_DENIED");
+    }
+
+    @Test
+    void shouldSendAppointmentCanceledEmail() throws Exception {
+        AppointmentUpdateEmailDTO dto = buildAppointmentUpdateEmail("");
+        Parameters mockParameters = new Parameters(UUID.randomUUID(), "APPOINTMENT_CANCELED", "",
+                LocalDateTime.now(), LocalDateTime.now());
+        when(parametersRepository.findByKey("APPOINTMENT_CANCELED")).thenReturn(Optional.of(mockParameters));
+
+        MimeMessage mimeMessage = new MimeMessage((Session) null);
+        ArgumentCaptor<MimeMessage> messageCaptor = ArgumentCaptor.forClass(MimeMessage.class);
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doNothing().when(mailSender).send(messageCaptor.capture());
+
+        assertTrue(emailService.sendAppointmentCanceledEmail(dto));
+        assertEquals("Agendamento Cancelado - PointTils", messageCaptor.getValue().getSubject());
+        assertEquals(1, messageCaptor.getValue().getFrom().length);
+        assertEquals("PointTils Test <test@pointtils.com>", messageCaptor.getValue().getFrom()[0].toString());
+
+        verify(mailSender).send(any(MimeMessage.class));
+        verify(parametersRepository).findByKey("APPOINTMENT_CANCELED");
+    }
+
+    private AppointmentUpdateEmailDTO buildAppointmentUpdateEmail(String template) {
+        return AppointmentUpdateEmailDTO.builder()
+                .template(template)
+                .email("user@example.com")
+                .userName("João Gustavo da Rocha")
+                .appointmentDate("2023-10-01 10:00")
+                .appointmentDescription("Reunião de condomínio")
+                .appointmentModality("Online")
+                .appointmentLocation("RS")
+                .subject("Intérprete")
+                .subjectName("Maria Almeida")
+                .build();
     }
 }

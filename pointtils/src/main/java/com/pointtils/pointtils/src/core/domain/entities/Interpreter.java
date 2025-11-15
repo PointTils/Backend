@@ -1,9 +1,5 @@
 package com.pointtils.pointtils.src.core.domain.entities;
 
-import java.math.BigDecimal;
-import java.util.HashSet;
-import java.util.Set;
-
 import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -14,6 +10,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrimaryKeyJoinColumn;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,7 +20,10 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.math.BigDecimal;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "interpreter")
@@ -48,16 +48,21 @@ public class Interpreter extends Person {
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private InterpreterModality modality;
 
+    @ToString.Exclude
     @OneToMany(mappedBy = "interpreter", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Location> locations;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @lombok.Builder.Default
+    @Builder.Default
     @OneToMany(mappedBy = "interpreter", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Schedule> schedules = new HashSet<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "interpreter", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<InterpreterDocuments> documents = new HashSet<>();
+
+    @Column(name = "video_url")
+    private String videoUrl;
 }

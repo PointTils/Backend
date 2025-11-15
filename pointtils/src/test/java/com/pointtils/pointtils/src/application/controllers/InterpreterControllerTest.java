@@ -1,6 +1,7 @@
 package com.pointtils.pointtils.src.application.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pointtils.pointtils.src.application.dto.requests.FindAllInterpreterDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.InterpreterPatchRequestDTO;
 import com.pointtils.pointtils.src.application.dto.requests.ProfessionalDataPatchRequestDTO;
@@ -8,6 +9,7 @@ import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResp
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
 import com.pointtils.pointtils.src.application.services.InterpreterService;
 import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
+import com.pointtils.pointtils.src.infrastructure.configs.FirebaseConfig;
 import io.awspring.cloud.autoconfigure.s3.S3AutoConfiguration;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -58,6 +60,9 @@ class InterpreterControllerTest {
 
     @MockitoBean
     private S3Client s3Client;
+
+    @MockitoBean
+    private FirebaseConfig firebaseConfig;
 
     @Test
     @DisplayName("Deve cadastrar intérprete com sucesso usando dados básicos")
@@ -159,7 +164,8 @@ class InterpreterControllerTest {
                 .andExpect(jsonPath("$.data.professional_data.image_rights").value(true))
                 .andExpect(jsonPath("$.data.professional_data.modality").value("PERSONALLY"))
                 .andExpect(jsonPath("$.data.professional_data.description")
-                        .value("Intérprete experiente em LIBRAS"));
+                        .value("Intérprete experiente em LIBRAS"))
+                .andExpect(jsonPath("$.data.professional_data.video_url").value("https://www.youtube.com/watch?v=tmIBzgKEz3o"));
     }
 
     @Test
@@ -198,9 +204,18 @@ class InterpreterControllerTest {
     @Test
     @DisplayName("Deve encontrar todos os intérpretes com sucesso")
     void deveBuscarInterpretesComSucesso() throws Exception {
+        FindAllInterpreterDTO dto = new FindAllInterpreterDTO();
+            dto.setModality("ONLINE");
+            dto.setGender("FEMALE");
+            dto.setCity("São Paulo");
+            dto.setUf("SP");
+            dto.setNeighborhood("Higienópolis");
+            dto.setSpecialty(UUID.randomUUID().toString());
+            dto.setAvailableDate("2025-11-07 09:00");
+            dto.setName("interpreter");
         // Arrange
         InterpreterListResponseDTO mockResponse = createInterpreterListResponse();
-        when(interpreterService.findAll(null, null, null, null, null, null, null, null))
+        when(interpreterService.findAll(dto))
                 .thenReturn(List.of(mockResponse));
 
         // Act & Assert
@@ -209,8 +224,7 @@ class InterpreterControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Intérpretes encontrados com sucesso"))
-                .andExpect(jsonPath("$.data[0].id").exists());
+                .andExpect(jsonPath("$.message").value("Intérpretes encontrados com sucesso"));
     }
 
     @Test

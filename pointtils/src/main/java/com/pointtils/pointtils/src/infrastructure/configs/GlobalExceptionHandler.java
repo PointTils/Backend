@@ -1,11 +1,19 @@
 
 package com.pointtils.pointtils.src.infrastructure.configs;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
+import com.fasterxml.jackson.databind.exc.ValueInstantiationException;
+import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
+import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
+import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
+import com.pointtils.pointtils.src.core.domain.exceptions.ClientTimeoutException;
+import com.pointtils.pointtils.src.core.domain.exceptions.DuplicateResourceException;
+import com.pointtils.pointtils.src.core.domain.exceptions.RatingException;
+import com.pointtils.pointtils.src.core.domain.exceptions.UserSpecialtyException;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -16,20 +24,10 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-import com.fasterxml.jackson.databind.exc.ValueInstantiationException;
-import com.pointtils.pointtils.src.core.domain.entities.enums.Gender;
-import com.pointtils.pointtils.src.core.domain.entities.enums.InterpreterModality;
-import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
-import com.pointtils.pointtils.src.core.domain.exceptions.ClientTimeoutException;
-import com.pointtils.pointtils.src.core.domain.exceptions.DuplicateResourceException;
-import com.pointtils.pointtils.src.core.domain.exceptions.RatingException;
-import com.pointtils.pointtils.src.core.domain.exceptions.UserSpecialtyException;
-
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.ConstraintViolationException;
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @ControllerAdvice
@@ -167,7 +165,8 @@ public class GlobalExceptionHandler {
             return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
         }
         if ("Refresh token inválido ou expirado".equals(message)
-                || "Access token inválido ou expirado".equals(message)) {
+                || "Access token inválido ou expirado".equals(message)
+                || "Token de recuperação inválido ou expirado".equals(message)) {
             ErrorResponse errorResponse = new ErrorResponse(
                     HttpStatus.UNAUTHORIZED.value(),
                     message,
@@ -277,7 +276,7 @@ public class GlobalExceptionHandler {
                     System.currentTimeMillis());
             return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
         }
-        if ("Agendamento ainda não foi concluído (só posso avaliar depois de status ser encerrado)"
+        if ("Agendamento não concluído"
                 .equals(ex.getMessage())) {
             ErrorResponse errorResponse = new ErrorResponse(
                     HttpStatus.CONFLICT.value(),
@@ -290,6 +289,15 @@ public class GlobalExceptionHandler {
                 ex.getMessage(),
                 System.currentTimeMillis());
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(UnsupportedOperationException.class)
+    public ResponseEntity<ErrorResponse> handleUnsupportedOperation(UnsupportedOperationException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.SERVICE_UNAVAILABLE.value(),
+                ex.getMessage(),
+                System.currentTimeMillis());
+        return new ResponseEntity<>(errorResponse, HttpStatus.SERVICE_UNAVAILABLE);
     }
 
     @Data

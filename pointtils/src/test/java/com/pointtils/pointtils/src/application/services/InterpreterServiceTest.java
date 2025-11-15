@@ -1,5 +1,7 @@
 package com.pointtils.pointtils.src.application.services;
 
+import com.pointtils.pointtils.src.application.dto.requests.FindAllInterpreterDTO;
+import com.pointtils.pointtils.src.application.dto.requests.InterpreterBasicRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterListResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.InterpreterResponseDTO;
 import com.pointtils.pointtils.src.application.mapper.InterpreterResponseMapper;
@@ -19,6 +21,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.jpa.domain.Specification;
@@ -40,8 +43,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -53,6 +61,8 @@ class InterpreterServiceTest {
     private PasswordEncoder passwordEncoder;
     @Mock
     private InterpreterResponseMapper responseMapper;
+    @Mock
+    private EmailService emailService;
     @Spy
     private LocationMapper locationMapper = new LocationMapper();
     @InjectMocks
@@ -79,19 +89,54 @@ class InterpreterServiceTest {
         assertEquals("1990-01-01", interpreterArgumentCaptor.getValue().getBirthday().toString());
         assertEquals(BigDecimal.ZERO, interpreterArgumentCaptor.getValue().getRating());
         assertEquals("", interpreterArgumentCaptor.getValue().getDescription());
-        assertEquals("ALL", interpreterArgumentCaptor.getValue().getModality().name());
+        assertEquals("https://www.youtube.com/watch?v=tmIBzgKEz3o", interpreterArgumentCaptor.getValue().getVideoUrl());
+        assertEquals("ONLINE", interpreterArgumentCaptor.getValue().getModality().name());
         assertFalse(interpreterArgumentCaptor.getValue().getImageRights());
     }
 
     @Test
+    void shouldRegisterInterpreterWithoutProfessionalData() {
+        var request = createInterpreterCreationRequest();
+        request.setProfessionalData(null);
+
+        InterpreterResponseDTO mapped = new InterpreterResponseDTO();
+
+        when(repository.save(Mockito.argThat(interpreter -> interpreter.getEmail().equals(request.getEmail()))))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        when(responseMapper.toResponseDTO(
+                Mockito.argThat(interpreter -> interpreter.getEmail().equals(request.getEmail()))))
+                .thenReturn(mapped);
+
+        when(passwordEncoder.encode("senha123")).thenReturn("encoded");
+
+        InterpreterResponseDTO result = service.registerBasic(request);
+
+        assertEquals(mapped, result);
+
+        ArgumentCaptor<Interpreter> captor = ArgumentCaptor.forClass(Interpreter.class);
+        verify(repository).save(captor.capture());
+        assertNull(captor.getValue().getCnpj());
+    }
+
+    @Test
     void shouldFindAll() {
+        FindAllInterpreterDTO dto = new FindAllInterpreterDTO();
+        dto.setModality("ONLINE");
+        dto.setGender("FEMALE");
+        dto.setCity("São Paulo");
+        dto.setUf("SP");
+        dto.setNeighborhood("Higienópolis");
+        dto.setSpecialty(UUID.randomUUID().toString());
+        dto.setAvailableDate("2025-11-07 09:00");
+        dto.setName("interpreter");
         UUID id = UUID.randomUUID();
         Interpreter foundInterpreter = Interpreter.builder().id(id).build();
         InterpreterListResponseDTO mappedResponse = InterpreterListResponseDTO.builder().id(id).build();
         when(repository.findAll(any(Specification.class))).thenReturn(List.of(foundInterpreter));
         when(responseMapper.toListResponseDTO(foundInterpreter)).thenReturn(mappedResponse);
 
-        assertThat(service.findAll(null, null, null, null, null, null, null, null))
+        assertThat(service.findAll(dto))
                 .hasSize(1)
                 .contains(mappedResponse);
     }
@@ -99,6 +144,16 @@ class InterpreterServiceTest {
     @Test
     void shouldFindAllWithFilters() {
         // Arrange
+        FindAllInterpreterDTO dto = new FindAllInterpreterDTO();
+        dto.setModality("ONLINE");
+        dto.setGender("FEMALE");
+        dto.setCity("São Paulo");
+        dto.setUf("SP");
+        dto.setNeighborhood("Higienópolis");
+        dto.setSpecialty(UUID.randomUUID().toString());
+        dto.setAvailableDate("2025-11-07 09:00");
+        dto.setName("interpreter");
+
         UUID id = UUID.randomUUID();
         Location location = Location.builder()
                 .id(UUID.randomUUID())
@@ -140,16 +195,7 @@ class InterpreterServiceTest {
         when(responseMapper.toListResponseDTO(foundInterpreter)).thenReturn(mappedResponse);
 
         // Act
-        List<InterpreterListResponseDTO> result = service.findAll(
-                "ONLINE",
-                "FEMALE",
-                "São Paulo",
-                "SP",
-                "Higienópolis",
-                specialty.getId().toString(),
-                "2025-12-31 10:00",
-                null
-        );
+        List<InterpreterListResponseDTO> result = service.findAll(dto);
 
         // Assert
         assertThat(result)
@@ -198,6 +244,38 @@ class InterpreterServiceTest {
     }
 
     @Test
+    void shouldUpdateCompleteInterpreterDataWithAndWithoutProfessionalData() {
+        UUID id = UUID.randomUUID();
+        Interpreter found = Interpreter.builder()
+                .id(id)
+                .cnpj("12345678000195")
+                .build();
+        InterpreterResponseDTO mapped = InterpreterResponseDTO.builder().id(id).build();
+
+        when(repository.findById(id)).thenReturn(Optional.of(found));
+        when(repository.save(Mockito.argThat(interpreter -> interpreter.getId().equals(id))))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(responseMapper.toResponseDTO(found)).thenReturn(mapped);
+        when(passwordEncoder.encode("novaSenha")).thenReturn("encoded");
+
+        var dto = createInterpreterCreationRequest();
+        dto.setPassword("novaSenha");
+
+        InterpreterResponseDTO resultWithProfessional = service.updateComplete(id, dto);
+        assertEquals(mapped, resultWithProfessional);
+        assertEquals("encoded", found.getPassword());
+
+        var dtoWithoutProfessional = createInterpreterCreationRequest();
+        dtoWithoutProfessional.setProfessionalData(null);
+        dtoWithoutProfessional.setPassword(null);
+
+        InterpreterResponseDTO resultWithoutProfessional = service.updateComplete(id, dtoWithoutProfessional);
+        assertEquals(mapped, resultWithoutProfessional);
+
+        assertEquals("12345678000195", found.getCnpj());
+    }
+
+    @Test
     void shouldUpdateAllInterpreterData() {
         UUID interpreterId = UUID.randomUUID();
         Interpreter foundInterpreter = Interpreter.builder().id(interpreterId).build();
@@ -224,6 +302,7 @@ class InterpreterServiceTest {
         assertEquals("98765432000196", interpreterArgumentCaptor.getValue().getCnpj());
         assertEquals(InterpreterModality.ONLINE, interpreterArgumentCaptor.getValue().getModality());
         assertEquals("Teste", interpreterArgumentCaptor.getValue().getDescription());
+        assertEquals("https://www.youtube.com/watch?v=tmIBzgKEz3o", interpreterArgumentCaptor.getValue().getVideoUrl());
         assertFalse(interpreterArgumentCaptor.getValue().getImageRights());
         assertThat(interpreterArgumentCaptor.getValue().getLocations())
                 .hasSize(1)
@@ -260,4 +339,218 @@ class InterpreterServiceTest {
                         loc.getNeighborhood().equals("Higienópolis") &&
                         loc.getInterpreter().getId().equals(interpreterId));
     }
+
+    @Test
+    void shouldApproveInterpreterSuccessfullyWhenEmailSent() {
+        UUID id = UUID.randomUUID();
+        Interpreter interpreter = Interpreter.builder()
+                .id(id)
+                .name("João")
+                .email("joao@email.com")
+                .status(UserStatus.PENDING)
+                .build();
+
+        when(repository.findById(id)).thenReturn(Optional.of(interpreter));
+        when(repository.save(Mockito.argThat(i -> i.getId().equals(id))))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(emailService.sendInterpreterFeedbackEmail("joao@email.com", "João", true)).thenReturn(true);
+
+        boolean result = service.approveInterpreter(id);
+
+        assertTrue(result);
+        assertEquals(UserStatus.ACTIVE, interpreter.getStatus());
+
+        ArgumentCaptor<Interpreter> captor = ArgumentCaptor.forClass(Interpreter.class);
+        verify(repository).save(captor.capture());
+        assertEquals(id, captor.getValue().getId());
+        assertEquals(UserStatus.ACTIVE, captor.getValue().getStatus());
+    }
+
+    @Test
+    void shouldApproveInterpreterButEmailFailsToSend() {
+        UUID id = UUID.randomUUID();
+        Interpreter interpreter = Interpreter.builder()
+                .id(id)
+                .name("Maria")
+                .email("maria@email.com")
+                .status(UserStatus.PENDING)
+                .build();
+
+        when(repository.findById(id)).thenReturn(Optional.of(interpreter));
+        when(repository.save(Mockito.argThat(i -> i.getId().equals(id))))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(emailService.sendInterpreterFeedbackEmail("maria@email.com", "Maria", true))
+                .thenReturn(false);
+
+        boolean result = service.approveInterpreter(id);
+
+        assertTrue(result);
+        assertEquals(UserStatus.ACTIVE, interpreter.getStatus());
+
+        ArgumentCaptor<Interpreter> captor = ArgumentCaptor.forClass(Interpreter.class);
+        verify(repository).save(captor.capture());
+        assertEquals(id, captor.getValue().getId());
+        assertEquals(UserStatus.ACTIVE, captor.getValue().getStatus());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenApprovingAlreadyApprovedInterpreter() {
+        UUID id = UUID.randomUUID();
+        Interpreter interpreter = Interpreter.builder()
+                .id(id)
+                .status(UserStatus.ACTIVE)
+                .build();
+
+        when(repository.findById(id)).thenReturn(Optional.of(interpreter));
+
+        assertThrows(IllegalArgumentException.class, () -> service.approveInterpreter(id));
+    }
+
+    @Test
+    void shouldRejectInterpreterSuccessfullyWhenEmailSent() {
+        UUID id = UUID.randomUUID();
+        Interpreter interpreter = Interpreter.builder()
+                .id(id)
+                .name("José")
+                .email("jose@email.com")
+                .status(UserStatus.PENDING)
+                .build();
+
+        when(repository.findById(id)).thenReturn(Optional.of(interpreter));
+        when(repository.save(Mockito.argThat(i -> i.getId().equals(id))))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(emailService.sendInterpreterFeedbackEmail("jose@email.com", "José", false))
+                .thenReturn(true);
+
+        boolean result = service.rejectInterpreter(id);
+
+        assertTrue(result);
+        assertEquals(UserStatus.INACTIVE, interpreter.getStatus());
+
+        ArgumentCaptor<Interpreter> captor = ArgumentCaptor.forClass(Interpreter.class);
+        verify(repository).save(captor.capture());
+        assertEquals(id, captor.getValue().getId());
+        assertEquals(UserStatus.INACTIVE, captor.getValue().getStatus());
+    }
+
+    @Test
+    void shouldRejectInterpreterButEmailFailsToSend() {
+        UUID id = UUID.randomUUID();
+        Interpreter interpreter = Interpreter.builder()
+                .id(id)
+                .name("Ana")
+                .email("ana@email.com")
+                .status(UserStatus.PENDING)
+                .build();
+
+        when(repository.findById(id)).thenReturn(Optional.of(interpreter));
+        when(repository.save(Mockito.argThat(i -> i.getId().equals(id))))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(emailService.sendInterpreterFeedbackEmail("ana@email.com", "Ana", false))
+                .thenReturn(false);
+
+        boolean result = service.rejectInterpreter(id);
+
+        assertTrue(result);
+        assertEquals(UserStatus.INACTIVE, interpreter.getStatus());
+
+        ArgumentCaptor<Interpreter> captor = ArgumentCaptor.forClass(Interpreter.class);
+        verify(repository).save(captor.capture());
+        assertEquals(id, captor.getValue().getId());
+        assertEquals(UserStatus.INACTIVE, captor.getValue().getStatus());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenRejectingAlreadyProcessedInterpreter() {
+        UUID id = UUID.randomUUID();
+        Interpreter interpreter = Interpreter.builder()
+                .id(id)
+                .status(UserStatus.ACTIVE)
+                .build();
+
+        when(repository.findById(id)).thenReturn(Optional.of(interpreter));
+
+        assertThrows(IllegalArgumentException.class, () -> service.rejectInterpreter(id));
+    }
+
+    @Test
+    void approveInterpreter_ShouldReturnFalse_WhenFindThrows() {
+        UUID id = UUID.randomUUID();
+        when(repository.findById(id)).thenThrow(new RuntimeException("DB error"));
+
+        boolean result = service.approveInterpreter(id);
+
+        assertFalse(result);
+        verify(repository, never()).save(any());
+        verify(emailService, never()).sendInterpreterFeedbackEmail(any(), any(), anyBoolean());
+    }
+
+    @Test
+    void approveInterpreter_ShouldReturnFalse_WhenEmailServiceThrows() {
+        UUID id = UUID.randomUUID();
+        Interpreter interpreter = Interpreter.builder()
+                .id(id)
+                .name("João")
+                .email("joao@example.com")
+                .status(UserStatus.PENDING)
+                .build();
+
+        when(repository.findById(id)).thenReturn(Optional.of(interpreter));
+        when(repository.save(any(Interpreter.class))).thenReturn(interpreter);
+        when(emailService.sendInterpreterFeedbackEmail("joao@example.com", "João", true))
+                .thenThrow(new RuntimeException("SMTP down"));
+
+        boolean result = service.approveInterpreter(id);
+
+        assertFalse(result);
+        assertEquals(UserStatus.ACTIVE, interpreter.getStatus());
+        verify(repository).save(interpreter);
+    }
+
+    @Test
+    void rejectInterpreter_ShouldReturnFalse_WhenFindThrows() {
+        UUID id = UUID.randomUUID();
+        when(repository.findById(id)).thenThrow(new RuntimeException("DB error"));
+
+        boolean result = service.rejectInterpreter(id);
+
+        assertFalse(result);
+        verify(repository, never()).save(any());
+        verify(emailService, never()).sendInterpreterFeedbackEmail(any(), any(), anyBoolean());
+    }
+
+    @Test
+    void rejectInterpreter_ShouldReturnFalse_WhenEmailServiceThrows() {
+        UUID id = UUID.randomUUID();
+        Interpreter interpreter = Interpreter.builder()
+                .id(id)
+                .name("Maria")
+                .email("maria@example.com")
+                .status(UserStatus.PENDING)
+                .build();
+
+        when(repository.findById(id)).thenReturn(Optional.of(interpreter));
+        when(repository.save(any(Interpreter.class))).thenReturn(interpreter);
+        when(emailService.sendInterpreterFeedbackEmail("maria@example.com", "Maria", false))
+                .thenThrow(new RuntimeException("SMTP down"));
+
+        boolean result = service.rejectInterpreter(id);
+
+        assertFalse(result);
+        assertEquals(UserStatus.INACTIVE, interpreter.getStatus());
+        verify(repository).save(interpreter);
+    }
+
+    @Test
+    void shouldSendRegistrationEmailSuccessfully() {
+        InterpreterBasicRequestDTO request = createInterpreterCreationRequest();
+
+        ArgumentCaptor<Interpreter> interpreterCaptor = ArgumentCaptor.forClass(Interpreter.class);
+        when(repository.save(interpreterCaptor.capture())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(responseMapper.toResponseDTO(any())).thenReturn(new InterpreterResponseDTO());
+        when(passwordEncoder.encode(request.getPassword())).thenReturn("encoded");
+
+        assertDoesNotThrow(() -> service.registerBasic(request));
+    }
+
 }
