@@ -1,16 +1,21 @@
 package com.pointtils.pointtils.src.application.services;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
+import com.pointtils.pointtils.src.application.dto.responses.ParametersResponseDTO;
 import com.pointtils.pointtils.src.core.domain.entities.UserApp;
 import com.pointtils.pointtils.src.core.domain.entities.enums.NotificationType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.scheduling.TaskScheduler;
 
@@ -34,12 +39,32 @@ class NotificationServiceTest {
     private TaskScheduler taskScheduler;
     @Mock
     private UserAppService userAppService;
+    @Mock
+    private ParametersService parametersService;
+    @Spy
+    private ObjectMapper objectMapper = new ObjectMapper();
     @InjectMocks
     private NotificationService notificationService;
 
-    @Test
-    void shouldSendNotificationToAllUserApps() throws FirebaseMessagingException {
+    @ParameterizedTest
+    @CsvSource(value = {
+            "APPOINTMENT_REQUESTED,NOTIFICATION_APPOINTMENT_REQUESTED",
+            "APPOINTMENT_CANCELED,NOTIFICATION_APPOINTMENT_CANCELED",
+            "APPOINTMENT_ACCEPTED,NOTIFICATION_APPOINTMENT_ACCEPTED",
+            "APPOINTMENT_REMINDER,NOTIFICATION_APPOINTMENT_REMINDER"
+    })
+    void shouldSendNotificationToAllUserApps(String notificationTypeStr, String parameterKey) throws FirebaseMessagingException {
         mockUserApps();
+        String mockedParameterValue = "{\"title\":\"Nova notificação\"," +
+                "\"body\":\"Você recebeu uma atualização importante. Clique para mais detalhes.\"}";
+        ParametersResponseDTO mockResponse = ParametersResponseDTO.builder()
+                .id(UUID.randomUUID())
+                .key(parameterKey)
+                .value(mockedParameterValue)
+                .build();
+        when(parametersService.findByKey(parameterKey)).thenReturn(mockResponse);
+
+        NotificationType notificationType = NotificationType.valueOf(notificationTypeStr);
 
         try (MockedStatic<FirebaseMessaging> mockedFirebaseMessaging = Mockito.mockStatic(FirebaseMessaging.class)) {
             FirebaseMessaging mockedMessagingInstance = mock(FirebaseMessaging.class);
@@ -48,8 +73,9 @@ class NotificationServiceTest {
                     .thenReturn("response");
             mockedFirebaseMessaging.when(FirebaseMessaging::getInstance).thenReturn(mockedMessagingInstance);
 
-            assertDoesNotThrow(() -> notificationService.sendNotificationToUser(userId, NotificationType.APPOINTMENT_REQUESTED));
+            assertDoesNotThrow(() -> notificationService.sendNotificationToUser(userId, notificationType));
             verify(mockedMessagingInstance, times(2)).send(any(Message.class));
+            verify(parametersService, times(1)).findByKey(parameterKey);
         }
     }
 
