@@ -76,6 +76,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, UUID>, JpaSp
                     FROM appointment a
                     WHERE a.interpreter_id = sd.interpreter_id
                       AND a.date = sd.selected_date
+                      AND a.status IN ('ACCEPTED', 'COMPLETED')
                       AND ('2000-01-01'::timestamp + a.start_time) < gs.slot_start + interval '30 minutes'
                       AND ('2000-01-01'::timestamp + a.end_time) > gs.slot_start
                 )
