@@ -79,6 +79,19 @@ class EmailControllerTest {
     }
 
     @Test
+    @DisplayName("Deve enviar erro 500 se envio de e-mail simples não teve sucesso")
+    void deveEnviarEmailSimplesSemSucesso() {
+        when(emailService.sendSimpleEmail(any(EmailRequestDTO.class))).thenReturn(Boolean.FALSE);
+
+        ResponseEntity<ApiResponseDTO<Map<String, Object>>> response = emailController.sendEmail(emailRequestDTO);
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertFalse(response.getBody().isSuccess());
+        assertEquals("Falha ao enviar email", response.getBody().getMessage());
+    }
+
+    @Test
     @DisplayName("Deve retornar mensagem de falha quando email de boas-vindas falhar")
     void deveRetornarMensagemFalhaEmailBoasVindas() {
         when(emailService.sendWelcomeEmail(testEmail, testUserName)).thenReturn(false);
