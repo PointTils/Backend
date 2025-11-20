@@ -9,7 +9,6 @@ import com.pointtils.pointtils.src.application.services.AppointmentService;
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentModality;
 import com.pointtils.pointtils.src.core.domain.entities.enums.AppointmentStatus;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -52,7 +51,7 @@ public class AppointmentController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Agendamento criado com sucesso",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = AppointmentResponseDTO.class))
+                            schema = @Schema(implementation = ApiResponseDTO.class))
             ),
             @ApiResponse(responseCode = "400", description = "Dados de agendamento inválidos"),
             @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
@@ -75,7 +74,7 @@ public class AppointmentController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Agendamentos encontrados com sucesso",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = AppointmentResponseDTO.class)))
+                            schema = @Schema(implementation = ApiResponseDTO.class))
             ),
             @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor ")
@@ -153,7 +152,7 @@ public class AppointmentController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Agendamentos filtrados encontrados com sucesso",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = AppointmentFilterResponseDTO.class)))
+                            schema = @Schema(implementation = ApiResponseDTO.class))
             ),
             @ApiResponse(responseCode = "400", description = "Parâmetros de filtro inválidos"),
             @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
@@ -173,7 +172,8 @@ public class AppointmentController {
             from = LocalDateTime.parse(fromDateTime);
         }
 
-        List<AppointmentFilterResponseDTO> appointments = appointmentService.searchAppointments(interpreterId, userId, status, modality, from, hasRating, dayLimit);
+        List<AppointmentFilterResponseDTO> appointments = appointmentService
+                .searchAppointments(interpreterId, userId, status, modality, from, hasRating, dayLimit);
         return ResponseEntity.ok(ApiResponseDTO.success("Solicitações encontradas com sucesso", appointments));
     }
 

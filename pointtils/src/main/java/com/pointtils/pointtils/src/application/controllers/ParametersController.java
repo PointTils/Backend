@@ -57,33 +57,67 @@ public class ParametersController {
     @GetMapping
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Busca todos os parâmetros da aplicação")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Parâmetros encontrados com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiResponseDTO.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+    })
     public ResponseEntity<ApiResponseDTO<List<ParametersResponseDTO>>> findAll() {
         List<ParametersResponseDTO> list = service.findAll();
-        ApiResponseDTO<List<ParametersResponseDTO>> response = new ApiResponseDTO<>(true, "Parâmetros encontrados com sucesso", list);
+        ApiResponseDTO<List<ParametersResponseDTO>> response = ApiResponseDTO
+                .success("Parâmetros encontrados com sucesso", list);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{key}")
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Busca um parâmetro por chave")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Parâmetro encontrado com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiResponseDTO.class))
+            ),
+            @ApiResponse(responseCode = "404", description = "Parâmetro não encontrado"),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+    })
     public ResponseEntity<ApiResponseDTO<ParametersResponseDTO>> findByKey(@PathVariable String key) {
         ParametersResponseDTO parameters = service.findByKey(key);
-        ApiResponseDTO<ParametersResponseDTO> response = new ApiResponseDTO<>(true, "Parâmetro encontrado com sucesso", parameters);
+        ApiResponseDTO<ParametersResponseDTO> response = ApiResponseDTO.success("Parâmetro encontrado com sucesso", parameters);
         return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Atualiza um parâmetro por ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Parâmetro atualizado com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiResponseDTO.class))
+            ),
+            @ApiResponse(responseCode = "404", description = "Parâmetro não encontrado"),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+    })
     public ResponseEntity<ApiResponseDTO<ParametersResponseDTO>> put(@PathVariable UUID id, @Valid @RequestBody ParametersPatchRequestDTO dto) {
         ParametersResponseDTO patched = service.put(id, dto);
-        ApiResponseDTO<ParametersResponseDTO> response = new ApiResponseDTO<>(true, "Parâmetro atualizado com sucesso", patched);
+        ApiResponseDTO<ParametersResponseDTO> response = ApiResponseDTO.success("Parâmetro atualizado com sucesso", patched);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Deleta um parâmetro por ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Parâmetro deletado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "ID inválido"),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
+            @ApiResponse(responseCode = "404", description = "Parâmetro não encontrado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+    })
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         service.delete(id);
         return ResponseEntity.noContent().build();

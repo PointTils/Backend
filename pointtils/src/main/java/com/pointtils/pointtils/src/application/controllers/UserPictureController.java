@@ -12,10 +12,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-
-import java.io.IOException;
-import java.util.UUID;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,6 +20,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("v1/users")
@@ -54,7 +53,7 @@ public class UserPictureController {
     })
     public ResponseEntity<UserResponseDTO> uploadPicture(
             @Parameter(description = "ID do usuário", required = true) @PathVariable UUID id,
-            @Parameter(description = "Arquivo de imagem (JPG, PNG, GIF)", required = true) 
+            @Parameter(description = "Arquivo de imagem (JPG, PNG, GIF)", required = true)
             @RequestParam("file") MultipartFile file) throws IOException {
         UserPicturePostRequestDTO request = new UserPicturePostRequestDTO(id, file);
         UserResponseDTO response = userPictureService.updatePicture(request);
@@ -62,7 +61,17 @@ public class UserPictureController {
     }
 
     @DeleteMapping("/{id}/picture")
-    @Operation(summary = "Deleta foto de perfil do usuário")
+    @Operation(
+            summary = "Deleta foto de perfil do usuário",
+            description = "Remove permanentemente uma foto do usuário do sistema a partir do ID do usuário"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Foto deletada com sucesso"),
+            @ApiResponse(responseCode = "400", description = "ID do usuário inválido"),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
+            @ApiResponse(responseCode = "404", description = "Usuário não encontrado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+    })
     public ResponseEntity<Void> deletePicture(@PathVariable UUID id) {
         userPictureService.deletePicture(id);
         return ResponseEntity.noContent().build();

@@ -7,6 +7,7 @@ import com.google.firebase.messaging.Message;
 import com.pointtils.pointtils.src.application.dto.responses.ParametersResponseDTO;
 import com.pointtils.pointtils.src.core.domain.entities.UserApp;
 import com.pointtils.pointtils.src.core.domain.entities.enums.NotificationType;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -31,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -80,6 +82,21 @@ class NotificationServiceTest {
             assertDoesNotThrow(() -> notificationService.sendNotificationToUser(userId, notificationType));
             verify(mockedMessagingInstance, times(2)).send(any(Message.class));
             verify(parametersService, times(2)).findByKey(parameterKey);
+        }
+    }
+
+    @Test
+    void shouldNotSendNotificationToAllUserAppsIfParameterNotFound() throws FirebaseMessagingException {
+        mockUserApps();
+        when(parametersService.findByKey("NOTIFICATION_APPOINTMENT_ACCEPTED")).thenThrow(new EntityNotFoundException());
+
+        try (MockedStatic<FirebaseMessaging> mockedFirebaseMessaging = Mockito.mockStatic(FirebaseMessaging.class)) {
+            FirebaseMessaging mockedMessagingInstance = mock(FirebaseMessaging.class);
+            mockedFirebaseMessaging.when(FirebaseMessaging::getInstance).thenReturn(mockedMessagingInstance);
+
+            assertDoesNotThrow(() -> notificationService.sendNotificationToUser(userId, NotificationType.APPOINTMENT_ACCEPTED));
+            verify(mockedMessagingInstance, never()).send(any(Message.class));
+            verify(parametersService, times(2)).findByKey("NOTIFICATION_APPOINTMENT_ACCEPTED");
         }
     }
 

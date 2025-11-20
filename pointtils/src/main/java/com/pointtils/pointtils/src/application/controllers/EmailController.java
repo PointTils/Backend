@@ -16,7 +16,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -73,7 +72,7 @@ public class EmailController {
         if (success) {
             return ResponseEntity.ok(ApiResponseDTO.success("Email enviado com sucesso", data));
         } else {
-            return ResponseEntity.status(500).body(ApiResponseDTO.error("Falha ao enviar email"));
+            return ResponseEntity.internalServerError().body(ApiResponseDTO.error("Falha ao enviar email"));
         }
     }
 
@@ -106,7 +105,7 @@ public class EmailController {
         if (success) {
             return ResponseEntity.ok(ApiResponseDTO.success("Email HTML enviado com sucesso", data));
         } else {
-            return ResponseEntity.status(500).body(ApiResponseDTO.error("Falha ao enviar email HTML"));
+            return ResponseEntity.internalServerError().body(ApiResponseDTO.error("Falha ao enviar email HTML"));
         }
     }
 
@@ -140,7 +139,7 @@ public class EmailController {
         if (success) {
             return ResponseEntity.ok(ApiResponseDTO.success("Email de boas-vindas enviado com sucesso", data));
         } else {
-            return ResponseEntity.status(500).body(ApiResponseDTO.error("Falha ao enviar email de boas-vindas"));
+            return ResponseEntity.internalServerError().body(ApiResponseDTO.error("Falha ao enviar email de boas-vindas"));
         }
     }
 
@@ -180,12 +179,12 @@ public class EmailController {
             if (success) {
                 return ResponseEntity.ok(ApiResponseDTO.success("Email de recuperação enviado com sucesso", data));
             } else {
-                return ResponseEntity.status(500).body(ApiResponseDTO.error("Falha ao enviar email de recuperação"));
+                return ResponseEntity.internalServerError().body(ApiResponseDTO.error("Falha ao enviar email de recuperação"));
             }
 
         } catch (Exception e) {
             log.error("Erro ao enviar email de reset de senha para {}: {}", email, e.getMessage(), e);
-            return ResponseEntity.status(500).body(ApiResponseDTO.error("Erro interno no servidor"));
+            return ResponseEntity.internalServerError().body(ApiResponseDTO.error("Erro interno no servidor"));
         }
     }
 
@@ -287,11 +286,11 @@ public class EmailController {
             return ResponseEntity.ok(emailService.getAdminRegistrationFeedbackHtml(responseMessage));
 
         } catch (IllegalArgumentException ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return ResponseEntity.badRequest()
                     .body(emailService.getAdminRegistrationFeedbackHtml(ex.getMessage()));
         } catch (Exception e) {
             log.error("Erro ao aprovar cadastro do intérprete {}: {}", id, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return ResponseEntity.internalServerError()
                     .body(emailService.getAdminRegistrationFeedbackHtml("Erro ao aprovar cadastro do intérprete."));
         }
     }
@@ -326,11 +325,11 @@ public class EmailController {
             return ResponseEntity.ok(emailService.getAdminRegistrationFeedbackHtml(responseMessage));
 
         } catch (IllegalArgumentException ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return ResponseEntity.badRequest()
                     .body(emailService.getAdminRegistrationFeedbackHtml(ex.getMessage()));
         } catch (Exception e) {
             log.error("Erro ao recusar cadastro do intérprete {}: {}", id, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return ResponseEntity.internalServerError()
                     .body(emailService.getAdminRegistrationFeedbackHtml("Erro ao recusar cadastro do intérprete."));
         }
     }
