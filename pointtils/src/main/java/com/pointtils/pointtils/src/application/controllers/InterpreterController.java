@@ -155,10 +155,10 @@ public class InterpreterController {
             description = "Remove permanentemente um intérprete do sistema"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Intéprete deletado com sucesso"),
+            @ApiResponse(responseCode = "204", description = "Intérprete deletado com sucesso"),
             @ApiResponse(responseCode = "400", description = "ID inválido"),
             @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
-            @ApiResponse(responseCode = "404", description = "Intéprete não encontrado"),
+            @ApiResponse(responseCode = "404", description = "Intérprete não encontrado"),
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
