@@ -3,8 +3,14 @@ package com.pointtils.pointtils.src.infrastructure.configs;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MemoryBlacklistServiceTest {
 
@@ -130,5 +136,19 @@ class MemoryBlacklistServiceTest {
 
         // Assert
         assertFalse(isBlacklisted, "Token vazio não deveria estar na blacklist");
+    }
+
+    @Test
+    @DisplayName("Validacao de token deve retornar false se token estiver expirado")
+    void shouldReturnNullIfTokenIsExpired() {
+        String mockToken = "token";
+        memoryBlacklistService.addToBlacklist(mockToken);
+
+        Instant mockInstant = Instant.now().plus(2, ChronoUnit.DAYS);
+        try (MockedStatic<Instant> instantMockedStatic = Mockito.mockStatic(Instant.class)) {
+            instantMockedStatic.when(Instant::now).thenReturn(mockInstant);
+
+            assertFalse(memoryBlacklistService.isBlacklisted(mockToken));
+        }
     }
 }

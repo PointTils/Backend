@@ -6,7 +6,6 @@ import com.pointtils.pointtils.src.application.dto.responses.ApiResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.UserAppResponseDTO;
 import com.pointtils.pointtils.src.application.services.UserAppService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -47,7 +46,7 @@ public class UserAppController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Dados do aplicativo do usuário registrados com sucesso",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ApiResponseDTO.class)))
+                            schema = @Schema(implementation = ApiResponseDTO.class))
             ),
             @ApiResponse(responseCode = "400", description = "Parâmetros de requisição inválidos"),
             @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
@@ -69,7 +68,7 @@ public class UserAppController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Dados de aplicativos encontrados com sucesso",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ApiResponseDTO.class)))
+                            schema = @Schema(implementation = ApiResponseDTO.class))
             ),
             @ApiResponse(responseCode = "400", description = "Parâmetros de requisição inválidos"),
             @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
@@ -90,7 +89,7 @@ public class UserAppController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Dados do aplicativo atualizados com sucesso",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ApiResponseDTO.class)))
+                            schema = @Schema(implementation = ApiResponseDTO.class))
             ),
             @ApiResponse(responseCode = "400", description = "Parâmetros de requisição inválidos"),
             @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),

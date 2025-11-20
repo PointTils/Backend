@@ -1,8 +1,19 @@
 package com.pointtils.pointtils.src.application.controllers;
 
-import java.util.List;
-import java.util.UUID;
-
+import com.pointtils.pointtils.src.application.dto.UserSpecialtyDTO;
+import com.pointtils.pointtils.src.application.dto.requests.AddUserSpecialtiesRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.UserSpecialtiesResponseDTO;
+import com.pointtils.pointtils.src.application.services.UserSpecialtyService;
+import com.pointtils.pointtils.src.core.domain.entities.UserSpecialty;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,22 +27,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.pointtils.pointtils.src.application.dto.UserSpecialtyDTO;
-import com.pointtils.pointtils.src.application.dto.requests.AddUserSpecialtiesRequestDTO;
-import com.pointtils.pointtils.src.application.dto.responses.UserSpecialtiesResponseDTO;
-import com.pointtils.pointtils.src.application.services.UserSpecialtyService;
-import com.pointtils.pointtils.src.core.domain.entities.UserSpecialty;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @SecurityRequirement(name = "bearerAuth")
@@ -50,7 +47,7 @@ public class UserSpecialtyController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Especialidades do usuário encontradas com sucesso",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = UserSpecialtiesResponseDTO.class)))
+                            schema = @Schema(implementation = UserSpecialtiesResponseDTO.class))
             ),
             @ApiResponse(responseCode = "400", description = "ID do usuário inválido"),
             @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
@@ -116,7 +113,7 @@ public class UserSpecialtyController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Especialidades do usuário atualizadas com sucesso",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = UserSpecialtiesResponseDTO.class)))
+                            schema = @Schema(implementation = UserSpecialtiesResponseDTO.class))
             ),
             @ApiResponse(responseCode = "400", description = "Lista de especialidade inválida"),
             @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
@@ -195,7 +192,7 @@ public class UserSpecialtyController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Especialidades removidas com sucesso",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = UserSpecialtyDTO.class)))
+                            schema = @Schema(implementation = UserSpecialtiesResponseDTO.class))
             ),
             @ApiResponse(responseCode = "400", description = "Lista de IDs inválida"),
             @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),

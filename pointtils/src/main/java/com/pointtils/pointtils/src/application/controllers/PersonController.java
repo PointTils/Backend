@@ -1,8 +1,20 @@
 package com.pointtils.pointtils.src.application.controllers;
 
-import java.util.List;
-import java.util.UUID;
-
+import com.pointtils.pointtils.src.application.dto.PersonDTO;
+import com.pointtils.pointtils.src.application.dto.requests.PersonCreationRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.PersonPatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.ApiResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.PersonResponseDTO;
+import com.pointtils.pointtils.src.application.services.PersonService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -15,23 +27,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.pointtils.pointtils.src.application.dto.PersonDTO;
-import com.pointtils.pointtils.src.application.dto.requests.PersonCreationRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.PersonPatchRequestDTO;
-import com.pointtils.pointtils.src.application.dto.responses.ApiResponseDTO;
-import com.pointtils.pointtils.src.application.dto.responses.PersonResponseDTO;
-import com.pointtils.pointtils.src.application.services.PersonService;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/v1/person")
@@ -48,7 +45,7 @@ public class PersonController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Usuário surdo cadastrado com sucesso",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = PersonResponseDTO.class))
+                            schema = @Schema(implementation = ApiResponseDTO.class))
             ),
             @ApiResponse(responseCode = "400", description = "Dados de cadastro inválidos"),
             @ApiResponse(responseCode = "409", description = "Email já cadastrado"),
@@ -69,7 +66,7 @@ public class PersonController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Usuários surdos encontrados com sucesso",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = PersonResponseDTO.class)))
+                            schema = @Schema(implementation = ApiResponseDTO.class))
             ),
             @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
@@ -90,7 +87,7 @@ public class PersonController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Usuário surdo encontrado com sucesso",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = PersonResponseDTO.class))
+                            schema = @Schema(implementation = ApiResponseDTO.class))
             ),
             @ApiResponse(responseCode = "400", description = "ID inválido"),
             @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
@@ -111,7 +108,7 @@ public class PersonController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Usuário surdo atualizado com sucesso",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = PersonResponseDTO.class))
+                            schema = @Schema(implementation = ApiResponseDTO.class))
             ),
             @ApiResponse(responseCode = "400", description = "Dados de atualização inválidos"),
             @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
@@ -119,7 +116,7 @@ public class PersonController {
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     public ResponseEntity<ApiResponseDTO<PersonResponseDTO>> updateUser(@PathVariable UUID id,
-                                                             @RequestBody @Valid PersonPatchRequestDTO dto) {
+                                                                        @RequestBody @Valid PersonPatchRequestDTO dto) {
         PersonResponseDTO updated = service.updatePartial(id, dto);
         return ResponseEntity.ok(ApiResponseDTO.success("Usuário surdo atualizado com sucesso", updated));
     }
@@ -133,7 +130,7 @@ public class PersonController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Usuário surdo atualizado com sucesso",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = PersonResponseDTO.class))
+                            schema = @Schema(implementation = ApiResponseDTO.class))
             ),
             @ApiResponse(responseCode = "400", description = "Dados de atualização inválidos"),
             @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
@@ -141,7 +138,7 @@ public class PersonController {
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     public ResponseEntity<ApiResponseDTO<PersonResponseDTO>> updateComplete(@PathVariable UUID id,
-                                                                 @RequestBody @Valid PersonDTO dto) {
+                                                                            @RequestBody @Valid PersonDTO dto) {
         PersonResponseDTO updated = service.updateComplete(id, dto);
         return ResponseEntity.ok(ApiResponseDTO.success("Usuário surdo atualizado com sucesso", updated));
     }

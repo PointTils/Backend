@@ -20,6 +20,7 @@ import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import java.io.IOException;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -36,7 +37,7 @@ class S3ServiceTest {
     private S3Client s3Client;
     private S3Service s3Service;
 
-    @BeforeEach 
+    @BeforeEach
     void setUp() {
         s3Client = Mockito.mock(S3Client.class);
         s3Service = new S3Service("test-bucket", true, s3Client);
@@ -165,5 +166,20 @@ class S3ServiceTest {
         UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class,
                 () -> disabledS3Service.deleteFile(documentUrl));
         assertEquals("Delete de arquivos está desabilitado.", exception.getMessage());
+    }
+
+    @Test
+    void deleteShouldNotThrowExceptionIfDeleteObjectFailed() {
+        String documentUrl = "https://test-bucket.s3.amazonaws.com/users/user123/test-file.txt";
+        DeleteObjectResponse mockResponse = mock(DeleteObjectResponse.class);
+        SdkHttpResponse mockSdkHttpResponse = mock(SdkHttpResponse.class);
+
+        when(mockResponse.sdkHttpResponse()).thenReturn(mockSdkHttpResponse);
+        when(mockSdkHttpResponse.isSuccessful()).thenReturn(Boolean.FALSE);
+        when(s3Client.deleteObject(any(DeleteObjectRequest.class))).thenReturn(mockResponse);
+
+        assertDoesNotThrow(() -> s3Service.deleteFile(documentUrl));
+
+        verify(s3Client).deleteObject(any(DeleteObjectRequest.class));
     }
 }

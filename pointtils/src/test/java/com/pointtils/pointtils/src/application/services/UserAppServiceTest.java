@@ -10,6 +10,9 @@ import com.pointtils.pointtils.src.infrastructure.repositories.UserAppRepository
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -19,6 +22,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -131,22 +135,50 @@ class UserAppServiceTest {
     }
 
     @Test
-    void deleteUserApps_ShouldDeleteAllMatchingApps() {
+    void deleteUserApps_ShouldDeleteAllMatchingApps_ByUserIdAndDeviceId() {
         UUID userId = UUID.randomUUID();
         String deviceId = "deviceId";
         UserApp userApp = new UserApp();
 
         when(userAppRepository.findAllByFilters(userId, deviceId)).thenReturn(List.of(userApp));
 
-        userAppService.deleteUserApps(userId, deviceId);
+        assertDoesNotThrow(() -> userAppService.deleteUserApps(userId, deviceId));
 
         verify(userAppRepository).findAllByFilters(userId, deviceId);
         verify(userAppRepository).deleteAll(List.of(userApp));
     }
 
     @Test
-    void deleteUserApps_ShouldThrowIllegalArgumentException() {
-        assertThrows(IllegalArgumentException.class, () -> userAppService.deleteUserApps(null, ""));
+    void deleteUserApps_ShouldDeleteAllMatchingApps_ByUserId() {
+        UUID userId = UUID.randomUUID();
+        UserApp userApp = new UserApp();
+
+        when(userAppRepository.findAllByFilters(userId, null)).thenReturn(List.of(userApp));
+
+        assertDoesNotThrow(() -> userAppService.deleteUserApps(userId, null));
+
+        verify(userAppRepository).findAllByFilters(userId, null);
+        verify(userAppRepository).deleteAll(List.of(userApp));
+    }
+
+    @Test
+    void deleteUserApps_ShouldDeleteAllMatchingApps_ByDeviceId() {
+        String deviceId = "deviceId";
+        UserApp userApp = new UserApp();
+
+        when(userAppRepository.findAllByFilters(null, deviceId)).thenReturn(List.of(userApp));
+
+        assertDoesNotThrow(() -> userAppService.deleteUserApps(null, deviceId));
+
+        verify(userAppRepository).findAllByFilters(null, deviceId);
+        verify(userAppRepository).deleteAll(List.of(userApp));
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {""})
+    void deleteUserApps_ShouldThrowIllegalArgumentException(String deviceId) {
+        assertThrows(IllegalArgumentException.class, () -> userAppService.deleteUserApps(null, deviceId));
         verifyNoInteractions(userAppRepository);
     }
 

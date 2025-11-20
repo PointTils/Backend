@@ -45,7 +45,7 @@ public class RatingController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Avaliação criada com sucesso",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = RatingResponseDTO.class))
+                            schema = @Schema(implementation = ApiResponseDTO.class))
             ),
             @ApiResponse(responseCode = "400", description = "Dados da avaliação inválidos"),
             @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
@@ -60,18 +60,43 @@ public class RatingController {
 
     @GetMapping
     @SecurityRequirement(name = "bearerAuth")
-    @Operation(summary = "Obtém todas as avaliações de um intérprete")
+    @Operation(
+            summary = "Obtém todas as avaliações de um intérprete",
+            description = "Retorna lista de todas as avaliações de um determinado intérprete a partir de seu ID"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Avaliações encontradas com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiResponseDTO.class))
+            ),
+            @ApiResponse(responseCode = "404", description = "Intérprete não encontrado"),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+    })
     public ResponseEntity<ApiResponseDTO<List<RatingResponseDTO>>> getAllRatingsByInterpreterId(
             @RequestParam UUID interpreterId) {
         List<RatingResponseDTO> ratings = ratingService.getRatingsByInterpreterId(interpreterId);
-        ApiResponseDTO<List<RatingResponseDTO>> apiResponse = ApiResponseDTO.success("Avaliações obtidas com sucesso",
-                ratings);
+        ApiResponseDTO<List<RatingResponseDTO>> apiResponse = ApiResponseDTO
+                .success("Avaliações obtidas com sucesso", ratings);
         return ResponseEntity.ok(apiResponse);
     }
 
     @PatchMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
-    @Operation(summary = "Atualiza uma avaliação existente")
+    @Operation(
+            summary = "Atualiza uma avaliação existente",
+            description = "Atualiza dados específicos de uma avaliação a partir de seu ID"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Avaliação atualizada com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiResponseDTO.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Dados de atualização inválidos"),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
+            @ApiResponse(responseCode = "404", description = "Avaliação não encontrada"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+    })
     public ResponseEntity<ApiResponseDTO<RatingResponseDTO>> patchRating(@RequestBody RatingPatchRequestDTO request,
                                                                          @PathVariable UUID id) {
         RatingResponseDTO response = ratingService.patchRating(request, id);
@@ -81,7 +106,17 @@ public class RatingController {
 
     @DeleteMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
-    @Operation(summary = "Deleta uma avaliação existente")
+    @Operation(
+            summary = "Deleta uma avaliação existente",
+            description = "Remove do sistema uma avaliação de um agendamento existente"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Avaliação deletada com sucesso"),
+            @ApiResponse(responseCode = "400", description = "ID inválido"),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
+            @ApiResponse(responseCode = "404", description = "Avaliação não encontrada"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+    })
     public ResponseEntity<ApiResponseDTO<Void>> deleteRating(@PathVariable UUID id) {
         ratingService.deleteRating(id);
         return ResponseEntity.noContent().build();

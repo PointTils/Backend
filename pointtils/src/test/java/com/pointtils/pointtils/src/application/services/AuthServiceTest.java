@@ -502,6 +502,14 @@ class AuthServiceTest {
     }
 
     @Test
+    @DisplayName("Deve lançar exceção ao resetar senha se senha for inválida")
+    void resetSenhaDeveLancarExcecaoSeSenhaForInvalida() {
+        AuthenticationException exception = assertThrows(AuthenticationException.class,
+                () -> loginService.resetPassword("token", "1234"));
+        assertEquals("Formato de senha inválida", exception.getMessage());
+    }
+
+    @Test
     @DisplayName("Deve lançar exceção ao ocorreu um erro inesperado durante reset de senha")
     void resetSenhaDeveLancarExcecaoSeErroInesperadoOcorrer() {
         User mockUser = mock(User.class);

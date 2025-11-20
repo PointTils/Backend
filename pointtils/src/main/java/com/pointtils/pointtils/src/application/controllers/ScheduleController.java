@@ -1,9 +1,22 @@
 package com.pointtils.pointtils.src.application.controllers;
 
-import java.time.LocalDate;
-import java.util.List;
-import java.util.UUID;
-
+import com.pointtils.pointtils.src.application.dto.requests.ScheduleListRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.SchedulePatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.ScheduleRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.ApiResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.AvailableTimeSlotsResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.PaginatedScheduleResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.ScheduleResponseDTO;
+import com.pointtils.pointtils.src.application.services.ScheduleService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -19,24 +32,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.pointtils.pointtils.src.application.dto.requests.ScheduleListRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.SchedulePatchRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.ScheduleRequestDTO;
-import com.pointtils.pointtils.src.application.dto.responses.ApiResponseDTO;
-import com.pointtils.pointtils.src.application.dto.responses.AvailableTimeSlotsResponseDTO;
-import com.pointtils.pointtils.src.application.dto.responses.PaginatedScheduleResponseDTO;
-import com.pointtils.pointtils.src.application.dto.responses.ScheduleResponseDTO;
-import com.pointtils.pointtils.src.application.services.ScheduleService;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @AllArgsConstructor
@@ -52,14 +50,14 @@ public class ScheduleController {
             description = "Registra um novo horário de disponibilidade para um intérprete"
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "Horário cadastrado com sucesso",
-            content = @Content(mediaType = "application/json",
-                schema = @Schema(implementation = ScheduleResponseDTO.class))
-        ),
-        @ApiResponse(responseCode = "400", description = "Dados do horário inválido"),
-        @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
-        @ApiResponse(responseCode = "409", description = "Conflito de horário"),
-        @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+            @ApiResponse(responseCode = "201", description = "Horário cadastrado com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiResponseDTO.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Dados do horário inválido"),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
+            @ApiResponse(responseCode = "409", description = "Conflito de horário"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     public ResponseEntity<ApiResponseDTO<ScheduleResponseDTO>> registerSchedule(@Valid @RequestBody ScheduleRequestDTO dto) {
         ScheduleResponseDTO created = service.registerSchedule(dto);

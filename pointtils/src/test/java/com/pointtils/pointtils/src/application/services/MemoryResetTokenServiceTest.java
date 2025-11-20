@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -68,5 +69,32 @@ class MemoryResetTokenServiceTest {
 
         memoryResetTokenService.invalidateResetToken(token);
         assertNull(memoryResetTokenService.validateResetToken(token));
+    }
+
+    @Test
+    @DisplayName("Deve limpar tokens expirados da memória")
+    void shouldNotCleanupActiveTokens() {
+        String email = "user@email.com";
+        String token = memoryResetTokenService.generateResetToken(email);
+        assertEquals(email, memoryResetTokenService.validateResetToken(token));
+
+        assertDoesNotThrow(() -> memoryResetTokenService.cleanupExpiredTokens());
+        assertEquals(email, memoryResetTokenService.validateResetToken(token));
+    }
+
+    @Test
+    @DisplayName("Deve limpar tokens expirados da memória")
+    void shouldCleanupExpiredTokens() {
+        String email = "user@email.com";
+        String token = memoryResetTokenService.generateResetToken(email);
+        assertEquals(email, memoryResetTokenService.validateResetToken(token));
+
+        Instant mockInstant = Instant.now().plus(2, ChronoUnit.DAYS);
+        try (MockedStatic<Instant> instantMockedStatic = Mockito.mockStatic(Instant.class)) {
+            instantMockedStatic.when(Instant::now).thenReturn(mockInstant);
+
+            assertDoesNotThrow(() -> memoryResetTokenService.cleanupExpiredTokens());
+            assertNull(memoryResetTokenService.validateResetToken(token));
+        }
     }
 }
