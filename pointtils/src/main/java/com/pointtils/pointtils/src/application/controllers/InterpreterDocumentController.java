@@ -31,56 +31,101 @@ import java.util.UUID;
 @Tag(name = "Interpreter Documents Controller", description = "Endpoints para gerenciamento de documentos de usuários intérpretes")
 public class InterpreterDocumentController {
 
-        private final InterpreterDocumentService interpreterDocumentService;
+    private final InterpreterDocumentService interpreterDocumentService;
 
-        @PostMapping(value = "/{id}", consumes = "multipart/form-data")
-        @Operation(summary = "Salva múltiplos documentos para um usuário intérprete", description = "Permite fazer upload de documentos que evidenciem a capacitação do intérprete")
-        @ApiResponses(value = {
-                        @ApiResponse(responseCode = "200", description = "Upload de documento realizado com sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = InterpreterDocumentResponseDTO.class))),
-                        @ApiResponse(responseCode = "400", description = "Arquivo inválido ou formato não suportado"),
-                        @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
-                        @ApiResponse(responseCode = "404", description = "Intérprete não encontrado"),
-                        @ApiResponse(responseCode = "413", description = "Arquivo muito grande"),
-                        @ApiResponse(responseCode = "500", description = "Erro interno no servidor"),
-                        @ApiResponse(responseCode = "503", description = "Serviço de upload temporariamente indisponível", content = @Content(mediaType = "text/plain"))
-        })
-        public ResponseEntity<InterpreterDocumentResponseDTO> saveDocuments(
-                        @PathVariable UUID id,
-                        @RequestParam("files") List<MultipartFile> files,
-                        @RequestParam("replace_existing") Boolean replaceExisting) {
-                InterpreterDocumentResponseDTO response = interpreterDocumentService.saveDocuments(id, files,
-                                replaceExisting);
-                return ResponseEntity.ok(response);
-        }
+    @PostMapping(value = "/{id}", consumes = "multipart/form-data")
+    @Operation(
+            summary = "Salva múltiplos documentos para um usuário intérprete",
+            description = "Permite fazer upload de documentos que evidenciem a capacitação do intérprete"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Upload de documento realizado com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = InterpreterDocumentResponseDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Arquivo inválido ou formato não suportado"),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
+            @ApiResponse(responseCode = "404", description = "Intérprete não encontrado"),
+            @ApiResponse(responseCode = "413", description = "Arquivo muito grande"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor"),
+            @ApiResponse(responseCode = "503", description = "Serviço de upload temporariamente indisponível",
+                    content = @Content(mediaType = "text/plain"))
+    })
+    public ResponseEntity<InterpreterDocumentResponseDTO> saveDocuments(
+            @PathVariable UUID id,
+            @RequestParam("files") List<MultipartFile> files,
+            @RequestParam("replace_existing") Boolean replaceExisting) {
+        InterpreterDocumentResponseDTO response = interpreterDocumentService.saveDocuments(id, files,
+                replaceExisting);
+        return ResponseEntity.ok(response);
+    }
 
-        @GetMapping("/{id}")
-        @SecurityRequirement(name = "bearerAuth")
-        @Operation(summary = "Busca todos os documentos de um usuario")
-        public ResponseEntity<InterpreterDocumentResponseDTO> getDocumentsByInterpreter(
-                        @PathVariable("id") UUID interpreterId) {
-                InterpreterDocumentResponseDTO documents = interpreterDocumentService
-                                .getDocumentsByInterpreter(interpreterId);
-                return ResponseEntity.ok(documents);
-        }
+    @GetMapping("/{id}")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(
+            summary = "Busca todos os documentos de um usuário intérprete pelo seu ID",
+            description = "Retorna lista de documentos que evidenciem a capacitação de um intérprete específico"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Documentos encontrados com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = InterpreterDocumentResponseDTO.class))),
+            @ApiResponse(responseCode = "400", description = "ID do intérprete inválido"),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
+            @ApiResponse(responseCode = "404", description = "Intérprete não encontrado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor"),
+            @ApiResponse(responseCode = "503", description = "Serviço de upload temporariamente indisponível",
+                    content = @Content(mediaType = "text/plain"))
+    })
+    public ResponseEntity<InterpreterDocumentResponseDTO> getDocumentsByInterpreter(
+            @PathVariable("id") UUID interpreterId) {
+        InterpreterDocumentResponseDTO documents = interpreterDocumentService
+                .getDocumentsByInterpreter(interpreterId);
+        return ResponseEntity.ok(documents);
+    }
 
-        @PatchMapping("/{id}/{documentId}")
-        @SecurityRequirement(name = "bearerAuth")
-        @Operation(summary = "Atualiza um documento de um usuario")
-        public ResponseEntity<InterpreterDocumentResponseDTO> updateDocument(
-                        @PathVariable UUID id,
-                        @PathVariable UUID documentId,
-                        @RequestParam("file") MultipartFile file) {
-                InterpreterDocumentRequestDTO convertedRequest = new InterpreterDocumentRequestDTO(id, file);
-                InterpreterDocumentResponseDTO updatedDocument = interpreterDocumentService.updateDocument(documentId,
-                                convertedRequest);
-                return ResponseEntity.ok(updatedDocument);
-        }
+    @PatchMapping("/{id}/{documentId}")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(
+            summary = "Atualiza um documento de um usuário intérprete",
+            description = "Atualiza um documento de um usuário intérprete a partir dos IDs do usuário e documento"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Upload de documento realizado com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = InterpreterDocumentResponseDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Arquivo inválido ou formato não suportado"),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
+            @ApiResponse(responseCode = "404", description = "Intérprete ou documento não encontrado"),
+            @ApiResponse(responseCode = "413", description = "Arquivo muito grande"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor"),
+            @ApiResponse(responseCode = "503", description = "Serviço de upload temporariamente indisponível",
+                    content = @Content(mediaType = "text/plain"))
+    })
+    public ResponseEntity<InterpreterDocumentResponseDTO> updateDocument(
+            @PathVariable UUID id,
+            @PathVariable UUID documentId,
+            @RequestParam("file") MultipartFile file) {
+        InterpreterDocumentRequestDTO convertedRequest = new InterpreterDocumentRequestDTO(id, file);
+        InterpreterDocumentResponseDTO updatedDocument = interpreterDocumentService.updateDocument(documentId,
+                convertedRequest);
+        return ResponseEntity.ok(updatedDocument);
+    }
 
-        @DeleteMapping("/{id}")
-        @SecurityRequirement(name = "bearerAuth")
-        @Operation(summary = "Deleta um documento de um usuário")
-        public ResponseEntity<Void> deleteDocument(@PathVariable UUID id) {
-                interpreterDocumentService.deleteDocument(id);
-                return ResponseEntity.noContent().build();
-        }
+    @DeleteMapping("/{id}")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(
+            summary = "Deleta um documento de um usuário intérprete por ID",
+            description = "Remove permanentemente um documento do intérprete do sistema"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Documento deletado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "ID inválido"),
+            @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
+            @ApiResponse(responseCode = "404", description = "Documento não encontrado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+    })
+    public ResponseEntity<Void> deleteDocument(@PathVariable UUID id) {
+        interpreterDocumentService.deleteDocument(id);
+        return ResponseEntity.noContent().build();
+    }
 }

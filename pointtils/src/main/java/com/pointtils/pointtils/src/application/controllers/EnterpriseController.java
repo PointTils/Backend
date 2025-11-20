@@ -1,8 +1,19 @@
 package com.pointtils.pointtils.src.application.controllers;
 
-import java.util.List;
-import java.util.UUID;
-
+import com.pointtils.pointtils.src.application.dto.requests.EnterprisePatchRequestDTO;
+import com.pointtils.pointtils.src.application.dto.requests.EnterpriseRequestDTO;
+import com.pointtils.pointtils.src.application.dto.responses.ApiResponseDTO;
+import com.pointtils.pointtils.src.application.dto.responses.EnterpriseResponseDTO;
+import com.pointtils.pointtils.src.application.services.EnterpriseService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,22 +25,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.pointtils.pointtils.src.application.dto.requests.EnterprisePatchRequestDTO;
-import com.pointtils.pointtils.src.application.dto.requests.EnterpriseRequestDTO;
-import com.pointtils.pointtils.src.application.dto.responses.ApiResponseDTO;
-import com.pointtils.pointtils.src.application.dto.responses.EnterpriseResponseDTO;
-import com.pointtils.pointtils.src.application.services.EnterpriseService;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/v1/enterprises")
@@ -46,7 +43,7 @@ public class EnterpriseController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Empresa cadastrada com sucesso",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = EnterpriseResponseDTO.class))
+                            schema = @Schema(implementation = ApiResponseDTO.class))
             ),
             @ApiResponse(responseCode = "400", description = "Dados de cadastro inválidos"),
             @ApiResponse(responseCode = "409", description = "CNPJ já cadastrado"),
@@ -67,7 +64,7 @@ public class EnterpriseController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Empresas encontradas com sucesso",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = EnterpriseResponseDTO.class)))
+                            schema = @Schema(implementation = ApiResponseDTO.class))
             ),
             @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
@@ -86,7 +83,7 @@ public class EnterpriseController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Empresa encontrada com sucesso",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = EnterpriseResponseDTO.class))
+                            schema = @Schema(implementation = ApiResponseDTO.class))
             ),
             @ApiResponse(responseCode = "400", description = "ID inválido"),
             @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
@@ -107,7 +104,7 @@ public class EnterpriseController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Empresa atualizada com sucesso",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = EnterpriseResponseDTO.class))
+                            schema = @Schema(implementation = ApiResponseDTO.class))
             ),
             @ApiResponse(responseCode = "400", description = "Dados de atualização inválidos"),
             @ApiResponse(responseCode = "401", description = "Token de autenticação inválido"),
@@ -115,7 +112,7 @@ public class EnterpriseController {
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     public ResponseEntity<ApiResponseDTO<EnterpriseResponseDTO>> updateUser(@PathVariable UUID id,
-                                                                         @RequestBody @Valid EnterprisePatchRequestDTO dto) {
+                                                                            @RequestBody @Valid EnterprisePatchRequestDTO dto) {
         EnterpriseResponseDTO updated = service.patchEnterprise(id, dto);
         return ResponseEntity.ok(ApiResponseDTO.success("Empresa atualizada com sucesso", updated));
     }

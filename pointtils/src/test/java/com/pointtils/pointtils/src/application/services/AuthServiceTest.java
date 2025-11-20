@@ -4,6 +4,7 @@ import com.pointtils.pointtils.src.application.dto.requests.LoginRequestDTO;
 import com.pointtils.pointtils.src.application.dto.responses.LoginResponseDTO;
 import com.pointtils.pointtils.src.application.dto.responses.RefreshTokenResponseDTO;
 import com.pointtils.pointtils.src.core.domain.entities.Person;
+import com.pointtils.pointtils.src.core.domain.entities.User;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserStatus;
 import com.pointtils.pointtils.src.core.domain.entities.enums.UserTypeE;
 import com.pointtils.pointtils.src.core.domain.exceptions.AuthenticationException;
@@ -13,6 +14,7 @@ import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -24,6 +26,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -169,13 +173,13 @@ class AuthServiceTest {
                 () -> loginService.login("emailinvalido", "senha123")
         );
         assertEquals("Formato de e-mail inválido", ex1.getMessage());
-        
+
         AuthenticationException ex2 = assertThrows(
                 AuthenticationException.class,
                 () -> loginService.login("email@", "senha123")
         );
         assertEquals("Formato de e-mail inválido", ex2.getMessage());
-        
+
         AuthenticationException ex3 = assertThrows(
                 AuthenticationException.class,
                 () -> loginService.login("@dominio.com", "senha123")
@@ -193,13 +197,13 @@ class AuthServiceTest {
                 () -> loginService.login("test@email.com", "123")
         );
         assertEquals("Formato de senha inválida", ex1.getMessage());
-        
+
         AuthenticationException ex2 = assertThrows(
                 AuthenticationException.class,
                 () -> loginService.login("test@email.com", "senha{com}chaves")
         );
         assertEquals("Formato de senha inválida", ex2.getMessage());
-        
+
         AuthenticationException ex3 = assertThrows(
                 AuthenticationException.class,
                 () -> loginService.login("test@email.com", "senha com espaços")
@@ -317,7 +321,7 @@ class AuthServiceTest {
         // Verificar que o logout foi bem-sucedido
         assertNotNull(result);
         assertTrue(result);
-        
+
         // Verificar que os tokens foram adicionados à blacklist
         verify(memoryBlacklistService).addToBlacklist(accessToken);
         verify(memoryBlacklistService).addToBlacklist(refreshToken);
@@ -479,5 +483,58 @@ class AuthServiceTest {
         );
 
         assertEquals("Usuário inativo", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao resetar senha se senha for nula")
+    void resetSenhaDeveLancarExcecaoSeSenhaForNula() {
+        AuthenticationException exception = assertThrows(AuthenticationException.class,
+                () -> loginService.resetPassword("token", null));
+        assertEquals("Nova senha não fornecida", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao resetar senha se senha for vazia")
+    void resetSenhaDeveLancarExcecaoSeSenhaForVazia() {
+        AuthenticationException exception = assertThrows(AuthenticationException.class,
+                () -> loginService.resetPassword("token", ""));
+        assertEquals("Nova senha não fornecida", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao resetar senha se senha for inválida")
+    void resetSenhaDeveLancarExcecaoSeSenhaForInvalida() {
+        AuthenticationException exception = assertThrows(AuthenticationException.class,
+                () -> loginService.resetPassword("token", "1234"));
+        assertEquals("Formato de senha inválida", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao ocorreu um erro inesperado durante reset de senha")
+    void resetSenhaDeveLancarExcecaoSeErroInesperadoOcorrer() {
+        User mockUser = mock(User.class);
+        when(resetTokenService.validateResetToken("token")).thenReturn("person1@email.com");
+        when(userRepository.findByEmail("person1@email.com")).thenReturn(mockUser);
+        when(passwordEncoder.encode("password")).thenThrow(new RuntimeException("Erro"));
+
+        AuthenticationException exception = assertThrows(AuthenticationException.class,
+                () -> loginService.resetPassword("token", "password"));
+        assertEquals("Erro ao redefinir senha: Erro", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve resetar senha se forem informados parametros validos")
+    void deveResetarSenha() {
+        User mockUser = new Person();
+        when(resetTokenService.validateResetToken("token")).thenReturn("person1@email.com");
+        doNothing().when(resetTokenService).invalidateResetToken("token");
+        when(userRepository.findByEmail("person1@email.com")).thenReturn(mockUser);
+        when(passwordEncoder.encode("password")).thenReturn("encoded");
+
+        ArgumentCaptor<User> userArgumentCaptor = ArgumentCaptor.forClass(User.class);
+        when(userRepository.save(userArgumentCaptor.capture())).thenReturn(mockUser);
+
+        assertTrue(loginService.resetPassword("token", "password"));
+        assertEquals("encoded", userArgumentCaptor.getValue().getPassword());
     }
 }

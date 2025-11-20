@@ -12,6 +12,7 @@ import com.pointtils.pointtils.src.infrastructure.configs.MemoryBlacklistService
 import com.pointtils.pointtils.src.infrastructure.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -164,7 +165,7 @@ public class AuthService {
      * @return true se a senha foi redefinida com sucesso, false caso contrário
      */
     public boolean resetPassword(String resetToken, String newPassword) {
-        if (newPassword == null || newPassword.isBlank()) {
+        if (StringUtils.isBlank(newPassword)) {
             throw new AuthenticationException("Nova senha não fornecida");
         }
 
